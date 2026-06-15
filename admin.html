@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDEAKDC – Admin Panel</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
+:root {
+  --ink:#0f0f0f; --bg:#f4f4f2; --surface:#fff;
+  --accent:#5b4bff; --accent-light:#ede9ff;
+  --green:#1db97a; --green-light:#e3f9f0;
+  --red:#e03e3e; --red-light:#fdeaea;
+  --yellow:#f59e0b; --yellow-light:#fef9ee;
+  --muted:#6b7280; --border:#e5e5e3;
+  --shadow:0 2px 16px rgba(0,0,0,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+
+/* ── LOADER ── */
+#global-loader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .3s}
+#global-loader.hide{opacity:0;pointer-events:none}
+.spinner{width:36px;height:36px;border:3px solid var(--accent-light);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── LOGIN ── */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;display:none}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem;width:100%;max-width:380px;box-shadow:var(--shadow)}
+.login-card .brand{font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);font-size:1.3rem;margin-bottom:.3rem}
+.login-card h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;color:var(--muted);margin-bottom:1.5rem}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:.82rem;font-weight:600;margin-bottom:.4rem}
+.form-group input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:.9rem;font-family:'Inter',sans-serif;transition:border-color .15s}
+.form-group input:focus{outline:none;border-color:var(--accent)}
+.err-msg{background:var(--red-light);color:var(--red);border-radius:8px;padding:8px 12px;font-size:.82rem;margin-bottom:1rem;display:none}
+.err-msg.show{display:block}
+.btn-full{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:background .15s}
+.btn-full:hover:not(:disabled){background:#4535e0}
+.btn-full:disabled{background:var(--muted);cursor:not-allowed}
+.btn-google{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Inter',sans-serif;font-size:.88rem;display:flex;align-items:center;justify-content:center;gap:.6rem;transition:border-color .15s;margin-top:.8rem}
+.btn-google:hover{border-color:var(--accent)}
+.auth-divider{display:flex;align-items:center;gap:.8rem;margin:1rem 0;color:var(--muted);font-size:.78rem}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.google-icon{width:18px;height:18px}
+
+/* ── APP SHELL ── */
+#app-shell{display:none}
+
+/* ── SIDEBAR ── */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--ink);padding:1.5rem 1rem;display:flex;flex-direction:column;gap:.3rem;z-index:50}
+.sidebar-brand{font-family:'Syne',sans-serif;font-weight:800;color:#fff;font-size:1.1rem;padding:.5rem .8rem 1.2rem;letter-spacing:-.3px}
+.sidebar-brand span{color:#a89fff}
+.nav-item{display:flex;align-items:center;gap:.7rem;padding:.65rem .8rem;border-radius:10px;color:#a0a0b8;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .15s;border:none;background:none;width:100%;text-align:left;font-family:'Inter',sans-serif}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:var(--accent);color:#fff}
+.nav-item .icon{font-size:1rem;width:20px;text-align:center}
+.badge-pill{background:var(--red);color:#fff;border-radius:99px;font-size:.65rem;font-weight:700;padding:1px 7px;margin-left:auto}
+.sidebar-footer{margin-top:auto}
+.admin-info{background:rgba(255,255,255,.06);border-radius:10px;padding:.7rem .8rem;margin-bottom:.5rem}
+.admin-email{font-size:.72rem;color:#a0a0b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-role{font-size:.68rem;background:var(--accent-light);color:var(--accent);border-radius:99px;padding:1px 8px;font-weight:600;display:inline-block;margin-top:3px}
+.btn-logout{width:100%;padding:8px;background:rgba(255,255,255,.06);border:none;border-radius:8px;color:#a0a0b8;font-size:.82rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+.btn-logout:hover{background:var(--red-light);color:var(--red)}
+
+/* ── MAIN CONTENT ── */
+.main{margin-left:220px;min-height:100vh;padding:2rem}
+
+/* ── TOP BAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem}
+.topbar h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem}
+.topbar-actions{display:flex;gap:.6rem}
+.btn-sm{font-size:.8rem;padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;font-family:'Inter',sans-serif;color:var(--muted);transition:all .15s}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-sm-primary:hover{background:#4535e0;border-color:#4535e0;color:#fff}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.5rem}
+.stat-label{font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:.4rem}
+.stat-value{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800}
+.stat-value.pending{color:var(--yellow)}
+.stat-value.approved{color:var(--green)}
+.stat-value.rejected{color:var(--red)}
+.stat-value.total{color:var(--accent)}
+
+/* ── PANEL ── */
+.panel{display:none}.panel.active{display:block}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.filter-bar input{padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:.85rem;font-family:'Inter',sans-serif;width:220px;transition:border-color .15s}
+.filter-bar input:focus{outline:none;border-color:var(--accent)}
+.tabs{display:flex;gap:.4rem}
+.tab{font-size:.82rem;font-weight:600;padding:7px 16px;border:none;background:var(--bg);cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;border-radius:8px;transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead{background:#fafafa;border-bottom:1px solid var(--border)}
+th{padding:12px 14px;font-size:.75rem;font-weight:700;color:var(--muted);text-align:left;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
+td{padding:12px 14px;font-size:.84rem;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+.student-info{display:flex;align-items:center;gap:.7rem}
+.student-name{font-weight:600;font-size:.88rem}
+.student-email{font-size:.75rem;color:var(--muted)}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:.73rem;font-weight:700}
+.status-pending{background:var(--yellow-light);color:var(--yellow)}
+.status-approved{background:var(--green-light);color:var(--green)}
+.status-rejected{background:var(--red-light);color:var(--red)}
+.action-btns{display:flex;gap:.4rem}
+.btn-approve{background:var(--green-light);color:var(--green);border:none;padding:5px 12px;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap}
+.btn-approve:hover{background:var(--green);color:#fff}
+.btn-reject{background:var(--red-light);color:var(--red);border:none;padding:5px 12px;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap}
+.btn-reject:hover{background:var(--red);color:#fff}
+.btn-icon{background:#f3f4f6;color:var(--ink);border:none;padding:5px 10px;border-radius:7px;font-size:.8rem;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s}
+.btn-icon:hover{background:#e5e7eb}
+.empty-state{text-align:center;padding:3rem;color:var(--muted);font-size:.88rem}
+.empty-state .e-icon{font-size:2.5rem;margin-bottom:.7rem}
+
+/* ── STUDENTS PANEL ── */
+.student-row-detail{font-size:.78rem;color:var(--muted)}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:18px;padding:1.8rem;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem}
+.modal-header h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem}
+.modal-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);line-height:1}
+.modal-meta{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.2rem}
+.meta-row{display:flex;gap:.5rem;font-size:.83rem}
+.meta-key{color:var(--muted);min-width:100px;font-weight:500}
+.meta-val{font-weight:600;word-break:break-all}
+.modal-ss{width:100%;border-radius:10px;margin-bottom:1.2rem;cursor:pointer;transition:transform .2s}
+.modal-ss:hover{transform:scale(1.01)}
+.modal-actions{display:flex;gap:.7rem}
+.modal-actions button{flex:1;padding:10px;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;border:none;transition:all .15s}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:.85rem;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;max-width:280px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+
+/* ── ENROLLMENT CARDS (mobile-friendly) ── */
+.enroll-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem;margin-bottom:1rem}
+.enroll-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;gap:.5rem;flex-wrap:wrap}
+.enroll-card-meta{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.meta-chip2{background:#f3f4f6;border-radius:6px;padding:4px 10px;font-size:.78rem;color:var(--muted)}
+.enroll-card-actions{display:flex;flex-direction:column;gap:.5rem}
+.btn-approve-big{width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif}
+.btn-reject-big{width:100%;padding:12px;background:var(--red-light);color:var(--red);border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif}
+.btn-ss-big{width:100%;padding:10px;background:#f3f4f6;color:var(--ink);border:none;border-radius:10px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:1rem}
+  .main{margin-left:0}
+  .sidebar-footer{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="global-loader"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════
+     LOGIN SCREEN
+══════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="brand">IDEAKDC</div>
+    <h2>Admin Panel Login</h2>
+    <div class="err-msg" id="login-err"></div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="admin@ideakdc.com" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pwd" placeholder="आपका password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-full" id="login-btn" onclick="doLogin()">
+      <span id="login-label">Login करें</span>
+    </button>
+    <div class="auth-divider">या</div>
+    <button class="btn-google" onclick="doGoogleLogin()">
+      <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Google से Login करें
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     APP SHELL
+══════════════════════════ -->
+<div id="app-shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-brand">IDEA<span>KDC</span></div>
+    <button class="nav-item active" id="nav-enrollments" onclick="switchPanel('enrollments',this)">
+      <span class="icon">📋</span> Enrollments
+      <span class="badge-pill" id="pending-badge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" id="nav-students" onclick="switchPanel('students',this)">
+      <span class="icon">👥</span> Students
+    </button>
+    <button class="nav-item" id="nav-courses" onclick="switchPanel('courses',this)">
+      <span class="icon">📚</span> Courses
+    </button>
+
+    <div class="sidebar-footer">
+      <div class="admin-info">
+        <div class="admin-email" id="admin-email-display">—</div>
+        <div class="admin-role">Admin</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">🚪 Logout करें</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <h1 id="panel-title">Enrollments</h1>
+      <div class="topbar-actions">
+        <button class="btn-sm" onclick="refreshAll()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="stat-label">कुल Enrollments</div><div class="stat-value total" id="stat-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending" id="stat-pending">—</div></div>
+      <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value approved" id="stat-approved">—</div></div>
+      <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value rejected" id="stat-rejected">—</div></div>
+    </div>
+
+    <!-- ── ENROLLMENTS PANEL ── -->
+    <div class="panel active" id="panel-enrollments">
+      <div class="filter-bar">
+        <input type="text" id="search-enrollments" placeholder="🔍 नाम, email, course search करें..." oninput="filterEnrollments()">
+        <div class="tabs">
+          <button class="tab active" onclick="setEnrollTab('all',this)">सभी</button>
+          <button class="tab" onclick="setEnrollTab('pending',this)">Pending</button>
+          <button class="tab" onclick="setEnrollTab('approved',this)">Approved</button>
+          <button class="tab" onclick="setEnrollTab('rejected',this)">Rejected</button>
+        </div>
+      </div>
+      <div id="enrollments-container"></div>
+    </div>
+
+    <!-- ── STUDENTS PANEL ── -->
+    <div class="panel" id="panel-students">
+      <div class="filter-bar">
+        <input type="text" id="search-students" placeholder="🔍 नाम या email search करें..." oninput="filterStudents()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Phone</th>
+              <th>Enrolled Courses</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="students-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── COURSES PANEL ── -->
+    <div class="panel" id="panel-courses">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Total Enrollments</th>
+              <th>Approved</th>
+              <th>Pending</th>
+            </tr>
+          </thead>
+          <tbody id="courses-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app-shell -->
+
+<!-- ── SCREENSHOT MODAL ── -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Enrollment Details</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-meta" id="modal-meta"></div>
+    <img class="modal-ss" id="modal-ss" src="" alt="Payment Screenshot" onclick="window.open(this.src)">
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     FIREBASE
+══════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signInWithPopup,
+         GoogleAuthProvider, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc,
+         query, orderBy, where, serverTimestamp, onSnapshot }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ══════════════════════════════════════════════
+// 🔧 FIREBASE CONFIG — same as index.html
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyDDSiGJJdoySLmJLHJaQBdj213DxVKCwaQ",
+  authDomain:        "ideakdc-24b0b.firebaseapp.com",
+  projectId:         "ideakdc-24b0b",
+  storageBucket:     "ideakdc-24b0b.firebasestorage.app",
+  messagingSenderId: "577382246228",
+  appId:             "1:577382246228:web:e3ec8a45d65b2799268ac1"
+};
+// ══════════════════════════════════════════════
+
+const ADMIN_EMAILS = [
+  "99naveenrai@gmail.com",   // ← यहाँ अपने admin emails डालें
+  // "another@ideakdc.com"
+];
+
+const app      = initializeApp(firebaseConfig);
+const auth     = getAuth(app);
+const db       = getFirestore(app);
+const gProvider = new GoogleAuthProvider();
+
+const COURSES = [
+  { id:'c1', emoji:'🌊', name:'Fluid Dynamics', tag:'11th Physics', price:450 },
+];
+
+// ── STATE ──
+let allEnrollments = [];
+let allStudents    = [];
+let enrollTab      = 'all';
+let currentModalId = null;
+let unsubscribeSnapshot = null;
+
+// ══════════════════════════════════════════════
+// AUTH STATE
+// ══════════════════════════════════════════════
+onAuthStateChanged(auth, async (user) => {
+  hideLoader();
+  if (user && ADMIN_EMAILS.includes(user.email)) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'block';
+    document.getElementById('admin-email-display').textContent = user.email;
+    startRealtimeListener();
+    loadStudents();
+    renderCoursesTable();
+  } else {
+    if (user) {
+      // Logged in but not admin
+      await signOut(auth);
+      showErr(document.getElementById('login-err'), 'आपके पास admin access नहीं है।');
+    }
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-shell').style.display = 'none';
+  }
+});
+
+// ══════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════
+window.doLogin = async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const pwd   = document.getElementById('login-pwd').value;
+  const errEl = document.getElementById('login-err');
+  errEl.classList.remove('show');
+  if (!email || !pwd) return showErr(errEl, 'Email और password डालें।');
+  setBtnLoading('login-btn','login-label',true,'Login हो रहा है...');
+  try {
+    await signInWithEmailAndPassword(auth, email, pwd);
+  } catch(e) {
+    showErr(errEl, firebaseErrMsg(e.code));
+  }
+  setBtnLoading('login-btn','login-label',false,'Login करें');
+};
+
+window.doGoogleLogin = async () => {
+  try {
+    await signInWithPopup(auth, gProvider);
+  } catch(e) {
+    if (e.code !== 'auth/popup-closed-by-user')
+      showErr(document.getElementById('login-err'), firebaseErrMsg(e.code));
+  }
+};
+
+window.doLogout = async () => {
+  if (unsubscribeSnapshot) unsubscribeSnapshot();
+  await signOut(auth);
+};
+
+// ══════════════════════════════════════════════
+// REALTIME ENROLLMENTS LISTENER
+// ══════════════════════════════════════════════
+function startRealtimeListener() {
+  const q = query(collection(db,'enrollments'), orderBy('submittedAt','desc'));
+  unsubscribeSnapshot = onSnapshot(q, snap => {
+    allEnrollments = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+    updateStats();
+    renderEnrollments();
+  }, err => {
+    console.error('Snapshot error:', err);
+    showToast('Data load करने में error।', 'error');
+  });
+}
+
+// ── STATS ──
+function updateStats() {
+  const total    = allEnrollments.length;
+  const pending  = allEnrollments.filter(e=>e.status==='pending').length;
+  const approved = allEnrollments.filter(e=>e.status==='approved').length;
+  const rejected = allEnrollments.filter(e=>e.status==='rejected').length;
+  document.getElementById('stat-total').textContent    = total;
+  document.getElementById('stat-pending').textContent  = pending;
+  document.getElementById('stat-approved').textContent = approved;
+  document.getElementById('stat-rejected').textContent = rejected;
+  const badge = document.getElementById('pending-badge');
+  badge.textContent = pending;
+  badge.style.display = pending > 0 ? '' : 'none';
+}
+
+// ── RENDER ENROLLMENTS — MOBILE CARDS ──
+function renderEnrollments() {
+  const search = (document.getElementById('search-enrollments')?.value||'').toLowerCase();
+  let data = allEnrollments;
+
+  if (enrollTab !== 'all') data = data.filter(e => e.status === enrollTab);
+  if (search) data = data.filter(e =>
+    (e.userName||'').toLowerCase().includes(search) ||
+    (e.userEmail||'').toLowerCase().includes(search) ||
+    (e.courseName||'').toLowerCase().includes(search) ||
+    (e.txnId||'').toLowerCase().includes(search)
+  );
+
+  const container = document.getElementById('enrollments-container');
+  if (!data.length) {
+    container.innerHTML = `<div class="empty-state"><div class="e-icon">📭</div>कोई enrollment नहीं मिली।</div>`;
+    return;
+  }
+
+  container.innerHTML = data.map(e => {
+    const initials = (e.userName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const date = e.submittedAt?.toDate ? e.submittedAt.toDate().toLocaleDateString('en-IN') : '—';
+    const statusHtml = `<span class="status-badge status-${e.status}">${
+      e.status==='pending' ? '⏳ Pending' :
+      e.status==='approved'? '✅ Approved' : '❌ Rejected'
+    }</span>`;
+
+    const actionHtml = e.status === 'pending'
+      ? `<button class="btn-approve-big" onclick="updateStatus('${e._id}','approved')">✅ Approve करें</button>
+         <button class="btn-reject-big"  onclick="updateStatus('${e._id}','rejected')">❌ Reject करें</button>
+         <button class="btn-ss-big"      onclick="openModal('${e._id}')">📸 Screenshot</button>`
+      : e.status === 'rejected'
+        ? `<button class="btn-approve-big" onclick="updateStatus('${e._id}','approved')">✅ Approve करें</button>
+           <button class="btn-ss-big"      onclick="openModal('${e._id}')">📸 Screenshot</button>`
+        : `<button class="btn-reject-big"  onclick="updateStatus('${e._id}','rejected')">🔴 Revoke</button>
+           <button class="btn-ss-big"      onclick="openModal('${e._id}')">📸 Screenshot</button>`;
+
+    return `
+    <div class="enroll-card">
+      <div class="enroll-card-top">
+        <div class="student-info">
+          <div class="avatar">${initials}</div>
+          <div>
+            <div class="student-name">${e.userName||'—'}</div>
+            <div class="student-email">${e.userEmail||'—'}</div>
+          </div>
+        </div>
+        ${statusHtml}
+      </div>
+      <div class="enroll-card-meta">
+        <div class="meta-chip2">📚 ${e.courseEmoji||''} ${e.courseName||'—'}</div>
+        <div class="meta-chip2">💰 ₹${(e.coursePrice||0).toLocaleString('en-IN')}</div>
+        <div class="meta-chip2">🔢 ${e.txnId||'—'}</div>
+        <div class="meta-chip2">📅 ${date}</div>
+      </div>
+      <div class="enroll-card-actions">${actionHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── UPDATE STATUS ──
+window.updateStatus = async (enrollId, newStatus) => {
+  try {
+    await updateDoc(doc(db,'enrollments',enrollId), {
+      status: newStatus,
+      reviewedAt: serverTimestamp()
+    });
+    // Also update student's access record
+    const enrollment = allEnrollments.find(e=>e._id===enrollId);
+    if (enrollment && newStatus === 'approved') {
+      await updateDoc(doc(db,'enrollments',enrollId), {
+        accessGrantedAt: serverTimestamp()
+      });
+    }
+    showToast(
+      newStatus==='approved' ? '✅ Enrollment approve हो गया!' : '❌ Enrollment reject किया गया।',
+      newStatus==='approved' ? 'success' : 'error'
+    );
+    closeModal();
+  } catch(e) {
+    console.error(e);
+    showToast('Update करने में error। फिर try करें।','error');
+  }
+};
+
+// ══════════════════════════════════════════════
+// STUDENTS
+// ══════════════════════════════════════════════
+async function loadStudents() {
+  try {
+    const snap = await getDocs(collection(db,'users'));
+    allStudents = snap.docs.map(d => ({ _id:d.id, ...d.data() }));
+    renderStudentsTable();
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function renderStudentsTable() {
+  const search = (document.getElementById('search-students')?.value||'').toLowerCase();
+  let data = allStudents;
+  if (search) data = data.filter(s =>
+    (s.name||'').toLowerCase().includes(search) ||
+    (s.email||'').toLowerCase().includes(search)
+  );
+
+  const tbody = document.getElementById('students-tbody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="e-icon">👥</div>कोई student नहीं मिला।</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(s => {
+    const initials = (s.name||s.email||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const enrolled = allEnrollments.filter(e=>e.userId===s._id);
+    const approved = enrolled.filter(e=>e.status==='approved').length;
+    const date = s.createdAt?.toDate ? s.createdAt.toDate().toLocaleDateString('en-IN') : '—';
+    return `
+    <tr>
+      <td>
+        <div class="student-info">
+          <div class="avatar">${initials}</div>
+          <div><div class="student-name">${s.name||'—'}</div>
+          <div class="student-email">${s.email||'—'}</div></div>
+        </div>
+      </td>
+      <td>${s.phone||'—'}</td>
+      <td>
+        <span style="font-weight:600">${enrolled.length}</span> enrolled,
+        <span style="color:var(--green);font-weight:600">${approved}</span> approved
+      </td>
+      <td>${date}</td>
+      <td>
+        <button class="btn-icon" onclick="viewStudentEnrollments('${s._id}')">📋 Enrollments</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+window.viewStudentEnrollments = (uid) => {
+  const student = allStudents.find(s=>s._id===uid);
+  const enrollments = allEnrollments.filter(e=>e.userId===uid);
+  if (!student) return;
+
+  document.getElementById('modal-title').textContent = student.name + ' के Enrollments';
+  document.getElementById('modal-ss').style.display = 'none';
+  document.getElementById('modal-actions').innerHTML = '';
+  document.getElementById('modal-meta').innerHTML = enrollments.length
+    ? enrollments.map(e=>`
+        <div class="meta-row">
+          <span class="meta-key">${e.courseEmoji} ${e.courseName}</span>
+          <span class="meta-val">
+            <span class="status-badge status-${e.status}">${e.status}</span>
+          </span>
+        </div>`).join('')
+    : '<div style="color:var(--muted);font-size:.85rem">कोई enrollment नहीं।</div>';
+  document.getElementById('modal').classList.add('open');
+};
+
+// ══════════════════════════════════════════════
+// COURSES SUMMARY TABLE
+// ══════════════════════════════════════════════
+function renderCoursesTable() {
+  const tbody = document.getElementById('courses-tbody');
+  tbody.innerHTML = COURSES.map(c => {
+    const total    = allEnrollments.filter(e=>e.courseId===c.id).length;
+    const approved = allEnrollments.filter(e=>e.courseId===c.id && e.status==='approved').length;
+    const pending  = allEnrollments.filter(e=>e.courseId===c.id && e.status==='pending').length;
+    return `
+    <tr>
+      <td><b>${c.emoji} ${c.name}</b></td>
+      <td>${c.tag}</td>
+      <td>₹${c.price.toLocaleString('en-IN')}</td>
+      <td style="font-weight:700;color:var(--accent)">${total}</td>
+      <td style="font-weight:700;color:var(--green)">${approved}</td>
+      <td style="font-weight:700;color:var(--yellow)">${pending}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════
+window.openModal = (enrollId) => {
+  const e = allEnrollments.find(en=>en._id===enrollId);
+  if (!e) return;
+  currentModalId = enrollId;
+  const date = e.submittedAt?.toDate ? e.submittedAt.toDate().toLocaleString('en-IN') : '—';
+
+  document.getElementById('modal-title').textContent = e.userName + ' — ' + e.courseName;
+  document.getElementById('modal-ss').style.display = 'block';
+  document.getElementById('modal-ss').src = e.screenshotBase64 || e.screenshotURL || '';
+  document.getElementById('modal-meta').innerHTML = `
+    <div class="meta-row"><span class="meta-key">Email</span><span class="meta-val">${e.userEmail}</span></div>
+    <div class="meta-row"><span class="meta-key">Phone</span><span class="meta-val">${e.userPhone||'—'}</span></div>
+    <div class="meta-row"><span class="meta-key">Course</span><span class="meta-val">${e.courseEmoji} ${e.courseName}</span></div>
+    <div class="meta-row"><span class="meta-key">Amount</span><span class="meta-val">₹${(e.coursePrice||0).toLocaleString('en-IN')}</span></div>
+    <div class="meta-row"><span class="meta-key">Txn ID</span><span class="meta-val" style="font-family:monospace">${e.txnId}</span></div>
+    <div class="meta-row"><span class="meta-key">Submitted</span><span class="meta-val">${date}</span></div>
+    <div class="meta-row"><span class="meta-key">Status</span><span class="meta-val"><span class="status-badge status-${e.status}">${e.status}</span></span></div>`;
+
+  document.getElementById('modal-actions').innerHTML = e.status === 'pending'
+    ? `<button style="background:var(--green);color:#fff" class="btn-full" onclick="updateStatus('${enrollId}','approved')">✅ Approve करें</button>
+       <button style="background:var(--red);color:#fff" class="btn-full" onclick="updateStatus('${enrollId}','rejected')">❌ Reject करें</button>`
+    : e.status === 'rejected'
+      ? `<button style="background:var(--green);color:#fff" class="btn-full" onclick="updateStatus('${enrollId}','approved')">✅ Approve करें</button>`
+      : `<button style="background:var(--red);color:#fff;opacity:.8" class="btn-full" onclick="updateStatus('${enrollId}','rejected')">Revoke Access</button>`;
+
+  document.getElementById('modal').classList.add('open');
+};
+
+window.closeModal = () => {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('modal-ss').style.display = 'none';
+  currentModalId = null;
+};
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+// ══════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════
+window.switchPanel = (name, el) => {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  el.classList.add('active');
+  const titles = { enrollments:'Enrollments', students:'Students', courses:'Courses' };
+  document.getElementById('panel-title').textContent = titles[name]||name;
+  if (name==='courses') renderCoursesTable();
+};
+
+window.setEnrollTab = (tab, el) => {
+  enrollTab = tab;
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderEnrollments();
+};
+
+window.filterEnrollments = () => renderEnrollments();
+window.filterStudents    = () => renderStudentsTable();
+window.refreshAll        = () => { loadStudents(); showToast('Refresh हो गया!', 'success'); };
+
+function hideLoader() {
+  const l = document.getElementById('global-loader');
+  l.classList.add('hide');
+  setTimeout(()=>l.style.display='none', 400);
+}
+
+function showErr(el, msg) { el.textContent = msg; el.classList.add('show'); }
+
+function setBtnLoading(btnId, labelId, loading, label) {
+  const btn = document.getElementById(btnId);
+  const lbl = document.getElementById(labelId);
+  if (!btn) return;
+  btn.disabled = loading;
+  if (lbl) lbl.textContent = label;
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type?' '+type:'');
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+function firebaseErrMsg(code) {
+  const m = {
+    'auth/user-not-found':     'यह email registered नहीं है।',
+    'auth/wrong-password':     'गलत password है।',
+    'auth/invalid-credential': 'Email या password गलत है।',
+    'auth/too-many-requests':  'बहुत ज़्यादा attempts। बाद में try करें।',
+  };
+  return m[code] || 'Error: ' + code;
+}
+</script>
+</body>
+</html>
