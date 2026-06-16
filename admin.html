@@ -2,20 +2,20 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>IDEAKDC – Admin Panel</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
-:root {
-  --ink:#0f0f0f; --bg:#f4f4f2; --surface:#fff;
-  --accent:#5b4bff; --accent-light:#ede9ff;
-  --green:#1db97a; --green-light:#e3f9f0;
-  --red:#e03e3e; --red-light:#fdeaea;
-  --yellow:#f59e0b; --yellow-light:#fef9ee;
-  --muted:#6b7280; --border:#e5e5e3;
+@import url('https://fonts.googleapis.com/css2?family=Berkshire+Swash&family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
+:root{
+  --ink:#0f0f0f;--bg:#f4f4f2;--surface:#fff;
+  --accent:#5b4bff;--accent-light:#ede9ff;
+  --green:#1db97a;--green-light:#e3f9f0;
+  --red:#e03e3e;--red-light:#fdeaea;
+  --yellow:#ffd700;--yellow-light:#fffde7;
+  --muted:#6b7280;--border:#e5e5e3;
   --shadow:0 2px 16px rgba(0,0,0,.07);
 }
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
 
 /* ── LOADER ── */
@@ -24,158 +24,167 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .spinner{width:36px;height:36px;border:3px solid var(--accent-light);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── LOGIN ── */
-#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;display:none}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem;width:100%;max-width:380px;box-shadow:var(--shadow)}
-.login-card .brand{font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);font-size:1.3rem;margin-bottom:.3rem}
-.login-card h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;color:var(--muted);margin-bottom:1.5rem}
-.form-group{margin-bottom:1rem}
-.form-group label{display:block;font-size:.82rem;font-weight:600;margin-bottom:.4rem}
-.form-group input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:.9rem;font-family:'Inter',sans-serif;transition:border-color .15s}
-.form-group input:focus{outline:none;border-color:var(--accent)}
-.err-msg{background:var(--red-light);color:var(--red);border-radius:8px;padding:8px 12px;font-size:.82rem;margin-bottom:1rem;display:none}
-.err-msg.show{display:block}
-.btn-full{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:background .15s}
-.btn-full:hover:not(:disabled){background:#4535e0}
-.btn-full:disabled{background:var(--muted);cursor:not-allowed}
-.btn-google{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Inter',sans-serif;font-size:.88rem;display:flex;align-items:center;justify-content:center;gap:.6rem;transition:border-color .15s;margin-top:.8rem}
-.btn-google:hover{border-color:var(--accent)}
-.auth-divider{display:flex;align-items:center;gap:.8rem;margin:1rem 0;color:var(--muted);font-size:.78rem}
-.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
-.google-icon{width:18px;height:18px}
-
-/* ── APP SHELL ── */
-#app-shell{display:none}
-
-/* ── SIDEBAR ── */
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--ink);padding:1.5rem 1rem;display:flex;flex-direction:column;gap:.3rem;z-index:50}
-.sidebar-brand{font-family:'Syne',sans-serif;font-weight:800;color:#fff;font-size:1.1rem;padding:.5rem .8rem 1.2rem;letter-spacing:-.3px}
-.sidebar-brand span{color:#a89fff}
-.nav-item{display:flex;align-items:center;gap:.7rem;padding:.65rem .8rem;border-radius:10px;color:#a0a0b8;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .15s;border:none;background:none;width:100%;text-align:left;font-family:'Inter',sans-serif}
-.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
-.nav-item.active{background:var(--accent);color:#fff}
-.nav-item .icon{font-size:1rem;width:20px;text-align:center}
-.badge-pill{background:var(--red);color:#fff;border-radius:99px;font-size:.65rem;font-weight:700;padding:1px 7px;margin-left:auto}
-.sidebar-footer{margin-top:auto}
-.admin-info{background:rgba(255,255,255,.06);border-radius:10px;padding:.7rem .8rem;margin-bottom:.5rem}
-.admin-email{font-size:.72rem;color:#a0a0b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.admin-role{font-size:.68rem;background:var(--accent-light);color:var(--accent);border-radius:99px;padding:1px 8px;font-weight:600;display:inline-block;margin-top:3px}
-.btn-logout{width:100%;padding:8px;background:rgba(255,255,255,.06);border:none;border-radius:8px;color:#a0a0b8;font-size:.82rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
-.btn-logout:hover{background:var(--red-light);color:var(--red)}
-
-/* ── MAIN CONTENT ── */
-.main{margin-left:220px;min-height:100vh;padding:2rem}
-
-/* ── TOP BAR ── */
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem}
-.topbar h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem}
-.topbar-actions{display:flex;gap:.6rem}
-.btn-sm{font-size:.8rem;padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;font-family:'Inter',sans-serif;color:var(--muted);transition:all .15s}
-.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
-.btn-sm-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn-sm-primary:hover{background:#4535e0;border-color:#4535e0;color:#fff}
-
-/* ── STAT CARDS ── */
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.5rem}
-.stat-label{font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:.4rem}
-.stat-value{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800}
-.stat-value.pending{color:var(--yellow)}
-.stat-value.approved{color:var(--green)}
-.stat-value.rejected{color:var(--red)}
-.stat-value.total{color:var(--accent)}
-
-/* ── PANEL ── */
-.panel{display:none}.panel.active{display:block}
-
-/* ── FILTER BAR ── */
-.filter-bar{display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem;flex-wrap:wrap}
-.filter-bar input{padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:.85rem;font-family:'Inter',sans-serif;width:220px;transition:border-color .15s}
-.filter-bar input:focus{outline:none;border-color:var(--accent)}
-.tabs{display:flex;gap:.4rem}
-.tab{font-size:.82rem;font-weight:600;padding:7px 16px;border:none;background:var(--bg);cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;border-radius:8px;transition:all .15s}
-.tab.active{background:var(--accent);color:#fff}
-
-/* ── TABLE ── */
-.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
-table{width:100%;border-collapse:collapse}
-thead{background:#fafafa;border-bottom:1px solid var(--border)}
-th{padding:12px 14px;font-size:.75rem;font-weight:700;color:var(--muted);text-align:left;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
-td{padding:12px 14px;font-size:.84rem;border-bottom:1px solid var(--border);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:#fafaf8}
-.avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
-.student-info{display:flex;align-items:center;gap:.7rem}
-.student-name{font-weight:600;font-size:.88rem}
-.student-email{font-size:.75rem;color:var(--muted)}
-.status-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:.73rem;font-weight:700}
-.status-pending{background:var(--yellow-light);color:var(--yellow)}
-.status-approved{background:var(--green-light);color:var(--green)}
-.status-rejected{background:var(--red-light);color:var(--red)}
-.action-btns{display:flex;gap:.4rem}
-.btn-approve{background:var(--green-light);color:var(--green);border:none;padding:5px 12px;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap}
-.btn-approve:hover{background:var(--green);color:#fff}
-.btn-reject{background:var(--red-light);color:var(--red);border:none;padding:5px 12px;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap}
-.btn-reject:hover{background:var(--red);color:#fff}
-.btn-icon{background:#f3f4f6;color:var(--ink);border:none;padding:5px 10px;border-radius:7px;font-size:.8rem;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s}
-.btn-icon:hover{background:#e5e7eb}
-.empty-state{text-align:center;padding:3rem;color:var(--muted);font-size:.88rem}
-.empty-state .e-icon{font-size:2.5rem;margin-bottom:.7rem}
-
-/* ── STUDENTS PANEL ── */
-.student-row-detail{font-size:.78rem;color:var(--muted)}
-
-/* ── MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem}
-.modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:18px;padding:1.8rem;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem}
-.modal-header h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem}
-.modal-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);line-height:1}
-.modal-meta{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.2rem}
-.meta-row{display:flex;gap:.5rem;font-size:.83rem}
-.meta-key{color:var(--muted);min-width:100px;font-weight:500}
-.meta-val{font-weight:600;word-break:break-all}
-.modal-ss{width:100%;border-radius:10px;margin-bottom:1.2rem;cursor:pointer;transition:transform .2s}
-.modal-ss:hover{transform:scale(1.01)}
-.modal-actions{display:flex;gap:.7rem}
-.modal-actions button{flex:1;padding:10px;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;border:none;transition:all .15s}
-
 /* ── TOAST ── */
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:.85rem;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;max-width:280px}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:var(--green)}
 .toast.error{background:var(--red)}
 
-/* ── ENROLLMENT CARDS (mobile-friendly) ── */
-.enroll-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem;margin-bottom:1rem}
-.enroll-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;gap:.5rem;flex-wrap:wrap}
-.enroll-card-meta{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
-.meta-chip2{background:#f3f4f6;border-radius:6px;padding:4px 10px;font-size:.78rem;color:var(--muted)}
-.enroll-card-actions{display:flex;flex-direction:column;gap:.5rem}
-.btn-approve-big{width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif}
-.btn-reject-big{width:100%;padding:12px;background:var(--red-light);color:var(--red);border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif}
-.btn-ss-big{width:100%;padding:10px;background:#f3f4f6;color:var(--ink);border:none;border-radius:10px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+/* ── LOGIN ── */
+#login-screen{min-height:100vh;display:none;align-items:center;justify-content:center;padding:1.5rem}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem;width:100%;max-width:380px;box-shadow:var(--shadow)}
+.login-brand{font-family:'Berkshire Swash',cursive;font-size:1.4rem;color:var(--accent);margin-bottom:.2rem}
+.login-card h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--muted);margin-bottom:1.5rem}
+.btn-google{width:100%;padding:11px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Inter',sans-serif;font-size:.88rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:.6rem;transition:all .15s;margin-top:.8rem}
+.btn-google:hover{border-color:var(--accent)}
+.err-msg{background:var(--red-light);color:var(--red);border-radius:8px;padding:8px 12px;font-size:.82rem;margin-bottom:.8rem;display:none}
+.err-msg.show{display:block}
 
-/* ── RESPONSIVE ── */
-@media(max-width:768px){
-  .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:1rem}
-  .main{margin-left:0}
-  .sidebar-footer{display:none}
-}
+/* ── APP SHELL ── */
+#app-shell{display:none}
+
+/* ── TOP NAV ── */
+.top-nav{background:linear-gradient(135deg,#fffde7,#fff9c4);border-bottom:2px solid #f9d800;padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(249,216,0,.3)}
+.top-nav-brand{font-family:'Berkshire Swash',cursive;font-size:1.1rem;color:#0a2a5e}
+.top-nav-right{display:flex;align-items:center;gap:.5rem}
+.admin-badge{font-size:.7rem;background:var(--accent-light);color:var(--accent);border-radius:99px;padding:3px 10px;font-weight:700}
+.btn-logout{font-size:.78rem;padding:6px 12px;border:1.5px solid var(--border);border-radius:8px;background:none;cursor:pointer;font-family:'Inter',sans-serif;color:var(--muted)}
+
+/* ── BOTTOM TAB NAV ── */
+.bottom-tabs{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+.btab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:.5rem .3rem;cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif;color:var(--muted);font-size:.62rem;font-weight:600;transition:color .15s}
+.btab.active{color:var(--accent)}
+.btab-icon{font-size:1.2rem;line-height:1}
+body{padding-bottom:65px}
+
+/* ── PANELS ── */
+.panel{display:none;max-width:700px;margin:0 auto;padding:1rem 1rem 2rem}
+.panel.active{display:block}
+.panel-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;margin-bottom:1rem;color:var(--ink)}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1.2rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem}
+.stat-label{font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.3rem}
+.stat-value{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800}
+.stat-value.pending{color:#f59e0b}
+.stat-value.approved{color:var(--green)}
+.stat-value.total{color:var(--accent)}
+.stat-value.courses{color:#0a2a5e}
+
+/* ── FORM STYLES ── */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.2rem;margin-bottom:1rem}
+.form-card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;margin-bottom:1rem;color:#0a2a5e;display:flex;align-items:center;gap:.4rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.form-group{margin-bottom:.8rem}
+.form-group label{display:block;font-size:.75rem;font-weight:700;margin-bottom:.3rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:.88rem;font-family:'Inter',sans-serif;background:#fff;color:var(--ink);transition:border-color .15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--accent)}
+.form-group textarea{resize:vertical;min-height:70px}
+
+/* Type toggle */
+.type-toggle{display:flex;gap:.5rem;margin-bottom:.8rem}
+.type-btn{flex:1;padding:10px;border:2px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;color:var(--muted);transition:all .15s;text-align:center}
+.type-btn.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+
+/* Free/Paid toggle */
+.free-paid-toggle{display:flex;gap:.5rem}
+.fp-btn{flex:1;padding:9px;border:2px solid var(--border);border-radius:9px;background:#fff;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;color:var(--muted);transition:all .15s}
+.fp-btn.active-free{border-color:var(--green);background:var(--green-light);color:var(--green)}
+.fp-btn.active-paid{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+
+/* Submit button */
+.btn-submit{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.3rem}
+.btn-submit:disabled{background:var(--muted);cursor:not-allowed}
+.btn-submit:active{transform:scale(.98)}
+
+/* Stream selector pills */
+.stream-pills{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem}
+.stream-pill{padding:6px 14px;border:1.5px solid var(--border);border-radius:99px;background:#fff;cursor:pointer;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--muted);transition:all .15s}
+.stream-pill.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+
+/* ── CONTENT LIST ── */
+.content-filters{display:flex;gap:.4rem;margin-bottom:.8rem;overflow-x:auto;scrollbar-width:none;padding-bottom:.3rem}
+.content-filters::-webkit-scrollbar{display:none}
+.filter-chip{flex-shrink:0;padding:6px 14px;border:1.5px solid var(--border);border-radius:99px;background:#fff;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--muted);white-space:nowrap;transition:all .15s}
+.filter-chip.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+
+.content-search{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:.88rem;font-family:'Inter',sans-serif;margin-bottom:.8rem;transition:border-color .15s}
+.content-search:focus{outline:none;border-color:var(--accent)}
+
+.content-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.7rem}
+.content-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;margin-bottom:.5rem}
+.content-item-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem}
+.content-item-type{font-size:.68rem;padding:3px 9px;border-radius:99px;font-weight:700;flex-shrink:0}
+.type-video{background:#fff3e0;color:#e65100}
+.type-playlist{background:var(--accent-light);color:var(--accent)}
+.content-chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem}
+.meta-chip{background:#f3f4f6;border-radius:6px;padding:2px 9px;font-size:.7rem;color:var(--muted);font-weight:500}
+.meta-chip.free{background:var(--green-light);color:var(--green);font-weight:700}
+.meta-chip.paid{background:var(--accent-light);color:var(--accent);font-weight:700}
+.content-item-actions{display:flex;gap:.4rem}
+.btn-edit{background:#f3f4f6;color:var(--ink);border:none;padding:6px 12px;border-radius:8px;font-size:.78rem;cursor:pointer;font-family:'Inter',sans-serif}
+.btn-delete{background:var(--red-light);color:var(--red);border:none;padding:6px 12px;border-radius:8px;font-size:.78rem;cursor:pointer;font-family:'Inter',sans-serif}
+.empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:.88rem}
+.empty-icon{font-size:2.5rem;margin-bottom:.6rem}
+
+/* ── ENROLLMENTS ── */
+.enroll-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.7rem}
+.enroll-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.5rem}
+.enroll-name{font-weight:700;font-size:.9rem}
+.enroll-email{font-size:.75rem;color:var(--muted)}
+.status-badge{padding:4px 10px;border-radius:99px;font-size:.72rem;font-weight:700}
+.status-pending{background:#fff8e1;color:#b8860b}
+.status-approved{background:var(--green-light);color:var(--green)}
+.status-rejected{background:var(--red-light);color:var(--red)}
+.enroll-meta{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem}
+.enroll-actions{display:flex;gap:.4rem}
+.btn-approve{background:var(--green);color:#fff;border:none;padding:8px 14px;border-radius:9px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;flex:1}
+.btn-reject{background:var(--red-light);color:var(--red);border:none;padding:8px 14px;border-radius:9px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;flex:1}
+.btn-view-ss{background:#f3f4f6;color:var(--ink);border:none;padding:8px 12px;border-radius:9px;font-size:.8rem;cursor:pointer;font-family:'Inter',sans-serif}
+
+/* Filter tabs */
+.filter-tabs{display:flex;gap:.4rem;margin-bottom:.8rem}
+.ftab{flex:1;padding:8px;border:1.5px solid var(--border);border-radius:9px;background:#fff;cursor:pointer;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--muted);text-align:center;transition:all .15s}
+.ftab.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+
+/* ── SCREENSHOT MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:18px;padding:1.5rem;max-width:440px;width:100%;max-height:88vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.modal-header h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted)}
+.modal img{width:100%;border-radius:10px;margin-bottom:1rem}
+.modal-meta{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem;font-size:.83rem}
+.modal-meta-row{display:flex;gap:.5rem}
+.modal-meta-key{color:var(--muted);min-width:80px;font-weight:500}
+.modal-meta-val{font-weight:600;word-break:break-all}
+.modal-actions{display:flex;gap:.5rem}
+.modal-actions button{flex:1;padding:11px;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;border:none}
 </style>
 </head>
 <body>
-
 <div id="global-loader"><div class="spinner"></div></div>
 <div class="toast" id="toast"></div>
 
-<!-- ══════════════════════════
-     LOGIN SCREEN
-══════════════════════════ -->
+<!-- ══ SCREENSHOT MODAL ══ -->
+<div class="modal-overlay" id="ss-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Enrollment Details</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <img id="modal-img" src="" alt="Payment Screenshot">
+    <div class="modal-meta" id="modal-meta"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- ══ LOGIN ══ -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="brand">IDEAKDC</div>
+    <div class="login-brand">⭐ IDEAKDC ⭐</div>
     <h2>Admin Panel Login</h2>
     <div class="err-msg" id="login-err"></div>
     <div class="form-group">
@@ -184,542 +193,596 @@ tr:hover td{background:#fafaf8}
     </div>
     <div class="form-group">
       <label>Password</label>
-      <input type="password" id="login-pwd" placeholder="आपका password" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="password" id="login-pwd" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <button class="btn-full" id="login-btn" onclick="doLogin()">
-      <span id="login-label">Login करें</span>
-    </button>
-    <div class="auth-divider">या</div>
+    <button class="btn-submit" id="login-btn" onclick="doLogin()"><span id="login-label">Login करें</span></button>
+    <div class="auth-divider" style="display:flex;align-items:center;gap:.8rem;margin:1rem 0;color:var(--muted);font-size:.78rem">
+      <div style="flex:1;height:1px;background:var(--border)"></div>या<div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
     <button class="btn-google" onclick="doGoogleLogin()">
-      <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Google से Login करें
     </button>
   </div>
 </div>
 
-<!-- ══════════════════════════
-     APP SHELL
-══════════════════════════ -->
+<!-- ══ APP SHELL ══ -->
 <div id="app-shell">
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="sidebar-brand">IDEA<span>KDC</span></div>
-    <button class="nav-item active" id="nav-enrollments" onclick="switchPanel('enrollments',this)">
-      <span class="icon">📋</span> Enrollments
-      <span class="badge-pill" id="pending-badge" style="display:none">0</span>
-    </button>
-    <button class="nav-item" id="nav-students" onclick="switchPanel('students',this)">
-      <span class="icon">👥</span> Students
-    </button>
-    <button class="nav-item" id="nav-courses" onclick="switchPanel('courses',this)">
-      <span class="icon">📚</span> Courses
-    </button>
-
-    <div class="sidebar-footer">
-      <div class="admin-info">
-        <div class="admin-email" id="admin-email-display">—</div>
-        <div class="admin-role">Admin</div>
-      </div>
-      <button class="btn-logout" onclick="doLogout()">🚪 Logout करें</button>
+  <!-- Top Nav -->
+  <div class="top-nav">
+    <div class="top-nav-brand">⭐ IDEAKDC Admin</div>
+    <div class="top-nav-right">
+      <span class="admin-badge" id="admin-email-badge">Admin</span>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
     </div>
   </div>
 
-  <!-- MAIN -->
-  <div class="main">
-    <div class="topbar">
-      <h1 id="panel-title">Enrollments</h1>
-      <div class="topbar-actions">
-        <button class="btn-sm" onclick="refreshAll()">🔄 Refresh</button>
-      </div>
-    </div>
-
-    <!-- STATS -->
-    <div class="stats-row" id="stats-row">
-      <div class="stat-card"><div class="stat-label">कुल Enrollments</div><div class="stat-value total" id="stat-total">—</div></div>
+  <!-- ══ PANEL: DASHBOARD ══ -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="panel-title">📊 Dashboard</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Enrollments</div><div class="stat-value total" id="stat-total">—</div></div>
       <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending" id="stat-pending">—</div></div>
       <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value approved" id="stat-approved">—</div></div>
-      <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value rejected" id="stat-rejected">—</div></div>
+      <div class="stat-card"><div class="stat-label">Total Content</div><div class="stat-value courses" id="stat-content">—</div></div>
+    </div>
+    <!-- Recent enrollments preview -->
+    <div class="form-card">
+      <div class="form-card-title">⏳ Recent Pending</div>
+      <div id="recent-pending"></div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: UPLOAD ══ -->
+  <div class="panel" id="panel-upload">
+    <div class="panel-title">➕ Content Upload</div>
+
+    <div class="form-card">
+      <div class="form-card-title">📹 Upload Type</div>
+      <div class="type-toggle">
+        <button class="type-btn active" id="type-video" onclick="setType('video')">🎬 Single Video</button>
+        <button class="type-btn" id="type-playlist" onclick="setType('playlist')">📋 Playlist</button>
+      </div>
     </div>
 
-    <!-- ── ENROLLMENTS PANEL ── -->
-    <div class="panel active" id="panel-enrollments">
-      <div class="filter-bar">
-        <input type="text" id="search-enrollments" placeholder="🔍 नाम, email, course search करें..." oninput="filterEnrollments()">
-        <div class="tabs">
-          <button class="tab active" onclick="setEnrollTab('all',this)">सभी</button>
-          <button class="tab" onclick="setEnrollTab('pending',this)">Pending</button>
-          <button class="tab" onclick="setEnrollTab('approved',this)">Approved</button>
-          <button class="tab" onclick="setEnrollTab('rejected',this)">Rejected</button>
+    <div class="form-card">
+      <div class="form-card-title">🏫 Class & Subject</div>
+
+      <!-- Class selector -->
+      <div class="form-group">
+        <label>Class</label>
+        <select id="up-class" onchange="onClassChange()">
+          <option value="">-- Class Select करें --</option>
+          <option>5</option><option>6</option><option>7</option>
+          <option>8</option><option>9</option><option>10</option>
+          <option>11</option><option>12</option>
+        </select>
+      </div>
+
+      <!-- Stream (only for 11/12) -->
+      <div class="form-group" id="stream-group" style="display:none">
+        <label>Stream</label>
+        <div class="stream-pills">
+          <button class="stream-pill" onclick="selectStream('science')" id="sp-science">🔬 Science</button>
+          <button class="stream-pill" onclick="selectStream('commerce')" id="sp-commerce">📈 Commerce</button>
+          <button class="stream-pill" onclick="selectStream('humanities')" id="sp-humanities">📖 Humanities</button>
         </div>
       </div>
-      <div id="enrollments-container"></div>
-    </div>
 
-    <!-- ── STUDENTS PANEL ── -->
-    <div class="panel" id="panel-students">
-      <div class="filter-bar">
-        <input type="text" id="search-students" placeholder="🔍 नाम या email search करें..." oninput="filterStudents()">
+      <!-- Subject -->
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="up-subject">
+          <option value="">-- पहले Class Select करें --</option>
+        </select>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Phone</th>
-              <th>Enrolled Courses</th>
-              <th>Joined</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="students-tbody"></tbody>
-        </table>
+
+      <!-- Chapter & Topic -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Chapter</label>
+          <input type="text" id="up-chapter" placeholder="जैसे Chapter 1">
+        </div>
+        <div class="form-group">
+          <label>Topic</label>
+          <input type="text" id="up-topic" placeholder="जैसे Introduction">
+        </div>
       </div>
     </div>
 
-    <!-- ── COURSES PANEL ── -->
-    <div class="panel" id="panel-courses">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Course</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Total Enrollments</th>
-              <th>Approved</th>
-              <th>Pending</th>
-            </tr>
-          </thead>
-          <tbody id="courses-tbody"></tbody>
-        </table>
+    <div class="form-card">
+      <div class="form-card-title">📝 Content Details</div>
+
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="up-title" placeholder="Video या Playlist का title">
       </div>
+
+      <div class="form-group" id="vid-link-group">
+        <label>YouTube Video Link</label>
+        <input type="text" id="up-video-link" placeholder="https://youtu.be/xxxxx या Video ID">
+      </div>
+
+      <div class="form-group" id="pl-link-group" style="display:none">
+        <label>YouTube Playlist Link</label>
+        <input type="text" id="up-playlist-link" placeholder="https://youtube.com/playlist?list=xxxxx">
+      </div>
+
+      <div class="form-group">
+        <label>Description (Optional)</label>
+        <textarea id="up-desc" placeholder="इस video/playlist के बारे में बताएं..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Free या Paid?</label>
+        <div class="free-paid-toggle">
+          <button class="fp-btn active-free" id="fp-free" onclick="setFP('free')">🆓 Free</button>
+          <button class="fp-btn" id="fp-paid" onclick="setFP('paid')">💎 Paid</button>
+        </div>
+      </div>
+
+      <button class="btn-submit" id="upload-btn" onclick="uploadContent()">
+        <span id="upload-label">✅ Content Upload करें</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: CONTENT ══ -->
+  <div class="panel" id="panel-content">
+    <div class="panel-title">📚 Uploaded Content</div>
+
+    <!-- Filters -->
+    <input class="content-search" type="text" placeholder="🔍 Title, subject, chapter search करें..." oninput="filterContent()">
+
+    <div class="content-filters" id="class-filter-chips">
+      <div class="filter-chip active" onclick="setClassFilter('all',this)">All</div>
+      <div class="filter-chip" onclick="setClassFilter('5',this)">Class 5</div>
+      <div class="filter-chip" onclick="setClassFilter('6',this)">Class 6</div>
+      <div class="filter-chip" onclick="setClassFilter('7',this)">Class 7</div>
+      <div class="filter-chip" onclick="setClassFilter('8',this)">Class 8</div>
+      <div class="filter-chip" onclick="setClassFilter('9',this)">Class 9</div>
+      <div class="filter-chip" onclick="setClassFilter('10',this)">Class 10</div>
+      <div class="filter-chip" onclick="setClassFilter('11',this)">Class 11</div>
+      <div class="filter-chip" onclick="setClassFilter('12',this)">Class 12</div>
     </div>
 
-  </div><!-- /main -->
+    <div id="content-list"></div>
+  </div>
+
+  <!-- ══ PANEL: ENROLLMENTS ══ -->
+  <div class="panel" id="panel-enrollments">
+    <div class="panel-title">📋 Enrollments</div>
+    <div class="filter-tabs">
+      <button class="ftab active" onclick="setEnrollTab('pending',this)">⏳ Pending</button>
+      <button class="ftab" onclick="setEnrollTab('approved',this)">✅ Approved</button>
+      <button class="ftab" onclick="setEnrollTab('rejected',this)">❌ Rejected</button>
+    </div>
+    <div id="enrollment-list"></div>
+  </div>
+
+  <!-- Bottom Tab Nav -->
+  <div class="bottom-tabs">
+    <button class="btab active" id="btab-dashboard" onclick="switchPanel('dashboard',this)">
+      <span class="btab-icon">📊</span>Dashboard
+    </button>
+    <button class="btab" id="btab-upload" onclick="switchPanel('upload',this)">
+      <span class="btab-icon">➕</span>Upload
+    </button>
+    <button class="btab" id="btab-content" onclick="switchPanel('content',this)">
+      <span class="btab-icon">📚</span>Content
+    </button>
+    <button class="btab" id="btab-enrollments" onclick="switchPanel('enrollments',this)">
+      <span class="btab-icon">📋</span>Enrollments
+      <span id="pending-dot" style="display:none;width:7px;height:7px;background:var(--red);border-radius:50%;margin-top:1px"></span>
+    </button>
+  </div>
+
 </div><!-- /app-shell -->
 
-<!-- ── SCREENSHOT MODAL ── -->
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="modal-title">Enrollment Details</h3>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-meta" id="modal-meta"></div>
-    <img class="modal-ss" id="modal-ss" src="" alt="Payment Screenshot" onclick="window.open(this.src)">
-    <div class="modal-actions" id="modal-actions"></div>
-  </div>
-</div>
-
-<!-- ══════════════════════════
-     FIREBASE
-══════════════════════════ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup,
          GoogleAuthProvider, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc,
-         query, orderBy, where, serverTimestamp, onSnapshot }
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc,
+         updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ══════════════════════════════════════════════
-// 🔧 FIREBASE CONFIG — same as index.html
-// ══════════════════════════════════════════════
+// ── CONFIG ──
 const firebaseConfig = {
-  apiKey:            "AIzaSyDDSiGJJdoySLmJLHJaQBdj213DxVKCwaQ",
-  authDomain:        "ideakdc-24b0b.firebaseapp.com",
-  projectId:         "ideakdc-24b0b",
-  storageBucket:     "ideakdc-24b0b.firebasestorage.app",
-  messagingSenderId: "577382246228",
-  appId:             "1:577382246228:web:e3ec8a45d65b2799268ac1"
+  apiKey:"AIzaSyDDSiGJJdoySLmJLHJaQBdj213DxVKCwaQ",
+  authDomain:"ideakdc-24b0b.firebaseapp.com",
+  projectId:"ideakdc-24b0b",
+  storageBucket:"ideakdc-24b0b.firebasestorage.app",
+  messagingSenderId:"577382246228",
+  appId:"1:577382246228:web:e3ec8a45d65b2799268ac1"
 };
-// ══════════════════════════════════════════════
+const ADMIN_EMAILS = ["99naveenrai@gmail.com"];
+const SUBJECTS = {
+  '5-10': ['Maths','Science','English','SST','Hindi'],
+  science: ['Physics','Chemistry','Maths'],
+  commerce: ['Accounts','Business Studies','Economics'],
+  humanities: ['Political Science','History','English','Geography'],
+};
 
-const ADMIN_EMAILS = [
-  "99naveenrai@gmail.com",   // ← यहाँ अपने admin emails डालें
-  // "another@ideakdc.com"
-];
-
-const app      = initializeApp(firebaseConfig);
-const auth     = getAuth(app);
-const db       = getFirestore(app);
+const app       = initializeApp(firebaseConfig);
+const auth      = getAuth(app);
+const db        = getFirestore(app);
 const gProvider = new GoogleAuthProvider();
 
-const COURSES = [
-  { id:'c1', emoji:'🌊', name:'Fluid Dynamics', tag:'11th Physics', price:450 },
-];
-
 // ── STATE ──
+let uploadType  = 'video';
+let uploadFP    = 'free';
+let uploadStream = '';
+let allContent  = [];
 let allEnrollments = [];
-let allStudents    = [];
-let enrollTab      = 'all';
-let currentModalId = null;
-let unsubscribeSnapshot = null;
+let enrollTab   = 'pending';
+let classFilter = 'all';
 
-// ══════════════════════════════════════════════
-// AUTH STATE
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════
 onAuthStateChanged(auth, async (user) => {
   hideLoader();
   if (user && ADMIN_EMAILS.includes(user.email)) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-shell').style.display = 'block';
-    document.getElementById('admin-email-display').textContent = user.email;
-    startRealtimeListener();
-    loadStudents();
-    renderCoursesTable();
+    document.getElementById('admin-email-badge').textContent = user.email.split('@')[0];
+    startListeners();
   } else {
-    if (user) {
-      // Logged in but not admin
-      await signOut(auth);
-      showErr(document.getElementById('login-err'), 'आपके पास admin access नहीं है।');
-    }
+    if (user) { await signOut(auth); showErr(document.getElementById('login-err'), 'Admin access नहीं है।'); }
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app-shell').style.display = 'none';
   }
 });
 
-// ══════════════════════════════════════════════
-// LOGIN
-// ══════════════════════════════════════════════
 window.doLogin = async () => {
   const email = document.getElementById('login-email').value.trim();
   const pwd   = document.getElementById('login-pwd').value;
-  const errEl = document.getElementById('login-err');
-  errEl.classList.remove('show');
-  if (!email || !pwd) return showErr(errEl, 'Email और password डालें।');
-  setBtnLoading('login-btn','login-label',true,'Login हो रहा है...');
-  try {
-    await signInWithEmailAndPassword(auth, email, pwd);
-  } catch(e) {
-    showErr(errEl, firebaseErrMsg(e.code));
-  }
-  setBtnLoading('login-btn','login-label',false,'Login करें');
+  const err   = document.getElementById('login-err');
+  err.classList.remove('show');
+  if (!email || !pwd) return showErr(err, 'Email और password डालें।');
+  setBtn('login-btn','login-label',true,'Login हो रहा है...');
+  try { await signInWithEmailAndPassword(auth, email, pwd); }
+  catch(e) { showErr(err, fireErr(e.code)); }
+  setBtn('login-btn','login-label',false,'Login करें');
 };
 
 window.doGoogleLogin = async () => {
-  try {
-    await signInWithPopup(auth, gProvider);
-  } catch(e) {
-    if (e.code !== 'auth/popup-closed-by-user')
-      showErr(document.getElementById('login-err'), firebaseErrMsg(e.code));
-  }
+  try { await signInWithPopup(auth, gProvider); }
+  catch(e) { if(e.code!=='auth/popup-closed-by-user') showErr(document.getElementById('login-err'), fireErr(e.code)); }
 };
 
-window.doLogout = async () => {
-  if (unsubscribeSnapshot) unsubscribeSnapshot();
-  await signOut(auth);
-};
+window.doLogout = async () => { await signOut(auth); };
 
-// ══════════════════════════════════════════════
-// REALTIME ENROLLMENTS LISTENER
-// ══════════════════════════════════════════════
-function startRealtimeListener() {
-  const q = query(collection(db,'enrollments'), orderBy('submittedAt','desc'));
-  unsubscribeSnapshot = onSnapshot(q, snap => {
-    allEnrollments = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+// ════════════════════════════════════════
+// REAL-TIME LISTENERS
+// ════════════════════════════════════════
+function startListeners() {
+  // Enrollments real-time
+  onSnapshot(query(collection(db,'enrollments'), orderBy('submittedAt','desc')), snap => {
+    allEnrollments = snap.docs.map(d => ({ _id:d.id, ...d.data() }));
     updateStats();
     renderEnrollments();
-  }, err => {
-    console.error('Snapshot error:', err);
-    showToast('Data load करने में error।', 'error');
+    renderRecentPending();
+    const pending = allEnrollments.filter(e=>e.status==='pending').length;
+    document.getElementById('pending-dot').style.display = pending ? 'block' : 'none';
+  });
+
+  // Content real-time
+  onSnapshot(query(collection(db,'content'), orderBy('createdAt','desc')), snap => {
+    allContent = snap.docs.map(d => ({ _id:d.id, ...d.data() }));
+    renderContent();
+    document.getElementById('stat-content').textContent = allContent.length;
   });
 }
 
-// ── STATS ──
+// ════════════════════════════════════════
+// STATS
+// ════════════════════════════════════════
 function updateStats() {
   const total    = allEnrollments.length;
   const pending  = allEnrollments.filter(e=>e.status==='pending').length;
   const approved = allEnrollments.filter(e=>e.status==='approved').length;
-  const rejected = allEnrollments.filter(e=>e.status==='rejected').length;
   document.getElementById('stat-total').textContent    = total;
   document.getElementById('stat-pending').textContent  = pending;
   document.getElementById('stat-approved').textContent = approved;
-  document.getElementById('stat-rejected').textContent = rejected;
-  const badge = document.getElementById('pending-badge');
-  badge.textContent = pending;
-  badge.style.display = pending > 0 ? '' : 'none';
 }
 
-// ── RENDER ENROLLMENTS — MOBILE CARDS ──
-function renderEnrollments() {
-  const search = (document.getElementById('search-enrollments')?.value||'').toLowerCase();
-  let data = allEnrollments;
+function renderRecentPending() {
+  const pending = allEnrollments.filter(e=>e.status==='pending').slice(0,3);
+  const el = document.getElementById('recent-pending');
+  if (!pending.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.83rem;padding:.5rem 0">कोई pending enrollment नहीं।</div>'; return; }
+  el.innerHTML = pending.map(e => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-weight:600;font-size:.85rem">${e.userName||'—'}</div>
+        <div style="font-size:.72rem;color:var(--muted)">${e.courseName||e.userEmail||''}</div>
+      </div>
+      <div style="display:flex;gap:.3rem">
+        <button class="btn-approve" style="padding:5px 10px;font-size:.75rem" onclick="updateStatus('${e._id}','approved')">✅</button>
+        <button class="btn-reject" style="padding:5px 10px;font-size:.75rem" onclick="updateStatus('${e._id}','rejected')">❌</button>
+      </div>
+    </div>`).join('');
+}
 
-  if (enrollTab !== 'all') data = data.filter(e => e.status === enrollTab);
-  if (search) data = data.filter(e =>
-    (e.userName||'').toLowerCase().includes(search) ||
-    (e.userEmail||'').toLowerCase().includes(search) ||
-    (e.courseName||'').toLowerCase().includes(search) ||
-    (e.txnId||'').toLowerCase().includes(search)
-  );
+// ════════════════════════════════════════
+// UPLOAD FORM
+// ════════════════════════════════════════
+window.setType = (type) => {
+  uploadType = type;
+  document.getElementById('type-video').classList.toggle('active', type==='video');
+  document.getElementById('type-playlist').classList.toggle('active', type==='playlist');
+  document.getElementById('vid-link-group').style.display = type==='video' ? 'block' : 'none';
+  document.getElementById('pl-link-group').style.display  = type==='playlist' ? 'block' : 'none';
+};
 
-  const container = document.getElementById('enrollments-container');
-  if (!data.length) {
-    container.innerHTML = `<div class="empty-state"><div class="e-icon">📭</div>कोई enrollment नहीं मिली।</div>`;
-    return;
+window.setFP = (fp) => {
+  uploadFP = fp;
+  document.getElementById('fp-free').className = 'fp-btn' + (fp==='free' ? ' active-free' : '');
+  document.getElementById('fp-paid').className = 'fp-btn' + (fp==='paid' ? ' active-paid' : '');
+};
+
+window.onClassChange = () => {
+  const cls = document.getElementById('up-class').value;
+  const isHigher = cls === '11' || cls === '12';
+  document.getElementById('stream-group').style.display = isHigher ? 'block' : 'none';
+  uploadStream = '';
+  document.querySelectorAll('.stream-pill').forEach(p => p.classList.remove('active'));
+  populateSubjects(cls, '');
+};
+
+window.selectStream = (stream) => {
+  uploadStream = stream;
+  document.querySelectorAll('.stream-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById('sp-' + stream).classList.add('active');
+  const cls = document.getElementById('up-class').value;
+  populateSubjects(cls, stream);
+};
+
+function populateSubjects(cls, stream) {
+  const sel = document.getElementById('up-subject');
+  let subjects = [];
+  if (!cls) { sel.innerHTML = '<option value="">-- पहले Class Select करें --</option>'; return; }
+  const n = parseInt(cls);
+  if (n >= 5 && n <= 10) subjects = SUBJECTS['5-10'];
+  else if (n === 11 || n === 12) subjects = stream ? SUBJECTS[stream] : [];
+  sel.innerHTML = '<option value="">-- Subject Select करें --</option>' +
+    subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+window.uploadContent = async () => {
+  const cls     = document.getElementById('up-class').value;
+  const subject = document.getElementById('up-subject').value;
+  const chapter = document.getElementById('up-chapter').value.trim();
+  const topic   = document.getElementById('up-topic').value.trim();
+  const title   = document.getElementById('up-title').value.trim();
+  const desc    = document.getElementById('up-desc').value.trim();
+  const vidLink = document.getElementById('up-video-link').value.trim();
+  const plLink  = document.getElementById('up-playlist-link').value.trim();
+
+  if (!cls)     return showToast('Class select करें।','error');
+  if (!subject) return showToast('Subject select करें।','error');
+  if (!chapter) return showToast('Chapter लिखें।','error');
+  if (!topic)   return showToast('Topic लिखें।','error');
+  if (!title)   return showToast('Title लिखें।','error');
+
+  const link = uploadType === 'video' ? vidLink : plLink;
+  if (!link)    return showToast('YouTube link डालें।','error');
+
+  // Extract ID
+  let videoId = '', playlistId = '';
+  if (uploadType === 'video') {
+    if (link.includes('youtu.be/')) videoId = link.split('youtu.be/')[1].split('?')[0];
+    else if (link.includes('v='))   videoId = link.split('v=')[1].split('&')[0];
+    else videoId = link.trim();
+  } else {
+    if (link.includes('list=')) playlistId = link.split('list=')[1].split('&')[0];
+    else playlistId = link.trim();
   }
 
-  container.innerHTML = data.map(e => {
-    const initials = (e.userName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    const date = e.submittedAt?.toDate ? e.submittedAt.toDate().toLocaleDateString('en-IN') : '—';
-    const statusHtml = `<span class="status-badge status-${e.status}">${
-      e.status==='pending' ? '⏳ Pending' :
-      e.status==='approved'? '✅ Approved' : '❌ Rejected'
-    }</span>`;
-
-    const actionHtml = e.status === 'pending'
-      ? `<button class="btn-approve-big" onclick="updateStatus('${e._id}','approved')">✅ Approve करें</button>
-         <button class="btn-reject-big"  onclick="updateStatus('${e._id}','rejected')">❌ Reject करें</button>
-         <button class="btn-ss-big"      onclick="openModal('${e._id}')">📸 Screenshot</button>`
-      : e.status === 'rejected'
-        ? `<button class="btn-approve-big" onclick="updateStatus('${e._id}','approved')">✅ Approve करें</button>
-           <button class="btn-ss-big"      onclick="openModal('${e._id}')">📸 Screenshot</button>`
-        : `<button class="btn-reject-big"  onclick="updateStatus('${e._id}','rejected')">🔴 Revoke</button>
-           <button class="btn-ss-big"      onclick="openModal('${e._id}')">📸 Screenshot</button>`;
-
-    return `
-    <div class="enroll-card">
-      <div class="enroll-card-top">
-        <div class="student-info">
-          <div class="avatar">${initials}</div>
-          <div>
-            <div class="student-name">${e.userName||'—'}</div>
-            <div class="student-email">${e.userEmail||'—'}</div>
-          </div>
-        </div>
-        ${statusHtml}
-      </div>
-      <div class="enroll-card-meta">
-        <div class="meta-chip2">📚 ${e.courseEmoji||''} ${e.courseName||'—'}</div>
-        <div class="meta-chip2">💰 ₹${(e.coursePrice||0).toLocaleString('en-IN')}</div>
-        <div class="meta-chip2">🔢 ${e.txnId||'—'}</div>
-        <div class="meta-chip2">📅 ${date}</div>
-      </div>
-      <div class="enroll-card-actions">${actionHtml}</div>
-    </div>`;
-  }).join('');
-}
-
-// ── UPDATE STATUS ──
-window.updateStatus = async (enrollId, newStatus) => {
+  setBtn('upload-btn','upload-label',true,'Upload हो रहा है...');
   try {
-    await updateDoc(doc(db,'enrollments',enrollId), {
-      status: newStatus,
-      reviewedAt: serverTimestamp()
+    await addDoc(collection(db,'content'), {
+      type:       uploadType,
+      title,
+      classNum:   cls,
+      stream:     uploadStream || '',
+      subject,
+      chapter,
+      topic,
+      videoId:    videoId || '',
+      playlistId: playlistId || '',
+      desc,
+      isFree:     uploadFP === 'free',
+      createdAt:  serverTimestamp()
     });
-    // Also update student's access record
-    const enrollment = allEnrollments.find(e=>e._id===enrollId);
-    if (enrollment && newStatus === 'approved') {
-      await updateDoc(doc(db,'enrollments',enrollId), {
-        accessGrantedAt: serverTimestamp()
-      });
-    }
-    showToast(
-      newStatus==='approved' ? '✅ Enrollment approve हो गया!' : '❌ Enrollment reject किया गया।',
-      newStatus==='approved' ? 'success' : 'error'
-    );
-    closeModal();
+    showToast('✅ Content upload हो गया!','success');
+    // Reset form
+    ['up-class','up-subject','up-chapter','up-topic','up-title','up-desc','up-video-link','up-playlist-link']
+      .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    uploadStream = '';
+    document.querySelectorAll('.stream-pill').forEach(p=>p.classList.remove('active'));
+    document.getElementById('stream-group').style.display='none';
+    setType('video'); setFP('free');
   } catch(e) {
     console.error(e);
-    showToast('Update करने में error। फिर try करें।','error');
+    showToast('Upload नहीं हो सका। फिर try करें।','error');
   }
+  setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
 };
 
-// ══════════════════════════════════════════════
-// STUDENTS
-// ══════════════════════════════════════════════
-async function loadStudents() {
-  try {
-    const snap = await getDocs(collection(db,'users'));
-    allStudents = snap.docs.map(d => ({ _id:d.id, ...d.data() }));
-    renderStudentsTable();
-  } catch(e) {
-    console.error(e);
-  }
-}
+// ════════════════════════════════════════
+// CONTENT LIST
+// ════════════════════════════════════════
+window.setClassFilter = (cls, el) => {
+  classFilter = cls;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderContent();
+};
 
-function renderStudentsTable() {
-  const search = (document.getElementById('search-students')?.value||'').toLowerCase();
-  let data = allStudents;
-  if (search) data = data.filter(s =>
-    (s.name||'').toLowerCase().includes(search) ||
-    (s.email||'').toLowerCase().includes(search)
+window.filterContent = () => renderContent();
+
+function renderContent() {
+  const search = (document.querySelector('.content-search')?.value||'').toLowerCase();
+  let data = allContent;
+  if (classFilter !== 'all') data = data.filter(c => c.classNum === classFilter);
+  if (search) data = data.filter(c =>
+    (c.title||'').toLowerCase().includes(search) ||
+    (c.subject||'').toLowerCase().includes(search) ||
+    (c.chapter||'').toLowerCase().includes(search) ||
+    (c.topic||'').toLowerCase().includes(search)
   );
 
-  const tbody = document.getElementById('students-tbody');
+  const el = document.getElementById('content-list');
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="e-icon">👥</div>कोई student नहीं मिला।</div></td></tr>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>कोई content नहीं मिला।</div>`;
     return;
   }
-
-  tbody.innerHTML = data.map(s => {
-    const initials = (s.name||s.email||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    const enrolled = allEnrollments.filter(e=>e.userId===s._id);
-    const approved = enrolled.filter(e=>e.status==='approved').length;
-    const date = s.createdAt?.toDate ? s.createdAt.toDate().toLocaleDateString('en-IN') : '—';
-    return `
-    <tr>
-      <td>
-        <div class="student-info">
-          <div class="avatar">${initials}</div>
-          <div><div class="student-name">${s.name||'—'}</div>
-          <div class="student-email">${s.email||'—'}</div></div>
-        </div>
-      </td>
-      <td>${s.phone||'—'}</td>
-      <td>
-        <span style="font-weight:600">${enrolled.length}</span> enrolled,
-        <span style="color:var(--green);font-weight:600">${approved}</span> approved
-      </td>
-      <td>${date}</td>
-      <td>
-        <button class="btn-icon" onclick="viewStudentEnrollments('${s._id}')">📋 Enrollments</button>
-      </td>
-    </tr>`;
-  }).join('');
+  el.innerHTML = data.map(c => `
+    <div class="content-item">
+      <div class="content-item-top">
+        <div class="content-item-title">${c.title||'—'}</div>
+        <span class="content-item-type ${c.type==='playlist'?'type-playlist':'type-video'}">${c.type==='playlist'?'📋 Playlist':'🎬 Video'}</span>
+      </div>
+      <div class="content-chips">
+        <span class="meta-chip">Class ${c.classNum||'—'}</span>
+        ${c.stream ? `<span class="meta-chip">${streamLabel(c.stream)}</span>` : ''}
+        <span class="meta-chip">${c.subject||'—'}</span>
+        <span class="meta-chip">${c.chapter||'—'}</span>
+        <span class="meta-chip">${c.topic||'—'}</span>
+        <span class="meta-chip ${c.isFree?'free':'paid'}">${c.isFree?'🆓 Free':'💎 Paid'}</span>
+      </div>
+      ${c.desc ? `<div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">${c.desc}</div>` : ''}
+      <div class="content-item-actions">
+        <button class="btn-delete" onclick="deleteContent('${c._id}','${(c.title||'').replace(/'/g,'')}')">🗑️ Delete</button>
+      </div>
+    </div>`).join('');
 }
 
-window.viewStudentEnrollments = (uid) => {
-  const student = allStudents.find(s=>s._id===uid);
-  const enrollments = allEnrollments.filter(e=>e.userId===uid);
-  if (!student) return;
-
-  document.getElementById('modal-title').textContent = student.name + ' के Enrollments';
-  document.getElementById('modal-ss').style.display = 'none';
-  document.getElementById('modal-actions').innerHTML = '';
-  document.getElementById('modal-meta').innerHTML = enrollments.length
-    ? enrollments.map(e=>`
-        <div class="meta-row">
-          <span class="meta-key">${e.courseEmoji} ${e.courseName}</span>
-          <span class="meta-val">
-            <span class="status-badge status-${e.status}">${e.status}</span>
-          </span>
-        </div>`).join('')
-    : '<div style="color:var(--muted);font-size:.85rem">कोई enrollment नहीं।</div>';
-  document.getElementById('modal').classList.add('open');
-};
-
-// ══════════════════════════════════════════════
-// COURSES SUMMARY TABLE
-// ══════════════════════════════════════════════
-function renderCoursesTable() {
-  const tbody = document.getElementById('courses-tbody');
-  tbody.innerHTML = COURSES.map(c => {
-    const total    = allEnrollments.filter(e=>e.courseId===c.id).length;
-    const approved = allEnrollments.filter(e=>e.courseId===c.id && e.status==='approved').length;
-    const pending  = allEnrollments.filter(e=>e.courseId===c.id && e.status==='pending').length;
-    return `
-    <tr>
-      <td><b>${c.emoji} ${c.name}</b></td>
-      <td>${c.tag}</td>
-      <td>₹${c.price.toLocaleString('en-IN')}</td>
-      <td style="font-weight:700;color:var(--accent)">${total}</td>
-      <td style="font-weight:700;color:var(--green)">${approved}</td>
-      <td style="font-weight:700;color:var(--yellow)">${pending}</td>
-    </tr>`;
-  }).join('');
+function streamLabel(s) {
+  return {science:'🔬 Science',commerce:'📈 Commerce',humanities:'📖 Humanities'}[s] || s;
 }
 
-// ══════════════════════════════════════════════
-// MODAL
-// ══════════════════════════════════════════════
-window.openModal = (enrollId) => {
-  const e = allEnrollments.find(en=>en._id===enrollId);
-  if (!e) return;
-  currentModalId = enrollId;
-  const date = e.submittedAt?.toDate ? e.submittedAt.toDate().toLocaleString('en-IN') : '—';
-
-  document.getElementById('modal-title').textContent = e.userName + ' — ' + e.courseName;
-  document.getElementById('modal-ss').style.display = 'block';
-  document.getElementById('modal-ss').src = e.screenshotBase64 || e.screenshotURL || '';
-  document.getElementById('modal-meta').innerHTML = `
-    <div class="meta-row"><span class="meta-key">Email</span><span class="meta-val">${e.userEmail}</span></div>
-    <div class="meta-row"><span class="meta-key">Phone</span><span class="meta-val">${e.userPhone||'—'}</span></div>
-    <div class="meta-row"><span class="meta-key">Course</span><span class="meta-val">${e.courseEmoji} ${e.courseName}</span></div>
-    <div class="meta-row"><span class="meta-key">Amount</span><span class="meta-val">₹${(e.coursePrice||0).toLocaleString('en-IN')}</span></div>
-    <div class="meta-row"><span class="meta-key">Txn ID</span><span class="meta-val" style="font-family:monospace">${e.txnId}</span></div>
-    <div class="meta-row"><span class="meta-key">Submitted</span><span class="meta-val">${date}</span></div>
-    <div class="meta-row"><span class="meta-key">Status</span><span class="meta-val"><span class="status-badge status-${e.status}">${e.status}</span></span></div>`;
-
-  document.getElementById('modal-actions').innerHTML = e.status === 'pending'
-    ? `<button style="background:var(--green);color:#fff" class="btn-full" onclick="updateStatus('${enrollId}','approved')">✅ Approve करें</button>
-       <button style="background:var(--red);color:#fff" class="btn-full" onclick="updateStatus('${enrollId}','rejected')">❌ Reject करें</button>`
-    : e.status === 'rejected'
-      ? `<button style="background:var(--green);color:#fff" class="btn-full" onclick="updateStatus('${enrollId}','approved')">✅ Approve करें</button>`
-      : `<button style="background:var(--red);color:#fff;opacity:.8" class="btn-full" onclick="updateStatus('${enrollId}','rejected')">Revoke Access</button>`;
-
-  document.getElementById('modal').classList.add('open');
+window.deleteContent = async (id, title) => {
+  if (!confirm(`"${title}" delete करें?`)) return;
+  try {
+    await deleteDoc(doc(db,'content',id));
+    showToast('Content delete हो गया।');
+  } catch(e) { showToast('Delete नहीं हो सका।','error'); }
 };
 
-window.closeModal = () => {
-  document.getElementById('modal').classList.remove('open');
-  document.getElementById('modal-ss').style.display = 'none';
-  currentModalId = null;
-};
-
-document.getElementById('modal').addEventListener('click', e => {
-  if (e.target.id === 'modal') closeModal();
-});
-
-// ══════════════════════════════════════════════
-// UI HELPERS
-// ══════════════════════════════════════════════
-window.switchPanel = (name, el) => {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('panel-'+name).classList.add('active');
-  el.classList.add('active');
-  const titles = { enrollments:'Enrollments', students:'Students', courses:'Courses' };
-  document.getElementById('panel-title').textContent = titles[name]||name;
-  if (name==='courses') renderCoursesTable();
-};
-
+// ════════════════════════════════════════
+// ENROLLMENTS
+// ════════════════════════════════════════
 window.setEnrollTab = (tab, el) => {
   enrollTab = tab;
-  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   renderEnrollments();
 };
 
-window.filterEnrollments = () => renderEnrollments();
-window.filterStudents    = () => renderStudentsTable();
-window.refreshAll        = () => { loadStudents(); showToast('Refresh हो गया!', 'success'); };
+function renderEnrollments() {
+  const data = allEnrollments.filter(e=>e.status===enrollTab);
+  const el   = document.getElementById('enrollment-list');
+  if (!data.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>कोई ${enrollTab} enrollment नहीं।</div>`;
+    return;
+  }
+  el.innerHTML = data.map(e => {
+    const date = e.submittedAt?.toDate ? e.submittedAt.toDate().toLocaleDateString('en-IN') : '—';
+    return `
+    <div class="enroll-card">
+      <div class="enroll-top">
+        <div>
+          <div class="enroll-name">${e.userName||'—'}</div>
+          <div class="enroll-email">${e.userEmail||'—'}</div>
+        </div>
+        <span class="status-badge status-${e.status}">${
+          e.status==='pending'?'⏳ Pending':e.status==='approved'?'✅ Approved':'❌ Rejected'
+        }</span>
+      </div>
+      <div class="enroll-meta">
+        <span class="meta-chip">${e.courseEmoji||'📚'} ${e.courseName||'—'}</span>
+        <span class="meta-chip">₹${e.coursePrice||0}</span>
+        <span class="meta-chip">📅 ${date}</span>
+      </div>
+      <div class="enroll-actions">
+        ${e.screenshotBase64 ? `<button class="btn-view-ss" onclick="viewSS('${e._id}')">📸 Screenshot</button>` : ''}
+        ${e.status==='pending' ? `
+          <button class="btn-approve" onclick="updateStatus('${e._id}','approved')">✅ Approve</button>
+          <button class="btn-reject" onclick="updateStatus('${e._id}','rejected')">❌ Reject</button>` :
+          e.status==='rejected' ?
+          `<button class="btn-approve" onclick="updateStatus('${e._id}','approved')">✅ Approve</button>` :
+          `<button class="btn-reject" onclick="updateStatus('${e._id}','rejected')">🔴 Revoke</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
 
+window.updateStatus = async (id, status) => {
+  try {
+    await updateDoc(doc(db,'enrollments',id), { status, reviewedAt: serverTimestamp() });
+    showToast(status==='approved' ? '✅ Approved!' : '❌ Rejected!', status==='approved'?'success':'error');
+    closeModal();
+  } catch(e) { showToast('Update नहीं हो सका।','error'); }
+};
+
+window.viewSS = (id) => {
+  const e = allEnrollments.find(x=>x._id===id);
+  if (!e) return;
+  document.getElementById('modal-title').textContent = e.userName || 'Enrollment';
+  document.getElementById('modal-img').src = e.screenshotBase64 || '';
+  document.getElementById('modal-meta').innerHTML = `
+    <div class="modal-meta-row"><span class="modal-meta-key">Email</span><span class="modal-meta-val">${e.userEmail||'—'}</span></div>
+    <div class="modal-meta-row"><span class="modal-meta-key">Course</span><span class="modal-meta-val">${e.courseName||'—'}</span></div>
+    <div class="modal-meta-row"><span class="modal-meta-key">Amount</span><span class="modal-meta-val">₹${e.coursePrice||0}</span></div>`;
+  document.getElementById('modal-actions').innerHTML = e.status==='pending' ? `
+    <button style="background:var(--green);color:#fff" onclick="updateStatus('${e._id}','approved')">✅ Approve</button>
+    <button style="background:var(--red);color:#fff" onclick="updateStatus('${e._id}','rejected')">❌ Reject</button>` : '';
+  document.getElementById('ss-modal').classList.add('open');
+};
+
+window.closeModal = () => document.getElementById('ss-modal').classList.remove('open');
+document.getElementById('ss-modal').addEventListener('click', e => { if(e.target.id==='ss-modal') closeModal(); });
+
+// ════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════
+window.switchPanel = (name, el) => {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.btab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  el.classList.add('active');
+};
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
 function hideLoader() {
   const l = document.getElementById('global-loader');
   l.classList.add('hide');
-  setTimeout(()=>l.style.display='none', 400);
+  setTimeout(()=>l.style.display='none',400);
 }
-
-function showErr(el, msg) { el.textContent = msg; el.classList.add('show'); }
-
-function setBtnLoading(btnId, labelId, loading, label) {
-  const btn = document.getElementById(btnId);
-  const lbl = document.getElementById(labelId);
-  if (!btn) return;
-  btn.disabled = loading;
-  if (lbl) lbl.textContent = label;
-}
-
-function showToast(msg, type='') {
+function showToast(msg,type='') {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show' + (type?' '+type:'');
-  clearTimeout(t._t);
-  t._t = setTimeout(()=>t.classList.remove('show'), 3000);
+  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3000);
 }
-
-function firebaseErrMsg(code) {
-  const m = {
-    'auth/user-not-found':     'यह email registered नहीं है।',
-    'auth/wrong-password':     'गलत password है।',
-    'auth/invalid-credential': 'Email या password गलत है।',
-    'auth/too-many-requests':  'बहुत ज़्यादा attempts। बाद में try करें।',
-  };
-  return m[code] || 'Error: ' + code;
+function showErr(el,msg){el.textContent=msg;el.classList.add('show');}
+function setBtn(btnId,labelId,loading,label){
+  const btn=document.getElementById(btnId);if(!btn)return;
+  btn.disabled=loading;
+  if(labelId){const l=document.getElementById(labelId);if(l)l.textContent=label;}
+  else btn.textContent=label;
+}
+function fireErr(code){
+  const m={'auth/user-not-found':'Email registered नहीं है।','auth/wrong-password':'गलत password।',
+  'auth/invalid-credential':'Email या password गलत है।','auth/too-many-requests':'बहुत attempts। बाद में try करें।'};
+  return m[code]||'Error: '+code;
 }
 </script>
 </body>
