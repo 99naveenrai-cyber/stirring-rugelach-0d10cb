@@ -238,6 +238,16 @@ body{padding-bottom:65px}
   <div class="panel" id="panel-upload">
     <div class="panel-title">➕ Content Upload</div>
 
+    <div class="form-card" id="migrate-card" style="display:none;border:2px dashed var(--accent)">
+      <div class="form-card-title">🔄 पुराना Data Migrate करें</div>
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:.8rem">
+        आपका पुराना "Fluid Dynamics" course मिला है। इसे नए structure (Class → Subject → Chapter → Topic) में migrate करें।
+      </div>
+      <button class="btn-submit" style="background:var(--green)" onclick="migrateOldCourses()">
+        <span id="migrate-label">🔄 Migrate करें</span>
+      </button>
+    </div>
+
     <div class="form-card">
       <div class="form-card-title">📹 Upload Type</div>
       <div class="type-toggle">
@@ -476,7 +486,56 @@ function startListeners() {
     renderContent();
     document.getElementById('stat-content').textContent = allContent.length;
   });
+
+  // Check for old 'courses' collection to offer migration
+  checkOldCourses();
 }
+
+async function checkOldCourses() {
+  try {
+    const snap = await getDocs(collection(db,'courses'));
+    if (!snap.empty) {
+      document.getElementById('migrate-card').style.display = 'block';
+      window._oldCoursesData = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    }
+  } catch(e) {}
+}
+
+window.migrateOldCourses = async () => {
+  const old = window._oldCoursesData || [];
+  if (!old.length) return showToast('कोई पुराना course नहीं मिला।');
+  document.getElementById('migrate-label').textContent = 'Migrate हो रहा है...';
+  try {
+    let count = 0;
+    for (const c of old) {
+      const videos = c.videos || [];
+      for (let i = 0; i < videos.length; i++) {
+        const v = videos[i];
+        await addDoc(collection(db,'content'), {
+          type: v.playlistId ? 'playlist' : 'video',
+          title: v.title || c.name,
+          classNum: '11', // Fluid Dynamics was 11th Physics
+          stream: 'science',
+          subject: 'Physics',
+          chapter: c.name || 'Fluid Dynamics',
+          topic: v.title || `Part ${i+1}`,
+          videoId: v.vid || '',
+          playlistId: v.playlistId || '',
+          desc: c.desc || '',
+          isFree: false,
+          createdAt: serverTimestamp()
+        });
+        count++;
+      }
+    }
+    showToast(`✅ ${count} videos migrate हो गए!`,'success');
+    document.getElementById('migrate-card').style.display = 'none';
+  } catch(e) {
+    console.error(e);
+    showToast('Migration में error आया।','error');
+  }
+  document.getElementById('migrate-label').textContent = '🔄 Migrate करें';
+};
 
 // ════════════════════════════════════════
 // STATS

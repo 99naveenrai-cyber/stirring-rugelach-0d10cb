@@ -656,14 +656,69 @@ function updateNav(loggedIn) {
 window.showLogin = () => { pushPage('login'); pushHistory(); };
 
 // ════════════════════════════════════════
-// LOAD COURSES
+// LOAD COURSES — reads from 'content' collection
+// Groups content by Class+Stream+Subject into a "course card"
 // ════════════════════════════════════════
+let allContentRaw = [];
+
 async function loadCourses() {
   try {
-    const snap = await getDocs(query(collection(db, 'courses'), orderBy('createdAt', 'desc')));
-    allCourses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  } catch(e) { allCourses = []; }
+    const snap = await getDocs(query(collection(db, 'content'), orderBy('createdAt', 'desc')));
+    allContentRaw = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) { allContentRaw = []; }
+  allCourses = groupContentIntoCourses(allContentRaw);
   renderCourses();
+}
+
+// Subject emojis for course cards
+const SUBJECT_EMOJI = {
+  'Maths':'🔢','Science':'🔬','English':'📖','SST':'🌍','Hindi':'📝',
+  'Physics':'⚛️','Chemistry':'🧪','Accounts':'📊','Business Studies':'💼',
+  'Economics':'📈','Political Science':'🏛️','History':'📜','Geography':'🌐'
+};
+const SUBJECT_COLOR = {
+  'Maths':'#e8f5e9','Science':'#e3f2fd','English':'#fff3e0','SST':'#f3e5f5','Hindi':'#fce4ec',
+  'Physics':'#e3f2fd','Chemistry':'#fff3e0','Accounts':'#e8f5e9','Business Studies':'#f3e5f5',
+  'Economics':'#fce4ec','Political Science':'#ede7f6','History':'#fff8e1','Geography':'#e0f2f1'
+};
+
+function groupContentIntoCourses(items) {
+  // Group by classNum + stream + subject => one "course"
+  const groups = {};
+  items.forEach(it => {
+    const key = `${it.classNum}__${it.stream||''}__${it.subject}`;
+    if (!groups[key]) {
+      groups[key] = {
+        id: key,
+        classNum: it.classNum,
+        stream: it.stream || '',
+        subject: it.subject,
+        name: `Class ${it.classNum} — ${it.subject}`,
+        tag: it.stream ? `Class ${it.classNum} • ${streamLabelJS(it.stream)}` : `Class ${it.classNum}`,
+        emoji: SUBJECT_EMOJI[it.subject] || '📚',
+        color: SUBJECT_COLOR[it.subject] || '#e3f2fd',
+        desc: `${it.subject} — सभी chapters और topics एक जगह।`,
+        price: 450, // default price per subject course; admin can override later
+        videos: []
+      };
+    }
+    groups[key].videos.push({
+      title: it.title,
+      dur: it.dur || '',
+      vid: it.videoId || '',
+      playlistId: it.playlistId || '',
+      chapter: it.chapter || '',
+      topic: it.topic || '',
+      isFree: !!it.isFree,
+      contentId: it.id,
+      type: it.type || 'video'
+    });
+  });
+  return Object.values(groups);
+}
+
+function streamLabelJS(s) {
+  return {science:'Science',commerce:'Commerce',humanities:'Humanities'}[s] || s;
 }
 
 function renderCourses() {
@@ -681,7 +736,7 @@ function renderCourses() {
           <div class="playlist-title">${v.title}</div>
           <div class="playlist-dur">⏱ ${v.dur || '—'}</div>
         </div>
-        <div class="playlist-lock">🔒</div>
+        <div class="playlist-lock">${v.isFree ? '🆓' : '🔒'}</div>
       </div>`).join('');
 
     return `
@@ -703,7 +758,7 @@ function renderCourses() {
               🔐 Course खरीदें — सभी Videos unlock हो जाएंगे
             </div>
           </div>
-        </div>` : ''}
+        </div>` : '<div style="color:var(--muted);font-size:.8rem;padding:.5rem 0">Videos जल्द आएंगी।</div>'}
         <div class="course-footer-btns">
           <div class="course-price">₹${(c.price||0).toLocaleString('en-IN')} <span>एक बार</span></div>
           <button class="btn-enroll" onclick="handleEnroll('${c.id}')">✅ अभी Enroll करें</button>
@@ -1190,18 +1245,18 @@ function getSubjectsForUser() {
 
   if (cls >= 5 && cls <= 10) {
     return [
-      { id:'maths',    name:'Maths',   emoji:'🔢' },
-      { id:'science',  name:'Science', emoji:'🔬' },
-      { id:'english',  name:'English', emoji:'📖' },
-      { id:'sst',      name:'SST',     emoji:'🌍' },
-      { id:'hindi',    name:'Hindi',   emoji:'📝' },
+      { id:'Maths',    name:'Maths',   emoji:'🔢' },
+      { id:'Science',  name:'Science', emoji:'🔬' },
+      { id:'English',  name:'English', emoji:'📖' },
+      { id:'SST',      name:'SST',     emoji:'🌍' },
+      { id:'Hindi',    name:'Hindi',   emoji:'📝' },
     ];
   }
   if (cls === 11 || cls === 12) {
     const map = {
-      science:    [{ id:'physics',   name:'Physics',   emoji:'⚛️' }, { id:'chemistry', name:'Chemistry', emoji:'🧪' }, { id:'maths',     name:'Maths',     emoji:'🔢' }],
-      commerce:   [{ id:'accounts',  name:'Accounts',  emoji:'📊' }, { id:'bst',       name:'Business Studies', emoji:'💼' }, { id:'economics', name:'Economics', emoji:'📈' }],
-      humanities: [{ id:'polsci',    name:'Political Science', emoji:'🏛️' }, { id:'history',   name:'History',   emoji:'📜' }, { id:'geo',       name:'Geography', emoji:'🌐' }, { id:'english',   name:'English',   emoji:'📖' }],
+      science:    [{ id:'Physics',   name:'Physics',   emoji:'⚛️' }, { id:'Chemistry', name:'Chemistry', emoji:'🧪' }, { id:'Maths',     name:'Maths',     emoji:'🔢' }],
+      commerce:   [{ id:'Accounts',  name:'Accounts',  emoji:'📊' }, { id:'Business Studies', name:'Business Studies', emoji:'💼' }, { id:'Economics', name:'Economics', emoji:'📈' }],
+      humanities: [{ id:'Political Science', name:'Political Science', emoji:'🏛️' }, { id:'History',   name:'History',   emoji:'📜' }, { id:'Geography', name:'Geography', emoji:'🌐' }, { id:'English', name:'English', emoji:'📖' }],
     };
     return map[stream] || [];
   }
@@ -1274,21 +1329,29 @@ window.toggleChapter = (id) => {
 };
 
 function getChaptersForSubject(subjectId) {
-  // Filter courses by subject/tag
+  // Match courses for this subject (subjectId here is the subject name, lowercased)
+  const ud  = currentUserData || {};
   const relevant = allCourses.filter(c =>
-    (c.subject || '').toLowerCase() === subjectId.toLowerCase() ||
-    (c.tag || '').toLowerCase().includes(subjectId.toLowerCase())
+    (c.subject || '').toLowerCase() === subjectId.toLowerCase() &&
+    String(c.classNum) === String(ud.classNum) &&
+    (!ud.stream || !c.stream || c.stream === ud.stream)
   );
   if (!relevant.length) {
-    return [{ name: 'Chapter 1', topics: [] }];
+    return [{ name: 'Chapter जल्द आएगा', topics: [] }];
   }
-  // Group by chapter
+  // Group videos by chapter (chapter lives on each video item now)
   const chapMap = {};
   relevant.forEach(c => {
-    const ch = c.chapter || 'General';
-    if (!chapMap[ch]) chapMap[ch] = [];
     (c.videos||[]).forEach(v => {
-      chapMap[ch].push({ name:v.title, videoId:v.vid, isFree:c.isFree||false, courseId:c.id });
+      const ch = v.chapter || 'General';
+      if (!chapMap[ch]) chapMap[ch] = [];
+      chapMap[ch].push({
+        name: v.topic ? `${v.topic} — ${v.title}` : v.title,
+        videoId: v.vid || '',
+        playlistId: v.playlistId || '',
+        isFree: !!v.isFree,
+        courseId: c.id
+      });
     });
   });
   return Object.entries(chapMap).map(([name,topics]) => ({ name, topics }));
@@ -1344,8 +1407,12 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
 
   window.playFromPlaylist = async (idx) => {
     const v = videos[idx];
-    document.getElementById('video-wrap').innerHTML = v.vid
-      ? `<iframe src="https://www.youtube.com/embed/${v.vid}?autoplay=1&rel=0"
+    let embedSrc = '';
+    if (v.vid) embedSrc = `https://www.youtube.com/embed/${v.vid}?autoplay=1&rel=0`;
+    else if (v.playlistId) embedSrc = `https://www.youtube.com/embed/videoseries?list=${v.playlistId}&autoplay=1&rel=0`;
+
+    document.getElementById('video-wrap').innerHTML = embedSrc
+      ? `<iframe src="${embedSrc}"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen></iframe>`
       : `<div class="video-placeholder"><div class="v-icon">🔜</div><div>Video जल्द आएगी</div></div>`;
