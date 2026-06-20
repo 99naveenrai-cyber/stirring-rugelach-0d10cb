@@ -35,6 +35,20 @@ service cloud.firestore {
         && request.auth.token.email in ['99naveenrai@gmail.com'];
     }
 
+    // ── COUPONS ──
+    match /coupons/{couponCode} {
+      // Students can check an active coupon code, but cannot list all coupons
+      allow get: if resource.data.active == true
+        || (request.auth != null
+            && request.auth.token.email in ['99naveenrai@gmail.com']);
+      allow list: if request.auth != null
+        && request.auth.token.email in ['99naveenrai@gmail.com'];
+
+      // Only admin can manage coupons
+      allow create, update, delete: if request.auth != null
+        && request.auth.token.email in ['99naveenrai@gmail.com'];
+    }
+
     // ── PROGRESS (Continue Learning tracking) ──
     match /progress/{userId} {
       allow read, write: if request.auth != null

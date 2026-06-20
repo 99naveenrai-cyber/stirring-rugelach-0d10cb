@@ -92,6 +92,9 @@ body{padding-bottom:65px}
 .fp-btn{flex:1;padding:9px;border:2px solid var(--border);border-radius:9px;background:#fff;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;color:var(--muted);transition:all .15s}
 .fp-btn.active-free{border-color:var(--green);background:var(--green-light);color:var(--green)}
 .fp-btn.active-paid{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+.coupon-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.7rem}
+.coupon-code{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:#0a2a5e}
+.coupon-meta{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0}
 
 /* Submit button */
 .btn-submit{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.3rem}
@@ -309,6 +312,11 @@ body{padding-bottom:65px}
         <input type="text" id="up-title" placeholder="Video या Playlist का title">
       </div>
 
+      <div class="form-group">
+        <label>Course Price</label>
+        <input type="number" id="up-price" min="1" step="1" value="450" placeholder="450">
+      </div>
+
       <div class="form-group" id="vid-link-group">
         <label>YouTube Video Link</label>
         <input type="text" id="up-video-link" placeholder="https://youtu.be/xxxxx या Video ID">
@@ -371,6 +379,26 @@ body{padding-bottom:65px}
     <div id="enrollment-list"></div>
   </div>
 
+  <!-- ══ PANEL: COUPONS ══ -->
+  <div class="panel" id="panel-coupons">
+    <div class="panel-title">🎟️ Coupons</div>
+    <div class="form-card">
+      <div class="form-card-title">➕ Add Discount Code</div>
+      <div class="form-group">
+        <label>Coupon Code</label>
+        <input type="text" id="coupon-code" placeholder="जैसे IDEAKDC100">
+      </div>
+      <div class="form-group">
+        <label>Special Price</label>
+        <input type="number" id="coupon-price" min="1" step="1" placeholder="जैसे 299">
+      </div>
+      <button class="btn-submit" id="coupon-btn" onclick="saveCoupon()">
+        <span id="coupon-label">✅ Coupon Save करें</span>
+      </button>
+    </div>
+    <div id="coupon-list"></div>
+  </div>
+
   <!-- Bottom Tab Nav -->
   <div class="bottom-tabs">
     <button class="btab active" id="btab-dashboard" onclick="switchPanel('dashboard',this)">
@@ -386,6 +414,9 @@ body{padding-bottom:65px}
       <span class="btab-icon">📋</span>Enrollments
       <span id="pending-dot" style="display:none;width:7px;height:7px;background:var(--red);border-radius:50%;margin-top:1px"></span>
     </button>
+    <button class="btab" id="btab-coupons" onclick="switchPanel('coupons',this)">
+      <span class="btab-icon">🎟️</span>Coupons
+    </button>
   </div>
 
 </div><!-- /app-shell -->
@@ -395,7 +426,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, signInWithEmailAndPassword, signInWithPopup,
          GoogleAuthProvider, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc,
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc,
          updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -428,6 +459,7 @@ let uploadFP    = 'free';
 let uploadStream = '';
 let allContent  = [];
 let allEnrollments = [];
+let allCoupons = [];
 let enrollTab   = 'pending';
 let classFilter = 'all';
 
@@ -488,6 +520,12 @@ function startListeners() {
     document.getElementById('stat-content').textContent = allContent.length;
   });
 
+  // Coupons real-time
+  onSnapshot(query(collection(db,'coupons'), orderBy('createdAt','desc')), snap => {
+    allCoupons = snap.docs.map(d => ({ _id:d.id, ...d.data() }));
+    renderCoupons();
+  });
+
   // Check for old 'courses' collection to offer migration
   checkOldCourses();
 }
@@ -524,6 +562,7 @@ window.migrateOldCourses = async () => {
           playlistId: v.playlistId || '',
           desc: c.desc || '',
           isFree: false,
+          price: 450,
           createdAt: serverTimestamp()
         });
         count++;
@@ -665,6 +704,7 @@ window.uploadContent = async () => {
   const chapter = document.getElementById('up-chapter').value.trim();
   const topic   = document.getElementById('up-topic').value.trim();
   const title   = document.getElementById('up-title').value.trim();
+  const price   = Number(document.getElementById('up-price').value || 0);
   const desc    = document.getElementById('up-desc').value.trim();
   const vidLink = document.getElementById('up-video-link').value.trim();
   const plLink  = document.getElementById('up-playlist-link').value.trim();
@@ -675,6 +715,7 @@ window.uploadContent = async () => {
   if (!chapter) return showToast('Chapter लिखें।','error');
   if (!topic)   return showToast('Topic लिखें।','error');
   if (!title)   return showToast('Title लिखें।','error');
+  if (!price || price < 1) return showToast('Course price सही डालें।','error');
 
   const link = uploadType === 'video' ? vidLink : plLink;
   if (!link)    return showToast('YouTube link डालें।','error');
@@ -692,7 +733,7 @@ window.uploadContent = async () => {
       await addDoc(collection(db,'content'), {
         type: 'video', title, classNum: cls, stream: uploadStream || '',
         subject, chapter, topic, videoId, playlistId: '', desc,
-        isFree: fp === 'free', createdAt: serverTimestamp()
+        isFree: fp === 'free', price, createdAt: serverTimestamp()
       });
       showToast('✅ Video upload हो गया!','success');
 
@@ -727,6 +768,7 @@ window.uploadContent = async () => {
           orderIndex: i,
           desc,
           isFree: fp === 'free',
+          price,
           createdAt: serverTimestamp()
         });
       }
@@ -736,6 +778,7 @@ window.uploadContent = async () => {
     // Reset form
     ['up-class','up-subject','up-chapter','up-topic','up-title','up-desc','up-video-link','up-playlist-link']
       .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('up-price').value='450';
     uploadStream = '';
     document.querySelectorAll('.stream-pill').forEach(p=>p.classList.remove('active'));
     document.getElementById('stream-group').style.display='none';
@@ -787,6 +830,7 @@ function renderContent() {
         <span class="meta-chip">${c.subject||'—'}</span>
         <span class="meta-chip">${c.chapter||'—'}</span>
         <span class="meta-chip">${c.topic||'—'}</span>
+        <span class="meta-chip">₹${c.price||450}</span>
         <span class="meta-chip ${c.isFree?'free':'paid'}">${c.isFree?'🆓 Free':'💎 Paid'}</span>
       </div>
       ${c.desc ? `<div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">${c.desc}</div>` : ''}
@@ -806,6 +850,61 @@ window.deleteContent = async (id, title) => {
     await deleteDoc(doc(db,'content',id));
     showToast('Content delete हो गया।');
   } catch(e) { showToast('Delete नहीं हो सका।','error'); }
+};
+
+// ════════════════════════════════════════
+// COUPONS
+// ════════════════════════════════════════
+window.saveCoupon = async () => {
+  const rawCode = document.getElementById('coupon-code').value.trim();
+  const code = rawCode.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+  const price = Number(document.getElementById('coupon-price').value || 0);
+  if (!code) return showToast('Coupon code लिखें।','error');
+  if (!price || price < 1) return showToast('Special price सही डालें।','error');
+
+  setBtn('coupon-btn','coupon-label',true,'Coupon save हो रहा है...');
+  try {
+    await setDoc(doc(db,'coupons',code), {
+      code,
+      price,
+      active: true,
+      createdAt: serverTimestamp()
+    });
+    document.getElementById('coupon-code').value = '';
+    document.getElementById('coupon-price').value = '';
+    showToast('✅ Coupon save हो गया!','success');
+  } catch(e) {
+    showToast('Coupon save नहीं हो सका।','error');
+  }
+  setBtn('coupon-btn','coupon-label',false,'✅ Coupon Save करें');
+};
+
+function renderCoupons() {
+  const el = document.getElementById('coupon-list');
+  if (!el) return;
+  if (!allCoupons.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🎟️</div>कोई coupon नहीं मिला।</div>`;
+    return;
+  }
+  el.innerHTML = allCoupons.map(c => `
+    <div class="coupon-item">
+      <div class="coupon-code">${c.code || c._id}</div>
+      <div class="coupon-meta">
+        <span class="meta-chip">Special Price ₹${c.price||0}</span>
+        <span class="meta-chip ${c.active!==false?'free':'paid'}">${c.active!==false?'Active':'Inactive'}</span>
+      </div>
+      <div class="content-item-actions">
+        <button class="btn-delete" onclick="deleteCoupon('${c._id}')">🗑️ Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+window.deleteCoupon = async (id) => {
+  if (!confirm(`Coupon "${id}" delete करें?`)) return;
+  try {
+    await deleteDoc(doc(db,'coupons',id));
+    showToast('Coupon delete हो गया।');
+  } catch(e) { showToast('Coupon delete नहीं हो सका।','error'); }
 };
 
 // ════════════════════════════════════════
