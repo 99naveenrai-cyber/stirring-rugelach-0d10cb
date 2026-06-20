@@ -1391,6 +1391,20 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
   window._currentMeta    = meta;
 
   const renderPlaylist = (activeIdx) => {
+    const v = videos[activeIdx];
+    // If this item is a YouTube playlist, YouTube's own player already
+    // shows the full list of videos inside the iframe — so we hide our
+    // custom list to avoid confusing "1 Lessons" duplicate UI.
+    if (v && v.playlistId && !v.vid) {
+      document.getElementById('full-playlist').innerHTML = `
+        <div class="full-playlist-header">📋 ${v.title}</div>
+        <div style="font-size:.82rem;color:var(--muted);padding:.6rem 0">
+          ऊपर video player में दाईं ओर (या नीचे, mobile पर) पूरी playlist के सभी videos दिखेंगे।
+          वहाँ से किसी भी video पर tap करके देखें।
+        </div>`;
+      return;
+    }
+    // Otherwise (individual videos grouped under this subject), show our list
     document.getElementById('full-playlist').innerHTML = `
       <div class="full-playlist-header">📋 सभी Videos — ${videos.length} Lessons</div>
       ${videos.map((v,i) => `
