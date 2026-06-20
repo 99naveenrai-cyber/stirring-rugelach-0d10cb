@@ -25,5 +25,29 @@ service cloud.firestore {
         && request.auth.token.email in ['99naveenrai@gmail.com'];
     }
 
+    // ── CONTENT (Class → Subject → Chapter → Topic → Video/Playlist) ──
+    match /content/{contentId} {
+      // Everyone (even logged-out visitors) can READ content listings
+      allow read: if true;
+
+      // Only admin can CREATE, UPDATE, DELETE content
+      allow create, update, delete: if request.auth != null
+        && request.auth.token.email in ['99naveenrai@gmail.com'];
+    }
+
+    // ── PROGRESS (Continue Learning tracking) ──
+    match /progress/{userId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // ── LEGACY: courses (old structure, kept for migration read) ──
+    match /courses/{courseId} {
+      allow read: if request.auth != null
+        && request.auth.token.email in ['99naveenrai@gmail.com'];
+      allow write: if request.auth != null
+        && request.auth.token.email in ['99naveenrai@gmail.com'];
+    }
+
   }
 }

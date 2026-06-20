@@ -667,7 +667,7 @@ window.uploadContent = async () => {
     setType('video'); setFP('free');
   } catch(e) {
     console.error(e);
-    showToast('Upload नहीं हो सका। फिर try करें।','error');
+    showToast('Error: ' + (e.code || e.message || 'अनजान error'),'error');
   }
   setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
 };
