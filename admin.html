@@ -409,6 +409,7 @@ const firebaseConfig = {
   appId:"1:577382246228:web:e3ec8a45d65b2799268ac1"
 };
 const ADMIN_EMAILS = ["99naveenrai@gmail.com"];
+const YOUTUBE_API_KEY = "AIzaSyAi4zGbfdWxvd-Q76PLBF4FtTTh7g9B_FE";
 const SUBJECTS = {
   '5-10': ['Maths','Science','English','SST','Hindi'],
   science: ['Physics','Chemistry','Maths'],
@@ -611,6 +612,53 @@ function populateSubjects(cls, stream) {
     subjects.map(s => `<option value="${s}">${s}</option>`).join('');
 }
 
+// ── Fetch all videos from a YouTube playlist using Data API v3 ──
+async function fetchPlaylistVideos(playlistId) {
+  let videos = [];
+  let pageToken = '';
+  do {
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}${pageToken ? '&pageToken='+pageToken : ''}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'YouTube API error');
+
+    const items = data.items || [];
+    videos.push(...items.map(it => ({
+      title: it.snippet.title,
+      videoId: it.contentDetails.videoId,
+      position: it.snippet.position
+    })));
+    pageToken = data.nextPageToken || '';
+  } while (pageToken);
+
+  // Fetch durations for all videos (batch of 50 at a time)
+  const idsChunks = [];
+  for (let i = 0; i < videos.length; i += 50) {
+    idsChunks.push(videos.slice(i, i+50).map(v=>v.videoId).join(','));
+  }
+  const durationMap = {};
+  for (const ids of idsChunks) {
+    const durUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${ids}&key=${YOUTUBE_API_KEY}`;
+    const durRes = await fetch(durUrl);
+    const durData = await durRes.json();
+    (durData.items||[]).forEach(it => {
+      durationMap[it.id] = parseISO8601Duration(it.contentDetails.duration);
+    });
+  }
+  videos.forEach(v => { v.duration = durationMap[v.videoId] || ''; });
+
+  return videos;
+}
+
+// Convert YouTube's ISO8601 duration (PT1H2M10S) to readable "1:02:10" / "12:48"
+function parseISO8601Duration(iso) {
+  const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!m) return '';
+  const h = parseInt(m[1]||0), min = parseInt(m[2]||0), s = parseInt(m[3]||0);
+  const pad = n => String(n).padStart(2,'0');
+  return h > 0 ? `${h}:${pad(min)}:${pad(s)}` : `${min}:${pad(s)}`;
+}
+
 window.uploadContent = async () => {
   const cls     = document.getElementById('up-class').value;
   const subject = document.getElementById('up-subject').value;
@@ -620,6 +668,7 @@ window.uploadContent = async () => {
   const desc    = document.getElementById('up-desc').value.trim();
   const vidLink = document.getElementById('up-video-link').value.trim();
   const plLink  = document.getElementById('up-playlist-link').value.trim();
+  const fp      = uploadFP;
 
   if (!cls)     return showToast('Class select करें।','error');
   if (!subject) return showToast('Subject select करें।','error');
@@ -630,34 +679,60 @@ window.uploadContent = async () => {
   const link = uploadType === 'video' ? vidLink : plLink;
   if (!link)    return showToast('YouTube link डालें।','error');
 
-  // Extract ID
-  let videoId = '', playlistId = '';
-  if (uploadType === 'video') {
-    if (link.includes('youtu.be/')) videoId = link.split('youtu.be/')[1].split('?')[0];
-    else if (link.includes('v='))   videoId = link.split('v=')[1].split('&')[0];
-    else videoId = link.trim();
-  } else {
-    if (link.includes('list=')) playlistId = link.split('list=')[1].split('&')[0];
-    else playlistId = link.trim();
-  }
+  setBtn('upload-btn','upload-label',true, uploadType==='playlist' ? 'Playlist से Videos fetch हो रही हैं...' : 'Upload हो रहा है...');
 
-  setBtn('upload-btn','upload-label',true,'Upload हो रहा है...');
   try {
-    await addDoc(collection(db,'content'), {
-      type:       uploadType,
-      title,
-      classNum:   cls,
-      stream:     uploadStream || '',
-      subject,
-      chapter,
-      topic,
-      videoId:    videoId || '',
-      playlistId: playlistId || '',
-      desc,
-      isFree:     uploadFP === 'free',
-      createdAt:  serverTimestamp()
-    });
-    showToast('✅ Content upload हो गया!','success');
+    if (uploadType === 'video') {
+      // ── SINGLE VIDEO ──
+      let videoId = '';
+      if (link.includes('youtu.be/')) videoId = link.split('youtu.be/')[1].split('?')[0];
+      else if (link.includes('v='))   videoId = link.split('v=')[1].split('&')[0];
+      else videoId = link.trim();
+
+      await addDoc(collection(db,'content'), {
+        type: 'video', title, classNum: cls, stream: uploadStream || '',
+        subject, chapter, topic, videoId, playlistId: '', desc,
+        isFree: fp === 'free', createdAt: serverTimestamp()
+      });
+      showToast('✅ Video upload हो गया!','success');
+
+    } else {
+      // ── PLAYLIST: fetch all videos via YouTube API, create one entry per video ──
+      let playlistId = '';
+      if (link.includes('list=')) playlistId = link.split('list=')[1].split('&')[0];
+      else playlistId = link.trim();
+
+      const videos = await fetchPlaylistVideos(playlistId);
+      if (!videos.length) {
+        showToast('Playlist में कोई video नहीं मिला। Link check करें।','error');
+        setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+        return;
+      }
+
+      setBtn('upload-btn','upload-label',true,`${videos.length} videos save हो रही हैं...`);
+
+      for (let i = 0; i < videos.length; i++) {
+        const v = videos[i];
+        await addDoc(collection(db,'content'), {
+          type: 'video', // each playlist video becomes its own video entry
+          title: v.title,
+          classNum: cls,
+          stream: uploadStream || '',
+          subject,
+          chapter,
+          topic: `${topic} — Part ${i+1}`,
+          videoId: v.videoId,
+          playlistId: '',
+          dur: v.duration,
+          orderIndex: i,
+          desc,
+          isFree: fp === 'free',
+          createdAt: serverTimestamp()
+        });
+      }
+      showToast(`✅ ${videos.length} videos playlist से upload हो गए!`,'success');
+    }
+
     // Reset form
     ['up-class','up-subject','up-chapter','up-topic','up-title','up-desc','up-video-link','up-playlist-link']
       .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });

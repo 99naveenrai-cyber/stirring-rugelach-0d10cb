@@ -711,7 +711,16 @@ function groupContentIntoCourses(items) {
       topic: it.topic || '',
       isFree: !!it.isFree,
       contentId: it.id,
-      type: it.type || 'video'
+      type: it.type || 'video',
+      orderIndex: typeof it.orderIndex === 'number' ? it.orderIndex : 999999,
+      createdAtMs: it.createdAt?.toMillis ? it.createdAt.toMillis() : 0
+    });
+  });
+  // Sort each course's videos: by orderIndex first (playlist sequence), then by creation time
+  Object.values(groups).forEach(g => {
+    g.videos.sort((a,b) => {
+      if (a.orderIndex !== b.orderIndex) return a.orderIndex - b.orderIndex;
+      return a.createdAtMs - b.createdAtMs;
     });
   });
   return Object.values(groups);
