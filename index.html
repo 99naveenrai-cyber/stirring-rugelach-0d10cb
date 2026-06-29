@@ -338,6 +338,7 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 <nav>
   <div class="logo" onclick="navHome()">IDEAKDC</div>
   <div class="nav-right" id="nav-right">
+    <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
     <button class="btn-nav btn-nav-primary" onclick="showLogin()">Login करें</button>
     <button class="btn-nav" onclick="startConvoReg(null)">New Student</button>
   </div>
@@ -664,11 +665,14 @@ function updateNav(loggedIn) {
   const bn = document.getElementById('bottom-nav');
   if (loggedIn) {
     const name = currentUser.displayName || currentUser.email.split('@')[0];
-    nr.innerHTML = `<span style="font-size:.72rem;font-weight:700;color:#0a2a5e;background:rgba(255,255,255,.5);padding:5px 9px;border-radius:8px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👋 ${name}</span>`;
+    nr.innerHTML = `
+      <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
+      <span style="font-size:.72rem;font-weight:700;color:#0a2a5e;background:rgba(255,255,255,.5);padding:5px 9px;border-radius:8px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👋 ${name}</span>`;
     bn.classList.add('show');
     document.body.classList.add('has-bottom-nav');
   } else {
     nr.innerHTML = `
+      <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
       <button class="btn-nav btn-nav-primary" onclick="showLogin()">Login करें</button>
       <button class="btn-nav" onclick="startConvoReg(null)">New Student</button>`;
     bn.classList.remove('show');
