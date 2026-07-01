@@ -117,8 +117,8 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 .benefit-card,.method-card{background:#fff;border:1px solid var(--border);border-radius:22px;padding:1.25rem;box-shadow:var(--shadow);transition:transform 420ms cubic-bezier(.22,.72,.22,1),box-shadow 420ms cubic-bezier(.22,.72,.22,1),border-color 420ms ease}
 .benefit-card:hover,.method-card:hover,.course-card:hover{transform:translateY(-6px) scale(1.012);box-shadow:0 28px 70px rgba(16,24,47,.14);border-color:rgba(35,71,183,.38)}
 .benefit-card:active,.method-card:active,.course-card:active{transform:translateY(-2px) scale(.995)}
-.benefit-icon{width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,var(--accent-light),#fff8ec);display:flex;align-items:center;justify-content:center;font-size:1.35rem;margin-bottom:.9rem;color:var(--accent);box-shadow:inset 0 0 0 1px rgba(35,71,183,.08)}
-.benefit-icon::before{content:'';width:20px;height:20px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent-warm));box-shadow:0 8px 18px rgba(35,71,183,.18)}
+.benefit-graphic{border-radius:18px;overflow:hidden;margin:-.25rem -.25rem 1rem;background:#f8fbff;border:1px solid rgba(35,71,183,.12);box-shadow:0 16px 36px rgba(16,24,47,.1)}
+.benefit-graphic img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
 .benefit-card h3{font-family:Inter,Poppins,system-ui,sans-serif;font-weight:800;color:var(--deep);font-size:1.03rem;margin-bottom:.45rem;letter-spacing:0}
 .benefit-card p{color:var(--muted);font-size:.86rem;line-height:1.65}
 .method-layout{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:1.2rem;align-items:center}
@@ -576,17 +576,23 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
       <p class="section-intro">IdeaKDC is designed for students who want more than lectures. The learning flow explains concepts clearly, gives practice at the right time, supports revision, and keeps preparation aligned with exams.</p>
       <div class="benefit-grid">
         <div class="benefit-card">
-          <div class="benefit-icon" aria-hidden="true"></div>
+          <div class="benefit-graphic">
+            <img src="assets/benefit-concept-clarity.png" width="1536" height="1024" loading="lazy" decoding="async" alt="Concept Clarity learning graphic">
+          </div>
           <h3>Concept Clarity</h3>
           <p>Topics are taught step by step so students understand the reason behind each idea instead of only memorising answers.</p>
         </div>
         <div class="benefit-card">
-          <div class="benefit-icon" aria-hidden="true"></div>
+          <div class="benefit-graphic">
+            <img src="assets/benefit-daily-practice.png" width="1536" height="1024" loading="lazy" decoding="async" alt="Daily Practice learning graphic">
+          </div>
           <h3>Daily Practice</h3>
           <p>Practice-first learning helps students check understanding immediately and build confidence through repeated application.</p>
         </div>
         <div class="benefit-card">
-          <div class="benefit-icon" aria-hidden="true"></div>
+          <div class="benefit-graphic">
+            <img src="assets/benefit-guided-revision.png" width="1536" height="1024" loading="lazy" decoding="async" alt="Guided Revision learning graphic">
+          </div>
           <h3>Guided Revision</h3>
           <p>Revision points and course structure make it easier to return to weak chapters before tests and final exams.</p>
         </div>
