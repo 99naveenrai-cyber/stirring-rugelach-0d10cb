@@ -7,18 +7,19 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Berkshire+Swash&family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
 :root{
-  --ink:#0f0f0f;--bg:#fafaf8;--surface:#fff;
-  --accent:#5b4bff;--accent-light:#ede9ff;
+  --ink:#17151f;--bg:#fbf6ee;--surface:#fffaf3;
+  --accent:#2347b7;--accent-light:#e8eefc;--accent-warm:#c98540;
+  --deep:#10182f;--cream:#fff8ec;--rose:#f7e4d8;
   --green:#1db97a;--green-light:#e3f9f0;
   --red:#e03e3e;--red-light:#fdeaea;
-  --yellow:#fffde7;--yellow-dark:#f9d800;
-  --muted:#6b7280;--border:#e5e5e3;
-  --shadow:0 2px 16px rgba(0,0,0,.07);
+  --yellow:#fff6d7;--yellow-dark:#dca94f;
+  --muted:#6f6a70;--border:#eadfce;
+  --shadow:0 18px 45px rgba(31,28,42,.09);
   --nav-h:58px;--bot-h:62px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
+body{font-family:'Inter',sans-serif;background:radial-gradient(circle at top left,#fff3db 0,#fbf6ee 34%,#fff 100%);color:var(--ink);min-height:100vh;overflow-x:hidden}
 
 /* ── LOADER ── */
 #global-loader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
@@ -27,16 +28,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── NAV ── */
-nav{background:linear-gradient(135deg,#fffde7,#fff9c4);border-bottom:2px solid var(--yellow-dark);padding:0 .8rem;display:flex;align-items:center;justify-content:space-between;height:var(--nav-h);position:sticky;top:0;z-index:100;box-shadow:0 3px 12px rgba(249,216,0,.3)}
-.logo{font-family:'Berkshire Swash',cursive;font-size:1.2rem;color:#0a2a5e;cursor:pointer;flex-shrink:1;white-space:nowrap}
-.logo::before{content:'⭐ '}
-.logo::after{content:' ⭐'}
+nav{background:rgba(255,250,243,.92);border-bottom:1px solid rgba(234,223,206,.85);padding:0 clamp(.9rem,3vw,2rem);display:flex;align-items:center;justify-content:space-between;height:var(--nav-h);position:sticky;top:0;z-index:100;box-shadow:0 10px 30px rgba(27,22,35,.08);backdrop-filter:blur(16px)}
+.logo{font-family:'Berkshire Swash',cursive;font-size:1.28rem;color:var(--deep);cursor:pointer;flex-shrink:1;white-space:nowrap;letter-spacing:.2px}
+.logo::before{content:''}
+.logo::after{content:''}
 .nav-right{display:flex;gap:.3rem;align-items:center;flex-shrink:0}
-.btn-nav{font-size:.72rem;padding:6px 10px;border:1.5px solid #0a2a5e;border-radius:8px;background:transparent;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:#0a2a5e;white-space:nowrap}
-.btn-nav-primary{background:#0a2a5e;color:#fffde7;border-color:#0a2a5e}
+.btn-nav{font-size:.72rem;padding:8px 12px;border:1.5px solid rgba(16,24,47,.16);border-radius:99px;background:#fffaf3;cursor:pointer;font-family:'Syne',sans-serif;font-weight:800;color:var(--deep);white-space:nowrap;box-shadow:0 8px 20px rgba(16,24,47,.06);transition:transform .15s,box-shadow .15s,background .15s}
+.btn-nav:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(16,24,47,.1)}
+.btn-nav-primary{background:var(--deep);color:#fff8ec;border-color:var(--deep)}
 
 /* ── BOTTOM NAV ── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#fffde7,#fff9c4);border-top:2px solid var(--yellow-dark);z-index:200;padding:.4rem 0 calc(.4rem + env(safe-area-inset-bottom))}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(255,250,243,.94);border-top:1px solid var(--border);z-index:200;padding:.4rem 0 calc(.4rem + env(safe-area-inset-bottom));box-shadow:0 -12px 30px rgba(16,24,47,.08);backdrop-filter:blur(16px)}
 .bottom-nav.show{display:flex}
 .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:.3rem;border:none;background:none;font-family:'Syne',sans-serif;color:#0a2a5e;font-size:.65rem;font-weight:800;opacity:.6;transition:all .15s}
 .bn-item.active,.bn-item:hover{opacity:1;transform:translateY(-1px)}
@@ -55,44 +57,84 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 .toast.error{background:var(--red)}
 
 /* ══════════════════════════════
-   HERO CAROUSEL
+   HOME / HERO
 ══════════════════════════════ */
-.hero-carousel{display:flex;overflow-x:scroll;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.home-shell{overflow:hidden}
+.home-hero{max-width:1180px;margin:0 auto;padding:clamp(1.5rem,4vw,4.5rem) clamp(1rem,4vw,2rem) 1.5rem;display:grid;grid-template-columns:minmax(0,1.03fr) minmax(320px,.97fr);gap:clamp(1.2rem,4vw,3rem);align-items:center;position:relative}
+.home-hero::before{content:'';position:absolute;inset:1rem auto auto -8rem;width:260px;height:260px;border-radius:50%;background:rgba(201,133,64,.12);filter:blur(6px);pointer-events:none}
+.hero-copy{position:relative;z-index:1;min-width:0}
+.hero-kicker{display:inline-flex;align-items:center;gap:.45rem;background:#fff;border:1px solid var(--border);border-radius:99px;padding:.48rem .75rem;font-size:.73rem;font-weight:900;color:var(--accent-warm);text-transform:uppercase;letter-spacing:1.1px;box-shadow:0 10px 25px rgba(27,22,35,.06);margin-bottom:1rem}
+.hero-title{font-family:'Syne',sans-serif;font-weight:900;font-size:clamp(2.05rem,6vw,4.65rem);line-height:.98;color:var(--deep);max-width:680px;margin-bottom:1rem}
+.hero-title span{color:var(--accent)}
+.hero-lead{font-size:clamp(.98rem,2vw,1.12rem);line-height:1.8;color:#4f4b55;max-width:600px;margin-bottom:1.35rem}
+.hero-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.35rem}
+.hero-cta{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 1.2rem;border-radius:99px;font-family:'Syne',sans-serif;font-weight:900;font-size:.9rem;text-decoration:none;border:1.5px solid transparent;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.hero-cta.primary{background:var(--deep);color:#fff;box-shadow:0 18px 34px rgba(16,24,47,.22)}
+.hero-cta.secondary{background:#fff;color:var(--deep);border-color:var(--border)}
+.hero-cta:active{transform:scale(.98)}
+.hero-proof{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;max-width:620px}
+.proof-pill{background:rgba(255,255,255,.76);border:1px solid var(--border);border-radius:16px;padding:.75rem;box-shadow:0 10px 28px rgba(27,22,35,.06)}
+.proof-num{font-family:'Syne',sans-serif;font-weight:900;color:var(--deep);font-size:1rem}
+.proof-text{font-size:.72rem;color:var(--muted);line-height:1.45;margin-top:.15rem}
+.hero-showcase{position:relative;z-index:1;background:#fff;border:1px solid var(--border);border-radius:30px;padding:.75rem;box-shadow:0 28px 70px rgba(16,24,47,.16);min-width:0}
+.hero-showcase::after{content:'IdeaKDC Coaching Method';position:absolute;right:1.2rem;top:-.85rem;background:var(--accent-warm);color:#fff;border-radius:99px;padding:.45rem .75rem;font-size:.68rem;font-weight:900;box-shadow:0 12px 24px rgba(201,133,64,.28)}
+.hero-carousel{display:flex;overflow-x:scroll;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:24px;background:#fff}
 .hero-carousel::-webkit-scrollbar{display:none}
-.hero-slide{min-width:100vw;padding:2.5rem 1.2rem 2rem;text-align:center;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:280px}
-.slide-1{background:linear-gradient(160deg,#e0f4ff,#87ceeb)}
-.slide-2{background:linear-gradient(160deg,#e8f5e9,#a5d6a7)}
-.slide-3{background:linear-gradient(160deg,#fff3e0,#ffcc80)}
-.slide-emoji{font-size:3rem;margin-bottom:.6rem;animation:bounce 2s infinite}
+.hero-slide{min-width:100%;padding:clamp(2rem,5vw,3.6rem) 1.4rem 2.6rem;text-align:center;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:390px}
+.slide-1{background:linear-gradient(150deg,#fff7ea,#f7e4d8 55%,#e8eefc)}
+.slide-2{background:linear-gradient(150deg,#eef7f1,#fffaf3 48%,#e8eefc)}
+.slide-3{background:linear-gradient(150deg,#f9eadb,#fff8ec 45%,#dce6ff)}
+.slide-emoji{font-size:3rem;margin-bottom:.7rem;animation:bounce 2s infinite}
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.slide-heading{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;line-height:1.15;color:#0a2a5e;margin-bottom:.6rem}
-.slide-heading span{color:#1565c0}
-.slide-sub{font-size:.92rem;color:#1a3a6e;line-height:1.7;margin-bottom:.8rem}
+.slide-heading{font-family:'Syne',sans-serif;font-size:clamp(1.85rem,4vw,2.75rem);font-weight:900;line-height:1.05;color:var(--deep);margin-bottom:.75rem}
+.slide-heading span{color:var(--accent)}
+.slide-sub{font-size:1rem;color:#4f4b55;line-height:1.75;margin-bottom:.9rem;max-width:420px}
 .slide-points{display:flex;flex-direction:column;gap:.6rem;margin:.4rem 0 .7rem;text-align:left}
-.slide-point{background:rgba(255,255,255,.7);border-radius:10px;padding:.6rem .9rem;font-size:.88rem;font-weight:600;color:#1a3a6e}
-.slide-badge{background:#0a2a5e;color:#fff;padding:9px 20px;border-radius:99px;font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem}
+.slide-point{background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.8);border-radius:14px;padding:.75rem 1rem;font-size:.9rem;font-weight:800;color:var(--deep);box-shadow:0 10px 24px rgba(16,24,47,.08)}
+.slide-badge{background:var(--deep);color:#fff;padding:11px 20px;border-radius:99px;font-family:'Syne',sans-serif;font-weight:900;font-size:.9rem;box-shadow:0 14px 28px rgba(16,24,47,.2)}
 .slide-badge span{color:#ffcc80}
-.carousel-dots{display:flex;justify-content:center;gap:8px;padding:.6rem 0}
-.dot{width:8px;height:8px;border-radius:99px;background:#ccc;cursor:pointer;transition:all .3s}
-.dot.active{background:#1565c0;width:24px}
+.carousel-dots{display:flex;justify-content:center;gap:8px;padding:1rem 0 .25rem}
+.dot{width:8px;height:8px;border-radius:99px;background:#d8cbb9;cursor:pointer;transition:all .3s}
+.dot.active{background:var(--accent);width:26px}
 
 /* ══════════════════════════════
-   COURSES SECTION
+   HOME SECTIONS / COURSES
 ══════════════════════════════ */
-.courses-section{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
-.section-title{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:1rem}
-.courses-grid{display:flex;flex-direction:column;gap:1rem}
+.trust-strip{max-width:1120px;margin:0 auto;padding:1.1rem clamp(1rem,4vw,2rem) 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem}
+.trust-item{background:rgba(255,255,255,.82);border:1px solid var(--border);border-radius:18px;padding:1rem;box-shadow:0 12px 32px rgba(27,22,35,.06)}
+.trust-item strong{display:block;font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--deep);margin-bottom:.2rem}
+.trust-item span{font-size:.78rem;color:var(--muted);line-height:1.45}
+.benefit-section,.story-section{max-width:1120px;margin:0 auto;padding:clamp(2rem,5vw,4rem) clamp(1rem,4vw,2rem) 0}
+.section-eyebrow{font-size:.72rem;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent-warm);margin-bottom:.45rem}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(1.55rem,4vw,2.6rem);font-weight:900;line-height:1.08;color:var(--deep);margin-bottom:1rem}
+.section-intro{max-width:720px;color:#55505b;line-height:1.75;font-size:.96rem;margin-bottom:1.25rem}
+.benefit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.benefit-card{background:#fff;border:1px solid var(--border);border-radius:22px;padding:1.25rem;box-shadow:var(--shadow)}
+.benefit-icon{width:42px;height:42px;border-radius:14px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:1.35rem;margin-bottom:.9rem}
+.benefit-card h3{font-family:'Syne',sans-serif;font-weight:900;color:var(--deep);font-size:1.05rem;margin-bottom:.45rem}
+.benefit-card p{color:var(--muted);font-size:.86rem;line-height:1.65}
+.story-panel{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:1.2rem;align-items:stretch;background:var(--deep);color:#fff;border-radius:28px;padding:clamp(1.25rem,4vw,2.4rem);box-shadow:0 26px 70px rgba(16,24,47,.2)}
+.story-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:1rem}
+.story-badge strong{display:block;font-family:'Syne',sans-serif;font-size:1.55rem;margin-bottom:.25rem;color:#fff8ec}
+.story-badge span{font-size:.82rem;line-height:1.65;color:#ded8d0}
+.story-copy h2{font-family:'Syne',sans-serif;font-size:clamp(1.35rem,3vw,2.05rem);line-height:1.12;margin-bottom:.75rem;color:#fff}
+.story-copy p{font-size:.93rem;line-height:1.75;color:#eee5dc}
+.courses-section{max-width:1120px;margin:0 auto;padding:clamp(2rem,5vw,4rem) clamp(1rem,4vw,2rem)}
+.courses-head{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+.courses-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
 
-.course-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
-.course-thumb{height:120px;display:flex;align-items:center;justify-content:center;font-size:3rem}
-.course-body{padding:1.1rem}
-.course-tag{font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--accent);margin-bottom:.3rem}
-.course-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:.4rem;color:var(--ink)}
-.course-desc{font-size:.83rem;color:var(--muted);line-height:1.6;margin-bottom:.8rem}
+.course-card{background:#fff;border:1px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:var(--shadow);transition:transform .16s,box-shadow .16s}
+.course-card:hover{transform:translateY(-3px);box-shadow:0 26px 60px rgba(16,24,47,.13)}
+.course-thumb{height:148px;display:flex;align-items:center;justify-content:center;font-size:3.2rem;position:relative}
+.course-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(16,24,47,.1));pointer-events:none}
+.course-body{padding:1.25rem}
+.course-tag{font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;font-weight:900;color:var(--accent-warm);margin-bottom:.35rem}
+.course-name{font-family:'Syne',sans-serif;font-weight:900;font-size:1.18rem;margin-bottom:.45rem;color:var(--deep);line-height:1.25}
+.course-desc{font-size:.86rem;color:var(--muted);line-height:1.65;margin-bottom:.85rem}
 
 /* Playlist preview */
-.playlist-preview{margin:.6rem 0 .9rem;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;position:relative}
-.playlist-header{display:flex;justify-content:space-between;align-items:center;padding:.55rem .85rem;background:#f8f9ff;border-bottom:1px solid var(--border);font-size:.78rem;font-weight:700;color:#0a2a5e}
+.playlist-preview{margin:.7rem 0 1rem;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;position:relative;background:#fffaf7}
+.playlist-header{display:flex;justify-content:space-between;align-items:center;padding:.65rem .9rem;background:#f7f1e8;border-bottom:1px solid var(--border);font-size:.78rem;font-weight:900;color:var(--deep)}
 .playlist-count{background:var(--accent-light);color:var(--accent);border-radius:99px;padding:2px 10px;font-size:.7rem;font-weight:700}
 .playlist-list{max-height:200px;overflow:hidden;position:relative}
 .playlist-list::after{content:'';position:absolute;bottom:0;left:0;right:0;height:70px;background:linear-gradient(transparent,rgba(255,255,255,.97))}
@@ -103,15 +145,50 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 .playlist-dur{font-size:.66rem;color:var(--muted)}
 .playlist-lock{font-size:.85rem;opacity:.5}
 .playlist-unlock-overlay{padding:1rem .85rem .7rem;text-align:center;margin-top:-15px;position:relative}
-.unlock-msg{background:linear-gradient(135deg,#0a2a5e,#1565c0);color:#fff;border-radius:10px;padding:.7rem 1rem;font-size:.8rem;font-weight:700;line-height:1.5;cursor:pointer;transition:all .15s}
+.unlock-msg{background:linear-gradient(135deg,var(--deep),#2347b7);color:#fff;border-radius:13px;padding:.75rem 1rem;font-size:.8rem;font-weight:900;line-height:1.5;cursor:pointer;transition:all .15s;box-shadow:0 12px 26px rgba(16,24,47,.18)}
 .unlock-msg:active{transform:scale(.98)}
 
 /* Course buttons */
 .course-footer-btns{margin-top:.7rem}
-.course-price{font-size:1.2rem;font-weight:800;color:var(--ink);margin-bottom:.5rem}
+.course-price{font-size:1.25rem;font-weight:900;color:var(--deep);margin-bottom:.55rem;font-family:'Syne',sans-serif}
 .course-price span{font-size:.72rem;color:var(--muted);font-weight:500}
-.btn-enroll{width:100%;background:var(--accent);color:#fff;border:none;padding:13px;border-radius:10px;font-size:.95rem;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;transition:all .15s;display:block}
-.btn-enroll:active{transform:scale(.98);background:#4535e0}
+.btn-enroll{width:100%;background:var(--deep);color:#fff;border:none;padding:14px;border-radius:99px;font-size:.95rem;font-weight:900;cursor:pointer;font-family:'Syne',sans-serif;transition:all .15s;display:block;box-shadow:0 14px 26px rgba(16,24,47,.2)}
+.btn-enroll:active{transform:scale(.98);background:#2347b7}
+
+.home-footer{background:#100f18;color:#f7efe6;padding:2rem clamp(1rem,4vw,2rem);margin-top:1rem}
+.home-footer-inner{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:1.2rem;align-items:center}
+.home-footer .footer-brand{font-family:'Berkshire Swash',cursive;font-size:1.55rem;margin-bottom:.35rem}
+.home-footer p{color:#d8d0c7;font-size:.86rem;line-height:1.7;max-width:620px}
+.footer-links{display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap}
+.footer-links a{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:.55rem .85rem;font-size:.78rem;font-weight:800}
+
+@media (max-width: 860px){
+  .home-hero{grid-template-columns:1fr;padding-top:1.2rem}
+  .hero-title{font-size:clamp(2rem,10vw,3.2rem)}
+  .hero-showcase{border-radius:24px}
+  .hero-slide{min-height:330px}
+  .trust-strip,.benefit-grid,.story-panel,.home-footer-inner{grid-template-columns:1fr}
+  .hero-proof{grid-template-columns:1fr}
+  .courses-head{display:block}
+  .footer-links{justify-content:flex-start}
+}
+
+@media (max-width: 520px){
+  nav{padding:0 .55rem}
+  .logo{font-size:.96rem}
+  .nav-right{gap:.18rem;min-width:0}
+  .btn-nav{font-size:.58rem;padding:6px 6px}
+  .home-hero{padding-left:.9rem;padding-right:.9rem}
+  .hero-actions{flex-direction:column}
+  .hero-cta{width:100%}
+  .hero-copy{text-align:left}
+  .hero-kicker{font-size:.63rem}
+  .hero-proof{gap:.5rem}
+  .trust-strip,.benefit-section,.story-section,.courses-section{padding-left:.9rem;padding-right:.9rem}
+  .trust-item,.benefit-card{border-radius:18px}
+  .story-panel{border-radius:22px}
+  .courses-grid{grid-template-columns:1fr}
+}
 
 /* ══════════════════════════════
    CONVERSATIONAL REGISTRATION
@@ -361,35 +438,126 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
      PAGE: HOME
 ════════════════════════════════════════ -->
 <div class="page active" id="page-home">
-  <div class="hero-carousel" id="hero-carousel">
-    <div class="hero-slide slide-1">
-      <div class="slide-emoji">😴</div>
-      <h2 class="slide-heading">YouTube से सिर्फ<br>lecture देख कर<br><span>क्या फ़ायदा?</span></h2>
-      <p class="slide-sub">अगर भूल गए तो सब बेकार।<br>यहाँ से पढ़ो — <strong>इस तरीके से।</strong></p>
-    </div>
-    <div class="hero-slide slide-2">
-      <div class="slide-emoji">🧠</div>
-      <h2 class="slide-heading">समझ तो<br><span>आएगा ही</span></h2>
-      <div class="slide-points">
-        <div class="slide-point">✅ याद भी रहेगा</div>
-        <div class="slide-point">⚡ Lesson के बीच में ही Practice होगी</div>
+  <div class="home-shell">
+    <section class="home-hero">
+      <div class="hero-copy">
+        <div class="hero-kicker">Academic coaching for clear thinking</div>
+        <h1 class="hero-title">Learn with clarity, practice, and <span>confidence.</span></h1>
+        <p class="hero-lead">IdeaKDC helps students move beyond passive video watching with guided lessons, practice-focused learning, and course access built for serious study.</p>
+        <div class="hero-actions">
+          <a class="hero-cta primary" href="#courses">Explore Courses</a>
+          <button class="hero-cta secondary" onclick="startConvoReg(null)">New Student</button>
+        </div>
+        <div class="hero-proof">
+          <div class="proof-pill">
+            <div class="proof-num">Practice-led</div>
+            <div class="proof-text">Lessons designed for better recall.</div>
+          </div>
+          <div class="proof-pill">
+            <div class="proof-num">Course Access</div>
+            <div class="proof-text">Enroll, pay, and learn from one place.</div>
+          </div>
+          <div class="proof-pill">
+            <div class="proof-num">Student Support</div>
+            <div class="proof-text">Help for login, payment, and access.</div>
+          </div>
+        </div>
       </div>
+      <div class="hero-showcase">
+        <div class="hero-carousel" id="hero-carousel">
+          <div class="hero-slide slide-1">
+            <div class="slide-emoji">😴</div>
+            <h2 class="slide-heading">YouTube से सिर्फ<br>lecture देख कर<br><span>क्या फ़ायदा?</span></h2>
+            <p class="slide-sub">अगर भूल गए तो सब बेकार।<br>यहाँ से पढ़ो — <strong>इस तरीके से।</strong></p>
+          </div>
+          <div class="hero-slide slide-2">
+            <div class="slide-emoji">🧠</div>
+            <h2 class="slide-heading">समझ तो<br><span>आएगा ही</span></h2>
+            <div class="slide-points">
+              <div class="slide-point">✅ याद भी रहेगा</div>
+              <div class="slide-point">⚡ Lesson के बीच में ही Practice होगी</div>
+            </div>
+          </div>
+          <div class="hero-slide slide-3">
+            <div class="slide-emoji">🚀</div>
+            <h2 class="slide-heading">सिर्फ YouTube<br>lecture नहीं है…</h2>
+            <p class="slide-sub">यह <strong>अलग ही चीज़ है।</strong></p>
+            <div class="slide-badge">💡 आपकी <span>'Thinking Skills'</span> बढ़ाएगा</div>
+          </div>
+        </div>
+        <div class="carousel-dots">
+          <span class="dot active" onclick="goToSlide(0)"></span>
+          <span class="dot" onclick="goToSlide(1)"></span>
+          <span class="dot" onclick="goToSlide(2)"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="IdeaKDC trust points">
+      <div class="trust-item"><strong>Guided Study</strong><span>Structured course flow instead of random learning.</span></div>
+      <div class="trust-item"><strong>Practice Focus</strong><span>Built around understanding, memory, and application.</span></div>
+      <div class="trust-item"><strong>Secure Access</strong><span>Student login, enrollment, and approval flow remain in place.</span></div>
+      <div class="trust-item"><strong>Fast Support</strong><span>Help for course access, payments, and technical issues.</span></div>
+    </section>
+
+    <section class="benefit-section">
+      <div class="section-eyebrow">Why students choose IdeaKDC</div>
+      <h2 class="section-title">A calm, focused way to study difficult topics.</h2>
+      <p class="section-intro">The homepage now reflects the same purpose as the learning system: less confusion, clearer steps, and a direct path from course discovery to enrollment.</p>
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon">🎯</div>
+          <h3>Clear Direction</h3>
+          <p>Students can quickly understand what IdeaKDC offers and move toward the right course.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">🧠</div>
+          <h3>Thinking Skills</h3>
+          <p>The messaging supports your existing promise of deeper understanding and stronger recall.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">🤝</div>
+          <h3>Supportive Journey</h3>
+          <p>Trust sections make the site feel more human, professional, and reassuring for parents and students.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-section">
+      <div class="story-panel">
+        <div class="story-badge">
+          <strong>Creating Thoughtful Minds</strong>
+          <span>IdeaKDC keeps the focus on quality education, timely support, and a guided learning experience.</span>
+        </div>
+        <div class="story-copy">
+          <h2>From watching lectures to actually remembering lessons.</h2>
+          <p>Students need more than content. They need a method, a clear next step, and confidence that the course they choose will help them practice while they learn.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="courses-section" id="courses">
+      <div class="courses-head">
+        <div>
+          <div class="section-eyebrow">Available learning paths</div>
+          <div class="section-title">सभी Courses</div>
+        </div>
+      </div>
+      <div class="courses-grid" id="courses-grid"></div>
     </div>
-    <div class="hero-slide slide-3">
-      <div class="slide-emoji">🚀</div>
-      <h2 class="slide-heading">सिर्फ YouTube<br>lecture नहीं है…</h2>
-      <p class="slide-sub">यह <strong>अलग ही चीज़ है।</strong></p>
-      <div class="slide-badge">💡 आपकी <span>'Thinking Skills'</span> बढ़ाएगा</div>
-    </div>
-  </div>
-  <div class="carousel-dots">
-    <span class="dot active" onclick="goToSlide(0)"></span>
-    <span class="dot" onclick="goToSlide(1)"></span>
-    <span class="dot" onclick="goToSlide(2)"></span>
-  </div>
-  <div class="courses-section">
-    <div class="section-title">सभी Courses</div>
-    <div class="courses-grid" id="courses-grid"></div>
+
+    <footer class="home-footer">
+      <div class="home-footer-inner">
+        <div>
+          <div class="footer-brand">IdeaKDC</div>
+          <p>Quality education, thoughtful learning, and student support for course enrollment, fee payment, login issues, and course access.</p>
+        </div>
+        <div class="footer-links">
+          <a href="contact.html">Contact Us</a>
+          <a href="terms.html">Terms</a>
+        </div>
+      </div>
+    </footer>
   </div>
 </div>
 
@@ -1600,14 +1768,14 @@ window.goToSlide = (n) => {
   const c = document.getElementById('hero-carousel');
   if (!c) return;
   currentSlide = n;
-  c.scrollTo({ left: n * window.innerWidth, behavior:'smooth' });
+  c.scrollTo({ left: n * c.clientWidth, behavior:'smooth' });
   document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===n));
 };
 setInterval(() => { currentSlide = (currentSlide+1)%3; window.goToSlide(currentSlide); }, 3500);
 setTimeout(() => {
   const c = document.getElementById('hero-carousel');
   if (c) c.addEventListener('scroll', () => {
-    const idx = Math.round(c.scrollLeft / window.innerWidth);
+    const idx = Math.round(c.scrollLeft / c.clientWidth);
     document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===idx));
     currentSlide = idx;
   });
