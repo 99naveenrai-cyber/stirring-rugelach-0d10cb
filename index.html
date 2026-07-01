@@ -59,14 +59,17 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 /* ══════════════════════════════
    HOME / HERO
 ══════════════════════════════ */
-.home-shell{overflow:hidden}
+.home-shell{overflow:hidden;position:relative;isolation:isolate}
+.home-shell::before,.home-shell::after{content:'';position:absolute;border-radius:50%;filter:blur(8px);opacity:.22;pointer-events:none;z-index:-1;will-change:transform}
+.home-shell::before{width:420px;height:420px;background:radial-gradient(circle,#c98540 0%,rgba(201,133,64,0) 68%);left:-150px;top:260px;animation:premiumBlobFloat 18s ease-in-out infinite}
+.home-shell::after{width:520px;height:520px;background:radial-gradient(circle,#2347b7 0%,rgba(35,71,183,0) 70%);right:-210px;top:760px;animation:premiumBlobFloat 22s ease-in-out infinite reverse}
 .home-hero{max-width:1180px;margin:0 auto;padding:clamp(1.5rem,4vw,4.5rem) clamp(1rem,4vw,2rem) 1.5rem;display:grid;grid-template-columns:minmax(0,1.03fr) minmax(320px,.97fr);gap:clamp(1.2rem,4vw,3rem);align-items:center;position:relative}
-.home-hero::before{content:'';position:absolute;inset:1rem auto auto -8rem;width:260px;height:260px;border-radius:50%;background:rgba(201,133,64,.12);filter:blur(6px);pointer-events:none}
+.home-hero::before{content:'';position:absolute;inset:1rem auto auto -8rem;width:260px;height:260px;border-radius:50%;background:rgba(201,133,64,.14);filter:blur(6px);pointer-events:none;animation:premiumGlowFloat 16s ease-in-out infinite;will-change:transform}
 .hero-copy{position:relative;z-index:1;min-width:0}
 .hero-kicker{display:inline-flex;align-items:center;gap:.45rem;background:#fff;border:1px solid var(--border);border-radius:999px;padding:.5rem .8rem;font-size:.72rem;font-weight:800;color:var(--accent-warm);text-transform:uppercase;letter-spacing:.04em;font-stretch:normal;box-shadow:0 10px 25px rgba(27,22,35,.06);margin-bottom:1rem}
 .hero-title{font-family:Inter,Poppins,system-ui,sans-serif;font-weight:800;font-size:clamp(2rem,5.4vw,4.35rem);line-height:1.02;letter-spacing:0;font-stretch:normal;color:var(--deep);max-width:680px;margin-bottom:1rem;overflow-wrap:anywhere}
 .hero-title span{color:var(--accent)}
-.hero-lead{font-size:clamp(.98rem,2vw,1.12rem);line-height:1.75;color:#4f4b55;max-width:600px;margin-bottom:1.35rem;overflow-wrap:anywhere}
+.hero-lead{font-size:clamp(.98rem,2vw,1.12rem);line-height:1.78;color:#4f4b55;max-width:630px;margin-bottom:1.35rem;overflow-wrap:anywhere}
 .hero-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.35rem}
 .hero-cta{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:.78rem 1.15rem;border-radius:999px;font-family:Inter,Poppins,system-ui,sans-serif;font-weight:700;font-size:.92rem;line-height:1.1;letter-spacing:0;font-stretch:normal;text-decoration:none;border:1.5px solid transparent;cursor:pointer;transition:transform .15s,box-shadow .15s,background .15s}
 .hero-cta.primary{background:var(--deep);color:#fff;box-shadow:0 18px 34px rgba(16,24,47,.22)}
@@ -75,9 +78,11 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 .hero-proof{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;max-width:620px}
 .proof-pill{background:rgba(255,255,255,.76);border:1px solid var(--border);border-radius:16px;padding:.75rem;box-shadow:0 10px 28px rgba(27,22,35,.06)}
 .proof-num{font-family:Inter,Poppins,system-ui,sans-serif;font-weight:800;color:var(--deep);font-size:1rem;letter-spacing:0}
-.proof-text{font-size:.72rem;color:var(--muted);line-height:1.45;margin-top:.15rem}
+.proof-text{font-size:.74rem;color:var(--muted);line-height:1.5;margin-top:.15rem}
 .hero-showcase{position:relative;z-index:1;background:#fff;border:1px solid var(--border);border-radius:30px;padding:.75rem;box-shadow:0 28px 70px rgba(16,24,47,.16);min-width:0}
 .hero-showcase::after{content:'IdeaKDC Coaching Method';position:absolute;right:1.2rem;top:-.85rem;background:var(--accent-warm);color:#fff;border-radius:999px;padding:.45rem .75rem;font-size:.68rem;font-weight:800;letter-spacing:0;box-shadow:0 12px 24px rgba(201,133,64,.28)}
+.hero-art-frame{border-radius:24px;overflow:hidden;background:linear-gradient(135deg,#fff8ec,#e8eefc);margin-bottom:.75rem;border:1px solid rgba(234,223,206,.9);transform:translateZ(0)}
+.hero-art{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
 .hero-carousel{display:flex;overflow-x:scroll;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:24px;background:#fff}
 .hero-carousel::-webkit-scrollbar{display:none}
 .hero-slide{min-width:100%;padding:clamp(2rem,5vw,3.6rem) 1.4rem 2.6rem;text-align:center;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:390px}
@@ -104,15 +109,24 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 .trust-item{background:rgba(255,255,255,.82);border:1px solid var(--border);border-radius:18px;padding:1rem;box-shadow:0 12px 32px rgba(27,22,35,.06)}
 .trust-item strong{display:block;font-family:Inter,Poppins,system-ui,sans-serif;font-weight:800;font-size:1.05rem;color:var(--deep);margin-bottom:.2rem;letter-spacing:0}
 .trust-item span{font-size:.78rem;color:var(--muted);line-height:1.45}
-.benefit-section,.story-section{max-width:1120px;margin:0 auto;padding:clamp(2rem,5vw,4rem) clamp(1rem,4vw,2rem) 0}
+.benefit-section,.method-section,.story-section{max-width:1120px;margin:0 auto;padding:clamp(2rem,5vw,4rem) clamp(1rem,4vw,2rem) 0}
 .section-eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-warm);margin-bottom:.45rem}
 .section-title{font-family:Inter,Poppins,system-ui,sans-serif;font-size:clamp(1.5rem,4vw,2.45rem);font-weight:800;line-height:1.12;letter-spacing:0;color:var(--deep);margin-bottom:1rem;overflow-wrap:anywhere}
 .section-intro{max-width:720px;color:#55505b;line-height:1.75;font-size:.96rem;margin-bottom:1.25rem}
 .benefit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
-.benefit-card{background:#fff;border:1px solid var(--border);border-radius:22px;padding:1.25rem;box-shadow:var(--shadow)}
-.benefit-icon{width:42px;height:42px;border-radius:14px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:1.35rem;margin-bottom:.9rem}
+.benefit-card,.method-card{background:#fff;border:1px solid var(--border);border-radius:22px;padding:1.25rem;box-shadow:var(--shadow);transition:transform 420ms cubic-bezier(.22,.72,.22,1),box-shadow 420ms cubic-bezier(.22,.72,.22,1),border-color 420ms ease}
+.benefit-card:hover,.method-card:hover,.course-card:hover{transform:translateY(-6px) scale(1.012);box-shadow:0 28px 70px rgba(16,24,47,.14);border-color:rgba(35,71,183,.38)}
+.benefit-card:active,.method-card:active,.course-card:active{transform:translateY(-2px) scale(.995)}
+.benefit-icon{width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,var(--accent-light),#fff8ec);display:flex;align-items:center;justify-content:center;font-size:1.35rem;margin-bottom:.9rem;color:var(--accent);box-shadow:inset 0 0 0 1px rgba(35,71,183,.08)}
+.benefit-icon::before{content:'';width:20px;height:20px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent-warm));box-shadow:0 8px 18px rgba(35,71,183,.18)}
 .benefit-card h3{font-family:Inter,Poppins,system-ui,sans-serif;font-weight:800;color:var(--deep);font-size:1.03rem;margin-bottom:.45rem;letter-spacing:0}
 .benefit-card p{color:var(--muted);font-size:.86rem;line-height:1.65}
+.method-layout{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:1.2rem;align-items:center}
+.method-visual{border-radius:28px;overflow:hidden;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow)}
+.method-visual img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
+.method-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem}
+.method-card h3{font-family:Inter,Poppins,system-ui,sans-serif;font-weight:800;color:var(--deep);font-size:1rem;margin-bottom:.45rem}
+.method-card p{color:var(--muted);font-size:.84rem;line-height:1.65}
 .story-panel{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:1.2rem;align-items:stretch;background:var(--deep);color:#fff;border-radius:28px;padding:clamp(1.25rem,4vw,2.4rem);box-shadow:0 26px 70px rgba(16,24,47,.2)}
 .story-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:1rem}
 .story-badge strong{display:block;font-family:Inter,Poppins,system-ui,sans-serif;font-weight:800;font-size:1.45rem;margin-bottom:.25rem;color:#fff8ec;letter-spacing:0}
@@ -123,8 +137,7 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 .courses-head{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin-bottom:1rem}
 .courses-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
 
-.course-card{background:#fff;border:1px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:var(--shadow);transition:transform .16s,box-shadow .16s}
-.course-card:hover{transform:translateY(-3px);box-shadow:0 26px 60px rgba(16,24,47,.13)}
+.course-card{background:#fff;border:1px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:var(--shadow);transition:transform 420ms cubic-bezier(.22,.72,.22,1),box-shadow 420ms cubic-bezier(.22,.72,.22,1),border-color 420ms ease}
 .course-thumb{height:148px;display:flex;align-items:center;justify-content:center;font-size:3.2rem;position:relative}
 .course-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(16,24,47,.1));pointer-events:none}
 .course-body{padding:1.25rem}
@@ -162,8 +175,9 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 .footer-links{display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap}
 .footer-links a{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:.55rem .85rem;font-size:.78rem;font-weight:800}
 
-.hero-kicker,.hero-title,.hero-lead,.hero-actions,.hero-proof,.hero-showcase{
-  animation:homeHeroFadeUp 760ms cubic-bezier(.22,.72,.22,1) both;
+.hero-kicker,.hero-title,.hero-lead,.hero-actions,.hero-proof,.hero-showcase,.hero-art-frame{
+  animation:homeHeroFadeUp 900ms cubic-bezier(.16,.84,.24,1) both;
+  will-change:transform,opacity;
 }
 .hero-kicker{animation-delay:80ms}
 .hero-title{animation-delay:180ms}
@@ -171,24 +185,34 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 .hero-actions{animation-delay:420ms}
 .hero-proof{animation-delay:540ms}
 .hero-showcase{animation-delay:320ms}
+.hero-art-frame{animation-delay:420ms}
 @keyframes homeHeroFadeUp{
-  from{opacity:0;transform:translateY(20px)}
-  to{opacity:1;transform:translateY(0)}
+  from{opacity:0;transform:translate3d(0,24px,0) scale(.985)}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+@keyframes premiumGlowFloat{
+  0%,100%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(34px,22px,0) scale(1.08)}
+}
+@keyframes premiumBlobFloat{
+  0%,100%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(42px,-36px,0) scale(1.12)}
 }
 .reveal-ready{
   opacity:0;
-  transform:translateY(24px);
-  transition:opacity 700ms ease,transform 700ms ease;
+  transform:translate3d(0,28px,0) scale(.985);
+  transition:opacity 900ms cubic-bezier(.16,.84,.24,1),transform 900ms cubic-bezier(.16,.84,.24,1),box-shadow 420ms ease,border-color 420ms ease;
   transition-delay:var(--reveal-delay,0ms);
+  will-change:opacity,transform;
 }
 .reveal-ready.is-visible{
   opacity:1;
-  transform:translateY(0);
+  transform:translate3d(0,0,0) scale(1);
 }
 
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto}
-  .hero-kicker,.hero-title,.hero-lead,.hero-actions,.hero-proof,.hero-showcase{
+  .home-shell::before,.home-shell::after,.home-hero::before,.hero-kicker,.hero-title,.hero-lead,.hero-actions,.hero-proof,.hero-showcase,.hero-art-frame{
     animation:none;
   }
   .reveal-ready{
@@ -206,7 +230,7 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
   .hero-title{font-size:clamp(1.9rem,8.4vw,3rem);line-height:1.08}
   .hero-showcase{border-radius:24px}
   .hero-slide{min-height:330px}
-  .trust-strip,.benefit-grid,.story-panel,.home-footer-inner{grid-template-columns:1fr}
+  .trust-strip,.benefit-grid,.method-layout,.method-grid,.story-panel,.home-footer-inner{grid-template-columns:1fr}
   .hero-proof{grid-template-columns:1fr}
   .courses-head{display:block}
   .footer-links{justify-content:flex-start}
@@ -227,8 +251,8 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
   .slide-heading{font-size:clamp(1.55rem,7vw,2.05rem)}
   .slide-badge{border-radius:18px;line-height:1.4}
   .hero-proof{gap:.5rem}
-  .trust-strip,.benefit-section,.story-section,.courses-section{padding-left:.9rem;padding-right:.9rem}
-  .trust-item,.benefit-card{border-radius:18px}
+  .trust-strip,.benefit-section,.method-section,.story-section,.courses-section{padding-left:.9rem;padding-right:.9rem}
+  .trust-item,.benefit-card,.method-card{border-radius:18px}
   .story-panel{border-radius:22px}
   .courses-grid{grid-template-columns:1fr}
 }
@@ -486,7 +510,7 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
       <div class="hero-copy">
         <div class="hero-kicker">Academic coaching for clear thinking</div>
         <h1 class="hero-title">Learn with clarity, practice, and <span>confidence.</span></h1>
-        <p class="hero-lead">IdeaKDC helps students move beyond passive video watching with guided lessons, practice-focused learning, and course access built for serious study.</p>
+        <p class="hero-lead">IdeaKDC helps students move beyond passive video watching with concept-first teaching, daily practice, guided revision, doubt support, and a clear exam-oriented learning path.</p>
         <div class="hero-actions">
           <a class="hero-cta primary" href="#courses">Explore Courses</a>
           <button class="hero-cta secondary" onclick="startConvoReg(null)">New Student</button>
@@ -494,19 +518,22 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
         <div class="hero-proof">
           <div class="proof-pill">
             <div class="proof-num">Practice-led</div>
-            <div class="proof-text">Lessons designed for better recall.</div>
+            <div class="proof-text">Students apply concepts immediately so learning stays active.</div>
           </div>
           <div class="proof-pill">
-            <div class="proof-num">Course Access</div>
-            <div class="proof-text">Enroll, pay, and learn from one place.</div>
+            <div class="proof-num">Revision Ready</div>
+            <div class="proof-text">Clear checkpoints help students revisit weak topics before exams.</div>
           </div>
           <div class="proof-pill">
-            <div class="proof-num">Student Support</div>
-            <div class="proof-text">Help for login, payment, and access.</div>
+            <div class="proof-num">Progress Focus</div>
+            <div class="proof-text">A structured path keeps students moving lesson by lesson.</div>
           </div>
         </div>
       </div>
       <div class="hero-showcase">
+        <div class="hero-art-frame">
+          <img class="hero-art" src="assets/ideakdc-education-visual.svg" width="3840" height="2160" loading="lazy" decoding="async" alt="IdeaKDC guided learning dashboard illustration">
+        </div>
         <div class="hero-carousel" id="hero-carousel">
           <div class="hero-slide slide-1">
             <div class="slide-emoji">😴</div>
@@ -537,31 +564,60 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
     </section>
 
     <section class="trust-strip" aria-label="IdeaKDC trust points">
-      <div class="trust-item"><strong>Guided Study</strong><span>Structured course flow instead of random learning.</span></div>
-      <div class="trust-item"><strong>Practice Focus</strong><span>Built around understanding, memory, and application.</span></div>
-      <div class="trust-item"><strong>Secure Access</strong><span>Student login, enrollment, and approval flow remain in place.</span></div>
-      <div class="trust-item"><strong>Fast Support</strong><span>Help for course access, payments, and technical issues.</span></div>
+      <div class="trust-item"><strong>Guided Study</strong><span>Every course is arranged as a clear path from concept building to exam practice.</span></div>
+      <div class="trust-item"><strong>Practice Focus</strong><span>Students learn, revise, and solve questions so concepts stay longer in memory.</span></div>
+      <div class="trust-item"><strong>Doubt Support</strong><span>Support is available for course access, login, payments, and learning roadblocks.</span></div>
+      <div class="trust-item"><strong>Progress Mindset</strong><span>The experience encourages daily consistency, revision discipline, and confident preparation.</span></div>
     </section>
 
     <section class="benefit-section">
       <div class="section-eyebrow">Why students choose IdeaKDC</div>
-      <h2 class="section-title">A calm, focused way to study difficult topics.</h2>
-      <p class="section-intro">The homepage now reflects the same purpose as the learning system: less confusion, clearer steps, and a direct path from course discovery to enrollment.</p>
+      <h2 class="section-title">A calm, focused way to understand, practice, revise, and remember.</h2>
+      <p class="section-intro">IdeaKDC is designed for students who want more than lectures. The learning flow explains concepts clearly, gives practice at the right time, supports revision, and keeps preparation aligned with exams.</p>
       <div class="benefit-grid">
         <div class="benefit-card">
-          <div class="benefit-icon">🎯</div>
-          <h3>Clear Direction</h3>
-          <p>Students can quickly understand what IdeaKDC offers and move toward the right course.</p>
+          <div class="benefit-icon" aria-hidden="true"></div>
+          <h3>Concept Clarity</h3>
+          <p>Topics are taught step by step so students understand the reason behind each idea instead of only memorising answers.</p>
         </div>
         <div class="benefit-card">
-          <div class="benefit-icon">🧠</div>
-          <h3>Thinking Skills</h3>
-          <p>The messaging supports your existing promise of deeper understanding and stronger recall.</p>
+          <div class="benefit-icon" aria-hidden="true"></div>
+          <h3>Daily Practice</h3>
+          <p>Practice-first learning helps students check understanding immediately and build confidence through repeated application.</p>
         </div>
         <div class="benefit-card">
-          <div class="benefit-icon">🤝</div>
-          <h3>Supportive Journey</h3>
-          <p>Trust sections make the site feel more human, professional, and reassuring for parents and students.</p>
+          <div class="benefit-icon" aria-hidden="true"></div>
+          <h3>Guided Revision</h3>
+          <p>Revision points and course structure make it easier to return to weak chapters before tests and final exams.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="method-section">
+      <div class="section-eyebrow">The IdeaKDC method</div>
+      <h2 class="section-title">A complete learning path from first explanation to exam readiness.</h2>
+      <p class="section-intro">Students remember concepts longer when learning is connected: explanation, practice, correction, revision, doubt solving, and progress tracking all work together.</p>
+      <div class="method-layout">
+        <div class="method-visual">
+          <img src="assets/ideakdc-education-visual.svg" width="3840" height="2160" loading="lazy" decoding="async" alt="IdeaKDC practice and revision learning system">
+        </div>
+        <div class="method-grid">
+          <div class="method-card">
+            <h3>Teach the concept</h3>
+            <p>Each topic starts with clear explanation so students know what they are learning and why it matters.</p>
+          </div>
+          <div class="method-card">
+            <h3>Practice immediately</h3>
+            <p>Students solve questions while the concept is fresh, turning passive watching into active learning.</p>
+          </div>
+          <div class="method-card">
+            <h3>Revise with purpose</h3>
+            <p>Guided revision helps students revisit important points and strengthen weak areas before exams.</p>
+          </div>
+          <div class="method-card">
+            <h3>Track the journey</h3>
+            <p>A clear course path helps students and parents see what has been covered and what comes next.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -570,11 +626,11 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
       <div class="story-panel">
         <div class="story-badge">
           <strong>Creating Thoughtful Minds</strong>
-          <span>IdeaKDC keeps the focus on quality education, timely support, and a guided learning experience.</span>
+          <span>IdeaKDC keeps the focus on quality education, timely support, and a guided learning experience that helps students think clearly.</span>
         </div>
         <div class="story-copy">
           <h2>From watching lectures to actually remembering lessons.</h2>
-          <p>Students need more than content. They need a method, a clear next step, and confidence that the course they choose will help them practice while they learn.</p>
+          <p>Students need more than content. They need a method, a clear next step, regular practice, exam-oriented preparation, and confidence that doubts can be solved before they become fear.</p>
         </div>
       </div>
     </section>
@@ -584,6 +640,7 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
         <div>
           <div class="section-eyebrow">Available learning paths</div>
           <div class="section-title">सभी Courses</div>
+          <p class="section-intro">Choose a course, follow the lessons in order, practice consistently, and move toward stronger marks with a more organised study routine.</p>
         </div>
       </div>
       <div class="courses-grid" id="courses-grid"></div>
@@ -898,16 +955,16 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 let revealObserver = null;
 
 function observeRevealTargets(root = document) {
-  const targets = root.querySelectorAll('.trust-item,.benefit-card,.story-panel,.course-card,.home-footer');
+  const targets = root.querySelectorAll('.trust-item,.benefit-card,.method-visual,.method-card,.story-panel,.course-card,.home-footer');
   targets.forEach((el, index) => {
     if (el.dataset.revealBound) return;
     el.dataset.revealBound = 'true';
-    el.style.setProperty('--reveal-delay', `${(index % 4) * 120}ms`);
+    el.style.setProperty('--reveal-delay', `${(index % 4) * 110}ms`);
+    el.classList.add('reveal-ready');
     if (prefersReducedMotion || !revealObserver) {
       el.classList.add('is-visible');
       return;
     }
-    el.classList.add('reveal-ready');
     revealObserver.observe(el);
   });
 }
@@ -916,11 +973,9 @@ function initHomepageMotion() {
   if (!prefersReducedMotion && 'IntersectionObserver' in window) {
     revealObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('is-visible');
-        revealObserver.unobserve(entry.target);
+        entry.target.classList.toggle('is-visible', entry.isIntersecting);
       });
-    }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+    }, { threshold: 0.18, rootMargin: '0px 0px -6% 0px' });
   }
   observeRevealTargets(document);
 }
