@@ -92,6 +92,14 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 .next-graphic::after{content:'';position:absolute;left:18%;right:18%;bottom:22%;height:18%;border-radius:999px;background:radial-gradient(circle,#7ab7ff 0%,rgba(122,183,255,0) 68%);filter:blur(14px)}
 .next-copy h2{font-size:clamp(2rem,5vw,4rem);line-height:1.05;letter-spacing:-.035em;margin-bottom:.8rem;color:#10182f}.next-copy p{font-size:clamp(1rem,1.8vw,1.2rem);line-height:1.75;color:#4f4b55}
 @keyframes cinemaGlowDrift{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(34px,-24px,0) scale(1.08)}}
+.cinematic-hero.no-gsap .cinema-book{opacity:0;transform:translate3d(0,24px,0) scale(.82);transition:opacity .3s ease,transform .3s ease}
+.cinematic-hero.no-gsap.is-loaded .cinema-launch .cinema-book{opacity:1;transform:translate3d(0,0,0) scale(1)}
+.cinematic-hero.no-gsap .floating-object{opacity:0;transform:translate3d(var(--fly-x,0),var(--fly-y,120px),0) scale(.72);transition:opacity .3s ease,transform .3s cubic-bezier(.2,.85,.25,1.2);transition-delay:var(--fly-delay,0ms)}
+.cinematic-hero.no-gsap.is-loaded .cinema-launch.is-active .floating-object{opacity:1;transform:translate3d(0,0,0) scale(1)}
+.cinematic-hero.no-gsap .portal-page,.cinematic-hero.no-gsap .teacher-character,.cinematic-hero.no-gsap .cinema-word,.cinematic-hero.no-gsap .teacher-copy p,.cinematic-hero.no-gsap .next-panel{transition:opacity .32s ease,transform .32s cubic-bezier(.2,.85,.25,1.12);transition-delay:var(--stage-delay,0ms)}
+.cinematic-hero.no-gsap .cinema-panel.is-active .portal-page{opacity:1;transform:translateX(-50%) translateY(-12px) scaleY(1)}
+.cinematic-hero.no-gsap .cinema-panel.is-active .cinema-word,.cinematic-hero.no-gsap .cinema-panel.is-active .teacher-copy p,.cinematic-hero.no-gsap .cinema-panel.is-active .teacher-character{opacity:1;transform:translate3d(0,0,0) scale(1)}
+.cinematic-hero.no-gsap .cinema-panel.is-active .next-panel{opacity:1;transform:translate3d(0,0,0) scale(1)}
 @media (max-width:760px){.cinema-layout.two-col,.next-panel{grid-template-columns:1fr}.book-scene{height:58vh}.cinema-book{height:min(56vmin,420px)}.floating-object{width:68px;border-radius:18px}.object-phone{left:1%;top:17%}.object-youtube{right:1%;top:16%}.object-notes{left:3%;bottom:18%}.object-teacher{right:3%;bottom:18%}.object-papers{right:33%;bottom:5%}.teacher-copy{text-align:center}.teacher-copy p{font-size:clamp(1rem,5vw,1.45rem)}.teacher-character{width:min(48vmin,260px);height:min(66vmin,360px)}.cinema-word{font-size:clamp(2.7rem,17vw,5rem)}}
 @media (prefers-reduced-motion:reduce){.cinema-panel::before,.cinema-panel::after{animation:none}.floating-object,.teacher-character,.portal-page,.cinema-word,.teacher-copy p,.next-panel{will-change:auto}}
 
@@ -952,6 +960,147 @@ body.has-bottom-nav{padding-bottom:var(--bot-h)}
 ════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script>
+(function initCinematicHeroEarly(){
+  const hero = document.querySelector('.cinematic-hero');
+  if (!hero || window.__ideakdcCinematicStarted) return;
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const gsapLib = window.gsap;
+  const scrollTrigger = window.ScrollTrigger;
+  const flyFrom = {
+    left: { x: -220, y: 30 },
+    right: { x: 220, y: 20 },
+    top: { x: 0, y: -180 },
+    bottom: { x: 0, y: 180 },
+    'right-bottom': { x: 220, y: 160 }
+  };
+
+  function showReducedMotionState() {
+    hero.querySelectorAll('.floating-object,.portal-page,.teacher-character,.cinema-word,.teacher-copy p,.next-panel')
+      .forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+  }
+
+  function runFallbackHero() {
+    hero.classList.add('no-gsap');
+    const launchObjects = [...hero.querySelectorAll('.cinema-launch .floating-object')];
+    launchObjects.forEach((object, index) => {
+      const point = flyFrom[object.dataset.fly] || { x: 0, y: 140 };
+      object.style.setProperty('--fly-x', `${point.x}px`);
+      object.style.setProperty('--fly-y', `${point.y}px`);
+      object.style.setProperty('--fly-delay', `${300 + index * 160}ms`);
+    });
+    hero.querySelectorAll('.cinema-word,.teacher-copy p').forEach((el, index) => {
+      el.style.setProperty('--stage-delay', `${(index % 5) * 130}ms`);
+    });
+
+    requestAnimationFrame(() => hero.classList.add('is-loaded'));
+    if (!('IntersectionObserver' in window)) {
+      hero.querySelectorAll('.cinema-panel').forEach(panel => panel.classList.add('is-active'));
+      return;
+    }
+
+    const fallbackObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => entry.target.classList.toggle('is-active', entry.isIntersecting));
+    }, { threshold: .58 });
+    hero.querySelectorAll('.cinema-panel').forEach(panel => fallbackObserver.observe(panel));
+  }
+
+  function runGsapHero() {
+    window.__ideakdcCinematicStarted = true;
+    gsapLib.registerPlugin(scrollTrigger);
+    const launchPanel = hero.querySelector('.cinema-launch');
+    const launchObjects = gsapLib.utils.toArray('.cinema-launch .floating-object');
+    const launchBook = hero.querySelector('.cinema-launch .cinema-book');
+
+    // GSAP animation stage 0: the oversized book lands first in 0.3 seconds.
+    gsapLib.fromTo(launchBook, { autoAlpha: 0, scale: .82, y: 24 }, {
+      autoAlpha: 1,
+      scale: 1,
+      y: 0,
+      duration: .3,
+      ease: 'power2.out'
+    });
+
+    // GSAP animation stage 1: learning objects fly around the book one by one.
+    const loadTl = gsapLib.timeline({ defaults: { duration: .3, ease: 'back.out(1.15)' }, delay: .3 });
+    gsapLib.set(launchObjects, { autoAlpha: 0, scale: .72 });
+    launchObjects.forEach((object, index) => {
+      loadTl.fromTo(object, flyFrom[object.dataset.fly] || { x: 0, y: 140 }, {
+        x: 0,
+        y: 0,
+        autoAlpha: 1,
+        scale: 1,
+        filter: 'drop-shadow(0 0 18px rgba(36,88,255,.28))'
+      }, index * .16);
+    });
+
+    // GSAP animation stage 2: first scroll returns every floating item into the book.
+    gsapLib.timeline({
+      defaults: { duration: .3, ease: 'power2.inOut' },
+      scrollTrigger: { trigger: launchPanel, start: 'top top', end: '+=100%', pin: true, scrub: .35, anticipatePin: 1 }
+    }).to(launchObjects, {
+      autoAlpha: 0,
+      scale: .18,
+      x: (i, el) => el.classList.contains('object-youtube') || el.classList.contains('object-teacher') ? -260 : 260,
+      y: (i, el) => el.classList.contains('object-papers') ? 300 : 120,
+      stagger: .025
+    });
+
+    // GSAP animation stage 3: the book page opens upward as a portal, with no text.
+    gsapLib.timeline({
+      defaults: { duration: .3, ease: 'power2.out' },
+      scrollTrigger: { trigger: '.cinema-portal', start: 'top top', end: '+=100%', pin: true, scrub: .3, anticipatePin: 1 }
+    }).fromTo('.cinema-portal .portal-page', { autoAlpha: 0, scaleY: .02, y: 40 }, {
+      autoAlpha: 1,
+      scaleY: 1,
+      y: -12
+    });
+
+    // GSAP animation stage 4: exam anxiety text appears word by word.
+    gsapLib.timeline({
+      defaults: { duration: .22, ease: 'power2.out' },
+      scrollTrigger: { trigger: '.cinema-question-panel', start: 'top top', end: '+=100%', pin: true, scrub: .35, anticipatePin: 1 }
+    }).to('.cinema-question-panel .cinema-word', { autoAlpha: 1, y: 0, scale: 1, stagger: .12 });
+
+    // GSAP animation stage 5: forgetfulness text appears word by word.
+    gsapLib.timeline({
+      defaults: { duration: .22, ease: 'power2.out' },
+      scrollTrigger: { trigger: '.cinema-forget-panel', start: 'top top', end: '+=100%', pin: true, scrub: .35, anticipatePin: 1 }
+    }).to('.cinema-forget-panel .cinema-word', { autoAlpha: 1, y: 0, scale: 1, stagger: .13 });
+
+    // GSAP animation stage 6: teacher and teaching lines appear in separate columns.
+    gsapLib.timeline({
+      defaults: { duration: .28, ease: 'power2.out' },
+      scrollTrigger: { trigger: '.cinema-teacher-panel', start: 'top top', end: '+=100%', pin: true, scrub: .35, anticipatePin: 1 }
+    }).to('.cinema-teacher-panel .teacher-character', { autoAlpha: 1, y: 0, scale: 1 })
+      .to('.cinema-teacher-panel .teacher-copy p', { autoAlpha: 1, y: 0, stagger: .13 }, .12);
+
+    // GSAP animation stage 7: the next section pops in with graphic first, then copy.
+    gsapLib.timeline({
+      defaults: { duration: .32, ease: 'back.out(1.25)' },
+      scrollTrigger: { trigger: '.cinema-next-panel', start: 'top top', end: '+=100%', pin: true, scrub: .35, anticipatePin: 1 }
+    }).to('.cinema-next-panel .next-panel', { autoAlpha: 1, y: 0, scale: 1 })
+      .fromTo('.cinema-next-panel .next-graphic', { y: 30, scale: .9 }, { y: 0, scale: 1 }, 0)
+      .fromTo('.cinema-next-panel .next-copy', { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0 }, .18);
+
+    scrollTrigger.refresh();
+  }
+
+  if (reduceMotion) {
+    window.__ideakdcCinematicStarted = true;
+    showReducedMotionState();
+    return;
+  }
+
+  if (gsapLib && scrollTrigger) {
+    runGsapHero();
+  } else {
+    window.__ideakdcCinematicStarted = true;
+    runFallbackHero();
+  }
+})();
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -1113,6 +1262,7 @@ initHomepageMotion();
 function initCinematicHero() {
   const hero = document.querySelector('.cinematic-hero');
   if (!hero) return;
+  if (window.__ideakdcCinematicStarted) return;
 
   const gsapLib = window.gsap;
   const scrollTrigger = window.ScrollTrigger;
