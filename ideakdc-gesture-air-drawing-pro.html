@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ideaKDC Gesture Air Drawing Pro</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{height:100vh;overflow:hidden;background:#05070d;color:white}
+#camera,#drawCanvas{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover}
+#camera{transform:scaleX(-1);filter:brightness(.82) contrast(1.1)}
+#drawCanvas{z-index:2;pointer-events:none}
+.top{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:5;text-align:center;padding:12px 18px;border-radius:18px;background:rgba(0,0,0,.35);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.25)}
+.top h1{font-size:clamp(20px,4.8vw,44px);text-shadow:0 0 18px #ff38f8,0 0 35px #ff38f8}
+.top p{font-size:13px;opacity:.85;margin-top:4px}
+.controls{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:96%}
+.glass-btn{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.45);background:linear-gradient(135deg,rgba(255,255,255,.24),rgba(255,255,255,.08));color:white;padding:12px 15px;border-radius:15px;backdrop-filter:blur(12px);font-weight:800;cursor:pointer;box-shadow:0 12px 25px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.55)}
+.glass-btn::before{content:"";position:absolute;inset:-80% -40%;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.75),transparent 65%);transform:translateX(-80%) rotate(12deg);animation:shine 3s linear infinite}
+@keyframes shine{to{transform:translateX(80%) rotate(12deg)}}
+.status{position:fixed;right:14px;top:14px;z-index:7;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(12px);padding:10px 13px;border-radius:14px;font-size:13px;max-width:290px}
+.cursor{position:fixed;z-index:4;width:24px;height:24px;border-radius:50%;border:2px solid white;box-shadow:0 0 18px #ff38f8,0 0 32px #ff38f8;pointer-events:none;transform:translate(-50%,-50%);display:none}
+.note{position:fixed;left:16px;bottom:98px;z-index:5;max-width:480px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:12px;backdrop-filter:blur(12px);font-size:13px;line-height:1.45}
+.startPanel{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);padding:22px}
+.startCard{width:min(560px,94vw);border:1px solid rgba(255,255,255,.28);background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.06));border-radius:24px;padding:28px;text-align:center;box-shadow:0 28px 80px rgba(0,0,0,.45)}
+.startCard h2{font-size:31px;margin-bottom:10px;text-shadow:0 0 20px #ff38f8}
+.startCard p{opacity:.9;line-height:1.5;margin-bottom:18px}
+.warning{margin-top:16px;padding:12px;border-radius:14px;background:rgba(255,170,0,.12);border:1px solid rgba(255,204,0,.35);font-size:13px;text-align:left}
+@media(max-width:650px){.note{bottom:132px;left:10px;right:10px;max-width:none}.controls{bottom:10px}.status{top:8px;right:8px}.top{top:54px}}
+</style>
+</head>
+<body>
+
+<video id="camera" autoplay playsinline muted></video>
+<canvas id="drawCanvas"></canvas>
+<div class="cursor" id="cursor"></div>
+
+<div class="top">
+  <h1>ideaKDC Gesture Draw Pro</h1>
+  <p>1 finger write • 2 fingers thick write • 3 fingers hold & move • palm erase</p>
+</div>
+
+<div class="status" id="status">Ready</div>
+
+<div class="note">
+  <b>Gestures:</b><br>
+  ☝️ <b>One index finger</b> = normal writing<br>
+  ✌️ <b>Two fingers</b> = thick writing / bold marker<br>
+  🤟 <b>Three fingers</b> = hold nearest written object and move it here-there<br>
+  🖐️ <b>Open palm</b> = erase by rubbing
+</div>
+
+<div class="controls">
+  <button class="glass-btn" onclick="setColor('#ff38f8')">Pink</button>
+  <button class="glass-btn" onclick="setColor('#00f7ff')">Cyan</button>
+  <button class="glass-btn" onclick="setColor('#ffe66d')">Gold</button>
+  <button class="glass-btn" onclick="undo()">Undo</button>
+  <button class="glass-btn" onclick="clearCanvas()">Clear</button>
+</div>
+
+<div class="startPanel" id="startPanel">
+  <div class="startCard">
+    <h2>Start Camera Drawing</h2>
+    <p>Camera access works only on <b>HTTPS</b> or <b>localhost</b>. Android file preview showing <b>content://</b> blocks camera.</p>
+    <button class="glass-btn" onclick="start()">Start Camera</button>
+    <div class="warning" id="errorBox">
+      Upload this file to GitHub Pages / Netlify / betalaunch.ideakdc.in and open that HTTPS link.
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+<script>
+const video = document.getElementById("camera");
+const canvas = document.getElementById("drawCanvas");
+const ctx = canvas.getContext("2d");
+const statusBox = document.getElementById("status");
+const cursor = document.getElementById("cursor");
+const startPanel = document.getElementById("startPanel");
+const errorBox = document.getElementById("errorBox");
+
+let color = "#ff38f8";
+let started = false;
+let strokes = [];
+let activeStroke = null;
+let lastPoint = null;
+let selectedStroke = null;
+let grabPoint = null;
+let erasePoint = null;
+
+function resizeCanvas(){
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  redraw();
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+function screenPoint(lm){
+  return { x:(1-lm.x)*window.innerWidth, y:lm.y*window.innerHeight };
+}
+function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
+
+function fingerCount(hand){
+  let count = 0;
+  if(hand[8].y < hand[6].y) count++;
+  if(hand[12].y < hand[10].y) count++;
+  if(hand[16].y < hand[14].y) count++;
+  if(hand[20].y < hand[18].y) count++;
+  return count;
+}
+function isOpenPalm(hand){
+  const count = fingerCount(hand);
+  const thumbAway = Math.abs(hand[4].x - hand[9].x) > 0.12;
+  return count >= 4 && thumbAway;
+}
+function palmCenter(hand){
+  const ids = [0,5,9,13,17];
+  let sx=0, sy=0;
+  ids.forEach(id=>{sx+=hand[id].x; sy+=hand[id].y});
+  return screenPoint({x:sx/ids.length,y:sy/ids.length});
+}
+
+function drawStroke(stroke, highlight=false){
+  if(stroke.points.length < 2) return;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  const drawLine = (strokeStyle, lineWidth, blur) => {
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth;
+    ctx.shadowColor = stroke.color;
+    ctx.shadowBlur = blur;
+    ctx.beginPath();
+    ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+    for(let i=1;i<stroke.points.length;i++) ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+    ctx.stroke();
+  };
+
+  drawLine(stroke.color, stroke.width + 16, 28);
+  drawLine(stroke.color, stroke.width + 5, 18);
+  drawLine("rgba(255,255,255,.95)", Math.max(2,stroke.width/3), 7);
+
+  if(highlight){
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(255,230,109,.85)";
+    ctx.lineWidth = stroke.width + 26;
+    ctx.setLineDash([12,14]);
+    ctx.beginPath();
+    ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+    for(let i=1;i<stroke.points.length;i++) ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+function redraw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  strokes.forEach(s=>drawStroke(s, s === selectedStroke));
+}
+function addPointToStroke(point, thick=false){
+  if(!activeStroke){
+    activeStroke = { color, width: thick ? 22 : 10, points:[point] };
+    strokes.push(activeStroke);
+  }else{
+    const last = activeStroke.points[activeStroke.points.length-1];
+    if(dist(last, point) > 3) activeStroke.points.push(point);
+  }
+  redraw();
+}
+function stopWriting(){
+  activeStroke = null;
+  lastPoint = null;
+}
+function nearestStroke(point){
+  let best = null;
+  let bestD = 999999;
+  for(const s of strokes){
+    for(const p of s.points){
+      const d = dist(point,p);
+      if(d < bestD){ bestD = d; best = s; }
+    }
+  }
+  return bestD < 90 ? best : null;
+}
+function moveStroke(stroke, dx, dy){
+  stroke.points.forEach(p=>{p.x += dx; p.y += dy});
+}
+function eraseAt(point, radius=55){
+  strokes = strokes.map(s => {
+    const pts = s.points.filter(p => dist(p, point) > radius);
+    return {...s, points: pts};
+  }).filter(s => s.points.length > 1);
+  redraw();
+}
+
+function setCursor(point, mode){
+  cursor.style.display = "block";
+  cursor.style.left = point.x + "px";
+  cursor.style.top = point.y + "px";
+  cursor.style.width = mode==="erase" ? "95px" : mode==="move" ? "60px" : mode==="thick" ? "36px" : "24px";
+  cursor.style.height = cursor.style.width;
+  cursor.style.background = mode==="write" ? color : "rgba(255,255,255,.12)";
+  cursor.style.borderColor = mode==="erase" ? "#ffe66d" : mode==="move" ? "#00f7ff" : "white";
+  cursor.style.boxShadow = mode==="erase" ? "0 0 22px #ffe66d,0 0 46px #ffe66d" :
+                           mode==="move" ? "0 0 22px #00f7ff,0 0 46px #00f7ff" :
+                           "0 0 18px #ff38f8,0 0 32px #ff38f8";
+}
+
+function onResults(results){
+  if(!results.multiHandLandmarks || results.multiHandLandmarks.length === 0){
+    statusBox.textContent = "No hand detected";
+    cursor.style.display = "none";
+    stopWriting();
+    selectedStroke = null;
+    grabPoint = null;
+    erasePoint = null;
+    redraw();
+    return;
+  }
+
+  const hand = results.multiHandLandmarks[0];
+  const index = screenPoint(hand[8]);
+  const middle = screenPoint(hand[12]);
+  const palm = palmCenter(hand);
+  const fingers = fingerCount(hand);
+
+  if(isOpenPalm(hand)){
+    statusBox.textContent = "ERASER ON — rub with palm";
+    setCursor(palm, "erase");
+    eraseAt(palm, 58);
+    stopWriting();
+    selectedStroke = null;
+    grabPoint = null;
+    return;
+  }
+
+  erasePoint = null;
+
+  if(fingers >= 3){
+    statusBox.textContent = "MOVE MODE — hold object with 3 fingers";
+    const grip = {
+      x:(index.x + middle.x + screenPoint(hand[16]).x)/3,
+      y:(index.y + middle.y + screenPoint(hand[16]).y)/3
+    };
+    setCursor(grip, "move");
+    stopWriting();
+
+    if(!selectedStroke) selectedStroke = nearestStroke(grip);
+    if(selectedStroke){
+      if(grabPoint){
+        moveStroke(selectedStroke, grip.x - grabPoint.x, grip.y - grabPoint.y);
+      }
+      grabPoint = grip;
+      redraw();
+    }
+    return;
+  }
+
+  selectedStroke = null;
+  grabPoint = null;
+
+  if(fingers === 2){
+    statusBox.textContent = "THICK WRITE — two fingers";
+    setCursor(index, "thick");
+    addPointToStroke(index, true);
+    return;
+  }
+
+  if(fingers === 1){
+    statusBox.textContent = "WRITE — one finger";
+    setCursor(index, "write");
+    addPointToStroke(index, false);
+    return;
+  }
+
+  statusBox.textContent = "Show 1 finger to write / 2 thick / 3 move / palm erase";
+  cursor.style.display = "none";
+  stopWriting();
+}
+
+async function start(){
+  if(started) return;
+  started = true;
+  statusBox.textContent = "Starting camera...";
+  errorBox.innerHTML = "Requesting camera permission...";
+
+  const isSecure = location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  if(!isSecure){
+    statusBox.textContent = "Blocked: not HTTPS";
+    errorBox.innerHTML = "<b>Problem:</b> You opened this as <b>" + location.protocol + "</b>.<br><br><b>Fix:</b> Upload to GitHub Pages / Netlify / betalaunch.ideakdc.in and open the HTTPS link.";
+    started = false;
+    return;
+  }
+
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: {ideal: 1280}, height: {ideal: 720} },
+      audio: false
+    });
+    video.srcObject = stream;
+    await video.play();
+
+    const hands = new Hands({
+      locateFile: file => "https://cdn.jsdelivr.net/npm/@mediapipe/hands/" + file
+    });
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.72,
+      minTrackingConfidence: 0.72
+    });
+    hands.onResults(onResults);
+
+    async function frameLoop(){
+      if(video.readyState >= 2) await hands.send({image: video});
+      requestAnimationFrame(frameLoop);
+    }
+    frameLoop();
+
+    startPanel.style.display = "none";
+    statusBox.textContent = "Camera ready";
+  }catch(err){
+    statusBox.textContent = "Camera blocked";
+    errorBox.innerHTML = "<b>Error:</b> " + err.name + ": " + err.message + "<br><br><b>Fix:</b> Chrome → site settings → Camera → Allow. Open from HTTPS/localhost.";
+    started = false;
+  }
+}
+
+function setColor(c){ color = c; }
+function undo(){ strokes.pop(); selectedStroke=null; redraw(); }
+function clearCanvas(){ strokes=[]; selectedStroke=null; redraw(); }
+</script>
+</body>
+</html>
