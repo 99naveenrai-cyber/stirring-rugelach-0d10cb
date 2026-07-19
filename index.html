@@ -1556,6 +1556,9 @@ function groupContentIntoCourses(items) {
       it.courseThumbnailUrl || it.courseThumbnail || it.courseImage || it.coursePoster ||
       it.courseImageUrl || it.coverImage || it.coverUrl || it.bannerUrl || ''
     );
+    const generatedThumbnail = youtubeThumbnailUrl(normalizedVideoId || normalizedFirstVideoId);
+    const lessonThumbnail = normalizedThumbnail || generatedThumbnail;
+    const courseThumbnail = normalizedCourseThumbnail || lessonThumbnail;
     const normalizedDesc = it.description || it.desc || '';
     const normalizedCourseFaqs = normalizedFaqs(it);
     const normalizedSequence = Number.isFinite(Number(it.sequenceNumber)) ? Number(it.sequenceNumber) :
@@ -1575,8 +1578,8 @@ function groupContentIntoCourses(items) {
         color: SUBJECT_COLOR[it.subject] || '#e3f2fd',
         desc: normalizedDesc || `${it.subject} — सभी chapters और topics एक जगह।`,
         price: coursePriceFrom(it.price),
-        thumbnailUrl: normalizedCourseThumbnail || normalizedThumbnail,
-        courseThumbnailUrl: normalizedCourseThumbnail || normalizedThumbnail,
+        thumbnailUrl: courseThumbnail,
+        courseThumbnailUrl: courseThumbnail,
         firstVideoId: normalizedFirstVideoId,
         videoCount: Number(it.videoCount || 0),
         contentType: normalizedContentType,
@@ -1586,8 +1589,8 @@ function groupContentIntoCourses(items) {
     }
     if (!groups[key].name && (it.courseTitle || it.title)) groups[key].name = it.courseTitle || it.title;
     if (it.price === 0 || it.price) groups[key].price = Number(it.price);
-    if (!groups[key].courseThumbnailUrl && (normalizedCourseThumbnail || normalizedThumbnail)) groups[key].courseThumbnailUrl = normalizedCourseThumbnail || normalizedThumbnail;
-    if (!groups[key].thumbnailUrl && (normalizedCourseThumbnail || normalizedThumbnail)) groups[key].thumbnailUrl = normalizedCourseThumbnail || normalizedThumbnail;
+    if (!groups[key].courseThumbnailUrl && courseThumbnail) groups[key].courseThumbnailUrl = courseThumbnail;
+    if (!groups[key].thumbnailUrl && courseThumbnail) groups[key].thumbnailUrl = courseThumbnail;
     if (!groups[key].firstVideoId && normalizedFirstVideoId) groups[key].firstVideoId = normalizedFirstVideoId;
     if ((!groups[key].desc || groups[key].desc.includes('सभी chapters')) && normalizedDesc) groups[key].desc = normalizedDesc;
     if (!groups[key].faqs.length && normalizedCourseFaqs.length) groups[key].faqs = normalizedCourseFaqs;
@@ -1602,7 +1605,7 @@ function groupContentIntoCourses(items) {
       playlistId: it.playlistId || '',
       playlistTitle: it.playlistTitle || it.playlistName || '',
       playlistDesc: it.playlistDescription || '',
-      thumbnailUrl: normalizedThumbnail,
+      thumbnailUrl: lessonThumbnail,
       firstVideoId: normalizedFirstVideoId,
       videoCount: Number(it.videoCount || 0),
       contentType: normalizedContentType,
@@ -1722,6 +1725,11 @@ function normalizeImageUrl(value) {
   return url;
 }
 
+function youtubeThumbnailUrl(videoId, quality = 'maxresdefault') {
+  const id = extractYouTubeVideoId(videoId || '');
+  return id ? `https://img.youtube.com/vi/${id}/${quality}.jpg` : '';
+}
+
 function imageFallbackUrl() {
   return 'assets/course-thumbnail-fallback.svg';
 }
@@ -1732,7 +1740,10 @@ function getLessonThumbnail(lesson = {}) {
     lesson.youtubeThumbnail || lesson.videoThumbnail || lesson.videoThumb || lesson.thumb || ''
   );
   if (stored) return stored;
-  return '';
+  return youtubeThumbnailUrl(
+    lesson.vid || lesson.videoId || lesson.youtubeVideoId || lesson.firstVideoId ||
+    lesson.videoUrl || lesson.youtubeUrl || lesson.url || ''
+  );
 }
 
 function getCourseThumbnail(course = {}) {
@@ -1746,6 +1757,8 @@ function getCourseThumbnail(course = {}) {
     course.youtubeThumbnail || course.videoThumbnail || course.videoThumb || course.thumb || ''
   );
   if (uploaded) return uploaded;
+  const generated = youtubeThumbnailUrl(course.firstVideoId || course.videoId || course.youtubeVideoId || course.youtubeUrl || course.videoUrl || '');
+  if (generated) return generated;
   const videos = course.videos || [];
   const storedLesson = videos.find(v =>
     v.thumbnailUrl || v.thumbnail || v.imageUrl || v.image || v.poster ||

@@ -135,7 +135,7 @@ function coursePriceFrom(value) {
 function firstSafeThumbnail(candidates, protectedVideoId) {
   for (const candidate of candidates) {
     const normalized = normalizeImageUrl(candidate || "");
-    if (normalized && !thumbnailLeaksVideoId(normalized, protectedVideoId)) return normalized;
+    if (normalized) return normalized;
   }
   return "";
 }
@@ -158,7 +158,7 @@ function publicLessonThumbnail(data, protectedVideoId = "") {
     data.thumbnailUrl || data.thumbnail || data.imageUrl || data.image || data.poster ||
     data.youtubeThumbnail || data.videoThumbnail || data.videoThumb || data.thumb || ""
   );
-  return thumbnailLeaksVideoId(normalized, protectedVideoId) ? "" : normalized;
+  return normalized;
 }
 
 function youtubeThumbnailUrl(videoId, quality = "maxresdefault") {
