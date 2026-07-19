@@ -83,16 +83,22 @@ function extractYouTubeVideoId(value) {
 function normalizeImageUrl(value) {
   const url = String(value || "").trim();
   if (!url) return "";
+  if (isMissingThumbnailValue(url)) return "";
   if (/^(blob:|data:|file:)/i.test(url)) return "";
   if (/^[a-zA-Z]:[\\/]/.test(url) || url.startsWith("\\\\")) return "";
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:") return "";
-    if (isDirectYoutubeThumbnailHost(parsed.hostname) || /youtube\.com$|youtube-nocookie\.com$|youtu\.be$/i.test(parsed.hostname)) return "";
+    if (!isDirectYoutubeThumbnailHost(parsed.hostname) && /youtube\.com$|youtube-nocookie\.com$|youtu\.be$/i.test(parsed.hostname)) return "";
     return parsed.toString();
   } catch (error) {
     return "";
   }
+}
+
+function isMissingThumbnailValue(value) {
+  const text = String(value || "").trim().toLowerCase();
+  return !text || text === "-" || text === "pending-repair" || text === "pending" || text === "null" || text === "undefined";
 }
 
 function isDirectYoutubeThumbnailHost(hostname = "") {
@@ -155,6 +161,11 @@ function publicLessonThumbnail(data, protectedVideoId = "") {
   return thumbnailLeaksVideoId(normalized, protectedVideoId) ? "" : normalized;
 }
 
+function youtubeThumbnailUrl(videoId, quality = "maxresdefault") {
+  const id = extractYouTubeVideoId(videoId);
+  return id ? `https://img.youtube.com/vi/${id}/${quality}.jpg` : "";
+}
+
 function protectedVideoIdFromContent(data) {
   return resolveProtectedVideoSource(data).videoId;
 }
@@ -209,6 +220,14 @@ function isFirebaseStorageThumbnailUrl(url) {
   return Boolean(value) &&
     value.includes("firebasestorage.googleapis.com") &&
     value.includes("/course-thumbnails%2F");
+}
+
+function isDisplayThumbnailUrl(url) {
+  return Boolean(normalizeImageUrl(url));
+}
+
+function shouldReplaceThumbnail(url) {
+  return !isDisplayThumbnailUrl(url);
 }
 
 function isPublicThumbnailCandidate(url, protectedVideoId = "") {
@@ -426,8 +445,9 @@ function contentToPublicCourses(items) {
     const legacyGroupId = data.playlistId ? `legacy_playlist_${data.playlistId}` : `legacy_single_${data.id}`;
     const key = String(data.courseId || legacyGroupId);
     const fullVideoId = protectedVideoIdFromContent(data);
-    const courseThumb = publicContentThumbnail(data, fullVideoId);
-    const lessonThumb = publicLessonThumbnail(data, fullVideoId) || courseThumb;
+    const generatedThumb = youtubeThumbnailUrl(fullVideoId);
+    const courseThumb = publicContentThumbnail(data, fullVideoId) || generatedThumb;
+    const lessonThumb = publicLessonThumbnail(data, fullVideoId) || generatedThumb || courseThumb;
     const faqs = normalizeFaqs(data);
     if (!groups[key]) {
       groups[key] = {
@@ -839,13 +859,6 @@ exports.repairProtectedCourseThumbnails = onCall({
     .map((doc) => ({ doc, id: doc.id, data: doc.data() || {} }))
     .filter((item) => !retrySet.size || retrySet.has(item.id));
 
-  const byCourse = new Map();
-  for (const item of docs) {
-    const courseId = contentCourseId(item.id, item.data);
-    if (!byCourse.has(courseId)) byCourse.set(courseId, []);
-    byCourse.get(courseId).push(item);
-  }
-
   const stats = {
     totalScanned: docs.length,
     repaired: 0,
@@ -856,186 +869,95 @@ exports.repairProtectedCourseThumbnails = onCall({
     failedRecords: []
   };
 
-  for (const [courseId, courseDocs] of byCourse.entries()) {
-    let courseThumbnail = "";
-    const existingCourseDoc = courseDocs.find((item) => {
-      const protectedId = resolveProtectedVideoSource(item.data, item.id).videoId;
-      return isFirebaseStorageThumbnailUrl(item.data.courseThumbnailUrl) ||
-        isFirebaseStorageThumbnailUrl(item.data.thumbnailUrl) ||
-        Boolean(existingCourseThumbnail(item.data, protectedId)) ||
-        Boolean(serverCopySourceThumbnail(item.data, protectedId).url);
+  for (const item of docs) {
+    const data = item.data;
+    const courseId = contentCourseId(item.id, data);
+    const source = resolveProtectedVideoSource(data, item.id);
+    const protectedId = source.videoId;
+    logger.info("[THUMB_SOURCE_CANDIDATES]", {
+      courseId,
+      contentId: item.id,
+      contentType: data.courseType || data.contentType || data.type || "",
+      hasYoutubeVideoId: Boolean(data.youtubeVideoId),
+      hasVideoId: Boolean(data.videoId),
+      hasYoutubeUrl: Boolean(data.youtubeUrl),
+      hasVideoUrl: Boolean(data.videoUrl),
+      hasSourceUrl: Boolean(data.sourceUrl),
+      hasPlaybackUrl: Boolean(data.playbackUrl),
+      hasEmbedUrl: Boolean(data.embedUrl),
+      hasUrl: Boolean(data.url),
+      lessonIdLooksLikeYoutubeId: YOUTUBE_ID_PATTERN.test(String(data.lessonId || "")),
+      documentIdLooksLikeYoutubeId: YOUTUBE_ID_PATTERN.test(String(item.id || ""))
     });
 
-    if (existingCourseDoc) {
-      const protectedId = resolveProtectedVideoSource(existingCourseDoc.data, existingCourseDoc.id).videoId;
-      const existing = existingCourseThumbnail(existingCourseDoc.data, protectedId);
-      if (isFirebaseStorageThumbnailUrl(existing)) {
-        courseThumbnail = existing;
-      } else if (existing) {
-        try {
-          courseThumbnail = await copyPublicImageToStorage(existing, courseId, existingCourseDoc.id, "course");
-          stats.repairable++;
-        } catch (error) {
-          logger.warn("Course thumbnail copy failed", { courseId, contentId: existingCourseDoc.id, reason: error.message });
-        }
-      } else {
-        const source = serverCopySourceThumbnail(existingCourseDoc.data, protectedId);
-        if (source.url) {
-          try {
-            courseThumbnail = await copyPublicImageToStorage(source.url, courseId, existingCourseDoc.id, "course");
-            stats.repairable++;
-            logger.info("Course thumbnail copied from existing source URL", {
-              courseId,
-              contentId: existingCourseDoc.id,
-              sourceType: source.directYoutube ? "direct-youtube-thumbnail" : "public-image"
-            });
-          } catch (error) {
-            logger.warn("Course thumbnail source copy failed", { courseId, contentId: existingCourseDoc.id, reason: error.message });
-          }
-        }
-      }
+    const current = normalizeImageUrl(data.thumbnailUrl || "");
+    const currentCourse = normalizeImageUrl(data.courseThumbnailUrl || "");
+    if (current && currentCourse) {
+      stats.alreadyValid++;
+      continue;
     }
 
-    if (!courseThumbnail) {
-      const sourceDoc = courseDocs.find((item) => resolveProtectedVideoSource(item.data, item.id).videoId);
-      if (sourceDoc) {
-        const source = resolveProtectedVideoSource(sourceDoc.data, sourceDoc.id);
-        logger.info("[THUMB_SOURCE_RESOLVED]", {
-          courseId,
-          contentId: sourceDoc.id,
-          sourceField: source.sourceField,
-          sourceValue: source.sourceValue
-        });
-        try {
-          const courseCopy = await copyYoutubeCourseThumbnailToStorage(source.videoId, courseId);
-          courseThumbnail = courseCopy.storageUrl;
-          stats.repairable++;
-        } catch (error) {
-          logger.warn("[THUMB_PIPELINE_FAILED]", { courseId, contentId: sourceDoc.id, stage: "course-thumbnail", reason: error.message });
-          logger.warn("Course thumbnail generation failed", { courseId, contentId: sourceDoc.id, reason: error.message });
-        }
-      }
+    if (!protectedId) {
+      stats.needsManualUpload++;
+      stats.failedRecords.push({ contentId: item.id, courseId, reason: "missing_youtube_video_id" });
+      continue;
     }
 
-    if (courseThumbnail) {
-      const courseRef = db.collection("courses").doc(courseId);
-      const courseSnap = await courseRef.get();
-      if (courseSnap.exists) {
-        const courseData = courseSnap.data() || {};
-        if (!isFirebaseStorageThumbnailUrl(courseData.thumbnailUrl)) {
-          await courseRef.set({
-            thumbnailUrl: courseThumbnail,
-            courseThumbnailUrl: courseData.courseThumbnailUrl || courseThumbnail,
-            thumbnailRepairedAt: FieldValue.serverTimestamp(),
-            thumbnailRepairSource: "content-course-thumbnail",
-            thumbnailStatus: "ready"
-          }, { merge: true });
-        }
-      }
+    logger.info("[THUMB_SOURCE_RESOLVED]", {
+      courseId,
+      contentId: item.id,
+      sourceField: source.sourceField,
+      sourceValue: source.sourceValue
+    });
+
+    const generatedThumbnail = youtubeThumbnailUrl(protectedId);
+    if (!generatedThumbnail) {
+      stats.failed++;
+      stats.failedRecords.push({ contentId: item.id, courseId, reason: "youtube_thumbnail_url_failed" });
+      continue;
     }
 
-    for (const item of courseDocs) {
-      const data = item.data;
-      const source = resolveProtectedVideoSource(data, item.id);
-      const protectedId = source.videoId;
-      logger.info("[THUMB_SOURCE_CANDIDATES]", {
-        courseId,
-        contentId: item.id,
-        contentType: data.courseType || data.contentType || data.type || "",
-        hasYoutubeVideoId: Boolean(data.youtubeVideoId),
-        hasVideoId: Boolean(data.videoId),
-        hasYoutubeUrl: Boolean(data.youtubeUrl),
-        hasVideoUrl: Boolean(data.videoUrl),
-        hasSourceUrl: Boolean(data.sourceUrl),
-        hasPlaybackUrl: Boolean(data.playbackUrl),
-        hasEmbedUrl: Boolean(data.embedUrl),
-        hasUrl: Boolean(data.url),
-        lessonIdLooksLikeYoutubeId: YOUTUBE_ID_PATTERN.test(String(data.lessonId || "")),
-        documentIdLooksLikeYoutubeId: YOUTUBE_ID_PATTERN.test(String(item.id || ""))
-      });
-      if (protectedId) {
-        logger.info("[THUMB_SOURCE_RESOLVED]", {
-          courseId,
-          contentId: item.id,
-          sourceField: source.sourceField,
-          sourceValue: source.sourceValue
-        });
-      }
-      const currentValid = isFirebaseStorageThumbnailUrl(data.thumbnailUrl) &&
-        !thumbnailLeaksVideoId(data.thumbnailUrl, protectedId);
-      const courseValid = isFirebaseStorageThumbnailUrl(data.courseThumbnailUrl) &&
-        !thumbnailLeaksVideoId(data.courseThumbnailUrl, protectedId);
-      if (currentValid && courseValid) {
-        stats.alreadyValid++;
-        continue;
-      }
+    const updates = {
+      thumbnailRepairedAt: FieldValue.serverTimestamp(),
+      thumbnailRepairSource: "youtube-direct-url",
+      thumbnailStatus: "ready"
+    };
+    if (shouldReplaceThumbnail(data.thumbnailUrl)) updates.thumbnailUrl = generatedThumbnail;
+    if (shouldReplaceThumbnail(data.courseThumbnailUrl)) updates.courseThumbnailUrl = generatedThumbnail;
 
-      let lessonThumbnail = currentValid ? data.thumbnailUrl : "";
-      if (!lessonThumbnail) {
-        const existing = existingCourseThumbnail(data, protectedId);
-        if (existing && !isFirebaseStorageThumbnailUrl(existing)) {
-          try {
-            lessonThumbnail = await copyPublicImageToStorage(existing, courseId, item.id, "lesson");
-            stats.repairable++;
-          } catch (error) {
-            logger.warn("Lesson thumbnail copy failed", { courseId, contentId: item.id, reason: error.message });
-          }
-        } else if (isFirebaseStorageThumbnailUrl(existing)) {
-          lessonThumbnail = existing;
-        } else {
-          const source = serverCopySourceThumbnail(data, protectedId);
-          if (source.url) {
-            try {
-              lessonThumbnail = await copyPublicImageToStorage(source.url, courseId, item.id, "lesson");
-              stats.repairable++;
-              logger.info("Lesson thumbnail copied from existing source URL", {
-                courseId,
-                contentId: item.id,
-                sourceType: source.directYoutube ? "direct-youtube-thumbnail" : "public-image"
-              });
-            } catch (error) {
-              logger.warn("Lesson thumbnail source copy failed", { courseId, contentId: item.id, reason: error.message });
-            }
-          }
-        }
-      }
+    await item.doc.ref.set(updates, { merge: true });
+    logger.info("[THUMB_FIRESTORE_WRITE_COMPLETE]", {
+      courseId,
+      contentId: item.id,
+      sourceField: source.sourceField,
+      thumbnailStatus: "ready"
+    });
+    stats.repaired++;
+    stats.repairable++;
+  }
 
-      if (!lessonThumbnail && protectedId) {
-        try {
-          const lessonCopy = await copyYoutubeThumbnailToStorage(protectedId, courseId, item.id);
-          lessonThumbnail = lessonCopy.storageUrl;
-          stats.repairable++;
-        } catch (error) {
-          stats.failed++;
-          stats.failedRecords.push({ contentId: item.id, courseId, reason: error.message || "youtube_thumbnail_failed" });
-          logger.warn("[THUMB_PIPELINE_FAILED]", { courseId, contentId: item.id, sourceField: source.sourceField, stage: "lesson-thumbnail", reason: error.message });
-          logger.warn("Protected lesson thumbnail generation failed", { courseId, contentId: item.id, reason: error.message });
-          continue;
-        }
-      }
-
-      const finalCourseThumbnail = courseThumbnail || lessonThumbnail || "";
-      if (!lessonThumbnail && !finalCourseThumbnail) {
-        stats.needsManualUpload++;
-        stats.failedRecords.push({ contentId: item.id, courseId, reason: "missing_public_thumbnail_and_protected_video" });
-        continue;
-      }
-
-      await item.doc.ref.set({
-        thumbnailUrl: lessonThumbnail || finalCourseThumbnail,
-        courseThumbnailUrl: finalCourseThumbnail,
-        ...unsafeThumbnailCleanup(data, protectedId),
+  const courseUpdates = new Map();
+  for (const item of docs) {
+    const data = item.data;
+    const courseId = contentCourseId(item.id, data);
+    if (courseUpdates.has(courseId)) continue;
+    const source = resolveProtectedVideoSource(data, item.id);
+    const thumbnail = normalizeImageUrl(data.courseThumbnailUrl || data.thumbnailUrl || "") || youtubeThumbnailUrl(source.videoId);
+    if (thumbnail) courseUpdates.set(courseId, thumbnail);
+  }
+  for (const [courseId, thumbnail] of courseUpdates.entries()) {
+    const courseRef = db.collection("courses").doc(courseId);
+    const courseSnap = await courseRef.get();
+    if (!courseSnap.exists) continue;
+    const courseData = courseSnap.data() || {};
+    if (!normalizeImageUrl(courseData.thumbnailUrl || "")) {
+      await courseRef.set({
+        thumbnailUrl: thumbnail,
+        courseThumbnailUrl: courseData.courseThumbnailUrl || thumbnail,
         thumbnailRepairedAt: FieldValue.serverTimestamp(),
-        thumbnailRepairSource: lessonThumbnail ? "storage-copy" : "course-thumbnail",
+        thumbnailRepairSource: "youtube-direct-url",
         thumbnailStatus: "ready"
       }, { merge: true });
-      logger.info("[THUMB_FIRESTORE_WRITE_COMPLETE]", {
-        courseId,
-        contentId: item.id,
-        sourceField: source.sourceField,
-        thumbnailStatus: "ready"
-      });
-      stats.repaired++;
     }
   }
 

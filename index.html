@@ -1715,9 +1715,10 @@ function extractYouTubeVideoId(value) {
 function normalizeImageUrl(value) {
   const url = String(value || '').trim();
   if (!url) return '';
+  const lowered = url.toLowerCase();
+  if (['-', 'pending-repair', 'pending', 'null', 'undefined'].includes(lowered)) return '';
   if (/^(blob:|data:|file:)/i.test(url)) return '';
   if (/^[a-zA-Z]:[\\/]/.test(url) || url.startsWith('\\\\')) return '';
-  if (/youtube\.com|youtu\.be|ytimg\.com/i.test(url)) return '';
   return url;
 }
 
@@ -1788,9 +1789,14 @@ function renderThumbFrame({ src, alt, badge = '', secondaryBadge = '', eager = f
 window.handleThumbnailError = (img) => {
   const current = img.getAttribute('src') || '';
   const fallback = img.dataset.fallback || imageFallbackUrl();
+  const hq = current.replace('/maxresdefault.jpg', '/hqdefault.jpg');
   if (!img.dataset.warned) {
     console.warn('[IdeaKDC thumbnail] image failed', { courseId: img.dataset.courseId || 'unknown' });
     img.dataset.warned = '1';
+  }
+  if (current.includes('/maxresdefault.jpg') && hq !== current) {
+    img.src = hq;
+    return;
   }
   if (current !== fallback) {
     img.src = fallback;
