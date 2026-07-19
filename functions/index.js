@@ -560,6 +560,7 @@ function contentToPublicCourses(items) {
       dur: data.dur || data.duration || "",
       durationSeconds: Number(data.durationSeconds || 0),
       thumbnailUrl: lessonThumb || courseThumb,
+      thumbnailVideoId: fullVideoId,
       hasProtectedVideo: !!fullVideoId,
       playlistId: "",
       hasProtectedPlaylist: !!data.playlistId,

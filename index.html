@@ -544,30 +544,32 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .qa-question[aria-expanded="true"]::after{content:'-'}
 .qa-answer{max-height:0;overflow:hidden;transition:max-height .22s ease}
 .qa-answer-inner{font-size:.8rem;line-height:1.56;color:#475569;padding:0 0 .65rem}
-.full-playlist{display:flex;flex-direction:column;gap:.24rem;max-height:min(58vh,560px);overflow-y:auto;overscroll-behavior:contain;scroll-behavior:smooth;overflow-anchor:none;padding:0 3px calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 24px) 0;background:#f7f8fb;border:1px solid #e4e8f0;border-radius:12px}
+.full-playlist{display:flex;flex-direction:column;gap:.45rem;max-height:min(66vh,720px);overflow-y:auto;overscroll-behavior:contain;scroll-behavior:smooth;overflow-anchor:none;padding:0 5px calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 28px) 0;background:#f7f8fb;border:1px solid #e4e8f0;border-radius:12px}
 .full-playlist:empty{display:none}
 .full-playlist-header{font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:900;font-size:.78rem;color:#334155;background:#fff;border:1px solid #e4e8f0;border-radius:10px;margin:.35rem .35rem .2rem;padding:.42rem .58rem;box-shadow:0 4px 12px rgba(15,23,42,.04)}
-.lesson-section{background:#fff;border:1px solid #e4e8f0;border-radius:10px;padding:.4rem;margin:.35rem .35rem .28rem;box-shadow:0 6px 16px rgba(15,23,42,.045)}
+.lesson-section{background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:.55rem;margin:.45rem .45rem .36rem;box-shadow:0 6px 16px rgba(15,23,42,.045)}
 .lesson-section-title{font-size:.8rem;font-weight:900;color:#334155;line-height:1.2;margin-bottom:.12rem}
 .lesson-section-desc{font-size:.68rem;color:#64748b;line-height:1.35;margin-bottom:.32rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pl-item{display:flex;align-items:center;gap:.4rem;width:100%;min-height:44px;padding:.34rem .42rem;background:#fafafa;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:border-color .15s,background .15s,transform .15s,box-shadow .15s}
+.pl-item{position:relative;display:grid;grid-template-columns:minmax(132px,34%) minmax(0,1fr) auto;align-items:center;gap:.78rem;width:100%;min-height:112px;padding:.64rem .7rem;background:#fff;border:1px solid #e5e7eb;border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s,transform .15s,box-shadow .15s;text-align:left}
 .pl-item:active{transform:scale(.98)}
 .pl-item.playing{border-color:#8fb4e8;background:#eef6ff;box-shadow:0 4px 12px rgba(37,99,235,.08)}
 .pl-item.locked{opacity:.72}
-.pl-num{width:20px;height:20px;border-radius:50%;background:#edf2f7;color:#475569;font-size:.6rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pl-num{position:absolute;left:.45rem;top:.45rem;width:24px;height:24px;border-radius:50%;background:rgba(15,23,42,.78);color:#fff;font-size:.66rem;font-weight:900;display:flex;align-items:center;justify-content:center;z-index:2}
 .pl-item.playing .pl-num{background:#dbeafe;color:#1d4ed8}
 .pl-info{flex:1;min-width:0}
-.pl-title{font-size:.75rem;font-weight:800;color:#1f2937;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pl-title{font-size:.94rem;font-weight:900;color:#1f2937;line-height:1.28;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pl-item.playing .pl-title{color:#1d4ed8}
-.pl-dur{font-size:.62rem;color:#64748b;margin-top:1px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-desc{font-size:.78rem;color:#64748b;margin-top:.28rem;line-height:1.38;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pl-dur{font-size:.72rem;color:#64748b;margin-top:.28rem;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800}
 .pl-badges{display:flex;gap:.2rem;flex-wrap:wrap;margin-top:.2rem}
 .lesson-badge{font-size:.52rem;font-weight:900;border-radius:999px;padding:.12rem .32rem;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}
 .lesson-badge.free{background:#ecfdf5;color:#047857;border-color:#bbf7d0}
 .lesson-badge.locked{background:#f8fafc;color:#64748b;border-color:#e2e8f0}
 .lesson-badge.playing{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
-.pl-play-icon{font-size:.8rem;flex-shrink:0;opacity:.72;color:#64748b}
+.pl-play-icon{font-size:.78rem;flex-shrink:0;opacity:1;color:#1d4ed8;border:1px solid #bfdbfe;background:#eff6ff;border-radius:999px;padding:.38rem .62rem;font-weight:900}
 .pl-item.playing .pl-play-icon{opacity:1}
-@media (max-width:640px){.course-viewer-header{grid-template-columns:1fr}.video-page{padding-left:.85rem;padding-right:.85rem}.pl-item{align-items:center}.lesson-mini-thumb{width:48px}.course-viewer-meta,.selected-lesson-meta{gap:.35rem}}
+@media (min-width:641px){.pl-item .lesson-mini-thumb{width:100%;min-width:132px}.pl-item .lesson-mini-thumb img{object-fit:cover}}
+@media (max-width:640px){.course-viewer-header{grid-template-columns:1fr}.video-page{padding-left:.85rem;padding-right:.85rem}.pl-item{grid-template-columns:1fr;gap:.55rem;min-height:0;padding:.65rem}.pl-item .lesson-mini-thumb{width:100%;border-radius:10px}.pl-info{width:100%}.pl-play-icon{justify-self:start}.course-viewer-meta,.selected-lesson-meta{gap:.35rem}}
 
 /* ══════════════════════════════
    AUTH PAGES (Login)
@@ -1778,7 +1780,7 @@ function getLessonThumbnail(lesson = {}) {
   );
   if (stored) return stored;
   return youtubeThumbnailUrl(
-    lesson.vid || lesson.videoId || lesson.youtubeVideoId || lesson.firstVideoId ||
+    lesson.thumbnailVideoId || lesson.vid || lesson.videoId || lesson.youtubeVideoId || lesson.firstVideoId ||
     lesson.videoUrl || lesson.youtubeUrl || lesson.url || ''
   );
 }
@@ -3338,7 +3340,7 @@ function lessonStatusBadges({ course, lesson, index, activeIdx, accessRule = nul
   if (accessRule?.locked) badges.push('<span class="lesson-badge locked">Locked</span>');
   else if (lesson?.isFree === true || accessRule?.reason === 'free-course') badges.push('<span class="lesson-badge free">Free</span>');
   else badges.push('<span class="lesson-badge">Purchased</span>');
-  if (!accessRule?.locked && !lesson.vid && !lesson.playlistId) badges.push('<span class="lesson-badge locked">Unavailable</span>');
+  if (!accessRule?.locked && !(lesson?.contentId || lesson?.lessonId || lesson?.vid || lesson?.playlistId)) badges.push('<span class="lesson-badge locked">Unavailable</span>');
   return badges.join('');
 }
 
@@ -3569,12 +3571,14 @@ function renderLockedPlaylistPreview(course, access) {
           const i = lesson.originalIndex;
           const accessRule = getLessonAccessRule(course, i, access);
           const visibleLesson = safePlaylistLessonForViewer(lesson, accessRule);
+          const thumbSrc = getLessonThumbnail(lesson) || getLessonThumbnail(visibleLesson) || getCourseThumbnail(course);
           return `
             <button type="button" class="pl-item locked" onclick="showLockedLessonPrompt('${course.id}')">
-              ${renderThumbFrame({ src: getLessonThumbnail(visibleLesson) || getCourseThumbnail(course), alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id })}
+              ${renderThumbFrame({ src: thumbSrc, alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id })}
               <div class="pl-num">${i + 1}</div>
               <div class="pl-info">
                 <div class="pl-title">${escapeHtml(visibleLesson.title || 'Untitled lesson')}</div>
+                ${visibleLesson.desc ? `<div class="pl-desc">${escapeHtml(visibleLesson.desc)}</div>` : ''}
                 <div class="pl-dur">⏱ ${escapeHtml(lessonDuration(visibleLesson) || 'Duration not set')}</div>
                 <div class="pl-badges">${lessonStatusBadges({ course, lesson: visibleLesson, index: i, activeIdx: -1, accessRule })}</div>
               </div>
@@ -3595,6 +3599,35 @@ function keepSelectedLessonVisibleInsidePlaylist() {
   list.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
 }
 
+let youtubeIframeApiPromise = null;
+
+function ensureYouTubeIframeApi() {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (youtubeIframeApiPromise) return youtubeIframeApiPromise;
+  youtubeIframeApiPromise = new Promise((resolve, reject) => {
+    const previousReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof previousReady === 'function') previousReady();
+      resolve(window.YT);
+    };
+    const script = document.createElement('script');
+    script.src = 'https://www.youtube.com/iframe_api';
+    script.async = true;
+    script.onerror = () => reject(new Error('youtube_iframe_api_failed'));
+    document.head.appendChild(script);
+  });
+  return youtubeIframeApiPromise;
+}
+
+function destroyActiveLessonPlayer() {
+  try {
+    window._activeLessonPlayer?.destroy?.();
+  } catch (error) {
+    console.warn('[IdeaKDC player] previous player cleanup skipped', error?.message || error);
+  }
+  window._activeLessonPlayer = null;
+}
+
 async function openVideoPlayer(course, startIdx, meta = {}) {
   const videos = course.videos || [];
   if (!videos.length) {
@@ -3607,6 +3640,23 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
   window.showLockedLessonPrompt = (courseId) => {
     const lockedCourse = resolveCourseById(courseId) || course;
     renderPurchasePrompt(lockedCourse, 'This lesson is locked.');
+  };
+  const nextPlayableLessonIndex = (currentIdx) => {
+    for (let i = currentIdx + 1; i < videos.length; i++) {
+      const nextLesson = videos[i];
+      const nextRule = getLessonAccessRule(course, i, access);
+      if ((nextLesson?.contentId || nextLesson?.lessonId) && nextRule.canPlay) return i;
+    }
+    return -1;
+  };
+  const startNextLessonAfterEnd = (currentIdx) => {
+    const nextIdx = nextPlayableLessonIndex(currentIdx);
+    if (nextIdx < 0) return;
+    showToast('Next lesson starting...', 'success');
+    window.clearTimeout(window._nextLessonTimer);
+    window._nextLessonTimer = window.setTimeout(() => {
+      window.playFromPlaylist(nextIdx, { autoplay: true });
+    }, 3000);
   };
   const allowed = getLessonAccessRule(course, startIdx, access).canPlay === true;
   if (!allowed) {
@@ -3679,14 +3729,15 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
             const accessRule = getLessonAccessRule(course, i, access);
             const canPlayLesson = !!(v.contentId || v.lessonId) && accessRule.canPlay;
             const visibleLesson = safePlaylistLessonForViewer(v, accessRule);
+            const thumbSrc = getLessonThumbnail(v) || getLessonThumbnail(visibleLesson) || getCourseThumbnail(course);
             return `
               <button type="button" class="pl-item ${i===activeIdx?'playing':''} ${canPlayLesson?'':'locked'}"
                 onclick="${canPlayLesson ? `playFromPlaylist(${i})` : `showLockedLessonPrompt('${course.id}')`}" ${v.contentId || v.lessonId ? '' : 'disabled'}>
-                ${renderThumbFrame({ src: getLessonThumbnail(visibleLesson) || getCourseThumbnail(course), alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id })}
+                ${renderThumbFrame({ src: thumbSrc, alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id })}
                 <div class="pl-num">${i+1}</div>
                 <div class="pl-info">
                   <div class="pl-title">${escapeHtml(visibleLesson.title || 'Untitled lesson')}</div>
-                  ${visibleLesson.desc ? `<div class="pl-dur">${escapeHtml(visibleLesson.desc)}</div>` : ''}
+                  ${visibleLesson.desc ? `<div class="pl-desc">${escapeHtml(visibleLesson.desc)}</div>` : ''}
                   <div class="pl-dur">⏱ ${escapeHtml(lessonDuration(visibleLesson) || 'Duration not set')}</div>
                   <div class="pl-badges">${lessonStatusBadges({ course, lesson: visibleLesson, index: i, activeIdx, accessRule })}</div>
                 </div>
@@ -3701,7 +3752,7 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
   };
   window._renderCurrentPlaylist = renderPlaylist;
 
-  window.playFromPlaylist = async (idx) => {
+  window.playFromPlaylist = async (idx, options = {}) => {
     const v = videos[idx];
     if (!v) {
       showCourseViewerState('Video is unavailable', 'Selected lesson नहीं मिला।', 'error');
@@ -3739,16 +3790,34 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
     }
     const selectedVideoId = extractYouTubeVideoId(resolvedLesson.videoId || '');
     const embedSrc = selectedVideoId
-      ? `https://www.youtube.com/embed/${selectedVideoId}?rel=0&playsinline=1&enablejsapi=1&origin=${origin}`
+      ? `https://www.youtube.com/embed/${selectedVideoId}?rel=0&playsinline=1&enablejsapi=1&origin=${origin}&autoplay=1`
       : '';
 
+    destroyActiveLessonPlayer();
+    window.clearTimeout(window._nextLessonTimer);
     document.getElementById('video-wrap').innerHTML = embedSrc
       ? `<iframe id="${iframeId}" src="${embedSrc}"
           title="${escapeHtml(v.title || 'IdeaKDC lesson player')}"
           loading="lazy"
-          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen></iframe>`
       : `<div class="video-placeholder"><div class="v-icon">⚠️</div><div>Video unavailable</div></div>`;
+    if (embedSrc) {
+      ensureYouTubeIframeApi()
+        .then((YT) => {
+          window._activeLessonPlayer = new YT.Player(iframeId, {
+            events: {
+              onStateChange: (event) => {
+                if (event.data === YT.PlayerState.ENDED) startNextLessonAfterEnd(idx);
+              },
+              onReady: (event) => {
+                try { event.target.playVideo(); } catch (_) {}
+              }
+            }
+          });
+        })
+        .catch((error) => console.warn('[IdeaKDC player] YouTube ended hook unavailable', error?.message || error));
+    }
     document.getElementById('video-title').textContent = '';
     renderSelectedLessonInfo(course, v, idx);
     if (playlistCourse) {
