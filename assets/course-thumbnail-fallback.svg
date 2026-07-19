@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="270" viewBox="0 0 480 270" role="img" aria-label="IdeaKDC course thumbnail">
+  <rect width="480" height="270" fill="#f8fafc"/>
+  <rect x="22" y="22" width="436" height="226" rx="20" fill="#ffffff" stroke="#dbe4f0" stroke-width="2"/>
+  <circle cx="122" cy="100" r="42" fill="#e8f1ff"/>
+  <path d="M102 98h40M102 116h64M102 134h50" stroke="#2563eb" stroke-width="8" stroke-linecap="round"/>
+  <path d="M255 92h100M255 123h142M255 154h118" stroke="#1f2937" stroke-width="12" stroke-linecap="round"/>
+  <path d="M82 192h316" stroke="#f4c542" stroke-width="10" stroke-linecap="round"/>
+  <text x="240" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#1f2937">IdeaKDC Course</text>
+</svg>

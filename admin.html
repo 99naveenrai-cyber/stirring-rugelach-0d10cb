@@ -81,11 +81,25 @@ body{padding-bottom:65px}
 .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:.88rem;font-family:'Inter',sans-serif;background:#fff;color:var(--ink);transition:border-color .15s}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--accent)}
 .form-group textarea{resize:vertical;min-height:70px}
+.faq-fields{display:flex;flex-direction:column;gap:.7rem;margin:.7rem 0 1rem}
+.faq-row{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:.75rem}
+.faq-row-title{font-size:.72rem;font-weight:800;color:#0a2a5e;margin-bottom:.55rem}
+.faq-row .form-row{grid-template-columns:1fr}
+.faq-row textarea{min-height:58px}
 
 /* Type toggle */
 .type-toggle{display:flex;gap:.5rem;margin-bottom:.8rem}
 .type-btn{flex:1;padding:10px;border:2px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;color:var(--muted);transition:all .15s;text-align:center}
 .type-btn.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+.upload-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin-bottom:.55rem}
+.upload-mode-btn{padding:10px;border:2px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Syne',sans-serif;font-weight:800;font-size:.78rem;color:var(--muted);text-align:left;transition:all .15s}
+.upload-mode-btn.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+.mode-help{font-size:.76rem;color:var(--muted);line-height:1.45}
+.upload-status{margin:.7rem 0 .35rem;padding:.65rem .75rem;border:1px solid var(--border);border-radius:10px;background:#f8fafc;display:none}
+.upload-status.show{display:block}
+.upload-status.success{color:var(--green);border-color:rgba(34,197,94,.25);background:#f0fdf4}
+.upload-status.warning{color:#a16207;border-color:rgba(234,179,8,.35);background:#fefce8}
+.upload-status.error{color:var(--red);border-color:rgba(239,68,68,.28);background:#fef2f2}
 
 /* Free/Paid toggle */
 .free-paid-toggle{display:flex;gap:.5rem}
@@ -100,6 +114,10 @@ body{padding-bottom:65px}
 .btn-submit{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.3rem}
 .btn-submit:disabled{background:var(--muted);cursor:not-allowed}
 .btn-submit:active{transform:scale(.98)}
+.thumbnail-repair-actions{display:grid;grid-template-columns:1fr;gap:.65rem;margin-top:.7rem}
+.thumbnail-repair-actions .btn-submit{margin-top:0;min-height:46px}
+.thumbnail-repair-status{margin-top:.65rem;min-height:1.2rem;line-height:1.45}
+@media (min-width:680px){.thumbnail-repair-actions{grid-template-columns:1fr 1fr}}
 
 /* Stream selector pills */
 .stream-pills{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem}
@@ -116,6 +134,10 @@ body{padding-bottom:65px}
 .content-search:focus{outline:none;border-color:var(--accent)}
 
 .content-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.7rem}
+.content-item-media{display:flex;gap:.75rem;align-items:flex-start}
+.content-thumb{width:96px;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#f3f4f6;border:1px solid var(--border);flex-shrink:0}
+.content-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.content-main{min-width:0;flex:1}
 .content-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;margin-bottom:.5rem}
 .content-item-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem}
 .content-item-type{font-size:.68rem;padding:3px 9px;border-radius:99px;font-weight:700;flex-shrink:0}
@@ -130,6 +152,7 @@ body{padding-bottom:65px}
 .btn-delete{background:var(--red-light);color:var(--red);border:none;padding:6px 12px;border-radius:8px;font-size:.78rem;cursor:pointer;font-family:'Inter',sans-serif}
 .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:.88rem}
 .empty-icon{font-size:2.5rem;margin-bottom:.6rem}
+@media (max-width:520px){.content-item-media{gap:.55rem}.content-thumb{width:82px}}
 
 /* ── ENROLLMENTS ── */
 .enroll-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.7rem}
@@ -252,10 +275,49 @@ body{padding-bottom:65px}
     </div>
 
     <div class="form-card">
+      <div class="form-card-title">Upload Mode</div>
+      <div class="upload-mode-grid">
+        <button class="upload-mode-btn active" id="mode-create-single" onclick="setUploadMode('create-single')">Create single-video course</button>
+        <button class="upload-mode-btn" id="mode-create-playlist" onclick="setUploadMode('create-playlist')">Create playlist course</button>
+        <button class="upload-mode-btn" id="mode-add-video-playlist" onclick="setUploadMode('add-video-playlist')">Add video to existing playlist</button>
+        <button class="upload-mode-btn" id="mode-edit-course" onclick="setUploadMode('edit-course')">Edit existing course</button>
+      </div>
+      <div class="mode-help" id="upload-mode-help">New upload will create a fresh courseId.</div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">Public Thumbnail Repair</div>
+      <div class="mode-help" style="margin-bottom:.7rem">
+        One-time safe migration: copy only non-protected thumbnail fields into the public thumbnailUrl metadata. It skips YouTube thumbnails that reveal a paid video ID.
+      </div>
+      <div class="mode-help" style="font-size:.7rem;color:var(--muted);margin-bottom:.55rem">Admin build: thumbnail-repair-v2</div>
+      <div class="thumbnail-repair-actions" aria-label="Thumbnail repair controls">
+        <button class="btn-submit" id="diagnose-thumbnails-btn" type="button" style="background:var(--accent)" onclick="diagnosePublicCourseThumbnails()">
+          Diagnose Live Thumbnails
+        </button>
+        <button class="btn-submit" id="deep-diagnose-thumbnails-btn" type="button" style="background:#0f766e" onclick="diagnoseDeepCourseThumbnails()">
+          Deep Thumbnail Diagnosis
+        </button>
+        <button class="btn-submit" id="repair-thumbnails-btn" type="button" style="background:var(--blue)" onclick="repairPublicCourseThumbnails()">
+          Repair All Missing Thumbnails
+        </button>
+      </div>
+      <div id="thumbnail-repair-status" class="mode-help thumbnail-repair-status" aria-live="polite"></div>
+      <div id="thumbnail-repair-summary" class="mode-help" style="margin-top:.65rem"></div>
+      <div id="thumbnail-diagnostic-output" style="margin-top:.8rem"></div>
+    </div>
+
+    <div class="form-card">
       <div class="form-card-title">📹 Upload Type</div>
       <div class="type-toggle">
         <button class="type-btn active" id="type-video" onclick="setType('video')">🎬 Single Video</button>
         <button class="type-btn" id="type-playlist" onclick="setType('playlist')">📋 Playlist</button>
+      </div>
+      <div class="form-group" id="existing-playlist-group" style="display:none">
+        <label>Existing Playlist Course</label>
+        <select id="existing-playlist-course">
+          <option value="">-- Select playlist course --</option>
+        </select>
       </div>
     </div>
 
@@ -277,9 +339,9 @@ body{padding-bottom:65px}
       <div class="form-group" id="stream-group" style="display:none">
         <label>Stream</label>
         <div class="stream-pills">
-          <button class="stream-pill" onclick="selectStream('science')" id="sp-science">🔬 Science</button>
-          <button class="stream-pill" onclick="selectStream('commerce')" id="sp-commerce">📈 Commerce</button>
-          <button class="stream-pill" onclick="selectStream('humanities')" id="sp-humanities">📖 Humanities</button>
+          <button type="button" class="stream-pill" onclick="selectStream('science')" id="sp-science">🔬 Science</button>
+          <button type="button" class="stream-pill" onclick="selectStream('commerce')" id="sp-commerce">📈 Commerce</button>
+          <button type="button" class="stream-pill" onclick="selectStream('humanities')" id="sp-humanities">📖 Humanities</button>
         </div>
       </div>
 
@@ -317,9 +379,22 @@ body{padding-bottom:65px}
         <input type="number" id="up-price" min="1" step="1" value="450" placeholder="450">
       </div>
 
+      <div class="form-group">
+        <label>Course Thumbnail</label>
+        <div class="mode-help">Thumbnail will be generated automatically from the YouTube video on the server after upload.</div>
+      </div>
+
       <div class="form-group" id="vid-link-group">
-        <label>YouTube Video Link</label>
+        <label>Full Paid Video URL or ID</label>
         <input type="text" id="up-video-link" placeholder="https://youtu.be/xxxxx या Video ID">
+      </div>
+
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:.5rem;font-weight:800">
+          <input type="checkbox" id="up-free-complete" style="width:auto">
+          Make this complete video free
+        </label>
+        <div class="mode-help">Default is locked/paid. Enable this only when the complete video may be watched without purchase.</div>
       </div>
 
       <div class="form-group" id="pl-link-group" style="display:none">
@@ -333,14 +408,30 @@ body{padding-bottom:65px}
       </div>
 
       <div class="form-group">
-        <label>Free या Paid?</label>
-        <div class="free-paid-toggle">
-          <button class="fp-btn active-free" id="fp-free" onclick="setFP('free')">🆓 Free</button>
-          <button class="fp-btn" id="fp-paid" onclick="setFP('paid')">💎 Paid</button>
+        <label>Questions & Answers (Optional)</label>
+        <div class="faq-fields" id="faq-fields">
+          <div class="faq-row"><div class="faq-row-title">Question 1</div><input type="text" id="faq-q-1" placeholder="What will you learn in this course?"><textarea id="faq-a-1" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 2</div><input type="text" id="faq-q-2" placeholder="Who should watch this course?"><textarea id="faq-a-2" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 3</div><input type="text" id="faq-q-3" placeholder="What prior knowledge is required?"><textarea id="faq-a-3" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 4</div><input type="text" id="faq-q-4" placeholder="What topics are covered?"><textarea id="faq-a-4" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 5</div><input type="text" id="faq-q-5" placeholder="How should this lesson be studied?"><textarea id="faq-a-5" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 6</div><input type="text" id="faq-q-6" placeholder="What practice should be done after watching?"><textarea id="faq-a-6" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 7</div><input type="text" id="faq-q-7" placeholder="What common mistakes should be avoided?"><textarea id="faq-a-7" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 8</div><input type="text" id="faq-q-8" placeholder="What should the student do next?"><textarea id="faq-a-8" placeholder="Answer"></textarea></div>
         </div>
       </div>
 
-      <button class="btn-submit" id="upload-btn" onclick="uploadContent()">
+      <div class="form-group">
+        <label>Free or Paid?</label>
+        <div class="free-paid-toggle">
+          <button type="button" class="fp-btn" id="fp-free" onclick="setFP('free')">🆓 Free Course</button>
+          <button type="button" class="fp-btn active-paid" id="fp-paid" onclick="setFP('paid')">💎 Paid Course</button>
+        </div>
+      </div>
+
+      <div id="upload-status" class="mode-help upload-status" aria-live="polite"></div>
+
+      <button type="button" class="btn-submit" id="upload-btn" onclick="uploadContent()">
         <span id="upload-label">✅ Content Upload करें</span>
       </button>
     </div>
@@ -429,11 +520,15 @@ import { getAuth, signInWithEmailAndPassword, signInWithPopup,
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc,
          updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getStorage, ref as storageRef }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import { getFunctions, httpsCallable }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
 // ── CONFIG ──
 const firebaseConfig = {
   apiKey:"AIzaSyDDSiGJJdoySLmJLHJaQBdj213DxVKCwaQ",
-  authDomain:"ideakdc-24b0b.firebaseapp.com",
+  authDomain:"betalaunch.ideakdc.in",
   projectId:"ideakdc-24b0b",
   storageBucket:"ideakdc-24b0b.firebasestorage.app",
   messagingSenderId:"577382246228",
@@ -451,12 +546,23 @@ const SUBJECTS = {
 const app       = initializeApp(firebaseConfig);
 const auth      = getAuth(app);
 const db        = getFirestore(app);
+const storage   = getStorage(app);
+const functions = getFunctions(app, 'asia-south1');
+const adminUploadPreflightFn = httpsCallable(functions, 'adminUploadPreflight');
+const repairProtectedCourseThumbnailsFn = httpsCallable(functions, 'repairProtectedCourseThumbnails');
+const diagnoseCourseThumbnailsFn = httpsCallable(functions, 'diagnoseCourseThumbnails');
 const gProvider = new GoogleAuthProvider();
 
 // ── STATE ──
 let uploadType  = 'video';
-let uploadFP    = 'free';
+let uploadMode  = 'create-single';
+let uploadFP    = 'paid';
 let uploadStream = '';
+let selectedCourseId = '';
+let editingCourseId = '';
+let activePlaylistId = '';
+let currentVideos = [];
+let selectedCourseRef = null;
 let allContent  = [];
 let allEnrollments = [];
 let allCoupons = [];
@@ -517,6 +623,7 @@ function startListeners() {
   onSnapshot(query(collection(db,'content'), orderBy('createdAt','desc')), snap => {
     allContent = snap.docs.map(d => ({ _id:d.id, ...d.data() }));
     renderContent();
+    populateExistingPlaylistSelect();
     document.getElementById('stat-content').textContent = allContent.length;
   });
 
@@ -548,10 +655,16 @@ window.migrateOldCourses = async () => {
     let count = 0;
     for (const c of old) {
       const videos = c.videos || [];
+      const courseId = uniqueCourseId(videos.some(v => v.playlistId) ? 'playlist' : 'single');
+      const firstVideoId = videos[0]?.videoId || videos[0]?.vid || '';
       for (let i = 0; i < videos.length; i++) {
         const v = videos[i];
-        await addDoc(collection(db,'content'), {
+        const createdDoc = await addDoc(collection(db,'content'), {
           type: v.playlistId ? 'playlist' : 'video',
+          contentType: v.playlistId ? 'playlist' : 'single',
+          courseType: v.playlistId ? 'playlist' : 'single',
+          courseId,
+          courseTitle: c.name || v.title || 'Migrated Course',
           title: v.title || c.name,
           classNum: '11', // Fluid Dynamics was 11th Physics
           stream: 'science',
@@ -560,11 +673,15 @@ window.migrateOldCourses = async () => {
           topic: v.title || `Part ${i+1}`,
           videoId: v.vid || '',
           playlistId: v.playlistId || '',
+          firstVideoId: firstVideoId || v.vid || '',
+          videoCount: videos.length,
+          thumbnailUrl: '',
           desc: c.desc || '',
           isFree: false,
           price: 450,
-          createdAt: serverTimestamp()
-        });
+          createdAt: serverTimestamp(),
+        thumbnailStatus: 'pending-repair'
+      });
         count++;
       }
     }
@@ -609,7 +726,107 @@ function renderRecentPending() {
 // ════════════════════════════════════════
 // UPLOAD FORM
 // ════════════════════════════════════════
+function uniqueCourseId(prefix = 'course') {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function playlistCourseOptions() {
+  const byCourse = new Map();
+  allContent.forEach(item => {
+    const courseId = item.courseId || '';
+    if (!courseId || item.courseType !== 'playlist') return;
+    if (!byCourse.has(courseId)) byCourse.set(courseId, item);
+  });
+  return [...byCourse.values()].sort((a,b) => String(a.title || '').localeCompare(String(b.title || '')));
+}
+
+function populateExistingPlaylistSelect() {
+  const sel = document.getElementById('existing-playlist-course');
+  if (!sel) return;
+  const options = playlistCourseOptions();
+  sel.innerHTML = '<option value="">-- Select playlist course --</option>' +
+    options.map(c => `<option value="${c.courseId}">${c.title || c.chapter || c.courseId} • Class ${c.classNum || '—'} • ${c.subject || '—'}</option>`).join('');
+}
+
+function resetUploadState() {
+  selectedCourseId = '';
+  editingCourseId = '';
+  activePlaylistId = '';
+  currentVideos = [];
+  selectedCourseRef = null;
+  uploadStream = '';
+  ['up-class','up-subject','up-chapter','up-topic','up-title','up-desc','up-video-link','up-playlist-link']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  const freeComplete = document.getElementById('up-free-complete');
+  if (freeComplete) freeComplete.checked = false;
+  for (let i = 1; i <= 8; i++) {
+    const q = document.getElementById(`faq-q-${i}`);
+    const a = document.getElementById(`faq-a-${i}`);
+    if (q) q.value = '';
+    if (a) a.value = '';
+  }
+  const priceEl = document.getElementById('up-price');
+  if (priceEl) priceEl.value = '450';
+  document.querySelectorAll('.stream-pill').forEach(p=>p.classList.remove('active'));
+  const streamGroup = document.getElementById('stream-group');
+  if (streamGroup) streamGroup.style.display='none';
+  setUploadMode('create-single');
+  setFP('paid');
+}
+
+function syncUploadModeButtons() {
+  document.querySelectorAll('.upload-mode-btn').forEach(btn => btn.classList.remove('active'));
+  const active = document.getElementById('mode-' + uploadMode);
+  if (active) active.classList.add('active');
+}
+
+window.setUploadMode = (mode) => {
+  uploadMode = mode;
+  syncUploadModeButtons();
+
+  const existingGroup = document.getElementById('existing-playlist-group');
+  const help = document.getElementById('upload-mode-help');
+  if (mode === 'create-single') {
+    setType('video');
+    if (help) help.textContent = 'Creates a new independent single-video course with a fresh courseId.';
+    if (existingGroup) existingGroup.style.display = 'none';
+  } else if (mode === 'create-playlist') {
+    setType('playlist');
+    if (help) help.textContent = 'Creates a new independent playlist course with one fresh courseId shared only by this playlist.';
+    if (existingGroup) existingGroup.style.display = 'none';
+  } else if (mode === 'add-video-playlist') {
+    setType('video');
+    populateExistingPlaylistSelect();
+    if (help) help.textContent = 'Adds one video only to the playlist course selected below.';
+    if (existingGroup) existingGroup.style.display = 'block';
+  } else {
+    populateExistingPlaylistSelect();
+    if (help) help.textContent = 'Edit existing course is intentionally separate from new upload. Select a course before saving edits.';
+    if (existingGroup) existingGroup.style.display = 'block';
+  }
+};
+
+function isPermanentThumbnailUrl(value) {
+  const url = String(value || '').trim();
+  if (!url) return false;
+  if (/^(blob:|data:|file:)/i.test(url)) return false;
+  if (/^[a-zA-Z]:[\\/]/.test(url) || url.startsWith('\\\\')) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && !['localhost', '127.0.0.1'].includes(parsed.hostname);
+  } catch (_) {
+    return false;
+  }
+}
+
 window.setType = (type) => {
+  if (uploadMode === 'add-video-playlist' && type === 'playlist') {
+    showToast('Add video mode allows only one video append. Use Create playlist course for a new playlist.', 'error');
+    type = 'video';
+  }
+  if (uploadMode === 'create-single' && type === 'playlist') uploadMode = 'create-playlist';
+  if (uploadMode === 'create-playlist' && type === 'video') uploadMode = 'create-single';
+  syncUploadModeButtons();
   uploadType = type;
   document.getElementById('type-video').classList.toggle('active', type==='video');
   document.getElementById('type-playlist').classList.toggle('active', type==='playlist');
@@ -652,37 +869,89 @@ function populateSubjects(cls, stream) {
 }
 
 // ── Fetch all videos from a YouTube playlist using Data API v3 ──
-async function fetchPlaylistVideos(playlistId) {
+async function fetchJsonWithAbort(url, label, timeoutMs = 20000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (_) {
+      data = {};
+    }
+    if (!res.ok) {
+      const apiMessage = data?.error?.message || `${label} failed with HTTP ${res.status}`;
+      throw new Error(apiMessage);
+    }
+    if (data.error) throw new Error(data.error.message || `${label} failed`);
+    return data;
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error(`${label} timed out. Check playlist link, internet, or YouTube API quota.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function extractPlaylistIdFromLink(link) {
+  const value = String(link || '').trim();
+  if (!value) return '';
+  try {
+    const parsed = new URL(value);
+    return parsed.searchParams.get('list') || value;
+  } catch (_) {
+    const match = value.match(/[?&]list=([^&]+)/);
+    return match ? decodeURIComponent(match[1]) : value;
+  }
+}
+
+async function fetchPlaylistVideos(playlistId, onProgress = () => {}) {
   let videos = [];
   let pageToken = '';
+  const seenTokens = new Set();
+  let pageCount = 0;
   do {
+    if (seenTokens.has(pageToken)) throw new Error('YouTube playlist pagination repeated. Upload stopped safely.');
+    seenTokens.add(pageToken);
+    pageCount++;
+    if (pageCount > 25) throw new Error('Playlist is too large for one upload. Please split it into smaller courses.');
+    onProgress(`Fetching playlist page ${pageCount}...`);
     const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}${pageToken ? '&pageToken='+pageToken : ''}`;
-    const res  = await fetch(url);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message || 'YouTube API error');
+    const data = await fetchJsonWithAbort(url, `YouTube playlist page ${pageCount}`);
 
     const items = data.items || [];
     videos.push(...items.map(it => ({
       title: it.snippet.title,
       videoId: it.contentDetails.videoId,
-      position: it.snippet.position
+      position: it.snippet.position,
+      youtubeThumbnailSourceUrl: it.snippet.thumbnails?.maxres?.url ||
+        it.snippet.thumbnails?.standard?.url ||
+        it.snippet.thumbnails?.high?.url ||
+        it.snippet.thumbnails?.medium?.url ||
+        it.snippet.thumbnails?.default?.url ||
+        ''
     })));
     pageToken = data.nextPageToken || '';
   } while (pageToken);
 
-  // Fetch durations for all videos (batch of 50 at a time)
   const idsChunks = [];
   for (let i = 0; i < videos.length; i += 50) {
     idsChunks.push(videos.slice(i, i+50).map(v=>v.videoId).join(','));
   }
   const durationMap = {};
+  let durationStart = 1;
   for (const ids of idsChunks) {
+    const batchSize = ids ? ids.split(',').length : 0;
+    onProgress(`Fetching video durations ${durationStart}-${durationStart + batchSize - 1}...`);
     const durUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${ids}&key=${YOUTUBE_API_KEY}`;
-    const durRes = await fetch(durUrl);
-    const durData = await durRes.json();
+    const durData = await fetchJsonWithAbort(durUrl, 'YouTube video duration lookup');
     (durData.items||[]).forEach(it => {
       durationMap[it.id] = parseISO8601Duration(it.contentDetails.duration);
     });
+    durationStart += batchSize;
   }
   videos.forEach(v => { v.duration = durationMap[v.videoId] || ''; });
 
@@ -698,7 +967,668 @@ function parseISO8601Duration(iso) {
   return h > 0 ? `${h}:${pad(min)}:${pad(s)}` : `${min}:${pad(s)}`;
 }
 
+function extractVideoIdFromLink(link) {
+  const text = String(link || '').trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(text)) return text;
+  try {
+    const url = new URL(text);
+    const host = url.hostname.replace(/^www\./, '');
+    const parts = url.pathname.split('/').filter(Boolean);
+    const v = url.searchParams.get('v');
+    if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+    if (host === 'youtu.be' && parts[0] && /^[a-zA-Z0-9_-]{11}$/.test(parts[0])) return parts[0];
+    if ((host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com' || host === 'youtube-nocookie.com') && parts.length) {
+      if (['embed', 'shorts', 'live'].includes(parts[0]) && parts[1] && /^[a-zA-Z0-9_-]{11}$/.test(parts[1])) return parts[1];
+    }
+  } catch(e) {}
+  const patterns = [
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /[?&]v=([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/live\/([a-zA-Z0-9_-]{11})/,
+    /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]{11})/
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[1];
+  }
+  return text;
+}
+
+function thumbnailLeaksVideoId(url, videoId) {
+  if (!url || !videoId) return false;
+  return String(url).includes(`/vi/${videoId}/`) || String(url).includes(encodeURIComponent(videoId));
+}
+
+function isDirectYoutubeThumbnailUrl(url = '') {
+  try {
+    const host = new URL(String(url || '').trim()).hostname.toLowerCase();
+    return host === 'img.youtube.com' ||
+      host.endsWith('.img.youtube.com') ||
+      host === 'i.ytimg.com' ||
+      host.endsWith('.i.ytimg.com') ||
+      host === 'ytimg.com' ||
+      host.endsWith('.ytimg.com');
+  } catch (_) {
+    return false;
+  }
+}
+
+function adminThumbnailFallbackUrl() {
+  return 'assets/course-thumbnail-fallback.svg';
+}
+
+window.handleAdminThumbnailError = (img) => {
+  const fallback = img.dataset.fallback || adminThumbnailFallbackUrl();
+  if ((img.getAttribute('src') || '') !== fallback) img.src = fallback;
+};
+
+function firstSafeThumbnailForAdmin(item) {
+  const protectedVideoId = extractVideoIdFromLink(item.videoId || item.vid || item.youtubeVideoId || item.videoUrl || item.youtubeUrl || '');
+  const candidates = [
+    item.courseThumbnailUrl,
+    item.courseThumbnail,
+    item.courseImage,
+    item.coursePoster,
+    item.courseImageUrl,
+    item.coverImage,
+    item.coverUrl,
+    item.bannerUrl,
+    item.thumbnailUrl,
+    item.thumbnail,
+    item.image,
+    item.poster,
+    item.previewThumbnailUrl,
+    item.imageUrl
+  ];
+  for (const candidate of candidates) {
+    const url = String(candidate || '').trim();
+    if (url && !isDirectYoutubeThumbnailUrl(url) && !thumbnailLeaksVideoId(url, protectedVideoId)) return url;
+  }
+  return '';
+}
+
+window.repairPublicCourseThumbnails = async () => {
+  if (!confirm('Copy safe public thumbnails into thumbnailUrl where missing?')) return;
+  let updated = 0;
+  let skipped = 0;
+  try {
+    for (const item of allContent) {
+      const safeThumb = firstSafeThumbnailForAdmin(item);
+      if (!safeThumb) { skipped++; continue; }
+      const protectedVideoId = extractVideoIdFromLink(item.videoId || item.vid || item.youtubeVideoId || item.videoUrl || item.youtubeUrl || '');
+      const existingThumb = String(item.thumbnailUrl || '').trim();
+      const existingIsUnsafe = thumbnailLeaksVideoId(existingThumb, protectedVideoId);
+      const courseThumbMismatch = item.courseThumbnailUrl && existingThumb !== item.courseThumbnailUrl;
+      if (existingThumb && !existingIsUnsafe && !courseThumbMismatch) { skipped++; continue; }
+      await updateDoc(doc(db, 'content', item._id), {
+        thumbnailUrl: safeThumb,
+        courseThumbnailUrl: item.courseThumbnailUrl || safeThumb,
+        publicThumbnailRepairedAt: serverTimestamp()
+      });
+      updated++;
+    }
+    showToast(`✅ ${updated} records updated, ${skipped} skipped.`, 'success');
+  } catch (error) {
+    console.error('[IdeaKDC thumbnail repair]', error);
+    showToast('Thumbnail repair failed. Console देखें।', 'error');
+  }
+};
+
+function resolveThumbnailDiagnostic(item = {}) {
+  const protectedVideoId = extractVideoIdFromLink(item.videoId || item.vid || item.youtubeVideoId || item.videoUrl || item.youtubeUrl || '');
+  const fields = {
+    courseThumbnailUrl: item.courseThumbnailUrl || '',
+    thumbnailUrl: item.thumbnailUrl || '',
+    thumbnail: item.thumbnail || '',
+    image: item.image || item.imageUrl || '',
+    poster: item.poster || ''
+  };
+  const candidates = [
+    fields.courseThumbnailUrl,
+    fields.thumbnailUrl,
+    fields.thumbnail,
+    fields.image,
+    fields.poster,
+    item.courseThumbnail,
+    item.courseImage,
+    item.coursePoster,
+    item.courseImageUrl,
+    item.coverImage,
+    item.coverUrl,
+    item.bannerUrl,
+    item.previewThumbnailUrl
+  ];
+  const resolved = candidates.find(candidate => {
+    const url = String(candidate || '').trim();
+    return isPermanentThumbnailUrl(url) && !isDirectYoutubeThumbnailUrl(url) && !thumbnailLeaksVideoId(url, protectedVideoId);
+  }) || '';
+  return { fields, resolved, protectedVideoId };
+}
+
+function firstSafePermanentThumbnailForAdmin(item) {
+  return resolveThumbnailDiagnostic(item).resolved;
+}
+
+async function fetchCollectionForThumbnailDiagnostics(collectionName) {
+  try {
+    const snap = await getDocs(collection(db, collectionName));
+    return snap.docs.map(d => ({ _id: d.id, _path: `${collectionName}/${d.id}`, _collection: collectionName, ...d.data() }));
+  } catch (error) {
+    console.warn('[IdeaKDC thumbnail diagnostic] collection read failed', { collectionName, code: error.code || error.message });
+    return [];
+  }
+}
+
+function testThumbnailImage(url) {
+  return new Promise(resolve => {
+    if (!url) {
+      resolve({ ok: false, reason: 'missing-url' });
+      return;
+    }
+    if (!isPermanentThumbnailUrl(url)) {
+      resolve({ ok: false, reason: 'not-permanent-https' });
+      return;
+    }
+    const img = new Image();
+    const timer = setTimeout(() => {
+      img.onload = null;
+      img.onerror = null;
+      resolve({ ok: false, reason: 'timeout-or-blocked' });
+    }, 7000);
+    img.onload = () => {
+      clearTimeout(timer);
+      resolve({ ok: true, reason: `${img.naturalWidth}x${img.naturalHeight}` });
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      resolve({ ok: false, reason: 'browser-image-load-failed' });
+    };
+    img.referrerPolicy = 'no-referrer';
+    img.src = url;
+  });
+}
+
+function shortThumbnailUrl(url) {
+  let value = String(url || '').trim();
+  if (!value) return '-';
+  try {
+    const parsed = new URL(value);
+    if (/youtube\.com$|youtube-nocookie\.com$|youtu\.be$|img\.youtube\.com$/i.test(parsed.hostname)) {
+      return '[direct-youtube-thumbnail-redacted]';
+    }
+    if (parsed.searchParams.has('token')) parsed.searchParams.set('token', '[redacted]');
+    value = parsed.toString();
+  } catch (_) {}
+  return value.length > 74 ? `${value.slice(0, 40)}...${value.slice(-24)}` : value;
+}
+
+function renderThumbnailDiagnostics(rows) {
+  const output = document.getElementById('thumbnail-diagnostic-output');
+  if (!output) return;
+  if (!rows.length) {
+    output.innerHTML = '<div class="mode-help">No readable course/content records found.</div>';
+    return;
+  }
+  output.innerHTML = `
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:12px;background:#fff">
+      <table style="width:100%;min-width:980px;border-collapse:collapse;font-size:.72rem">
+        <thead>
+          <tr style="background:#f1f5f9;color:#0f172a;text-align:left">
+            <th style="padding:.55rem">Path</th>
+            <th style="padding:.55rem">courseId</th>
+            <th style="padding:.55rem">courseThumbnailUrl</th>
+            <th style="padding:.55rem">thumbnailUrl</th>
+            <th style="padding:.55rem">thumbnail/image/poster</th>
+            <th style="padding:.55rem">resolved final URL</th>
+            <th style="padding:.55rem">browser load</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr style="border-top:1px solid var(--border)">
+              <td style="padding:.55rem;font-weight:800">${row.path}</td>
+              <td style="padding:.55rem">${row.courseId || '-'}</td>
+              <td style="padding:.55rem">${shortThumbnailUrl(row.courseThumbnailUrl)}</td>
+              <td style="padding:.55rem">${shortThumbnailUrl(row.thumbnailUrl)}</td>
+              <td style="padding:.55rem">${shortThumbnailUrl(row.otherThumb)}</td>
+              <td style="padding:.55rem;color:${row.resolved ? '#0a7a3d' : '#b42318'}">${shortThumbnailUrl(row.resolved)}</td>
+              <td style="padding:.55rem">${row.loadOk ? 'OK' : 'FAIL'} ${row.loadReason}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+window.diagnosePublicCourseThumbnails = async () => {
+  const output = document.getElementById('thumbnail-diagnostic-output');
+  if (output) output.innerHTML = '<div class="mode-help">Reading live thumbnail fields and testing image URLs...</div>';
+  try {
+    const courseDocs = await fetchCollectionForThumbnailDiagnostics('courses');
+    const contentDocs = allContent.map(item => ({ _path: `content/${item._id}`, _collection: 'content', ...item }));
+    const rows = [];
+    for (const item of [...courseDocs, ...contentDocs]) {
+      const diagnostic = resolveThumbnailDiagnostic(item);
+      const load = await testThumbnailImage(diagnostic.resolved);
+      rows.push({
+        path: item._path || `${item._collection || 'content'}/${item._id || item.id || 'unknown'}`,
+        courseId: item.courseId || item.id || '',
+        courseThumbnailUrl: diagnostic.fields.courseThumbnailUrl,
+        thumbnailUrl: diagnostic.fields.thumbnailUrl,
+        otherThumb: diagnostic.fields.thumbnail || diagnostic.fields.image || diagnostic.fields.poster || '',
+        resolved: diagnostic.resolved,
+        loadOk: load.ok,
+        loadReason: load.reason
+      });
+    }
+    renderThumbnailDiagnostics(rows);
+  } catch (error) {
+    console.error('[IdeaKDC thumbnail diagnostic]', error);
+    if (output) output.innerHTML = '<div class="mode-help" style="color:var(--red)">Thumbnail diagnostic failed. Check console.</div>';
+  }
+};
+
+function renderDeepThumbnailDiagnostics(result = {}) {
+  const output = document.getElementById('thumbnail-diagnostic-output');
+  if (!output) return;
+  const rows = Array.isArray(result.rows) ? result.rows : [];
+  if (!rows.length) {
+    output.innerHTML = '<div class="mode-help">Deep diagnosis returned no content rows.</div>';
+    return;
+  }
+  const missing = rows.filter(row => !row.resolvedField).length;
+  const failed = rows.filter(row => !row.imageOk).length;
+  output.innerHTML = `
+    <div class="mode-help" style="margin-bottom:.65rem">
+      Deep diagnosis ${result.diagnosticVersion || ''}: scanned ${result.scanned || rows.length},
+      missing ${missing}, failed URL/image ${failed}, raw YouTube URLs remaining ${result.rawYoutubeUrlsRemaining ?? rows.filter(row => row.hasRawYoutubeThumbnail).length}.
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:12px;background:#fff">
+      <table style="width:100%;min-width:1500px;border-collapse:collapse;font-size:.7rem">
+        <thead>
+          <tr style="background:#f1f5f9;color:#0f172a;text-align:left">
+            <th style="padding:.5rem">Path</th>
+            <th style="padding:.5rem">document.id</th>
+            <th style="padding:.5rem">courseId</th>
+            <th style="padding:.5rem">lessonId</th>
+            <th style="padding:.5rem">type</th>
+            <th style="padding:.5rem">sourceField</th>
+            <th style="padding:.5rem">sourceValue</th>
+            <th style="padding:.5rem">raw YouTube URL?</th>
+            <th style="padding:.5rem">status</th>
+            <th style="padding:.5rem">thumbnailUrl</th>
+            <th style="padding:.5rem">courseThumbnailUrl</th>
+            <th style="padding:.5rem">other fields</th>
+            <th style="padding:.5rem">resolved</th>
+            <th style="padding:.5rem">catalogue course</th>
+            <th style="padding:.5rem">catalogue lesson</th>
+            <th style="padding:.5rem">HTTP</th>
+            <th style="padding:.5rem">content-type</th>
+            <th style="padding:.5rem">Storage path</th>
+            <th style="padding:.5rem">result</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr style="border-top:1px solid var(--border)">
+              <td style="padding:.5rem;font-weight:800">${row.path || '-'}</td>
+              <td style="padding:.5rem">${row.documentId || '-'}</td>
+              <td style="padding:.5rem">${row.courseId || '-'}</td>
+              <td style="padding:.5rem">${row.lessonId || '-'}</td>
+              <td style="padding:.5rem">${row.courseType || '-'}</td>
+              <td style="padding:.5rem">${row.sourceField || '-'}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.sourceValue || '')}</td>
+              <td style="padding:.5rem;color:${row.hasRawYoutubeThumbnail ? '#b42318' : '#0a7a3d'}">${row.hasRawYoutubeThumbnail ? 'YES' : 'no'}</td>
+              <td style="padding:.5rem">${row.thumbnailStatus || '-'}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.thumbnailUrl)}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.courseThumbnailUrl)}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.thumbnail || row.image || row.poster || '')}</td>
+              <td style="padding:.5rem;color:${row.resolvedUrl ? '#0a7a3d' : '#b42318'}">${row.resolvedField || 'none'}<br>${shortThumbnailUrl(row.resolvedUrl)}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.catalogueThumbnailUrl)}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.catalogueLessonThumbnailUrl)}</td>
+              <td style="padding:.5rem">${row.httpStatus || '-'}</td>
+              <td style="padding:.5rem">${row.contentType || '-'}</td>
+              <td style="padding:.5rem">${row.storagePath || '-'}${row.storageRuleExpectedPublic ? '<br><span style="color:#0a7a3d">course-thumbnails public read expected</span>' : ''}</td>
+              <td style="padding:.5rem;color:${row.imageOk ? '#0a7a3d' : '#b42318'}">${row.imageOk ? 'OK image' : `FAIL ${row.failureReason || ''}`}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+window.diagnoseDeepCourseThumbnails = async () => {
+  const output = document.getElementById('thumbnail-diagnostic-output');
+  const status = document.getElementById('thumbnail-repair-status');
+  if (output) output.innerHTML = '<div class="mode-help">Running server-side deep thumbnail diagnosis...</div>';
+  if (status) status.textContent = 'Deep diagnosis running...';
+  try {
+    const result = await diagnoseCourseThumbnailsFn({});
+    renderDeepThumbnailDiagnostics(result.data || {});
+    if (status) status.textContent = 'Deep thumbnail diagnosis completed.';
+  } catch (error) {
+    console.error('[IdeaKDC deep thumbnail diagnosis]', error);
+    const safeMessage = safeCallableError(error);
+    if (status) status.textContent = safeMessage;
+    if (output) output.innerHTML = `<div class="mode-help" style="color:var(--red)">${safeMessage}</div>`;
+  }
+};
+
+async function repairThumbnailDocs(collectionName, docs) {
+  let updated = 0;
+  let skipped = 0;
+  for (const item of docs) {
+    const safeThumb = firstSafePermanentThumbnailForAdmin(item);
+    if (!safeThumb) { skipped++; continue; }
+    const diagnostic = resolveThumbnailDiagnostic(item);
+    const existingThumb = String(item.thumbnailUrl || '').trim();
+    const existingValid = isPermanentThumbnailUrl(existingThumb) && !thumbnailLeaksVideoId(existingThumb, diagnostic.protectedVideoId);
+    const courseThumb = String(item.courseThumbnailUrl || '').trim();
+    const shouldRepair = !existingValid || (courseThumb && existingThumb !== courseThumb);
+    if (!shouldRepair) { skipped++; continue; }
+    await updateDoc(doc(db, collectionName, item._id || item.id), {
+      thumbnailUrl: safeThumb,
+      courseThumbnailUrl: item.courseThumbnailUrl || safeThumb,
+      publicThumbnailRepairedAt: serverTimestamp()
+    });
+    updated++;
+  }
+  return { updated, skipped };
+}
+
+window.repairPublicCourseThumbnails = async () => {
+  if (!confirm('Copy safe public thumbnails into thumbnailUrl where missing?')) return;
+  let updated = 0;
+  let skipped = 0;
+  try {
+    const contentResult = await repairThumbnailDocs('content', allContent);
+    updated += contentResult.updated;
+    skipped += contentResult.skipped;
+    const courseDocs = await fetchCollectionForThumbnailDiagnostics('courses');
+    const courseResult = await repairThumbnailDocs('courses', courseDocs);
+    updated += courseResult.updated;
+    skipped += courseResult.skipped;
+    showToast(`âœ… ${updated} records updated, ${skipped} skipped.`, 'success');
+    await diagnosePublicCourseThumbnails();
+  } catch (error) {
+    console.error('[IdeaKDC thumbnail repair]', error);
+    showToast('Thumbnail repair failed. Console à¤¦à¥‡à¤–à¥‡à¤‚à¥¤', 'error');
+  }
+};
+
+function renderRepairSummary(result = {}) {
+  const target = document.getElementById('thumbnail-repair-summary');
+  if (!target) return;
+  const failed = Array.isArray(result.failedRecords) ? result.failedRecords : [];
+  target.innerHTML = `
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:.75rem">
+      <strong>Repair result:</strong>
+      scanned ${result.totalScanned || 0},
+      repaired ${result.repaired || 0},
+      already valid ${result.alreadyValid || 0},
+      failed ${result.failed || 0},
+      needs manual upload ${result.needsManualUpload || 0}.
+      ${failed.length ? `
+        <div style="margin-top:.55rem;color:var(--red)">
+          ${failed.slice(0, 12).map(item => `
+            <div>
+              ${item.courseId || 'course'} / ${item.contentId || 'content'}: ${item.reason || 'failed'}
+              <button type="button" class="mini-btn" onclick="retryThumbnailRepair('${item.contentId || ''}')">Retry</button>
+            </div>`).join('')}
+        </div>` : ''}
+    </div>`;
+}
+
+window.retryThumbnailRepair = async (contentId) => {
+  if (!contentId) return;
+  const summary = document.getElementById('thumbnail-repair-summary');
+  if (summary) summary.textContent = 'Retrying thumbnail repair...';
+  try {
+    const result = await repairProtectedCourseThumbnailsFn({ contentIds: [contentId] });
+    renderRepairSummary(result.data || {});
+    await diagnosePublicCourseThumbnails();
+  } catch (error) {
+    console.error('[IdeaKDC protected thumbnail retry]', error);
+    showToast('Thumbnail retry failed. Console देखें।', 'error');
+  }
+};
+
+window.repairPublicCourseThumbnails = async () => {
+  if (!confirm('Repair all missing thumbnails using protected video IDs on the server?')) return;
+  const summary = document.getElementById('thumbnail-repair-summary');
+  if (summary) summary.textContent = 'Repairing thumbnails on server...';
+  try {
+    const result = await repairProtectedCourseThumbnailsFn({});
+    renderRepairSummary(result.data || {});
+    showToast('Thumbnail repair completed.', 'success');
+    await diagnosePublicCourseThumbnails();
+  } catch (error) {
+    console.error('[IdeaKDC protected thumbnail repair]', error);
+    if (summary) summary.textContent = 'Thumbnail repair failed. Check console.';
+    showToast('Thumbnail repair failed. Console देखें।', 'error');
+  }
+};
+
+function setRepairButtonLoading(isLoading) {
+  const button = document.getElementById('repair-thumbnails-btn');
+  if (!button) return;
+  button.disabled = isLoading;
+  button.textContent = isLoading ? 'Scanning...' : 'Repair All Missing Thumbnails';
+}
+
+function setRepairStatus(message, type = 'info') {
+  const status = document.getElementById('thumbnail-repair-status');
+  if (!status) return;
+  status.style.color = type === 'error' ? 'var(--red)' : type === 'success' ? 'var(--green)' : 'var(--muted)';
+  status.textContent = message || '';
+}
+
+function safeCallableError(error) {
+  const code = error?.code || 'unknown';
+  const message = error?.message || 'Request failed.';
+  if (code === 'functions/not-found' || code === 'not-found') return 'Repair function is not deployed or unavailable.';
+  if (code === 'functions/permission-denied' || code === 'permission-denied') return 'Permission denied. Please login with the IdeaKDC admin account.';
+  if (code === 'functions/unauthenticated' || code === 'unauthenticated') return 'Admin login is required before repair.';
+  return `${code}: ${message}`;
+}
+
+window.retryThumbnailRepair = async (contentId) => {
+  if (!contentId) return;
+  const summary = document.getElementById('thumbnail-repair-summary');
+  if (summary) summary.textContent = 'Retrying thumbnail repair...';
+  setRepairStatus('Scanning...', 'info');
+  try {
+    const result = await repairProtectedCourseThumbnailsFn({ contentIds: [contentId] });
+    const data = result.data || {};
+    renderRepairSummary(data);
+    setRepairStatus(`Repaired ${data.repaired || 0}. Already valid ${data.alreadyValid || 0}. Failed ${data.failed || 0}.`, data.failed ? 'error' : 'success');
+    await diagnosePublicCourseThumbnails();
+  } catch (error) {
+    console.error('[IdeaKDC protected thumbnail retry]', error);
+    const safeMessage = safeCallableError(error);
+    setRepairStatus(safeMessage, 'error');
+    showToast(safeMessage, 'error');
+  }
+};
+
+window.repairPublicCourseThumbnails = async () => {
+  if (!confirm('Repair all missing thumbnails using protected video IDs on the server?')) return;
+  const summary = document.getElementById('thumbnail-repair-summary');
+  if (summary) summary.textContent = '';
+  setRepairButtonLoading(true);
+  setRepairStatus('Scanning...', 'info');
+  try {
+    const result = await repairProtectedCourseThumbnailsFn({});
+    const data = result.data || {};
+    renderRepairSummary(data);
+    setRepairStatus(`Repaired ${data.repaired || 0}. Already valid ${data.alreadyValid || 0}. Failed ${data.failed || 0}.`, data.failed ? 'error' : 'success');
+    showToast('Thumbnail repair completed.', 'success');
+    await diagnosePublicCourseThumbnails();
+  } catch (error) {
+    console.error('[IdeaKDC protected thumbnail repair]', error);
+    const safeMessage = safeCallableError(error);
+    if (summary) summary.textContent = safeMessage;
+    setRepairStatus(safeMessage, 'error');
+    showToast(safeMessage, 'error');
+  } finally {
+    setRepairButtonLoading(false);
+  }
+};
+
+function collectCourseFaqs() {
+  const faqs = [];
+  for (let i = 1; i <= 8; i++) {
+    const question = document.getElementById(`faq-q-${i}`)?.value.trim() || '';
+    const answer = document.getElementById(`faq-a-${i}`)?.value.trim() || '';
+    if (!question && !answer) continue;
+    if (!question || !answer) {
+      showToast(`Q&A ${i} में question और answer दोनों भरें।`, 'error');
+      return null;
+    }
+    faqs.push({ question, answer });
+  }
+  return faqs.slice(0, 8);
+}
+
+let uploadInProgress = false;
+
+function setUploadStatus(message = '', type = 'info') {
+  const status = document.getElementById('upload-status');
+  if (!status) return;
+  status.textContent = message;
+  status.className = `mode-help upload-status${message ? ' show' : ''}${type ? ` ${type}` : ''}`;
+}
+
+function setUploading(isUploading, label = '') {
+  uploadInProgress = isUploading;
+  setBtn('upload-btn', 'upload-label', isUploading, label || (isUploading ? 'Upload ho raha hai...' : 'Content Upload karein'));
+}
+
+function safeUploadError(error) {
+  const code = error?.code || '';
+  const message = error?.message || '';
+  if (code.includes('storage/unauthorized')) return 'Thumbnail upload permission denied. Please check admin login and Storage rules.';
+  if (code.includes('storage/retry-limit-exceeded')) return 'Thumbnail upload network timeout. Please try again.';
+  if (code.includes('permission-denied')) return 'Permission denied. Please login with the IdeaKDC admin account.';
+  if (code.includes('unauthenticated')) return 'Admin login required. Please login again.';
+  if (code.includes('functions/not-found') || code.includes('not-found')) return 'Required upload Function is unavailable. Deploy functions before uploading courses.';
+  if (/network|failed to fetch|offline/i.test(message)) return 'Network problem during upload. Please check internet and try again.';
+  return message || code || 'Upload failed. Please try again.';
+}
+
+function showVisibleUploadError(error) {
+  const safeMessage = safeUploadError(error);
+  const code = error?.code || '';
+  const visibleMessage = code && !safeMessage.includes(code) ? `${code}: ${safeMessage}` : safeMessage;
+  console.error('[IdeaKDC upload]', error);
+  setUploadStatus(visibleMessage, 'error');
+  showToast(visibleMessage, 'error');
+}
+
+async function runUploadPreflight() {
+  setUploadStatus('Checking upload setup...', 'info');
+  if (!firebaseConfig.projectId || firebaseConfig.projectId !== 'ideakdc-24b0b') {
+    throw new Error(`Firebase project mismatch: ${firebaseConfig.projectId || 'missing'}`);
+  }
+  if (!firebaseConfig.storageBucket) {
+    throw new Error('Storage bucket missing in Firebase config.');
+  }
+  if (!storage) {
+    throw new Error('Storage not initialized.');
+  }
+  if (!db) {
+    throw new Error('Firestore not initialized.');
+  }
+  if (!functions || !adminUploadPreflightFn || !repairProtectedCourseThumbnailsFn) {
+    throw new Error('Required Function unavailable.');
+  }
+
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('Admin authentication missing.');
+  }
+  const email = String(user.email || '').toLowerCase();
+  if (!ADMIN_EMAILS.map(item => item.toLowerCase()).includes(email)) {
+    throw new Error('Current user is not recognized as IdeaKDC admin.');
+  }
+
+  const diagnosticRef = storageRef(storage, 'course-thumbnails/diagnostics/upload-preflight-check.txt');
+  if (!diagnosticRef || !diagnosticRef.fullPath || !diagnosticRef.bucket) {
+    throw new Error('Storage diagnostic reference could not be created.');
+  }
+  setUploadStatus(`Storage ready: ${diagnosticRef.bucket}`, 'info');
+
+  let serverResult;
+  try {
+    serverResult = await withUploadTimeout(
+      adminUploadPreflightFn({ expectedProjectId: firebaseConfig.projectId }),
+      15000,
+      'Required Function unavailable or timed out.'
+    );
+  } catch (error) {
+    if ((error?.code || '').includes('permission-denied')) {
+      throw new Error('Required Function permission denied. Please login with admin account.');
+    }
+    if ((error?.code || '').includes('not-found')) {
+      throw new Error('Required Function unavailable. Deploy functions before uploading courses.');
+    }
+    throw error;
+  }
+
+  const data = serverResult?.data || {};
+  if (!data.ok) {
+    throw new Error('Required Function preflight failed.');
+  }
+  const preflightVersion = data.preflightVersion || 'unknown-version';
+  setUploadStatus(`Storage ready. Firestore ready. Functions ready (${preflightVersion}). Bucket: ${firebaseConfig.storageBucket}`, 'success');
+  return {
+    bucket: firebaseConfig.storageBucket,
+    serverBucket: data.storageBucket || '',
+    preflightVersion
+  };
+}
+
+function withUploadTimeout(promise, timeoutMs, label) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(label || 'Operation timed out.')), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
+async function saveContentDoc(data, label = 'Firestore course save') {
+  return withUploadTimeout(
+    addDoc(collection(db, 'content'), data),
+    25000,
+    `${label} timed out. Check Firestore permissions and internet connection.`
+  );
+}
+
+function queuePostUploadThumbnailRepair(contentIds = []) {
+  const safeIds = contentIds.filter(Boolean);
+  if (!safeIds.length) return;
+  setUploadStatus('Course saved. Public thumbnail repair is running in background...', 'success');
+  withUploadTimeout(
+      repairProtectedCourseThumbnailsFn({ contentIds: safeIds }),
+      120000,
+      'Thumbnail repair is taking too long. Run Repair All Missing Thumbnails from admin panel if needed.'
+    )
+    .then(() => {
+      setUploadStatus('Upload completed. Thumbnail is ready.', 'success');
+    })
+    .catch((error) => {
+      console.warn('[IdeaKDC upload thumbnail repair skipped]', {
+        code: error?.code || '',
+        message: error?.message || ''
+      });
+      setUploadStatus('Course saved. Thumbnail repair did not finish now; use Repair All Missing Thumbnails if the image is missing.', 'warning');
+    });
+}
+
+
 window.uploadContent = async () => {
+  if (uploadInProgress) return;
+  setUploadStatus('');
   const cls     = document.getElementById('up-class').value;
   const subject = document.getElementById('up-subject').value;
   const chapter = document.getElementById('up-chapter').value.trim();
@@ -706,44 +1636,129 @@ window.uploadContent = async () => {
   const title   = document.getElementById('up-title').value.trim();
   const price   = Number(document.getElementById('up-price').value || 0);
   const desc    = document.getElementById('up-desc').value.trim();
+  let courseThumbnailUrl = '';
   const vidLink = document.getElementById('up-video-link').value.trim();
+  const makeCompleteVideoFree = document.getElementById('up-free-complete')?.checked === true;
   const plLink  = document.getElementById('up-playlist-link').value.trim();
   const fp      = uploadFP;
+  const faqs    = collectCourseFaqs();
+  if (faqs === null) return;
 
-  if (!cls)     return showToast('Class select करें।','error');
-  if (!subject) return showToast('Subject select करें।','error');
-  if (!chapter) return showToast('Chapter लिखें।','error');
-  if (!topic)   return showToast('Topic लिखें।','error');
+  if (uploadMode === 'edit-course') {
+    return showToast('Edit existing course mode अलग action है। पहले content list से course select करें।', 'error');
+  }
+
+  if (uploadMode !== 'add-video-playlist') {
+    if (!cls)     return showToast('Class select करें।','error');
+    if (!subject) return showToast('Subject select करें।','error');
+    if (!chapter) return showToast('Chapter लिखें।','error');
+    if (!topic)   return showToast('Topic लिखें।','error');
+  }
   if (!title)   return showToast('Title लिखें।','error');
-  if (!price || price < 1) return showToast('Course price सही डालें।','error');
+  if (uploadMode !== 'add-video-playlist' && (!price || price < 1)) return showToast('Course price सही डालें।','error');
 
   const link = uploadType === 'video' ? vidLink : plLink;
   if (!link)    return showToast('YouTube link डालें।','error');
 
-  setBtn('upload-btn','upload-label',true, uploadType==='playlist' ? 'Playlist से Videos fetch हो रही हैं...' : 'Upload हो रहा है...');
+  uploadInProgress = true;
+  setBtn('upload-btn', 'upload-label', true, 'Checking upload setup...');
+  try {
+    await runUploadPreflight();
+  } catch (error) {
+    showVisibleUploadError(error);
+    setUploading(false, '✅ Content Upload करें');
+    return;
+  }
+  setUploading(true, uploadType==='playlist' ? 'Playlist se videos fetch ho rahi hain...' : 'Upload ho raha hai...');
 
   try {
-    if (uploadType === 'video') {
-      // ── SINGLE VIDEO ──
-      let videoId = '';
-      if (link.includes('youtu.be/')) videoId = link.split('youtu.be/')[1].split('?')[0];
-      else if (link.includes('v='))   videoId = link.split('v=')[1].split('&')[0];
-      else videoId = link.trim();
+    if (uploadMode === 'add-video-playlist') {
+      const targetCourseId = document.getElementById('existing-playlist-course')?.value || '';
+      const targetItems = allContent
+        .filter(item => item.courseId === targetCourseId && item.courseType === 'playlist')
+        .sort((a,b) => Number(a.orderIndex || 0) - Number(b.orderIndex || 0));
+      const base = targetItems[0];
+      if (!targetCourseId || !base) {
+        showToast('Existing playlist course select करें।', 'error');
+        setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+        return;
+      }
+      if (uploadType !== 'video') {
+        showToast('Add video mode में playlist upload allowed नहीं है।', 'error');
+        setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+        return;
+      }
 
-      await addDoc(collection(db,'content'), {
-        type: 'video', title, classNum: cls, stream: uploadStream || '',
-        subject, chapter, topic, videoId, playlistId: '', desc,
-        isFree: fp === 'free', price, createdAt: serverTimestamp()
+	      const videoId = extractVideoIdFromLink(vidLink);
+	      const nextIndex = targetItems.reduce((max, item) => Math.max(max, Number(item.orderIndex || 0)), -1) + 1;
+      setUploadStatus('Saving new playlist lesson...', 'info');
+		      const createdDoc = await saveContentDoc({
+        type: 'video',
+        contentType: 'playlist',
+        courseType: 'playlist',
+        courseId: targetCourseId,
+        title,
+        classNum: base.classNum || cls,
+        stream: base.stream || uploadStream || '',
+        subject: base.subject || subject,
+        chapter: base.chapter || chapter,
+        topic: `${base.topic || topic} — Part ${nextIndex + 1}`,
+        videoId,
+        playlistId: base.playlistId || '',
+        firstVideoId: base.firstVideoId || videoId,
+        videoCount: targetItems.length + 1,
+        thumbnailUrl: '',
+        courseThumbnailUrl: courseThumbnailUrl || base.courseThumbnailUrl || base.thumbnailUrl || '',
+        faqs: faqs.length ? faqs : (Array.isArray(base.faqs) ? base.faqs.slice(0, 8) : []),
+        desc: desc || base.desc || '',
+        isFree: makeCompleteVideoFree,
+        price: Number(base.price || price),
+        orderIndex: nextIndex,
+        createdAt: serverTimestamp(),
+        thumbnailStatus: 'pending-repair'
       });
+      queuePostUploadThumbnailRepair([createdDoc.id]);
+      showToast('✅ Existing playlist में नया video add हो गया!','success');
+
+    } else if (uploadMode === 'create-single') {
+      if (uploadType !== 'video') {
+        showToast('Single-video course के लिए video upload type चुनें।', 'error');
+        setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+        return;
+	      }
+	      const courseId = uniqueCourseId('single');
+	      const videoId = extractVideoIdFromLink(link);
+      setUploadStatus('Saving single-video course...', 'info');
+		      const createdDoc = await saveContentDoc({
+        type: 'video', contentType: 'single', courseType: 'single', courseId,
+        title, courseTitle: title, classNum: cls, stream: uploadStream || '',
+        subject, chapter, topic, videoId, playlistId: '', desc,
+        firstVideoId: videoId,
+        videoCount: 1,
+        thumbnailUrl: '',
+        courseThumbnailUrl: '',
+        faqs,
+        orderIndex: 0,
+        isFree: fp === 'free' || makeCompleteVideoFree, price, createdAt: serverTimestamp(),
+        thumbnailStatus: 'pending-repair'
+      });
+      queuePostUploadThumbnailRepair([createdDoc.id]);
       showToast('✅ Video upload हो गया!','success');
 
-    } else {
+    } else if (uploadMode === 'create-playlist') {
+      if (uploadType !== 'playlist') {
+        showToast('Playlist course के लिए playlist upload type चुनें।', 'error');
+        setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+        return;
+	      }
+	      const courseId = uniqueCourseId('playlist');
+      setUploadStatus('Saving playlist course metadata...', 'info');
       // ── PLAYLIST: fetch all videos via YouTube API, create one entry per video ──
-      let playlistId = '';
-      if (link.includes('list=')) playlistId = link.split('list=')[1].split('&')[0];
-      else playlistId = link.trim();
-
-      const videos = await fetchPlaylistVideos(playlistId);
+	      const playlistId = extractPlaylistIdFromLink(link);
+	
+	      setUploadStatus('Fetching playlist videos from YouTube...', 'info');
+	      const videos = await fetchPlaylistVideos(playlistId, message => setUploadStatus(message, 'info'));
+      const firstVideoId = videos[0]?.videoId || '';
       if (!videos.length) {
         showToast('Playlist में कोई video नहीं मिला। Link check करें।','error');
         setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
@@ -752,42 +1767,53 @@ window.uploadContent = async () => {
 
       setBtn('upload-btn','upload-label',true,`${videos.length} videos save हो रही हैं...`);
 
-      for (let i = 0; i < videos.length; i++) {
-        const v = videos[i];
-        await addDoc(collection(db,'content'), {
+	      const createdContentIds = [];
+	      for (let i = 0; i < videos.length; i++) {
+	        const v = videos[i];
+	        setUploadStatus(`Saving lesson ${i + 1} of ${videos.length}...`, 'info');
+		        const createdDoc = await saveContentDoc({
           type: 'video', // each playlist video becomes its own video entry
+          contentType: 'playlist',
+          courseType: 'playlist',
+          courseId,
           title: v.title,
+          courseTitle: title,
           classNum: cls,
           stream: uploadStream || '',
           subject,
           chapter,
           topic: `${topic} — Part ${i+1}`,
           videoId: v.videoId,
-          playlistId: '',
+          playlistId,
+          firstVideoId,
+          videoCount: videos.length,
+          thumbnailUrl: '',
+          courseThumbnailUrl: courseThumbnailUrl || '',
           dur: v.duration,
           orderIndex: i,
+          faqs,
           desc,
-          isFree: fp === 'free',
+          isFree: fp === 'free' || makeCompleteVideoFree,
           price,
-          createdAt: serverTimestamp()
-        });
+          createdAt: serverTimestamp(),
+        thumbnailStatus: 'pending-repair'
+      });
+        createdContentIds.push(createdDoc.id);
       }
+      queuePostUploadThumbnailRepair(createdContentIds);
       showToast(`✅ ${videos.length} videos playlist से upload हो गए!`,'success');
+    } else {
+      showToast('Upload mode सही select करें।', 'error');
+      setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+      return;
     }
 
-    // Reset form
-    ['up-class','up-subject','up-chapter','up-topic','up-title','up-desc','up-video-link','up-playlist-link']
-      .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
-    document.getElementById('up-price').value='450';
-    uploadStream = '';
-    document.querySelectorAll('.stream-pill').forEach(p=>p.classList.remove('active'));
-    document.getElementById('stream-group').style.display='none';
-    setType('video'); setFP('free');
+    resetUploadState();
   } catch(e) {
-    console.error(e);
-    showToast('Error: ' + (e.code || e.message || 'अनजान error'),'error');
+    showVisibleUploadError(e);
+  } finally {
+    setUploading(false, '✅ Content Upload करें');
   }
-  setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
 };
 
 // ════════════════════════════════════════
@@ -818,11 +1844,18 @@ function renderContent() {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>कोई content नहीं मिला।</div>`;
     return;
   }
-  el.innerHTML = data.map(c => `
+  el.innerHTML = data.map(c => {
+    const displayType = c.courseType || c.contentType || c.type || 'video';
+    const thumb = firstSafeThumbnailForAdmin(c) || adminThumbnailFallbackUrl();
+    const safeTitle = String(c.title || 'IdeaKDC content').replace(/"/g, '&quot;');
+    return `
     <div class="content-item">
+      <div class="content-thumb" style="margin-bottom:.65rem">
+        <img src="${thumb}" alt="${safeTitle} thumbnail" width="160" height="90" loading="lazy" decoding="async" data-fallback="${adminThumbnailFallbackUrl()}" onerror="handleAdminThumbnailError(this)">
+      </div>
       <div class="content-item-top">
         <div class="content-item-title">${c.title||'—'}</div>
-        <span class="content-item-type ${c.type==='playlist'?'type-playlist':'type-video'}">${c.type==='playlist'?'📋 Playlist':'🎬 Video'}</span>
+        <span class="content-item-type ${displayType==='playlist'?'type-playlist':'type-video'}">${displayType==='playlist'?'📋 Playlist':'🎬 Video'}</span>
       </div>
       <div class="content-chips">
         <span class="meta-chip">Class ${c.classNum||'—'}</span>
@@ -830,6 +1863,9 @@ function renderContent() {
         <span class="meta-chip">${c.subject||'—'}</span>
         <span class="meta-chip">${c.chapter||'—'}</span>
         <span class="meta-chip">${c.topic||'—'}</span>
+        <span class="meta-chip">${c.courseType || c.contentType || 'legacy'}</span>
+        <span class="meta-chip">Course: ${c.courseId || 'legacy-group'}</span>
+        <span class="meta-chip">Doc: ${c._id}</span>
         <span class="meta-chip">₹${c.price||450}</span>
         <span class="meta-chip ${c.isFree?'free':'paid'}">${c.isFree?'🆓 Free':'💎 Paid'}</span>
       </div>
@@ -837,7 +1873,8 @@ function renderContent() {
       <div class="content-item-actions">
         <button class="btn-delete" onclick="deleteContent('${c._id}','${(c.title||'').replace(/'/g,'')}')">🗑️ Delete</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function streamLabel(s) {
@@ -868,8 +1905,9 @@ window.saveCoupon = async () => {
       code,
       price,
       active: true,
-      createdAt: serverTimestamp()
-    });
+      createdAt: serverTimestamp(),
+        thumbnailStatus: 'pending-repair'
+      });
     document.getElementById('coupon-code').value = '';
     document.getElementById('coupon-price').value = '';
     showToast('✅ Coupon save हो गया!','success');
@@ -990,6 +2028,7 @@ window.switchPanel = (name, el) => {
   document.querySelectorAll('.btab').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel-'+name).classList.add('active');
   el.classList.add('active');
+  if (name === 'upload') resetUploadState();
 };
 
 // ════════════════════════════════════════
