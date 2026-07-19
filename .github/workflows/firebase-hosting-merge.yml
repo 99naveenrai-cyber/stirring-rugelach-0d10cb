@@ -16,15 +16,6 @@ jobs:
           node-version: 20
       - name: Apply thumbnail hotfix
         run: node scripts/apply-thumbnail-hotfix.js
-      - name: Install Functions dependencies
-        run: npm ci
-        working-directory: functions
-      - name: Deploy Firebase Functions
-        run: |
-          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_IDEAKDC_24B0B }}' > "$RUNNER_TEMP/firebase-sa.json"
-          npx firebase-tools deploy --only functions --project ideakdc-24b0b --non-interactive
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
