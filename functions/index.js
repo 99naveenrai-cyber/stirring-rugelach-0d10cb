@@ -132,6 +132,64 @@ function coursePriceFrom(value) {
   return value === 0 || value ? Number(value) : 450;
 }
 
+function hasExplicitFreeFlag(data = {}) {
+  return data.isFree === true ||
+    data.free === true ||
+    data.paymentRequired === false ||
+    String(data.accessType || "").toLowerCase() === "free";
+}
+
+function hasExplicitPaidFlag(data = {}) {
+  return data.paymentRequired === true ||
+    String(data.accessType || "").toLowerCase() === "paid";
+}
+
+function isContentFree(data = {}) {
+  if (hasExplicitFreeFlag(data)) return true;
+  if (hasExplicitPaidFlag(data)) return false;
+  return ["price", "amount", "coursePrice"].some((field) => {
+    const value = data[field];
+    return value !== undefined && value !== null && value !== "" && Number(value) === 0;
+  });
+}
+
+function normalizedContentPrice(data = {}) {
+  if (isContentFree(data)) return 0;
+  return coursePriceFrom(data.price ?? data.amount ?? data.coursePrice);
+}
+
+function needsFreePricingRepair(data = {}) {
+  if (!hasExplicitFreeFlag(data)) return false;
+  const numericFields = [data.price, data.amount, data.coursePrice]
+    .filter((value) => value !== undefined && value !== null && value !== "")
+    .map((value) => Number(value));
+  return numericFields.some((value) => Number.isFinite(value) && value > 0) ||
+    data.paymentRequired !== false ||
+    String(data.accessType || "").toLowerCase() !== "free" ||
+    data.isFree !== true;
+}
+
+async function repairConflictingFreePricingDocs(docs = []) {
+  const repairs = [];
+  docs.forEach((doc) => {
+    const data = doc.data() || {};
+    if (!needsFreePricingRepair(data)) return;
+    repairs.push(doc.ref.set({
+      isFree: true,
+      free: true,
+      price: 0,
+      amount: 0,
+      coursePrice: 0,
+      paymentRequired: false,
+      accessType: "free",
+      pricingRepairedAt: FieldValue.serverTimestamp()
+    }, { merge: true }));
+  });
+  if (!repairs.length) return 0;
+  await Promise.all(repairs);
+  return repairs.length;
+}
+
 function firstSafeThumbnail(candidates, protectedVideoId) {
   for (const candidate of candidates) {
     const normalized = normalizeImageUrl(candidate || "");
@@ -449,6 +507,8 @@ function contentToPublicCourses(items) {
     const courseThumb = publicContentThumbnail(data, fullVideoId) || generatedThumb;
     const lessonThumb = publicLessonThumbnail(data, fullVideoId) || generatedThumb || courseThumb;
     const faqs = normalizeFaqs(data);
+    const itemIsFree = isContentFree(data);
+    const itemPrice = normalizedContentPrice(data);
     if (!groups[key]) {
       groups[key] = {
         id: key,
@@ -461,7 +521,11 @@ function contentToPublicCourses(items) {
         name: data.courseTitle || data.title || `Class ${data.classNum || ""} - ${data.subject || "Course"}`.trim(),
         tag: data.stream ? `Class ${data.classNum || ""}` : `Class ${data.classNum || ""}`,
         desc: data.description || data.desc || "",
-        price: coursePriceFrom(data.price),
+        price: itemPrice,
+        isFree: itemIsFree,
+        free: itemIsFree,
+        paymentRequired: !itemIsFree,
+        accessType: itemIsFree ? "free" : "paid",
         thumbnailUrl: courseThumb || lessonThumb,
         courseThumbnailUrl: courseThumb || lessonThumb,
         videoCount: Number(data.videoCount || 0),
@@ -475,6 +539,19 @@ function contentToPublicCourses(items) {
     if (!groups[key].faqs.length && faqs.length) groups[key].faqs = faqs;
     if (contentType === "playlist") groups[key].contentType = "playlist";
     if (Number(data.videoCount || 0) > groups[key].videoCount) groups[key].videoCount = Number(data.videoCount || 0);
+    if (!itemIsFree) {
+      groups[key].isFree = false;
+      groups[key].free = false;
+      groups[key].paymentRequired = true;
+      groups[key].accessType = "paid";
+      groups[key].price = itemPrice;
+    } else if (groups[key].isFree !== false) {
+      groups[key].isFree = true;
+      groups[key].free = true;
+      groups[key].paymentRequired = false;
+      groups[key].accessType = "free";
+      groups[key].price = 0;
+    }
     groups[key].videos.push({
       contentId: data.id,
       lessonId: data.id,
@@ -492,7 +569,11 @@ function contentToPublicCourses(items) {
       contentType,
       chapter: data.chapter || "",
       topic: data.topic || "",
-      isFree: data.isFree === true,
+      isFree: itemIsFree,
+      free: itemIsFree,
+      price: itemPrice,
+      paymentRequired: !itemIsFree,
+      accessType: itemIsFree ? "free" : "paid",
       orderIndex: Number.isFinite(Number(data.orderIndex)) ? Number(data.orderIndex) : 999999,
       sequenceNumber: Number.isFinite(Number(data.sequenceNumber)) ? Number(data.sequenceNumber) : 999999,
       createdAtMs: data.createdAt?.toMillis ? data.createdAt.toMillis() : 0
@@ -524,7 +605,7 @@ async function findCourseById(courseId) {
     return {
       courseId: normalizedCourseId,
       title: data.title || data.name || normalizedCourseId,
-      amount: Number(data.price || 0),
+      amount: normalizedContentPrice(data),
       currency: data.currency || "INR",
       source: "courses"
     };
@@ -550,7 +631,7 @@ async function findCourseById(courseId) {
   return {
     courseId: normalizedCourseId,
     title: `Class ${matched.classNum || ""} - ${matched.subject || "Course"}`.trim(),
-    amount: Number(matched.price || 0),
+    amount: normalizedContentPrice(matched),
     currency: "INR",
     source: "content"
   };
@@ -590,18 +671,19 @@ async function loadCourseContentDocs(courseId) {
 
 function isCourseFreeFromDocs(docs) {
   if (!docs.length) return false;
-  return docs.some((doc) => doc.isFree === true || Number(doc.price || 0) <= 0);
+  return docs.some((doc) => isContentFree(doc));
 }
 
 function lessonPlayableWithoutPurchase(lesson, docs, index) {
   if (isCourseFreeFromDocs(docs)) return true;
-  return lesson.isFree === true;
+  return isContentFree(lesson);
 }
 
 exports.getPublicCourseCatalogue = onCall({
   region: "asia-south1"
 }, async () => {
   const snap = await db.collection("content").orderBy("createdAt", "desc").get();
+  const repairedFreePricing = await repairConflictingFreePricingDocs(snap.docs);
   const items = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   const courses = contentToPublicCourses(items).map((course) => {
     const { courseThumbnailUrl, ...publicCourse } = course;
@@ -611,7 +693,8 @@ exports.getPublicCourseCatalogue = onCall({
     };
   });
   logger.info("Public sanitized course catalogue served", {
-    courseCount: courses.length
+    courseCount: courses.length,
+    repairedFreePricing
   });
   return { courses };
 });

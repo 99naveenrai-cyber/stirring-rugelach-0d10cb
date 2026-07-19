@@ -840,6 +840,43 @@ window.setFP = (fp) => {
   document.getElementById('fp-paid').className = 'fp-btn' + (fp==='paid' ? ' active-paid' : '');
 };
 
+function normalizeUploadPricing(fp, rawPrice, forceFree = false) {
+  const isFreeCourse = fp === 'free' || forceFree === true;
+  const numericPrice = Number(rawPrice || 0);
+  if (isFreeCourse) {
+    return {
+      isFree: true,
+      free: true,
+      price: 0,
+      amount: 0,
+      coursePrice: 0,
+      paymentRequired: false,
+      accessType: 'free'
+    };
+  }
+  const price = numericPrice > 0 ? numericPrice : 450;
+  return {
+    isFree: false,
+    free: false,
+    price,
+    amount: price,
+    coursePrice: price,
+    paymentRequired: true,
+    accessType: 'paid'
+  };
+}
+
+function isContentMarkedFree(item = {}) {
+  return item.isFree === true ||
+    item.free === true ||
+    item.paymentRequired === false ||
+    String(item.accessType || '').toLowerCase() === 'free' ||
+    ['price', 'amount', 'coursePrice'].some(field => {
+      const value = item[field];
+      return value !== undefined && value !== null && value !== '' && Number(value) === 0;
+    });
+}
+
 window.onClassChange = () => {
   const cls = document.getElementById('up-class').value;
   const isHigher = cls === '11' || cls === '12';
@@ -1655,7 +1692,7 @@ window.uploadContent = async () => {
     if (!topic)   return showToast('Topic लिखें।','error');
   }
   if (!title)   return showToast('Title लिखें।','error');
-  if (uploadMode !== 'add-video-playlist' && (!price || price < 1)) return showToast('Course price सही डालें।','error');
+  if (uploadMode !== 'add-video-playlist' && fp !== 'free' && (!price || price < 1)) return showToast('Course price सही डालें।','error');
 
   const link = uploadType === 'video' ? vidLink : plLink;
   if (!link)    return showToast('YouTube link डालें।','error');
@@ -1691,6 +1728,7 @@ window.uploadContent = async () => {
 
 	      const videoId = extractVideoIdFromLink(vidLink);
 	      const nextIndex = targetItems.reduce((max, item) => Math.max(max, Number(item.orderIndex || 0)), -1) + 1;
+      const pricingState = normalizeUploadPricing(isContentMarkedFree(base) ? 'free' : fp, Number(base.price || price), makeCompleteVideoFree || isContentMarkedFree(base));
       setUploadStatus('Saving new playlist lesson...', 'info');
 		      const createdDoc = await saveContentDoc({
         type: 'video',
@@ -1711,8 +1749,7 @@ window.uploadContent = async () => {
         courseThumbnailUrl: courseThumbnailUrl || base.courseThumbnailUrl || base.thumbnailUrl || '',
         faqs: faqs.length ? faqs : (Array.isArray(base.faqs) ? base.faqs.slice(0, 8) : []),
         desc: desc || base.desc || '',
-        isFree: makeCompleteVideoFree,
-        price: Number(base.price || price),
+        ...pricingState,
         orderIndex: nextIndex,
         createdAt: serverTimestamp(),
         thumbnailStatus: 'pending-repair'
@@ -1728,6 +1765,7 @@ window.uploadContent = async () => {
 	      }
 	      const courseId = uniqueCourseId('single');
 	      const videoId = extractVideoIdFromLink(link);
+      const pricingState = normalizeUploadPricing(fp, price, makeCompleteVideoFree);
       setUploadStatus('Saving single-video course...', 'info');
 		      const createdDoc = await saveContentDoc({
         type: 'video', contentType: 'single', courseType: 'single', courseId,
@@ -1739,7 +1777,8 @@ window.uploadContent = async () => {
         courseThumbnailUrl: '',
         faqs,
         orderIndex: 0,
-        isFree: fp === 'free' || makeCompleteVideoFree, price, createdAt: serverTimestamp(),
+        ...pricingState,
+        createdAt: serverTimestamp(),
         thumbnailStatus: 'pending-repair'
       });
       queuePostUploadThumbnailRepair([createdDoc.id]);
@@ -1768,6 +1807,7 @@ window.uploadContent = async () => {
       setBtn('upload-btn','upload-label',true,`${videos.length} videos save हो रही हैं...`);
 
 	      const createdContentIds = [];
+      const pricingState = normalizeUploadPricing(fp, price, makeCompleteVideoFree);
 	      for (let i = 0; i < videos.length; i++) {
 	        const v = videos[i];
 	        setUploadStatus(`Saving lesson ${i + 1} of ${videos.length}...`, 'info');
@@ -1793,8 +1833,7 @@ window.uploadContent = async () => {
           orderIndex: i,
           faqs,
           desc,
-          isFree: fp === 'free' || makeCompleteVideoFree,
-          price,
+          ...pricingState,
           createdAt: serverTimestamp(),
         thumbnailStatus: 'pending-repair'
       });
@@ -1848,6 +1887,7 @@ function renderContent() {
     const displayType = c.courseType || c.contentType || c.type || 'video';
     const thumb = firstSafeThumbnailForAdmin(c) || adminThumbnailFallbackUrl();
     const safeTitle = String(c.title || 'IdeaKDC content').replace(/"/g, '&quot;');
+    const contentFree = isContentMarkedFree(c);
     return `
     <div class="content-item">
       <div class="content-thumb" style="margin-bottom:.65rem">
@@ -1866,8 +1906,8 @@ function renderContent() {
         <span class="meta-chip">${c.courseType || c.contentType || 'legacy'}</span>
         <span class="meta-chip">Course: ${c.courseId || 'legacy-group'}</span>
         <span class="meta-chip">Doc: ${c._id}</span>
-        <span class="meta-chip">₹${c.price||450}</span>
-        <span class="meta-chip ${c.isFree?'free':'paid'}">${c.isFree?'🆓 Free':'💎 Paid'}</span>
+        ${contentFree ? '' : `<span class="meta-chip">₹${c.price||450}</span>`}
+        <span class="meta-chip ${contentFree?'free':'paid'}">${contentFree?'🆓 Free':'💎 Paid'}</span>
       </div>
       ${c.desc ? `<div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">${c.desc}</div>` : ''}
       <div class="content-item-actions">
@@ -2059,3 +2099,4 @@ function fireErr(code){
 </script>
 </body>
 </html>
+

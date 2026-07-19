@@ -1535,6 +1535,21 @@ function groupContentIntoCourses(items) {
   // legacy single-video records stay independent so they cannot attach to a previous playlist.
   const groups = {};
   const coursePriceFrom = (value) => value === 0 || value ? Number(value) : 450;
+  const hasExplicitFreeFlag = (item = {}) => item.isFree === true ||
+    item.free === true ||
+    item.paymentRequired === false ||
+    String(item.accessType || '').toLowerCase() === 'free';
+  const hasExplicitPaidFlag = (item = {}) => item.paymentRequired === true ||
+    String(item.accessType || '').toLowerCase() === 'paid';
+  const isFreeContent = (item = {}) => {
+    if (hasExplicitFreeFlag(item)) return true;
+    if (hasExplicitPaidFlag(item)) return false;
+    return ['price', 'amount', 'coursePrice'].some(field => {
+      const value = item[field];
+      return value !== undefined && value !== null && value !== '' && Number(value) === 0;
+    });
+  };
+  const normalizedPrice = (item = {}) => isFreeContent(item) ? 0 : coursePriceFrom(item.price ?? item.amount ?? item.coursePrice);
   items.forEach(it => {
     if (it.active === false) return;
     const normalizedVideoId = extractYouTubeVideoId(
@@ -1563,6 +1578,8 @@ function groupContentIntoCourses(items) {
     const normalizedCourseFaqs = normalizedFaqs(it);
     const normalizedSequence = Number.isFinite(Number(it.sequenceNumber)) ? Number(it.sequenceNumber) :
       (Number.isFinite(Number(it.orderIndex)) ? Number(it.orderIndex) : 999999);
+    const itemIsFree = isFreeContent(it);
+    const itemPrice = normalizedPrice(it);
     if (!groups[key]) {
       groups[key] = {
         id: key,
@@ -1577,7 +1594,11 @@ function groupContentIntoCourses(items) {
         emoji: SUBJECT_EMOJI[it.subject] || '📚',
         color: SUBJECT_COLOR[it.subject] || '#e3f2fd',
         desc: normalizedDesc || `${it.subject} — सभी chapters और topics एक जगह।`,
-        price: coursePriceFrom(it.price),
+        price: itemPrice,
+        isFree: itemIsFree,
+        free: itemIsFree,
+        paymentRequired: !itemIsFree,
+        accessType: itemIsFree ? 'free' : 'paid',
         thumbnailUrl: courseThumbnail,
         courseThumbnailUrl: courseThumbnail,
         firstVideoId: normalizedFirstVideoId,
@@ -1588,7 +1609,19 @@ function groupContentIntoCourses(items) {
       };
     }
     if (!groups[key].name && (it.courseTitle || it.title)) groups[key].name = it.courseTitle || it.title;
-    if (it.price === 0 || it.price) groups[key].price = Number(it.price);
+    if (!itemIsFree) {
+      groups[key].price = itemPrice;
+      groups[key].isFree = false;
+      groups[key].free = false;
+      groups[key].paymentRequired = true;
+      groups[key].accessType = 'paid';
+    } else if (groups[key].isFree !== false) {
+      groups[key].price = 0;
+      groups[key].isFree = true;
+      groups[key].free = true;
+      groups[key].paymentRequired = false;
+      groups[key].accessType = 'free';
+    }
     if (!groups[key].courseThumbnailUrl && courseThumbnail) groups[key].courseThumbnailUrl = courseThumbnail;
     if (!groups[key].thumbnailUrl && courseThumbnail) groups[key].thumbnailUrl = courseThumbnail;
     if (!groups[key].firstVideoId && normalizedFirstVideoId) groups[key].firstVideoId = normalizedFirstVideoId;
@@ -1611,7 +1644,11 @@ function groupContentIntoCourses(items) {
       contentType: normalizedContentType,
       chapter: it.chapter || '',
       topic: it.topic || '',
-      isFree: !!it.isFree,
+      isFree: itemIsFree,
+      free: itemIsFree,
+      price: itemPrice,
+      paymentRequired: !itemIsFree,
+      accessType: itemIsFree ? 'free' : 'paid',
       contentId: it.id,
       type: it.type || 'video',
       sequenceNumber: normalizedSequence,
@@ -1822,7 +1859,13 @@ window.handleThumbnailError = (img) => {
 
 function isCourseExplicitlyFree(course) {
   return course?.isFree === true ||
-    Number(course?.price || 0) <= 0;
+    course?.free === true ||
+    course?.paymentRequired === false ||
+    String(course?.accessType || '').toLowerCase() === 'free' ||
+    ['price', 'amount', 'coursePrice'].some(field => {
+      const value = course?.[field];
+      return value !== undefined && value !== null && value !== '' && Number(value) <= 0;
+    });
 }
 
 function isCurrentUserAdmin() {
@@ -2168,6 +2211,7 @@ async function renderCourses() {
   grid.innerHTML = allCourses.map((c, courseIndex) => {
     const courseAccess = accessByCourse.get(c.id) || { access: false, free: false };
     const canOpen = courseAccess.access === true;
+    const courseIsFree = isCourseExplicitlyFree(c) || courseAccess.free === true;
     const buttonLabel = canOpen ? 'Open Course' : 'Buy Course';
     const buttonAction = canOpen ? 'open' : 'buy';
     const videos = c.videos || [];
@@ -2228,7 +2272,7 @@ async function renderCourses() {
         </div>` : '<div style="color:var(--muted);font-size:.8rem;padding:.5rem 0">Videos जल्द आएंगी।</div>'}
         ${faqHtml}
         <div class="course-footer-btns">
-          <div class="course-price">₹${(c.price||0).toLocaleString('en-IN')} <span>एक बार</span></div>
+          <div class="course-price">${courseIsFree ? 'Free' : `₹${(c.price||0).toLocaleString('en-IN')} <span>एक बार</span>`}</div>
           <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(c.id)}" data-action="${buttonAction}">${buttonLabel}</button>
         </div>
       </div>
@@ -2278,6 +2322,7 @@ async function renderCatalogueContent() {
             ${grouped[classNum][subject].map(course => {
               const access = accessByCourse.get(course.id) || { access: false, free: false };
               const canOpen = access.access === true;
+              const courseIsFree = isCourseExplicitlyFree(course) || access.free === true;
               const label = canOpen ? 'Open Course' : 'Buy Course';
               const action = canOpen ? 'open' : 'buy';
               const contentType = getCourseContentType(course);
@@ -2330,7 +2375,7 @@ async function renderCatalogueContent() {
                   <div class="catalogue-meta">${course.tag || `Class ${classNum}`} • ${contentType === 'playlist' ? 'Playlist' : 'Single video'} • ${videoCount} videos</div>
                   <div class="catalogue-status">
                     <span>${status}</span>
-                    <span class="catalogue-price">₹${Number(course.price || 0).toLocaleString('en-IN')}</span>
+                    <span class="catalogue-price">${courseIsFree ? 'Free' : `₹${Number(course.price || 0).toLocaleString('en-IN')}`}</span>
                   </div>
                   ${lessons.length ? `
                     <div class="playlist-preview" aria-label="${course.name} lessons">
