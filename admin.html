@@ -2298,6 +2298,23 @@ window.setClassFilter = (cls, el) => {
 
 window.filterContent = () => renderContent();
 
+function adminQuizStatus(item = {}) {
+  const config = item.quizConfig || {};
+  const hasSeparate = config.separateQuiz?.enabled === true;
+  const hasPopup = config.popupQuiz?.enabled === true;
+  if (hasSeparate && hasPopup) return { label: 'Separate + Pop-up Quiz', className: 'free' };
+  if (hasSeparate) return { label: 'Separate Quiz', className: 'free' };
+  if (hasPopup) return { label: 'Pop-up Quiz', className: 'free' };
+  return { label: 'No Quiz', className: 'paid' };
+}
+
+function adminCourseKindLabel(item = {}) {
+  const kind = String(item.courseType || item.contentType || item.type || 'video').toLowerCase();
+  if (kind === 'playlist') return 'Course Type: Playlist';
+  if (kind === 'single') return 'Course Type: Single Video';
+  return `Course Type: ${kind || 'Video'}`;
+}
+
 function renderContent() {
   const search = (document.querySelector('.content-search')?.value||'').toLowerCase();
   let data = allContent;
@@ -2319,6 +2336,7 @@ function renderContent() {
     const thumb = firstSafeThumbnailForAdmin(c) || adminThumbnailFallbackUrl();
     const safeTitle = String(c.title || 'IdeaKDC content').replace(/"/g, '&quot;');
     const contentFree = isContentMarkedFree(c);
+    const quizStatus = adminQuizStatus(c);
     return `
     <div class="content-item">
       <div class="content-thumb" style="margin-bottom:.65rem">
@@ -2334,7 +2352,8 @@ function renderContent() {
         <span class="meta-chip">${c.subject||'—'}</span>
         <span class="meta-chip">${c.chapter||'—'}</span>
         <span class="meta-chip">${c.topic||'—'}</span>
-        <span class="meta-chip">${c.courseType || c.contentType || 'legacy'}</span>
+        <span class="meta-chip">${escapeHtml(adminCourseKindLabel(c))}</span>
+        <span class="meta-chip ${quizStatus.className}">Quiz: ${escapeHtml(quizStatus.label)}</span>
         <span class="meta-chip">Course: ${c.courseId || 'legacy-group'}</span>
         <span class="meta-chip">Doc: ${c._id}</span>
         ${contentFree ? '' : `<span class="meta-chip">₹${c.price||450}</span>`}
