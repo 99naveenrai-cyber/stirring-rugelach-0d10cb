@@ -1769,20 +1769,46 @@ function youtubeThumbnailUrl(videoId, quality = 'maxresdefault') {
   return id ? `https://img.youtube.com/vi/${id}/${quality}.jpg` : '';
 }
 
+function youtubeThumbnailCandidates(value) {
+  const id = extractYouTubeVideoId(value || '');
+  if (!id) return [];
+  return ['maxresdefault', 'hqdefault'].map(quality => youtubeThumbnailUrl(id, quality));
+}
+
 function imageFallbackUrl() {
   return 'assets/course-thumbnail-fallback.svg';
 }
 
-function getLessonThumbnail(lesson = {}) {
+function uniqueThumbnailCandidates(candidates = []) {
+  const seen = new Set();
+  return candidates
+    .map(candidate => normalizeImageUrl(candidate || ''))
+    .filter(candidate => {
+      if (!candidate || seen.has(candidate)) return false;
+      seen.add(candidate);
+      return true;
+    });
+}
+
+function lessonVideoIdSource(lesson = {}) {
+  return lesson.thumbnailVideoId || lesson.vid || lesson.videoId || lesson.youtubeVideoId || lesson.firstVideoId ||
+    lesson.contentId || lesson.lessonId || lesson.videoUrl || lesson.youtubeUrl || lesson.url || '';
+}
+
+function getLessonThumbnailCandidates(lesson = {}, course = {}) {
   const stored = normalizeImageUrl(
     lesson.thumbnailUrl || lesson.thumbnail || lesson.imageUrl || lesson.image || lesson.poster ||
     lesson.youtubeThumbnail || lesson.videoThumbnail || lesson.videoThumb || lesson.thumb || ''
   );
-  if (stored) return stored;
-  return youtubeThumbnailUrl(
-    lesson.thumbnailVideoId || lesson.vid || lesson.videoId || lesson.youtubeVideoId || lesson.firstVideoId ||
-    lesson.videoUrl || lesson.youtubeUrl || lesson.url || ''
-  );
+  return uniqueThumbnailCandidates([
+    stored,
+    ...youtubeThumbnailCandidates(lessonVideoIdSource(lesson)),
+    getCourseThumbnail(course)
+  ]);
+}
+
+function getLessonThumbnail(lesson = {}) {
+  return getLessonThumbnailCandidates(lesson)[0] || '';
 }
 
 function getCourseThumbnail(course = {}) {
@@ -1819,17 +1845,19 @@ function getCourseVideoCount(course = {}) {
   return (course.videos || []).length;
 }
 
-function renderThumbFrame({ src, alt, badge = '', secondaryBadge = '', eager = false, fallback = '📚', mini = false, courseId = '' }) {
-  const rawSrc = normalizeImageUrl(src || '');
+function renderThumbFrame({ src, alt, badge = '', secondaryBadge = '', eager = false, fallback = '📚', mini = false, courseId = '', lessonId = '', lessonIndex = '', candidates = [] }) {
+  const candidateList = uniqueThumbnailCandidates([src, ...candidates]);
+  const rawSrc = candidateList[0] || '';
   const safeSrc = escapeHtml(rawSrc || imageFallbackUrl());
   const safeAlt = escapeHtml(alt || 'IdeaKDC lesson thumbnail');
   const loading = eager ? 'eager' : 'lazy';
+  const candidateData = escapeHtml(candidateList.slice(1).join('|'));
   const badges = badge || secondaryBadge ? `
     <div class="thumb-badge-row">
       ${badge ? `<span class="thumb-badge ${escapeHtml(String(badge.className || ''))}">${escapeHtml(badge.text || badge)}</span>` : '<span></span>'}
       ${secondaryBadge ? `<span class="thumb-badge ${escapeHtml(String(secondaryBadge.className || ''))}">${escapeHtml(secondaryBadge.text || secondaryBadge)}</span>` : ''}
     </div>` : '';
-  const img = `<img src="${safeSrc}" alt="${safeAlt}" width="480" height="270" loading="${loading}" decoding="async" data-course-id="${escapeHtml(courseId || '')}" data-fallback="${escapeHtml(imageFallbackUrl())}" onerror="handleThumbnailError(this)">`;
+  const img = `<img src="${safeSrc}" alt="${safeAlt}" width="480" height="270" loading="${loading}" decoding="async" data-course-id="${escapeHtml(courseId || '')}" data-lesson-id="${escapeHtml(lessonId || '')}" data-lesson-index="${escapeHtml(String(lessonIndex ?? ''))}" data-thumb-candidates="${candidateData}" data-fallback="${escapeHtml(imageFallbackUrl())}" onerror="handleThumbnailError(this)">`;
   return `
     <div class="${mini ? 'lesson-mini-thumb' : 'thumb-frame'}">
       ${badges}
@@ -1841,13 +1869,20 @@ function renderThumbFrame({ src, alt, badge = '', secondaryBadge = '', eager = f
 window.handleThumbnailError = (img) => {
   const current = img.getAttribute('src') || '';
   const fallback = img.dataset.fallback || imageFallbackUrl();
-  const hq = current.replace('/maxresdefault.jpg', '/hqdefault.jpg');
   if (!img.dataset.warned) {
-    console.warn('[IdeaKDC thumbnail] image failed', { courseId: img.dataset.courseId || 'unknown' });
+    console.warn('[IdeaKDC thumbnail] image failed', {
+      courseId: img.dataset.courseId || 'unknown',
+      lessonIndex: img.dataset.lessonIndex || '',
+      lessonId: img.dataset.lessonId || '',
+      failedSrc: current
+    });
     img.dataset.warned = '1';
   }
-  if (current.includes('/maxresdefault.jpg') && hq !== current) {
-    img.src = hq;
+  const candidates = String(img.dataset.thumbCandidates || '').split('|').filter(Boolean);
+  if (candidates.length) {
+    const [next, ...rest] = candidates;
+    img.dataset.thumbCandidates = rest.join('|');
+    img.src = next;
     return;
   }
   if (current !== fallback) {
@@ -2232,7 +2267,7 @@ async function renderCourses() {
       <div id="${faqId}" class="course-card-faq" hidden>${renderFaqAccordion(c, { id: `${faqId}-inner` })}</div>` : '';
     const videoRows = videos.map((v, i) => `
       <div class="playlist-item">
-        ${renderThumbFrame({ src: getLessonThumbnail(v), alt: `${v.title} thumbnail`, mini: true, fallback: '▶' })}
+        ${renderThumbFrame({ src: getLessonThumbnail(v), candidates: getLessonThumbnailCandidates(v, c), alt: `${v.title} thumbnail`, mini: true, fallback: '▶', courseId: c.id, lessonId: v.contentId || v.lessonId || '', lessonIndex: i + 1 })}
         <div class="playlist-num">${i+1}</div>
         <div class="playlist-info">
           <div class="playlist-title">${v.title}</div>
@@ -2348,8 +2383,11 @@ async function renderCatalogueContent() {
                   <div class="playlist-item">
                     ${renderThumbFrame({
                       src: getLessonThumbnail(lesson) || getCourseThumbnail(course),
+                      candidates: getLessonThumbnailCandidates(lesson, course),
                       alt: `${lesson.title || course.name || 'Lesson'} thumbnail`,
                       courseId: course.id,
+                      lessonId: lesson.contentId || lesson.lessonId || '',
+                      lessonIndex: idx + 1,
                       mini: true,
                       fallback: '▶'
                     })}
@@ -3547,9 +3585,12 @@ function renderStandaloneReadyState(course, lesson, idx) {
       <div class="video-placeholder standalone-ready">
         ${renderThumbFrame({
           src: getLessonThumbnail(lesson) || getCourseThumbnail(course),
+          candidates: getLessonThumbnailCandidates(lesson, course),
           alt: `${course.name || lesson.title || 'IdeaKDC course'} thumbnail`,
           fallback: course.emoji || '📚',
           courseId: course.id,
+          lessonId: lesson.contentId || lesson.lessonId || '',
+          lessonIndex: idx + 1,
           eager: true
         })}
         <button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx})">Play</button>
@@ -3574,7 +3615,7 @@ function renderLockedPlaylistPreview(course, access) {
           const thumbSrc = getLessonThumbnail(lesson) || getLessonThumbnail(visibleLesson) || getCourseThumbnail(course);
           return `
             <button type="button" class="pl-item locked" onclick="showLockedLessonPrompt('${course.id}')">
-              ${renderThumbFrame({ src: thumbSrc, alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id })}
+              ${renderThumbFrame({ src: thumbSrc, candidates: getLessonThumbnailCandidates(lesson, course), alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '', lessonIndex: i + 1 })}
               <div class="pl-num">${i + 1}</div>
               <div class="pl-info">
                 <div class="pl-title">${escapeHtml(visibleLesson.title || 'Untitled lesson')}</div>
@@ -3733,7 +3774,7 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
             return `
               <button type="button" class="pl-item ${i===activeIdx?'playing':''} ${canPlayLesson?'':'locked'}"
                 onclick="${canPlayLesson ? `playFromPlaylist(${i})` : `showLockedLessonPrompt('${course.id}')`}" ${v.contentId || v.lessonId ? '' : 'disabled'}>
-                ${renderThumbFrame({ src: thumbSrc, alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id })}
+                ${renderThumbFrame({ src: thumbSrc, candidates: getLessonThumbnailCandidates(v, course), alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id, lessonId: v.contentId || v.lessonId || '', lessonIndex: i + 1 })}
                 <div class="pl-num">${i+1}</div>
                 <div class="pl-info">
                   <div class="pl-title">${escapeHtml(visibleLesson.title || 'Untitled lesson')}</div>

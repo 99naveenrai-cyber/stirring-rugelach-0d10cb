@@ -502,10 +502,20 @@ function contentToPublicCourses(items) {
     const contentType = data.contentType || (data.type === "playlist" || data.playlistId ? "playlist" : "single");
     const legacyGroupId = data.playlistId ? `legacy_playlist_${data.playlistId}` : `legacy_single_${data.id}`;
     const key = String(data.courseId || legacyGroupId);
-    const fullVideoId = protectedVideoIdFromContent(data);
+    const videoSource = resolveProtectedVideoSource(data, data.id);
+    const fullVideoId = videoSource.videoId;
     const generatedThumb = youtubeThumbnailUrl(fullVideoId);
     const courseThumb = publicContentThumbnail(data, fullVideoId) || generatedThumb;
     const lessonThumb = publicLessonThumbnail(data, fullVideoId) || generatedThumb || courseThumb;
+    if (!lessonThumb) {
+      logger.warn("[IdeaKDC thumbnail] lesson thumbnail unresolved", {
+        courseId: key,
+        contentId: data.id,
+        lessonPosition: Number(data.orderIndex ?? data.sequenceNumber ?? 0) + 1,
+        contentType,
+        reason: fullVideoId ? "thumbnail-url-not-generated" : "missing-video-id-source"
+      });
+    }
     const faqs = normalizeFaqs(data);
     const itemIsFree = isContentFree(data);
     const itemPrice = normalizedContentPrice(data);
@@ -561,6 +571,7 @@ function contentToPublicCourses(items) {
       durationSeconds: Number(data.durationSeconds || 0),
       thumbnailUrl: lessonThumb || courseThumb,
       thumbnailVideoId: fullVideoId,
+      thumbnailSourceField: videoSource.sourceField || "",
       hasProtectedVideo: !!fullVideoId,
       playlistId: "",
       hasProtectedPlaylist: !!data.playlistId,
