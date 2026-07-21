@@ -1,3 +1,37 @@
 {
-  "classes": []
+  "classes": [
+    {
+      "id": "11th",
+      "name": "11th",
+      "subjects": [
+        {
+          "id": "physics",
+          "name": "physics",
+          "books": [],
+          "chapters": [
+            {
+              "id": "laws-of-motion",
+              "name": "laws of motion",
+              "topics": [
+                {
+                  "id": "banking-of-road",
+                  "name": "banking of road",
+                  "subtopics": [
+                    {
+                      "id": "banking-of-road-with-and-without-friction",
+                      "name": "banking of road with and without friction"
+                    },
+                    {
+                      "id": "banking-of-road-with-and-without-friction-1",
+                      "name": "banking of road with and without friction"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
