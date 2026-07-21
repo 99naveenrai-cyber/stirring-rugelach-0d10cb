@@ -16,6 +16,11 @@ jobs:
           node-version: 20
       - name: Apply thumbnail hotfix
         run: node scripts/apply-thumbnail-hotfix.js
+      - name: Verify thumbnail hotfix
+        run: |
+          grep -q "mqdefault" index.html
+          grep -q "height:clamp(160px,48vw,190px)" index.html
+          grep -q "minmax(118px,30%)" index.html
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
