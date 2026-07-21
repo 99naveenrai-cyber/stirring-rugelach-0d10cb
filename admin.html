@@ -1617,6 +1617,16 @@ const uploadQuizState = {
 };
 let quizPreviewPlayer = null;
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[char]);
+}
+
 function normalizeLocalizedText(value) {
   if (typeof value === 'string') return { en: value.trim(), hi: '' };
   if (value && typeof value === 'object') {
@@ -1691,8 +1701,20 @@ window.handleQuizJsonUpload = (kind, file) => {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (event) => {
+    let parsed;
     try {
-      const parsed = JSON.parse(event.target.result);
+      parsed = JSON.parse(event.target.result);
+    } catch (error) {
+      uploadQuizState[kind].questionSet = null;
+      uploadQuizState[kind].errors = [error.message || 'Invalid JSON.'];
+      if (status) {
+        status.className = 'quiz-validation error';
+        status.textContent = `Invalid JSON: ${error.message || 'Unable to parse file.'}`;
+      }
+      return;
+    }
+
+    try {
       const result = validateQuizQuestionSet(parsed);
       uploadQuizState[kind].questionSet = result.errors.length ? null : {
         title: result.title,
@@ -1712,11 +1734,12 @@ window.handleQuizJsonUpload = (kind, file) => {
         renderPopupTimestampList();
       }
     } catch (error) {
+      console.error('[IdeaKDC quiz upload render]', error);
       uploadQuizState[kind].questionSet = null;
-      uploadQuizState[kind].errors = [error.message || 'Invalid JSON.'];
+      uploadQuizState[kind].errors = [error.message || 'Quiz UI render failed.'];
       if (status) {
         status.className = 'quiz-validation error';
-        status.textContent = `Invalid JSON: ${error.message || 'Unable to parse file.'}`;
+        status.textContent = `Quiz UI error: ${error.message || 'Unable to render quiz options.'}`;
       }
     }
   };
