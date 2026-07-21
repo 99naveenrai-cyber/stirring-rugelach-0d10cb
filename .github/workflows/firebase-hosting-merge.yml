@@ -16,11 +16,25 @@ jobs:
           node-version: 20
       - name: Apply thumbnail hotfix
         run: node scripts/apply-thumbnail-hotfix.js
+      - name: Normalize thumbnail hotfix
+        run: node scripts/ensure-thumbnail-hotfix.js
       - name: Verify thumbnail hotfix
+        shell: bash
         run: |
-          grep -q "mqdefault" index.html
-          grep -q "height:clamp(160px,48vw,190px)" index.html
-          grep -q "minmax(118px,30%)" index.html
+          check() {
+            local label="$1"
+            local pattern="$2"
+            if grep -Eq "$pattern" index.html; then
+              echo "PASS: $label"
+            else
+              echo "FAIL: $label"
+              return 1
+            fi
+          }
+
+          check "mqdefault thumbnail fallback exists" 'mqdefault'
+          check "mobile thumbnail height is moderate and responsive" 'height:[[:space:]]*clamp\([[:space:]]*160px,[[:space:]]*48vw,[[:space:]]*190px[[:space:]]*\)'
+          check "playlist card desktop thumbnail width is moderate" 'minmax\([[:space:]]*118px,[[:space:]]*30%[[:space:]]*\)'
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
