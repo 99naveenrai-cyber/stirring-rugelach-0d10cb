@@ -506,6 +506,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 ══════════════════════════════ */
 .video-page{max-width:900px;margin:0 auto;padding:.8rem 1rem calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 24px);overflow-anchor:none}
 .video-wrap{background:#000;border-radius:14px;overflow:hidden;aspect-ratio:16/9;min-height:180px;display:flex;align-items:center;justify-content:center;margin-bottom:.65rem;position:sticky;top:calc(var(--nav-h));z-index:10;contain:layout paint}
+.video-wrap.popup-quiz-active{overflow:visible;contain:layout;z-index:40}
 .video-wrap iframe{width:100%;height:100%;border:none}
 .video-placeholder{color:#fff;text-align:center;padding:1rem}
 .video-placeholder.standalone-ready{width:100%;height:100%;padding:0;position:relative}
@@ -3872,8 +3873,9 @@ async function configurePopupQuizForPlayer(course, lesson, idx) {
 function maybeShowTimedPopupQuiz(player) {
   if (!activeLessonQuiz || activeLessonQuiz.active || !player?.getCurrentTime) return;
   const time = player.getCurrentTime();
+  const triggerWindowSeconds = 0.75;
   const mapping = (activeLessonQuiz.quizData.popupQuiz?.timestamps || [])
-    .find(item => time >= Number(item.timeSeconds) && !activeLessonQuiz.answeredThisSession.has(String(item.questionId)));
+    .find(item => time + triggerWindowSeconds >= Number(item.timeSeconds) && !activeLessonQuiz.answeredThisSession.has(String(item.questionId)));
   if (!mapping) return;
   const question = activeLessonQuiz.quizData.questions.find(q => String(q.id) === String(mapping.questionId));
   if (!question) return;
@@ -3887,12 +3889,14 @@ function showTimedPopupQuestion(question, popupConfig, player) {
   const wrap = document.getElementById('video-wrap');
   if (!wrap) return;
   wrap.querySelectorAll('.popup-quiz-layer').forEach(node => node.remove());
+  wrap.classList.add('popup-quiz-active');
   const dismissPopup = (layer) => {
     layer.classList.add('dull');
     window.setTimeout(() => {
       layer.classList.remove('show');
       window.setTimeout(() => {
         layer.remove();
+        wrap.classList.remove('popup-quiz-active');
         activeLessonQuiz.active = false;
         try { player.playVideo(); } catch (_) {}
       }, 420);
