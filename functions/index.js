@@ -586,6 +586,7 @@ function contentToPublicCourses(items) {
       price: itemPrice,
       paymentRequired: !itemIsFree,
       accessType: itemIsFree ? "free" : "paid",
+      quizConfig: publicQuizConfig(data.quizConfig || {}),
       orderIndex: Number.isFinite(Number(data.orderIndex)) ? Number(data.orderIndex) : 999999,
       sequenceNumber: Number.isFinite(Number(data.sequenceNumber)) ? Number(data.sequenceNumber) : 999999,
       createdAtMs: data.createdAt?.toMillis ? data.createdAt.toMillis() : 0
@@ -689,6 +690,78 @@ function isCourseFreeFromDocs(docs) {
 function lessonPlayableWithoutPurchase(lesson, docs, index) {
   if (isCourseFreeFromDocs(docs)) return true;
   return isContentFree(lesson);
+}
+
+function publicQuizConfig(config = {}) {
+  const separateEnabled = config?.separateQuiz?.enabled === true;
+  const popupEnabled = config?.popupQuiz?.enabled === true;
+  return {
+    separateQuiz: {
+      enabled: separateEnabled,
+      questionSetId: separateEnabled ? String(config.separateQuiz.questionSetId || "separate") : ""
+    },
+    popupQuiz: {
+      enabled: popupEnabled,
+      questionSetId: popupEnabled ? String(config.popupQuiz.questionSetId || "popup") : "",
+      requireAnswer: config?.popupQuiz?.requireAnswer !== false,
+      soundEnabled: config?.popupQuiz?.soundEnabled !== false,
+      timestamps: Array.isArray(config?.popupQuiz?.timestamps)
+        ? config.popupQuiz.timestamps
+            .map((item) => ({
+              questionId: String(item.questionId || ""),
+              timeSeconds: Number(item.timeSeconds)
+            }))
+            .filter((item) => item.questionId && Number.isFinite(item.timeSeconds) && item.timeSeconds >= 0)
+            .sort((a, b) => a.timeSeconds - b.timeSeconds)
+        : []
+    }
+  };
+}
+
+function localizedQuizText(value) {
+  if (typeof value === "string") return { en: value, hi: "" };
+  if (value && typeof value === "object") {
+    return {
+      en: String(value.en || value.text || value.value || ""),
+      hi: String(value.hi || "")
+    };
+  }
+  return { en: "", hi: "" };
+}
+
+function visibleQuizText(value) {
+  const normalized = localizedQuizText(value);
+  return normalized.en || normalized.hi || "";
+}
+
+function sanitizeQuizQuestion(question = {}) {
+  return {
+    id: String(question.id || ""),
+    question: localizedQuizText(question.question || question.q || ""),
+    options: Array.isArray(question.options)
+      ? question.options.map((option, index) => {
+          if (typeof option === "string") {
+            return { id: String.fromCharCode(65 + index), en: option, hi: "" };
+          }
+          return {
+            id: String(option.id || String.fromCharCode(65 + index)),
+            en: String(option.en || option.text || option.value || ""),
+            hi: String(option.hi || "")
+          };
+        }).filter((option) => option.id && (option.en || option.hi))
+      : []
+  };
+}
+
+function findQuizQuestionSet(lesson = {}, mode = "separate") {
+  const config = publicQuizConfig(lesson.quizConfig || {});
+  const setId = mode === "popup"
+    ? config.popupQuiz.questionSetId || "popup"
+    : config.separateQuiz.questionSetId || "separate";
+  const sets = lesson.quizQuestionSets || {};
+  const set = sets[setId] || sets[mode] || null;
+  if (!set || !Array.isArray(set.questions)) return null;
+  return { id: setId, title: String(set.title || "Lesson Quiz"), questions: set.questions };
 }
 
 exports.getPublicCourseCatalogue = onCall({
@@ -1116,6 +1189,104 @@ exports.getAuthorizedLessonVideo = onCall({
   }
 
   throw new HttpsError("permission-denied", "This lesson is locked. Purchase is required.");
+});
+
+exports.getAuthorizedLessonQuiz = onCall({
+  region: "asia-south1"
+}, async (request) => {
+  const courseId = normalizeCourseId(request.data?.courseId || "");
+  const lessonId = normalizeCourseId(request.data?.lessonId || "");
+  const mode = String(request.data?.mode || "separate") === "popup" ? "popup" : "separate";
+  if (!courseId || !lessonId) {
+    throw new HttpsError("invalid-argument", "courseId and lessonId are required.");
+  }
+
+  const docs = await loadCourseContentDocs(courseId);
+  const lessonIndex = docs.findIndex((doc) => doc.id === lessonId || doc.lessonId === lessonId || doc.contentId === lessonId);
+  const lesson = lessonIndex >= 0 ? docs[lessonIndex] : null;
+  if (!lesson) throw new HttpsError("not-found", "Lesson was not found.");
+
+  const uid = request.auth?.uid || "";
+  const access = await hasCourseAccess(uid, courseId, request.auth);
+  const canUsePublicLesson = lessonPlayableWithoutPurchase(lesson, docs, lessonIndex);
+  if (!access && !canUsePublicLesson) throw new HttpsError("permission-denied", "This lesson is locked.");
+
+  const config = publicQuizConfig(lesson.quizConfig || {});
+  const modeConfig = mode === "popup" ? config.popupQuiz : config.separateQuiz;
+  if (!modeConfig.enabled) throw new HttpsError("not-found", "Quiz is not enabled for this lesson.");
+  const questionSet = findQuizQuestionSet(lesson, mode);
+  if (!questionSet) throw new HttpsError("failed-precondition", "Quiz question set is missing.");
+  const questions = questionSet.questions
+    .map(sanitizeQuizQuestion)
+    .filter((question) => question.id && visibleQuizText(question.question) && question.options.length >= 2);
+  return {
+    courseId,
+    lessonId,
+    mode,
+    title: questionSet.title,
+    questions,
+    popupQuiz: mode === "popup" ? config.popupQuiz : null
+  };
+});
+
+exports.submitLessonQuizAnswer = onCall({
+  region: "asia-south1"
+}, async (request) => {
+  const auth = requireAuth(request);
+  const courseId = normalizeCourseId(request.data?.courseId || "");
+  const lessonId = normalizeCourseId(request.data?.lessonId || "");
+  const mode = String(request.data?.mode || "separate") === "popup" ? "popup" : "separate";
+  const questionId = String(request.data?.questionId || "");
+  const selectedOption = String(request.data?.selectedOption || "");
+  if (!courseId || !lessonId || !questionId || !selectedOption) {
+    throw new HttpsError("invalid-argument", "courseId, lessonId, questionId, and selectedOption are required.");
+  }
+
+  const docs = await loadCourseContentDocs(courseId);
+  const lessonIndex = docs.findIndex((doc) => doc.id === lessonId || doc.lessonId === lessonId || doc.contentId === lessonId);
+  const lesson = lessonIndex >= 0 ? docs[lessonIndex] : null;
+  if (!lesson) throw new HttpsError("not-found", "Lesson was not found.");
+
+  const access = await hasCourseAccess(auth.uid, courseId, request.auth);
+  const canUsePublicLesson = lessonPlayableWithoutPurchase(lesson, docs, lessonIndex);
+  if (!access && !canUsePublicLesson) throw new HttpsError("permission-denied", "This lesson is locked.");
+
+  const questionSet = findQuizQuestionSet(lesson, mode);
+  const question = questionSet?.questions?.find((item) => String(item.id) === questionId);
+  if (!question) throw new HttpsError("not-found", "Question was not found.");
+
+  const correct = String(question.correctOption || "") === selectedOption;
+  const feedback = correct
+    ? localizedQuizText(question.feedback?.correct || "Correct.")
+    : localizedQuizText(question.feedback?.incorrect || "Please try again.");
+  const progressId = `${courseId}__${lessonId}`;
+  const progressRef = db
+    .collection("users")
+    .doc(auth.uid)
+    .collection("quizProgress")
+    .doc(progressId);
+  await progressRef.set({
+    uid: auth.uid,
+    courseId,
+    lessonId,
+    updatedAt: FieldValue.serverTimestamp(),
+    [`${mode}.started`]: true,
+    [`${mode}.lastAttemptedAt`]: FieldValue.serverTimestamp(),
+    [`${mode}.answered.${questionId}`]: {
+      selectedOption,
+      correct,
+      answeredAt: FieldValue.serverTimestamp()
+    },
+    [`${mode}.questionsAnswered`]: FieldValue.increment(1),
+    [`${mode}.correctAnswers`]: FieldValue.increment(correct ? 1 : 0)
+  }, { merge: true });
+
+  return {
+    correct,
+    feedback,
+    correctOption: correct ? selectedOption : "",
+    questionId
+  };
 });
 
 function assertCashfreeEnvironmentConfigured() {

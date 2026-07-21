@@ -530,6 +530,22 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .preview-prompt strong{display:block;font-size:.95rem;margin-bottom:.3rem}
 .preview-prompt p{font-size:.82rem;line-height:1.55;color:var(--muted);margin-bottom:.75rem}
 .preview-prompt .btn-enroll{width:auto;min-width:180px}
+.lesson-action-row{display:flex;flex-wrap:wrap;gap:.55rem;justify-content:center;margin:.65rem 0}
+.quiz-panel{background:#fff;border:1px solid #e4e8f0;border-radius:14px;padding:.85rem;margin:.75rem 0;box-shadow:0 10px 24px rgba(15,23,42,.06);color:#1f2937}
+.quiz-panel h2{font-size:.95rem;margin:0 0 .55rem;color:#0f172a}
+.quiz-option{display:block;width:100%;text-align:left;border:1px solid #e5e7eb;background:#fff;border-radius:10px;padding:.72rem;margin:.45rem 0;font-weight:800;color:#1f2937}
+.quiz-option.correct{border-color:#22c55e;background:#ecfdf5;box-shadow:0 0 0 3px rgba(34,197,94,.12)}
+.quiz-option.wrong{border-color:#ef4444;background:#fef2f2;animation:softShake .28s ease}
+.quiz-feedback{font-size:.82rem;font-weight:800;margin-top:.55rem;color:#334155}
+.quiz-feedback.correct{color:#047857}.quiz-feedback.wrong{color:#b91c1c}
+.popup-quiz-layer{position:absolute;inset:auto 4% 0 4%;height:75%;z-index:15;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(255,255,255,.48);backdrop-filter:blur(16px) saturate(150%);border:1px solid rgba(255,255,255,.7);border-radius:18px 18px 0 0;box-shadow:0 -18px 48px rgba(15,23,42,.18);transform:translateY(110%);opacity:0;pointer-events:none;transition:transform .42s cubic-bezier(.22,1,.36,1),opacity .42s ease,filter .28s ease}
+.popup-quiz-layer.show{transform:translateY(0);opacity:1;pointer-events:auto}
+.popup-quiz-layer.dull{filter:grayscale(.4) brightness(.88);opacity:.64}
+.popup-quiz-card{width:min(520px,100%);max-height:100%;overflow:auto}
+.quiz-sound-toggle{border:1px solid #e5e7eb;background:#fff;border-radius:999px;padding:.38rem .65rem;font-size:.74rem;font-weight:900;color:#334155}
+@keyframes softShake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@media(orientation:landscape){.popup-quiz-layer{inset:10% 7%;height:80%;border-radius:18px}}
+@media(orientation:portrait){.popup-quiz-layer{left:16%;right:4%;height:75%;bottom:-50%}}
 .selected-lesson-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:.8rem;margin:.6rem 0 .75rem;box-shadow:0 12px 28px rgba(16,24,47,.06)}
 .selected-lesson-kicker{font-size:.72rem;font-weight:900;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
 .selected-lesson-title{font-size:1rem;font-weight:900;color:var(--deep);line-height:1.35;margin-bottom:.35rem}
@@ -1193,6 +1209,8 @@ const createCashfreeOrderFn = httpsCallable(functions, 'createCashfreeOrder');
 const verifyCashfreePaymentFn = httpsCallable(functions, 'verifyCashfreePayment');
 const getPublicCourseCatalogueFn = httpsCallable(functions, 'getPublicCourseCatalogue');
 const getAuthorizedLessonVideoFn = httpsCallable(functions, 'getAuthorizedLessonVideo');
+const getAuthorizedLessonQuizFn = httpsCallable(functions, 'getAuthorizedLessonQuiz');
+const submitLessonQuizAnswerFn = httpsCallable(functions, 'submitLessonQuizAnswer');
 const gProvider = new GoogleAuthProvider();
 
 // ── STATE ──
@@ -3593,7 +3611,11 @@ function renderStandaloneReadyState(course, lesson, idx) {
           lessonIndex: idx + 1,
           eager: true
         })}
-        <button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx})">Play</button>
+        <div class="lesson-action-row">
+          <button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx})">Play Video</button>
+          ${hasSeparateQuiz(lesson) ? `<button class="btn-enroll" type="button" onclick="startLessonQuiz(${idx}, 'separate')">Start Quiz</button>` : ''}
+          ${hasSeparateQuiz(lesson) ? `<button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
+        </div>
       </div>`;
   }
   if (qaSlot) qaSlot.innerHTML = renderCourseFaqs(course);
@@ -3666,7 +3688,238 @@ function destroyActiveLessonPlayer() {
   } catch (error) {
     console.warn('[IdeaKDC player] previous player cleanup skipped', error?.message || error);
   }
+  window.clearInterval(window._popupQuizTimer);
+  window._popupQuizTimer = null;
+  activeLessonQuiz = null;
   window._activeLessonPlayer = null;
+}
+
+let activeLessonQuiz = null;
+let quizSoundMuted = false;
+
+function hasSeparateQuiz(lesson = {}) {
+  return lesson.quizConfig?.separateQuiz?.enabled === true;
+}
+
+function hasPopupQuiz(lesson = {}) {
+  return lesson.quizConfig?.popupQuiz?.enabled === true && Array.isArray(lesson.quizConfig?.popupQuiz?.timestamps) && lesson.quizConfig.popupQuiz.timestamps.length > 0;
+}
+
+function quizText(value = {}) {
+  if (typeof value === 'string') return value;
+  return value.hi || value.en || value.text || '';
+}
+
+function playQuizTone(kind, enabled = true) {
+  if (quizSoundMuted || !enabled) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const freqs = kind === 'correct' ? [660, 880] : [220];
+    freqs.forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      const start = ctx.currentTime + index * 0.09;
+      gain.gain.setValueAtTime(0.045, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.16);
+    });
+  } catch (_) {}
+}
+
+function launchQuizConfetti(container) {
+  if (!container) return;
+  const colors = ['#22c55e', '#60a5fa', '#fbbf24', '#14b8a6'];
+  for (let i = 0; i < 16; i++) {
+    const piece = document.createElement('span');
+    piece.style.cssText = `position:absolute;left:${35 + Math.random()*30}%;bottom:18%;width:6px;height:10px;border-radius:2px;background:${colors[i % colors.length]};pointer-events:none`;
+    container.appendChild(piece);
+    const anim = piece.animate([
+      { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${(Math.random()-.5)*140}px, ${-(90+Math.random()*120)}px) rotate(${Math.random()*500}deg)`, opacity: 0 }
+    ], { duration: 850 + Math.random()*300, easing: 'cubic-bezier(.15,.6,.4,1)' });
+    anim.onfinish = () => piece.remove();
+  }
+}
+
+async function loadLessonQuiz(course, lesson, mode) {
+  const result = await getAuthorizedLessonQuizFn({
+    courseId: course.id,
+    lessonId: lesson.contentId || lesson.lessonId || '',
+    mode
+  });
+  return result.data || {};
+}
+
+function renderQuizPanel(course, lesson, mode, quizData, targetId = 'selected-lesson-info') {
+  const target = document.getElementById(targetId);
+  if (!target || !quizData?.questions?.length) return;
+  target.innerHTML = `
+    <section class="quiz-panel" id="lesson-quiz-panel">
+      <h2>${escapeHtml(quizData.title || 'Lesson Quiz')}</h2>
+      <div class="mode-help">${mode === 'popup' ? 'Timed pop-up quiz questions are connected to this video.' : 'This quiz can be attempted separately from the video.'}</div>
+      <div id="lesson-quiz-question"></div>
+    </section>`;
+  renderQuizQuestion(course, lesson, mode, quizData, 0);
+}
+
+function renderQuizQuestion(course, lesson, mode, quizData, index) {
+  const holder = document.getElementById('lesson-quiz-question');
+  const question = quizData.questions?.[index];
+  if (!holder || !question) return;
+  holder.innerHTML = `
+    <div class="qnum">Question ${index + 1} of ${quizData.questions.length}</div>
+    <div class="qtext">${escapeHtml(quizText(question.question))}</div>
+    ${(question.options || []).map(option => `<button type="button" class="quiz-option" data-option-id="${escapeHtml(option.id)}">${escapeHtml(option.id)}. ${escapeHtml(quizText(option))}</button>`).join('')}
+    <div class="quiz-feedback" id="lesson-quiz-feedback"></div>`;
+  holder.querySelectorAll('.quiz-option').forEach(button => {
+    button.onclick = async () => {
+      await submitQuizAnswer(course, lesson, mode, question, button.dataset.optionId, holder, quizData.popupQuiz);
+      window.setTimeout(() => {
+        if (index + 1 < quizData.questions.length) renderQuizQuestion(course, lesson, mode, quizData, index + 1);
+        else holder.innerHTML = '<div class="quiz-feedback correct">Quiz completed.</div>';
+      }, 2100);
+    };
+  });
+}
+
+async function submitQuizAnswer(course, lesson, mode, question, selectedOption, container, popupConfig = null) {
+  container.querySelectorAll('.quiz-option').forEach(btn => btn.disabled = true);
+  const selected = container.querySelector(`[data-option-id="${CSS.escape(selectedOption)}"]`);
+  const feedback = container.querySelector('.quiz-feedback');
+  try {
+    const result = await submitLessonQuizAnswerFn({
+      courseId: course.id,
+      lessonId: lesson.contentId || lesson.lessonId || '',
+      mode,
+      questionId: question.id,
+      selectedOption
+    });
+    const data = result.data || {};
+    selected?.classList.add(data.correct ? 'correct' : 'wrong');
+    if (feedback) {
+      feedback.className = `quiz-feedback ${data.correct ? 'correct' : 'wrong'}`;
+      feedback.textContent = quizText(data.feedback) || (data.correct ? 'Correct.' : 'Incorrect. Please review once.');
+    }
+    playQuizTone(data.correct ? 'correct' : 'wrong', popupConfig?.soundEnabled !== false);
+    if (data.correct) launchQuizConfetti(container);
+  } catch (error) {
+    console.warn('[IdeaKDC quiz answer]', error?.code || error?.message || error);
+    if (feedback) {
+      feedback.className = 'quiz-feedback wrong';
+      feedback.textContent = 'Answer could not be saved. Please try again.';
+    }
+  }
+}
+
+function renderLessonActionControls(course, lesson, idx, hasVideo = true) {
+  const selectedInfo = document.getElementById('selected-lesson-info');
+  if (!selectedInfo) return;
+  const separate = hasSeparateQuiz(lesson);
+  const popup = hasPopupQuiz(lesson);
+  selectedInfo.innerHTML = `
+    <div class="lesson-action-row">
+      ${hasVideo ? `<button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx}, { autoplay: true, mode: 'video' })">Play Video</button>` : ''}
+      ${separate ? `<button class="btn-enroll" type="button" onclick="startLessonQuiz(${idx}, 'separate')">Start Quiz</button>` : ''}
+      ${hasVideo && separate ? `<button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
+      ${popup ? `<button class="quiz-sound-toggle" type="button" onclick="toggleQuizSoundMute()">Sound: ${quizSoundMuted ? 'Muted' : 'On'}</button>` : ''}
+    </div>`;
+}
+
+window.toggleQuizSoundMute = () => {
+  quizSoundMuted = !quizSoundMuted;
+  const course = window._currentCourse;
+  const videos = window._currentVideos || [];
+  const idx = Number(window._activeLessonIndex || 0);
+  if (course && videos[idx]) renderLessonActionControls(course, videos[idx], idx, true);
+};
+
+window.startLessonQuiz = async (idx, mode = 'separate') => {
+  const course = window._currentCourse;
+  const lesson = (window._currentVideos || [])[idx];
+  if (!course || !lesson) return;
+  try {
+    const quizData = await loadLessonQuiz(course, lesson, mode);
+    renderQuizPanel(course, lesson, mode, quizData);
+  } catch (error) {
+    console.warn('[IdeaKDC quiz load]', error?.code || error?.message || error);
+    showToast('Quiz is not available for this lesson yet.', 'error');
+  }
+};
+
+async function configurePopupQuizForPlayer(course, lesson, idx) {
+  activeLessonQuiz = null;
+  if (!hasPopupQuiz(lesson)) return;
+  try {
+    const quizData = await loadLessonQuiz(course, lesson, 'popup');
+    activeLessonQuiz = {
+      course,
+      lesson,
+      idx,
+      quizData,
+      answeredThisSession: new Set(),
+      active: false
+    };
+  } catch (error) {
+    console.warn('[IdeaKDC popup quiz load]', error?.code || error?.message || error);
+  }
+}
+
+function maybeShowTimedPopupQuiz(player) {
+  if (!activeLessonQuiz || activeLessonQuiz.active || !player?.getCurrentTime) return;
+  const time = player.getCurrentTime();
+  const mapping = (activeLessonQuiz.quizData.popupQuiz?.timestamps || [])
+    .find(item => time >= Number(item.timeSeconds) && !activeLessonQuiz.answeredThisSession.has(String(item.questionId)));
+  if (!mapping) return;
+  const question = activeLessonQuiz.quizData.questions.find(q => String(q.id) === String(mapping.questionId));
+  if (!question) return;
+  activeLessonQuiz.active = true;
+  activeLessonQuiz.answeredThisSession.add(String(mapping.questionId));
+  try { player.pauseVideo(); } catch (_) {}
+  showTimedPopupQuestion(question, activeLessonQuiz.quizData.popupQuiz, player);
+}
+
+function showTimedPopupQuestion(question, popupConfig, player) {
+  const wrap = document.getElementById('video-wrap');
+  if (!wrap) return;
+  wrap.querySelectorAll('.popup-quiz-layer').forEach(node => node.remove());
+  const dismissPopup = (layer) => {
+    layer.classList.add('dull');
+    window.setTimeout(() => {
+      layer.classList.remove('show');
+      window.setTimeout(() => {
+        layer.remove();
+        activeLessonQuiz.active = false;
+        try { player.playVideo(); } catch (_) {}
+      }, 420);
+    }, 280);
+  };
+  const layer = document.createElement('div');
+  layer.className = 'popup-quiz-layer';
+  layer.innerHTML = `
+    <div class="popup-quiz-card quiz-panel">
+      <h2>Quick Check</h2>
+      <div class="qtext">${escapeHtml(quizText(question.question))}</div>
+      ${(question.options || []).map(option => `<button type="button" class="quiz-option" data-option-id="${escapeHtml(option.id)}">${escapeHtml(option.id)}. ${escapeHtml(quizText(option))}</button>`).join('')}
+      ${popupConfig?.requireAnswer === false ? '<button type="button" class="quiz-sound-toggle" id="popup-skip-btn">Skip</button>' : ''}
+      <div class="quiz-feedback"></div>
+    </div>`;
+  wrap.appendChild(layer);
+  requestAnimationFrame(() => layer.classList.add('show'));
+  const skip = layer.querySelector('#popup-skip-btn');
+  if (skip) skip.onclick = () => dismissPopup(layer);
+  layer.querySelectorAll('.quiz-option').forEach(button => {
+    button.onclick = async () => {
+      await submitQuizAnswer(activeLessonQuiz.course, activeLessonQuiz.lesson, 'popup', question, button.dataset.optionId, layer, popupConfig);
+      window.setTimeout(() => {
+        dismissPopup(layer);
+      }, 2000);
+    };
+  });
 }
 
 async function openVideoPlayer(course, startIdx, meta = {}) {
@@ -3836,6 +4089,8 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
 
     destroyActiveLessonPlayer();
     window.clearTimeout(window._nextLessonTimer);
+    window._activeLessonIndex = idx;
+    await configurePopupQuizForPlayer(course, v, idx);
     document.getElementById('video-wrap').innerHTML = embedSrc
       ? `<iframe id="${iframeId}" src="${embedSrc}"
           title="${escapeHtml(v.title || 'IdeaKDC lesson player')}"
@@ -3852,6 +4107,8 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
                 if (event.data === YT.PlayerState.ENDED) startNextLessonAfterEnd(idx);
               },
               onReady: (event) => {
+                window.clearInterval(window._popupQuizTimer);
+                window._popupQuizTimer = window.setInterval(() => maybeShowTimedPopupQuiz(event.target), 350);
                 try { event.target.playVideo(); } catch (_) {}
               }
             }
@@ -3861,6 +4118,10 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
     }
     document.getElementById('video-title').textContent = '';
     renderSelectedLessonInfo(course, v, idx);
+    renderLessonActionControls(course, v, idx, !!embedSrc);
+    if (options.mode === 'video-quiz' && hasSeparateQuiz(v)) {
+      window.startLessonQuiz(idx, 'separate');
+    }
     if (playlistCourse) {
       renderPlaylist(idx);
       keepSelectedLessonVisibleInsidePlaylist();

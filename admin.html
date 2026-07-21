@@ -100,6 +100,24 @@ body{padding-bottom:65px}
 .upload-status.success{color:var(--green);border-color:rgba(34,197,94,.25);background:#f0fdf4}
 .upload-status.warning{color:#a16207;border-color:rgba(234,179,8,.35);background:#fefce8}
 .upload-status.error{color:var(--red);border-color:rgba(239,68,68,.28);background:#fef2f2}
+.quiz-option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;margin:.45rem 0 .75rem}
+.quiz-option-card{border:1px solid var(--border);border-radius:12px;background:#fff;padding:.75rem;display:flex;gap:.55rem;align-items:flex-start}
+.quiz-option-card input{width:auto;margin-top:.2rem}
+.quiz-option-card strong{display:block;font-size:.85rem;color:var(--text)}
+.quiz-option-card span{display:block;font-size:.72rem;color:var(--muted);line-height:1.35;margin-top:.2rem}
+.quiz-config-box{border:1px solid var(--border);border-radius:12px;background:#f8fafc;padding:.75rem;margin:.65rem 0;display:none}
+.quiz-config-box.show{display:block}
+.quiz-validation{font-size:.75rem;margin-top:.45rem;color:var(--muted)}
+.quiz-validation.error{color:var(--red);font-weight:700}
+.quiz-validation.success{color:var(--green);font-weight:700}
+.timestamp-builder{display:grid;grid-template-columns:1.3fr .7fr .7fr auto auto;gap:.5rem;align-items:end;margin-top:.65rem}
+.timestamp-list{display:grid;gap:.45rem;margin-top:.7rem}
+.timestamp-row{display:grid;grid-template-columns:1fr auto auto;gap:.45rem;align-items:center;padding:.5rem;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:.78rem}
+.timestamp-row button,.small-action-btn{border:1px solid var(--border);border-radius:8px;background:#fff;padding:.4rem .55rem;cursor:pointer;font-weight:800;color:var(--accent)}
+.admin-video-preview{display:none;margin-top:.65rem;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#000;aspect-ratio:16/9}
+.admin-video-preview.show{display:block}
+.admin-video-preview iframe{width:100%;height:100%;border:0;display:block}
+@media(max-width:760px){.quiz-option-grid,.timestamp-builder,.timestamp-row{grid-template-columns:1fr}}
 
 /* Free/Paid toggle */
 .free-paid-toggle{display:flex;gap:.5rem}
@@ -400,6 +418,65 @@ body{padding-bottom:65px}
       <div class="form-group" id="pl-link-group" style="display:none">
         <label>YouTube Playlist Link</label>
         <input type="text" id="up-playlist-link" placeholder="https://youtube.com/playlist?list=xxxxx">
+      </div>
+
+      <div class="form-group">
+        <label>Quiz Options</label>
+        <div class="quiz-option-grid">
+          <label class="quiz-option-card">
+            <input type="checkbox" id="quiz-separate-enabled" onchange="updateQuizOptionVisibility()">
+            <span><strong>Separate Quiz</strong><span>Students can open the quiz independently from the video.</span></span>
+          </label>
+          <label class="quiz-option-card">
+            <input type="checkbox" id="quiz-popup-enabled" onchange="updateQuizOptionVisibility()">
+            <span><strong>Pop-up Quiz</strong><span>Questions pause the video and appear at selected timestamps.</span></span>
+          </label>
+        </div>
+        <div class="mode-help">Both options can be enabled together, or both can be left off.</div>
+      </div>
+
+      <div class="quiz-config-box" id="separate-quiz-box">
+        <div class="form-group">
+          <label>Upload Question JSON File</label>
+          <input type="file" id="separate-quiz-file" accept="application/json,.json" onchange="handleQuizJsonUpload('separate', this.files && this.files[0])">
+          <div class="quiz-validation" id="separate-quiz-status">No Separate Quiz file selected.</div>
+          <button type="button" class="small-action-btn" onclick="clearQuizJson('separate')">Remove Separate Quiz File</button>
+        </div>
+      </div>
+
+      <div class="quiz-config-box" id="popup-quiz-box">
+        <div class="form-group">
+          <label>Step 1 - Upload JSON file of question set</label>
+          <input type="file" id="popup-quiz-file" accept="application/json,.json" onchange="handleQuizJsonUpload('popup', this.files && this.files[0])">
+          <div class="quiz-validation" id="popup-quiz-status">No Pop-up Quiz file selected.</div>
+          <button type="button" class="small-action-btn" onclick="clearQuizJson('popup')">Remove Pop-up Quiz File</button>
+        </div>
+        <div class="form-group">
+          <label>Video timing helper</label>
+          <div class="mode-help">Paste the video URL above, then load this preview to use the current video time.</div>
+          <button type="button" class="small-action-btn" onclick="loadQuizTimingPreview()">Load video preview</button>
+          <div class="admin-video-preview" id="quiz-video-preview"><div id="quiz-preview-player"></div></div>
+        </div>
+        <div class="form-group">
+          <label>Step 2 - Set timestamp with question number</label>
+          <div class="timestamp-builder">
+            <select id="popup-question-select"><option value="">Upload JSON first</option></select>
+            <input type="number" id="popup-minutes" min="0" value="0" placeholder="Minutes">
+            <input type="number" id="popup-seconds" min="0" max="59" value="0" placeholder="Seconds">
+            <button type="button" class="small-action-btn" onclick="useCurrentVideoTimeForPopup()">Use Current Video Time</button>
+            <button type="button" class="small-action-btn" onclick="addPopupTimestamp()">Add timestamp</button>
+          </div>
+          <div class="timestamp-list" id="popup-timestamp-list"></div>
+          <div class="quiz-validation" id="popup-timestamp-status">No timestamps mapped yet.</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:.5rem;font-weight:800;margin-top:.5rem">
+          <input type="checkbox" id="popup-require-answer" checked style="width:auto">
+          Answer required before continuing
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;font-weight:800;margin-top:.5rem">
+          <input type="checkbox" id="popup-sound-enabled" checked style="width:auto">
+          Quiz sounds enabled by default
+        </label>
       </div>
 
       <div class="form-group">
@@ -759,6 +836,13 @@ function resetUploadState() {
     .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
   const freeComplete = document.getElementById('up-free-complete');
   if (freeComplete) freeComplete.checked = false;
+  const separateQuiz = document.getElementById('quiz-separate-enabled');
+  const popupQuiz = document.getElementById('quiz-popup-enabled');
+  if (separateQuiz) separateQuiz.checked = false;
+  if (popupQuiz) popupQuiz.checked = false;
+  clearQuizJson('separate');
+  clearQuizJson('popup');
+  updateQuizOptionVisibility();
   for (let i = 1; i <= 8; i++) {
     const q = document.getElementById(`faq-q-${i}`);
     const a = document.getElementById(`faq-a-${i}`);
@@ -1527,6 +1611,317 @@ function collectCourseFaqs() {
   return faqs.slice(0, 8);
 }
 
+const uploadQuizState = {
+  separate: { questionSet: null, errors: [] },
+  popup: { questionSet: null, errors: [], timestamps: [] }
+};
+let quizPreviewPlayer = null;
+
+function normalizeLocalizedText(value) {
+  if (typeof value === 'string') return { en: value.trim(), hi: '' };
+  if (value && typeof value === 'object') {
+    return {
+      en: String(value.en || value.text || value.value || '').trim(),
+      hi: String(value.hi || '').trim()
+    };
+  }
+  return { en: '', hi: '' };
+}
+
+function localizedTextValue(value) {
+  const normalized = normalizeLocalizedText(value);
+  return normalized.en || normalized.hi || '';
+}
+
+function validateQuizQuestionSet(raw) {
+  const errors = [];
+  const data = raw && typeof raw === 'object' ? raw : {};
+  const rawQuestions = Array.isArray(data.questions) ? data.questions : [];
+  if (!rawQuestions.length) errors.push('JSON must contain a non-empty questions array.');
+  const usedIds = new Set();
+  const questions = rawQuestions.map((question, index) => {
+    const id = question.id ?? index + 1;
+    const idString = String(id).trim();
+    if (!idString) errors.push(`Question ${index + 1} has no id.`);
+    if (usedIds.has(idString)) errors.push(`Duplicate question id: ${idString}`);
+    usedIds.add(idString);
+    const prompt = question.question !== undefined ? normalizeLocalizedText(question.question) : normalizeLocalizedText(question.q || question.prompt || '');
+    if (!localizedTextValue(prompt)) errors.push(`Question ${idString || index + 1} has no text.`);
+    const options = Array.isArray(question.options) ? question.options.map((option, optionIndex) => {
+      if (typeof option === 'string') {
+        return { id: String.fromCharCode(65 + optionIndex), en: option.trim(), hi: '' };
+      }
+      return {
+        id: String(option.id || String.fromCharCode(65 + optionIndex)).trim(),
+        en: String(option.en || option.text || option.value || '').trim(),
+        hi: String(option.hi || '').trim()
+      };
+    }) : [];
+    if (options.length < 2) errors.push(`Question ${idString || index + 1} needs at least two options.`);
+    const optionIds = new Set(options.map(option => option.id));
+    const legacyCorrect = Number.isInteger(question.correct) ? options[question.correct]?.id : '';
+    const correctOption = String(question.correctOption || question.answer || legacyCorrect || '').trim();
+    if (!correctOption || !optionIds.has(correctOption)) errors.push(`Question ${idString || index + 1} has invalid correctOption.`);
+    const feedback = question.feedback && typeof question.feedback === 'object'
+      ? question.feedback
+      : {
+          correct: question.explanation || 'Correct.',
+          incorrect: question.incorrectFeedback || 'Please try again.'
+        };
+    return {
+      id: idString || String(index + 1),
+      question: prompt,
+      options,
+      correctOption,
+      feedback: {
+        correct: normalizeLocalizedText(feedback.correct || question.explanation || 'Correct.'),
+        incorrect: normalizeLocalizedText(feedback.incorrect || 'Please review this concept.')
+      }
+    };
+  });
+  return {
+    title: String(data.title || 'Lesson Quiz').trim(),
+    questions,
+    errors
+  };
+}
+
+window.handleQuizJsonUpload = (kind, file) => {
+  const status = document.getElementById(`${kind}-quiz-status`);
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const parsed = JSON.parse(event.target.result);
+      const result = validateQuizQuestionSet(parsed);
+      uploadQuizState[kind].questionSet = result.errors.length ? null : {
+        title: result.title,
+        questions: result.questions
+      };
+      uploadQuizState[kind].errors = result.errors;
+      if (status) {
+        status.className = `quiz-validation ${result.errors.length ? 'error' : 'success'}`;
+        status.textContent = result.errors.length
+          ? result.errors.join(' ')
+          : `${result.questions.length} valid questions loaded.`;
+      }
+      if (kind === 'popup') {
+        uploadQuizState.popup.timestamps = uploadQuizState.popup.timestamps
+          .filter(item => result.questions.some(q => String(q.id) === String(item.questionId)));
+        renderPopupQuestionSelector();
+        renderPopupTimestampList();
+      }
+    } catch (error) {
+      uploadQuizState[kind].questionSet = null;
+      uploadQuizState[kind].errors = [error.message || 'Invalid JSON.'];
+      if (status) {
+        status.className = 'quiz-validation error';
+        status.textContent = `Invalid JSON: ${error.message || 'Unable to parse file.'}`;
+      }
+    }
+  };
+  reader.readAsText(file);
+};
+
+window.clearQuizJson = (kind) => {
+  uploadQuizState[kind] = kind === 'popup'
+    ? { questionSet: null, errors: [], timestamps: [] }
+    : { questionSet: null, errors: [] };
+  const input = document.getElementById(`${kind}-quiz-file`);
+  const status = document.getElementById(`${kind}-quiz-status`);
+  if (input) input.value = '';
+  if (status) {
+    status.className = 'quiz-validation';
+    status.textContent = kind === 'popup' ? 'No Pop-up Quiz file selected.' : 'No Separate Quiz file selected.';
+  }
+  renderPopupQuestionSelector();
+  renderPopupTimestampList();
+};
+
+window.updateQuizOptionVisibility = () => {
+  const separateEnabled = document.getElementById('quiz-separate-enabled')?.checked === true;
+  const popupEnabled = document.getElementById('quiz-popup-enabled')?.checked === true;
+  document.getElementById('separate-quiz-box')?.classList.toggle('show', separateEnabled);
+  document.getElementById('popup-quiz-box')?.classList.toggle('show', popupEnabled);
+};
+
+function renderPopupQuestionSelector() {
+  const select = document.getElementById('popup-question-select');
+  if (!select) return;
+  const questions = uploadQuizState.popup.questionSet?.questions || [];
+  select.innerHTML = questions.length
+    ? questions.map(q => `<option value="${escapeHtml(q.id)}">Question ${escapeHtml(q.id)} - ${escapeHtml(localizedTextValue(q.question)).slice(0, 64)}</option>`).join('')
+    : '<option value="">Upload JSON first</option>';
+}
+
+function formatTimeSeconds(seconds) {
+  const safe = Math.max(0, Number(seconds) || 0);
+  const minutes = Math.floor(safe / 60);
+  const secs = Math.floor(safe % 60);
+  return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function currentPopupTimeSeconds() {
+  const minutes = Number(document.getElementById('popup-minutes')?.value || 0);
+  const seconds = Number(document.getElementById('popup-seconds')?.value || 0);
+  if (!Number.isFinite(minutes) || !Number.isFinite(seconds) || minutes < 0 || seconds < 0 || seconds > 59) return null;
+  return minutes * 60 + seconds;
+}
+
+function popupVideoDurationSeconds() {
+  try {
+    const duration = quizPreviewPlayer?.getDuration?.();
+    return Number.isFinite(duration) && duration > 0 ? duration : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+window.addPopupTimestamp = () => {
+  const questionId = document.getElementById('popup-question-select')?.value || '';
+  const timeSeconds = currentPopupTimeSeconds();
+  const status = document.getElementById('popup-timestamp-status');
+  const questions = uploadQuizState.popup.questionSet?.questions || [];
+  const duration = popupVideoDurationSeconds();
+  const fail = (message) => {
+    if (status) {
+      status.className = 'quiz-validation error';
+      status.textContent = message;
+    }
+  };
+  if (!questions.some(q => String(q.id) === String(questionId))) return fail('Selected question does not exist in the uploaded JSON.');
+  if (timeSeconds === null) return fail('Invalid timestamp. Use minutes and 0-59 seconds.');
+  if (duration !== null && timeSeconds > duration) return fail('Timestamp is beyond the loaded video duration.');
+  if (uploadQuizState.popup.timestamps.some(item => String(item.questionId) === String(questionId))) return fail('This question is already mapped. Delete it first to change the time.');
+  if (uploadQuizState.popup.timestamps.some(item => Number(item.timeSeconds) === Number(timeSeconds))) return fail('Another question already uses this timestamp.');
+  uploadQuizState.popup.timestamps.push({ questionId: String(questionId), timeSeconds });
+  uploadQuizState.popup.timestamps.sort((a, b) => a.timeSeconds - b.timeSeconds);
+  renderPopupTimestampList();
+};
+
+window.deletePopupTimestamp = (questionId) => {
+  uploadQuizState.popup.timestamps = uploadQuizState.popup.timestamps.filter(item => String(item.questionId) !== String(questionId));
+  renderPopupTimestampList();
+};
+
+window.editPopupTimestamp = (questionId) => {
+  const item = uploadQuizState.popup.timestamps.find(row => String(row.questionId) === String(questionId));
+  if (!item) return;
+  document.getElementById('popup-question-select').value = String(item.questionId);
+  document.getElementById('popup-minutes').value = Math.floor(item.timeSeconds / 60);
+  document.getElementById('popup-seconds').value = Math.floor(item.timeSeconds % 60);
+  window.deletePopupTimestamp(questionId);
+};
+
+function renderPopupTimestampList() {
+  const list = document.getElementById('popup-timestamp-list');
+  const status = document.getElementById('popup-timestamp-status');
+  if (!list) return;
+  const questions = uploadQuizState.popup.questionSet?.questions || [];
+  list.innerHTML = uploadQuizState.popup.timestamps.map(item => {
+    const question = questions.find(q => String(q.id) === String(item.questionId));
+    return `
+      <div class="timestamp-row">
+        <span>Question ${escapeHtml(item.questionId)} at ${formatTimeSeconds(item.timeSeconds)}<br><small>${escapeHtml(localizedTextValue(question?.question || '')).slice(0, 90)}</small></span>
+        <button type="button" onclick="editPopupTimestamp('${escapeHtml(item.questionId)}')">Edit</button>
+        <button type="button" onclick="deletePopupTimestamp('${escapeHtml(item.questionId)}')">Delete</button>
+      </div>`;
+  }).join('');
+  if (status) {
+    status.className = `quiz-validation ${uploadQuizState.popup.timestamps.length ? 'success' : ''}`;
+    status.textContent = uploadQuizState.popup.timestamps.length
+      ? `${uploadQuizState.popup.timestamps.length} timestamp mappings ready.`
+      : 'No timestamps mapped yet.';
+  }
+}
+
+function buildQuizConfigForUpload() {
+  const separateEnabled = document.getElementById('quiz-separate-enabled')?.checked === true;
+  const popupEnabled = document.getElementById('quiz-popup-enabled')?.checked === true;
+  if (separateEnabled && !uploadQuizState.separate.questionSet) {
+    throw new Error('Separate Quiz is enabled, but its JSON is missing or invalid.');
+  }
+  if (popupEnabled && !uploadQuizState.popup.questionSet) {
+    throw new Error('Pop-up Quiz is enabled, but its JSON is missing or invalid.');
+  }
+  if (popupEnabled && !uploadQuizState.popup.timestamps.length) {
+    throw new Error('Pop-up Quiz needs at least one timestamp mapping.');
+  }
+  const questionSets = {};
+  const quizConfig = {
+    separateQuiz: { enabled: false, questionSetId: '' },
+    popupQuiz: {
+      enabled: false,
+      questionSetId: '',
+      requireAnswer: true,
+      soundEnabled: true,
+      timestamps: []
+    }
+  };
+  if (separateEnabled) {
+    questionSets.separate = uploadQuizState.separate.questionSet;
+    quizConfig.separateQuiz = { enabled: true, questionSetId: 'separate' };
+  }
+  if (popupEnabled) {
+    questionSets.popup = uploadQuizState.popup.questionSet;
+    quizConfig.popupQuiz = {
+      enabled: true,
+      questionSetId: 'popup',
+      requireAnswer: document.getElementById('popup-require-answer')?.checked !== false,
+      soundEnabled: document.getElementById('popup-sound-enabled')?.checked !== false,
+      timestamps: uploadQuizState.popup.timestamps.map(item => ({
+        questionId: String(item.questionId),
+        timeSeconds: Number(item.timeSeconds)
+      }))
+    };
+  }
+  return { quizConfig, quizQuestionSets: questionSets };
+}
+
+window.loadQuizTimingPreview = async () => {
+  const link = uploadType === 'playlist'
+    ? document.getElementById('up-playlist-link')?.value.trim()
+    : document.getElementById('up-video-link')?.value.trim();
+  const videoId = extractVideoIdFromLink(link);
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) return showToast('Valid YouTube video URL/ID required for timing preview.', 'error');
+  const preview = document.getElementById('quiz-video-preview');
+  if (preview) preview.classList.add('show');
+  await ensureAdminYouTubeApi();
+  try { quizPreviewPlayer?.destroy?.(); } catch (_) {}
+  quizPreviewPlayer = new YT.Player('quiz-preview-player', {
+    videoId,
+    playerVars: { rel: 0, playsinline: 1 }
+  });
+};
+
+function ensureAdminYouTubeApi() {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (window._adminYtApiPromise) return window._adminYtApiPromise;
+  window._adminYtApiPromise = new Promise((resolve, reject) => {
+    const previousReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof previousReady === 'function') previousReady();
+      resolve(window.YT);
+    };
+    const script = document.createElement('script');
+    script.src = 'https://www.youtube.com/iframe_api';
+    script.async = true;
+    script.onerror = () => reject(new Error('YouTube timing preview failed to load.'));
+    document.head.appendChild(script);
+  });
+  return window._adminYtApiPromise;
+}
+
+window.useCurrentVideoTimeForPopup = () => {
+  try {
+    const time = Math.floor(quizPreviewPlayer?.getCurrentTime?.() || 0);
+    document.getElementById('popup-minutes').value = Math.floor(time / 60);
+    document.getElementById('popup-seconds').value = time % 60;
+  } catch (_) {
+    showToast('Load and play the timing preview first.', 'error');
+  }
+};
+
 let uploadInProgress = false;
 
 function setUploadStatus(message = '', type = 'info') {
@@ -1680,6 +2075,13 @@ window.uploadContent = async () => {
   const fp      = uploadFP;
   const faqs    = collectCourseFaqs();
   if (faqs === null) return;
+  let quizPayload;
+  try {
+    quizPayload = buildQuizConfigForUpload();
+  } catch (error) {
+    showVisibleUploadError(error);
+    return;
+  }
 
   if (uploadMode === 'edit-course') {
     return showToast('Edit existing course mode अलग action है। पहले content list से course select करें।', 'error');
@@ -1748,6 +2150,8 @@ window.uploadContent = async () => {
         thumbnailUrl: '',
         courseThumbnailUrl: courseThumbnailUrl || base.courseThumbnailUrl || base.thumbnailUrl || '',
         faqs: faqs.length ? faqs : (Array.isArray(base.faqs) ? base.faqs.slice(0, 8) : []),
+        quizConfig: quizPayload.quizConfig,
+        quizQuestionSets: quizPayload.quizQuestionSets,
         desc: desc || base.desc || '',
         ...pricingState,
         orderIndex: nextIndex,
@@ -1776,6 +2180,8 @@ window.uploadContent = async () => {
         thumbnailUrl: '',
         courseThumbnailUrl: '',
         faqs,
+        quizConfig: quizPayload.quizConfig,
+        quizQuestionSets: quizPayload.quizQuestionSets,
         orderIndex: 0,
         ...pricingState,
         createdAt: serverTimestamp(),
@@ -1832,6 +2238,8 @@ window.uploadContent = async () => {
           dur: v.duration,
           orderIndex: i,
           faqs,
+          quizConfig: quizPayload.quizConfig,
+          quizQuestionSets: quizPayload.quizQuestionSets,
           desc,
           ...pricingState,
           createdAt: serverTimestamp(),
