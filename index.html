@@ -541,7 +541,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .popup-quiz-layer,.interactive-lesson-layer{position:absolute;inset:0;z-index:22;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2.2vw,18px);pointer-events:none;opacity:0;transform:translateY(20px) scale(.982);transition:opacity 620ms cubic-bezier(.22,1,.36,1),transform 680ms cubic-bezier(.19,1,.22,1),filter 480ms ease}
 .popup-quiz-layer.show,.interactive-lesson-layer.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
 .popup-quiz-layer.dull,.interactive-lesson-layer.dull{filter:saturate(.7) brightness(.78);opacity:.16;transform:translateY(18px) scale(.99)}
-.interactive-lesson-panel{position:relative;width:var(--quiz-width);max-height:min(86vh,620px);overflow:visible;padding:clamp(9px,2vw,17px);font-size:var(--quiz-font-scale);color:var(--quiz-primary-text);text-shadow:0 2px 10px rgba(0,4,16,.98),0 0 20px rgba(0,8,24,.8);background:linear-gradient(145deg,rgba(1,7,24,.96),rgba(4,22,61,.94) 48%,rgba(3,38,89,.9));border:1px solid rgba(118,188,255,.58);border-radius:18px;box-shadow:0 26px 80px rgba(0,8,28,.62),0 0 42px rgba(50,132,255,.34),inset 0 1px 0 rgba(190,226,255,.22),inset 0 -26px 50px rgba(0,0,0,.18);backdrop-filter:none;-webkit-backdrop-filter:none}
+.interactive-lesson-panel{position:relative;width:var(--quiz-width);max-height:min(86vh,620px);overflow:visible;padding:clamp(9px,2vw,17px);font-size:var(--quiz-font-scale);color:var(--quiz-primary-text);text-shadow:0 2px 10px rgba(0,4,16,.98),0 0 20px rgba(0,8,24,.8);background:linear-gradient(145deg,rgba(1,7,24,.98),rgba(4,22,61,.96) 48%,rgba(3,38,89,.94));border:1px solid rgba(118,188,255,.58);border-radius:18px;box-shadow:0 26px 80px rgba(0,8,28,.62),0 0 42px rgba(50,132,255,.34),inset 0 1px 0 rgba(190,226,255,.22),inset 0 -26px 50px rgba(0,0,0,.18);backdrop-filter:none;-webkit-backdrop-filter:none}
 .interactive-lesson-panel::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;background:linear-gradient(120deg,rgba(110,181,255,.28),rgba(110,181,255,0) 34%,rgba(82,255,196,.16) 72%,rgba(110,181,255,.18));opacity:.46;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);padding:1px;mask-composite:exclude;-webkit-mask-composite:xor}
 .popup-quiz-card{width:var(--quiz-width);max-height:min(86vh,620px);overflow:hidden;padding:clamp(10px,2.2vw,18px);font-size:var(--quiz-font-scale)}
 .popup-quiz-card .quiz-kicker,.interactive-lesson-panel .quiz-kicker{font-size:clamp(.62rem,1.8vw,.78rem);font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--quiz-accent-blue);margin-bottom:.32rem;text-shadow:0 0 16px rgba(110,181,255,.56)}
@@ -561,10 +561,10 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .quiz-option:active{transform:scale(.985)}
 .quiz-option::before{content:"";position:absolute;left:0;right:0;bottom:0;height:0%;pointer-events:none;transition:height 700ms cubic-bezier(.22,.8,.24,1);z-index:1}
 .quiz-option::after{content:"";position:absolute;left:-20%;right:-20%;bottom:-18px;height:24px;opacity:0;z-index:1;filter:blur(2px);transition:opacity .28s ease}
-.quiz-option.is-correct,.quiz-option.correct{border-color:rgba(74,255,176,1);box-shadow:0 0 30px rgba(28,245,137,.82),0 0 70px rgba(28,245,137,.32),inset 0 0 24px rgba(27,221,132,.22)}
+.quiz-option.is-correct,.quiz-option.correct{border-color:rgba(74,255,176,1);box-shadow:0 0 38px rgba(28,245,137,1),0 0 96px rgba(28,245,137,.55),0 0 150px rgba(28,245,137,.24),inset 0 0 30px rgba(27,221,132,.32)}
 .quiz-option.is-correct::before,.quiz-option.correct::before{height:100%;background:linear-gradient(180deg,rgba(99,255,190,.18),rgba(18,214,118,.78))}
 .quiz-option.is-correct::after,.quiz-option.correct::after{opacity:1;background:radial-gradient(ellipse at center,rgba(185,255,225,.95),rgba(34,255,146,0) 72%);animation:quizWave .9s ease infinite}
-.quiz-option.is-wrong,.quiz-option.wrong{border-color:rgba(255,62,86,1);box-shadow:0 0 30px rgba(255,45,72,.86),0 0 70px rgba(255,45,72,.3),inset 0 0 22px rgba(255,48,76,.2);animation:quizWrongShake 480ms ease}
+.quiz-option.is-wrong,.quiz-option.wrong{border-color:rgba(255,62,86,1);box-shadow:0 0 38px rgba(255,45,72,1),0 0 92px rgba(255,45,72,.52),0 0 145px rgba(255,45,72,.22),inset 0 0 28px rgba(255,48,76,.3);animation:quizWrongShake 480ms ease}
 .quiz-option-content{position:relative;z-index:2;display:grid;grid-template-columns:auto 1fr;gap:.55rem;align-items:start}
 .quiz-option-id{color:var(--quiz-accent-blue);font-weight:950;text-shadow:0 0 14px rgba(110,181,255,.55)}
 .quiz-feedback{font-size:clamp(.72rem,2vw,.9rem);font-weight:900;margin-top:clamp(7px,1.6vw,11px);padding-top:.45rem;border-top:1px solid rgba(130,190,255,.34);color:#dbeafe;min-height:1.3rem;text-shadow:0 2px 9px rgba(0,0,0,.95)}
@@ -579,9 +579,9 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 @keyframes quizWave{0%,100%{transform:translateX(-6%)}50%{transform:translateX(6%)}}
 @keyframes quizWrongShake{0%,100%{transform:translateX(0)}18%{transform:translateX(-7px)}36%{transform:translateX(6px)}54%{transform:translateX(-4px)}72%{transform:translateX(3px)}}
 @media(orientation:landscape){.lesson-player-stage{--quiz-width:min(78%,760px);--quiz-font-scale:clamp(.74rem,1.45vw,.98rem)}.popup-quiz-layer,.interactive-lesson-layer{inset:0}.popup-quiz-card,.interactive-lesson-panel{max-height:82%;overflow:visible}.quiz-options{grid-template-columns:1fr 1fr}}
-@media(orientation:portrait){.lesson-player-stage{position:relative;top:auto;--quiz-width:min(94%,720px);--quiz-font-scale:clamp(.76rem,2.75vw,1.02rem);padding-bottom:clamp(150px,46vw,320px)}.lesson-player-stage.popup-quiz-active,.lesson-player-stage.interactive-lesson-active{padding-bottom:clamp(205px,60vw,380px)}.popup-quiz-layer,.interactive-lesson-layer{align-items:flex-start;inset:auto 0 auto 0;top:clamp(24px,7vw,42px);min-height:clamp(245px,62vw,430px);padding:0}.popup-quiz-card,.interactive-lesson-panel{max-height:none;margin-inline:auto}}
-@media(min-width:700px) and (orientation:portrait){.lesson-player-stage{--quiz-width:min(92%,760px);--quiz-font-scale:clamp(.9rem,2.1vw,1.08rem)}.popup-quiz-layer,.interactive-lesson-layer{top:clamp(125px,17vw,175px);min-height:clamp(320px,48vw,500px)}}
-@media(max-height:700px){.popup-quiz-card,.interactive-lesson-panel{padding:8px 10px}.quiz-options{gap:5px}.quiz-option{padding:6px 8px}.popup-quiz-card .qtext,.interactive-lesson-panel .qtext{margin-bottom:6px}.quiz-feedback{margin-top:6px;padding-top:5px}}
+@media(orientation:portrait){.lesson-player-stage{position:relative;top:auto;--quiz-width:min(94%,720px);--quiz-font-scale:clamp(.7rem,2.45vw,.95rem);padding-bottom:.75rem}.lesson-player-stage.popup-quiz-active,.lesson-player-stage.interactive-lesson-active{padding-bottom:.75rem}.popup-quiz-layer,.interactive-lesson-layer{align-items:flex-start;inset:8px 0 auto 0;min-height:0;padding:0}.popup-quiz-card,.interactive-lesson-panel{max-height:calc(100% - 16px);overflow-y:auto;margin-inline:auto}.interactive-lesson-panel .quiz-option{min-height:38px}.interactive-lesson-panel .quiz-option-content{gap:.42rem}}
+@media(min-width:700px) and (orientation:portrait){.lesson-player-stage{--quiz-width:min(92%,760px);--quiz-font-scale:clamp(.82rem,1.8vw,1.02rem)}.popup-quiz-layer,.interactive-lesson-layer{inset:14px 0 auto 0}.popup-quiz-card,.interactive-lesson-panel{max-height:calc(100% - 28px)}}
+@media(max-height:700px){.popup-quiz-card,.interactive-lesson-panel{padding:6px 9px}.quiz-options{gap:4px}.quiz-option{padding:5px 7px}.popup-quiz-card .qtext,.interactive-lesson-panel .qtext{margin-bottom:5px}.quiz-feedback{margin-top:5px;padding-top:4px}}
 @media(prefers-reduced-motion:reduce){.popup-quiz-layer,.interactive-lesson-layer,.interactive-lesson-panel .qtext,.lesson-teacher-cue,.interactive-lesson-panel .quiz-option,.quiz-option::before,.quiz-option::after,.quiz-feedback{transition:none!important;animation:none!important}}
 .selected-lesson-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:.8rem;margin:.6rem 0 .75rem;box-shadow:0 12px 28px rgba(16,24,47,.06)}
 .selected-lesson-kicker{font-size:.72rem;font-weight:900;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
@@ -3934,6 +3934,22 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
   const feedback = container.querySelector('.quiz-feedback');
   const saveStatus = container.querySelector('.quiz-save-status');
   const responseId = quizResponseId(course, lesson, mode, question.id);
+  const localCorrect = question.correctOption ? String(question.correctOption) === String(selectedOption) : null;
+  if (localCorrect !== null) {
+    selected?.classList.add(localCorrect ? 'is-correct' : 'is-wrong');
+    if (feedback) {
+      feedback.className = `quiz-feedback ${localCorrect ? 'correct' : 'wrong'}`;
+      const heading = localCorrect
+        ? { en: 'Correct!', hi: 'सही उत्तर!' }
+        : { en: 'Not correct.', hi: 'उत्तर सही नहीं है।' };
+      const localMessage = localCorrect
+        ? question.feedback?.correct
+        : question.feedback?.incorrect;
+      feedback.innerHTML = `${renderBilingualLines(heading)}${renderBilingualLines(localMessage)}`;
+    }
+    playQuizTone(localCorrect ? 'correct' : 'wrong', popupConfig?.soundEnabled !== false);
+    launchQuizConfetti(selected || container, localCorrect ? 'correct' : 'wrong');
+  }
   const pendingItem = {
     responseId,
     courseId: course.id,
@@ -3957,7 +3973,9 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
       responseId
     });
     const data = result.data || {};
-    selected?.classList.add(data.correct ? 'is-correct' : 'is-wrong');
+    if (localCorrect === null) {
+      selected?.classList.add(data.correct ? 'is-correct' : 'is-wrong');
+    }
     upsertPendingQuizResponse({
       ...pendingItem,
       isCorrect: data.correct === true,
@@ -3966,7 +3984,7 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
       syncStatus: data.remoteSaved === false ? 'pending' : 'synced'
     });
     if (data.remoteSaved !== false) markPendingQuizSynced(responseId);
-    if (feedback) {
+    if (feedback && localCorrect === null) {
       feedback.className = `quiz-feedback ${data.correct ? 'correct' : 'wrong'}`;
       const heading = data.correct
         ? { en: 'Correct!', hi: 'सही उत्तर!' }
@@ -3978,8 +3996,10 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
         ? renderBilingualLines({ en: 'Answer saved on this device. It will sync when the connection returns.', hi: 'उत्तर इस डिवाइस पर सुरक्षित है। इंटरनेट आने पर सिंक हो जाएगा।' })
         : renderBilingualLines({ en: 'Progress saved', hi: 'प्रगति सुरक्षित हो गई' });
     }
-    playQuizTone(data.correct ? 'correct' : 'wrong', popupConfig?.soundEnabled !== false);
-    launchQuizConfetti(selected || container, data.correct ? 'correct' : 'wrong');
+    if (localCorrect === null) {
+      playQuizTone(data.correct ? 'correct' : 'wrong', popupConfig?.soundEnabled !== false);
+      launchQuizConfetti(selected || container, data.correct ? 'correct' : 'wrong');
+    }
     if (data.remoteSaved === false) window.setTimeout(retryPendingQuizResponses, 3000);
   } catch (error) {
     console.warn('[IdeaKDC quiz answer]', error?.code || error?.message || error);
@@ -4047,6 +4067,7 @@ async function configurePopupQuizForPlayer(course, lesson, idx) {
       idx,
       quizData,
       answeredThisSession: new Set(),
+      lastTime: 0,
       active: false
     };
   } catch (error) {
@@ -4057,6 +4078,15 @@ async function configurePopupQuizForPlayer(course, lesson, idx) {
 function maybeShowTimedPopupQuiz(player) {
   if (!activeLessonQuiz || activeLessonQuiz.active || !player?.getCurrentTime) return;
   const time = player.getCurrentTime();
+  const previousTime = Number(activeLessonQuiz.lastTime || 0);
+  if (time + 1.25 < previousTime) {
+    (activeLessonQuiz.quizData.popupQuiz?.timestamps || []).forEach(item => {
+      if (Number(item.timeSeconds) >= time - 0.5) {
+        activeLessonQuiz.answeredThisSession.delete(String(item.questionId));
+      }
+    });
+  }
+  activeLessonQuiz.lastTime = time;
   const triggerWindowSeconds = 0.75;
   const mapping = (activeLessonQuiz.quizData.popupQuiz?.timestamps || [])
     .find(item => time + triggerWindowSeconds >= Number(item.timeSeconds) && !activeLessonQuiz.answeredThisSession.has(String(item.questionId)));

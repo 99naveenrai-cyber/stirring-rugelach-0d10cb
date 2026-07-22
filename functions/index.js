@@ -749,7 +749,12 @@ function sanitizeQuizQuestion(question = {}) {
             hi: String(option.hi || "")
           };
         }).filter((option) => option.id && (option.en || option.hi))
-      : []
+      : [],
+    correctOption: String(question.correctOption || ""),
+    feedback: {
+      correct: localizedQuizText(question.feedback?.correct || "Correct."),
+      incorrect: localizedQuizText(question.feedback?.incorrect || "Please try again.")
+    }
   };
 }
 
