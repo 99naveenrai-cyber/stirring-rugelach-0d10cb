@@ -764,6 +764,10 @@ function findQuizQuestionSet(lesson = {}, mode = "separate") {
   return { id: setId, title: String(set.title || "Lesson Quiz"), questions: set.questions };
 }
 
+function safeQuizAnswerKey(value = "") {
+  return String(value || "").replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || "question";
+}
+
 exports.getPublicCourseCatalogue = onCall({
   region: "asia-south1"
 }, async () => {
@@ -1238,6 +1242,7 @@ exports.submitLessonQuizAnswer = onCall({
   const mode = String(request.data?.mode || "separate") === "popup" ? "popup" : "separate";
   const questionId = String(request.data?.questionId || "");
   const selectedOption = String(request.data?.selectedOption || "");
+  const responseId = String(request.data?.responseId || `${Date.now()}_${crypto.randomBytes(3).toString("hex")}`);
   if (!courseId || !lessonId || !questionId || !selectedOption) {
     throw new HttpsError("invalid-argument", "courseId, lessonId, questionId, and selectedOption are required.");
   }
@@ -1265,27 +1270,54 @@ exports.submitLessonQuizAnswer = onCall({
     .doc(auth.uid)
     .collection("quizProgress")
     .doc(progressId);
-  await progressRef.set({
-    uid: auth.uid,
-    courseId,
-    lessonId,
-    updatedAt: FieldValue.serverTimestamp(),
-    [`${mode}.started`]: true,
-    [`${mode}.lastAttemptedAt`]: FieldValue.serverTimestamp(),
-    [`${mode}.answered.${questionId}`]: {
-      selectedOption,
-      correct,
-      answeredAt: FieldValue.serverTimestamp()
-    },
-    [`${mode}.questionsAnswered`]: FieldValue.increment(1),
-    [`${mode}.correctAnswers`]: FieldValue.increment(correct ? 1 : 0)
-  }, { merge: true });
+  let remoteSaved = true;
+  try {
+    const answerKey = safeQuizAnswerKey(questionId);
+    await db.runTransaction(async (transaction) => {
+      const snap = await transaction.get(progressRef);
+      const previous = snap.exists ? snap.get(`${mode}.answered.${answerKey}`) : null;
+      const alreadyCounted = !!previous;
+      const payload = {
+        uid: auth.uid,
+        courseId,
+        lessonId,
+        updatedAt: FieldValue.serverTimestamp(),
+        [`${mode}.started`]: true,
+        [`${mode}.lastAttemptedAt`]: FieldValue.serverTimestamp(),
+        [`${mode}.answered.${answerKey}`]: {
+          questionId,
+          responseId,
+          selectedOption,
+          correct,
+          answeredAt: FieldValue.serverTimestamp()
+        }
+      };
+      if (!alreadyCounted) {
+        payload[`${mode}.questionsAnswered`] = FieldValue.increment(1);
+        payload[`${mode}.correctAnswers`] = FieldValue.increment(correct ? 1 : 0);
+      }
+      transaction.set(progressRef, payload, { merge: true });
+    });
+  } catch (error) {
+    remoteSaved = false;
+    logger.warn("[IdeaKDC quiz progress] remote save skipped", {
+      uid: auth.uid,
+      courseId,
+      lessonId,
+      mode,
+      questionId,
+      code: error.code || "",
+      message: error.message || ""
+    });
+  }
 
   return {
     correct,
     feedback,
     correctOption: correct ? selectedOption : "",
-    questionId
+    questionId,
+    responseId,
+    remoteSaved
   };
 });
 
