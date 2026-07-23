@@ -536,8 +536,19 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .preview-prompt p{font-size:.82rem;line-height:1.55;color:var(--muted);margin-bottom:.75rem}
 .preview-prompt .btn-enroll{width:auto;min-width:180px}
 .lesson-action-row{display:flex;flex-wrap:wrap;gap:.55rem;justify-content:center;margin:.65rem 0}
+.video-page .lesson-action-row .btn-enroll{width:auto;flex:1 1 145px;max-width:260px;background:linear-gradient(135deg,#13b96f,#08794b);box-shadow:0 0 24px rgba(34,255,146,.24),0 14px 28px rgba(4,19,52,.22)}
+.video-page .lesson-action-row .btn-enroll:active{transform:scale(.97)}
 .quiz-panel{background:linear-gradient(135deg,rgba(3,16,46,.14),rgba(12,44,94,.08),rgba(2,10,30,.04));border:1px solid rgba(93,164,255,.26);border-radius:14px;padding:.85rem;margin:.75rem 0;box-shadow:0 18px 55px rgba(0,10,35,.18),inset 0 1px 0 rgba(130,190,255,.12);color:var(--quiz-primary-text,#f3f8ff);text-shadow:0 1px 14px rgba(0,10,35,.45);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 .quiz-panel h2{font-size:.95rem;margin:0 0 .55rem;color:var(--quiz-primary-text,#f3f8ff)}
+.quiz-panel{background:radial-gradient(circle at 50% -10%,rgba(255,211,101,.18),rgba(14,46,104,.18) 32%,rgba(2,9,28,.98) 72%),linear-gradient(145deg,rgba(1,6,22,.98),rgba(4,18,60,.97));border-color:rgba(255,211,101,.6);border-radius:18px;box-shadow:0 22px 70px rgba(0,5,22,.54),0 0 42px rgba(255,198,73,.18),inset 0 1px 0 rgba(255,238,176,.22);padding:clamp(.85rem,2.6vw,1.15rem)}
+.quiz-panel h2{font-size:clamp(1.05rem,3.5vw,1.45rem);font-weight:950;letter-spacing:.01em;color:#ffe08a;text-shadow:0 0 20px rgba(255,211,101,.45)}
+.quiz-panel .qnum{color:#ffd365;font-weight:950;text-transform:uppercase;letter-spacing:.04em}
+.quiz-panel .qtext{font-size:clamp(1.05rem,3.6vw,1.45rem);font-weight:950;line-height:1.18;margin:.4rem 0 .75rem}
+.quiz-panel .lesson-action-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;align-items:center;margin:.85rem 0 .15rem}
+.quiz-panel .quiz-nav-btn{width:100%;min-height:48px;border-radius:999px;font-size:clamp(.92rem,2.8vw,1.05rem);font-weight:950;border:1px solid rgba(255,211,101,.72);box-shadow:0 0 22px rgba(255,211,101,.18),0 12px 26px rgba(0,0,0,.25)}
+.quiz-panel .quiz-nav-prev{background:linear-gradient(135deg,#0b1d4d,#123173);color:#f8fbff}
+.quiz-panel .quiz-nav-next{background:linear-gradient(135deg,#17b56d,#0d7c4e);color:#fff;box-shadow:0 0 26px rgba(34,255,146,.36),0 14px 30px rgba(0,0,0,.28)}
+.quiz-panel .quiz-nav-btn:disabled{opacity:.5;filter:grayscale(.3);cursor:not-allowed}
 .popup-quiz-layer,.interactive-lesson-layer{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2.2vw,18px);pointer-events:none;opacity:0;transform:translateY(20px) scale(.982);transition:opacity 620ms cubic-bezier(.22,1,.36,1),transform 680ms cubic-bezier(.19,1,.22,1),filter 480ms ease}
 .popup-quiz-layer.show,.interactive-lesson-layer.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
 .popup-quiz-layer.dull,.interactive-lesson-layer.dull{filter:saturate(.7) brightness(.78);opacity:.16;transform:translateY(18px) scale(.99)}
@@ -3747,6 +3758,43 @@ function destroyActiveLessonPlayer() {
 
 let activeLessonQuiz = null;
 let quizSoundMuted = false;
+const QUIZ_CORRECT_FEEDBACK_POOL = [
+  { hi: 'सही है' },
+  { en: 'Good Going!' },
+  { hi: 'वाह!' },
+  { hi: 'शानदार' },
+  { hi: 'अद्भुत' },
+  { hi: 'कमाल कर दिया' },
+  { en: 'Outstanding!' },
+  { en: 'Excellent!' },
+  { hi: 'बिलकुल सही जवाब' },
+  { hi: 'ठीक है' },
+  { en: 'Miracle Miracle!' },
+  { hi: 'झक्कास!' },
+  { en: '100% Correct!' },
+  { hi: 'अति शोभनम्!' },
+  { hi: 'सही तो होना ही था!' }
+];
+const QUIZ_WRONG_FEEDBACK_POOL = [
+  { hi: 'गलत है जी' },
+  { hi: 'दोबारा ट्राई करो' },
+  { hi: 'फिर से सोचो' },
+  { hi: 'दिमाग लगाओ' },
+  { hi: 'कैसे कैसे लोग आ जाते हैं' },
+  { hi: 'नहीं... नहीं...' },
+  { hi: 'गलत है' },
+  { hi: 'एक मौका दिया' },
+  { hi: 'नहीं रे!' },
+  { hi: 'कुछ भी!' },
+  { hi: 'सही नहीं है बाबा!' },
+  { hi: 'दिमाग का इस्तेमाल क्यों नहीं करते!' },
+  { hi: '100% गलत है!' },
+  { hi: 'चुल्लू भर पानी दूँ!' },
+  { hi: 'सड़ा हुआ अंडा!' },
+  { hi: 'दिमाग का यूज़ कब होगा?' },
+  { hi: 'अंटी मंटी कांटी... अब गलत गया तो...' }
+];
+let lastQuizRuleFeedback = '';
 
 function hasSeparateQuiz(lesson = {}) {
   return lesson.quizConfig?.separateQuiz?.enabled === true;
@@ -3776,6 +3824,32 @@ function renderBilingualLines(value = {}, fallback = '') {
   return `
     ${en ? `<span class="quiz-line-en">${escapeHtml(en)}</span>` : ''}
     ${hi ? `<span class="quiz-line-hi">${escapeHtml(hi)}</span>` : ''}`;
+}
+
+function hasQuizText(value = {}) {
+  const pair = quizLangPair(value);
+  return Boolean(pair.en || pair.hi);
+}
+
+function randomQuizRuleFeedback(isCorrect) {
+  const pool = isCorrect ? QUIZ_CORRECT_FEEDBACK_POOL : QUIZ_WRONG_FEEDBACK_POOL;
+  let next = pool[Math.floor(Math.random() * pool.length)] || pool[0];
+  if (pool.length > 1) {
+    let guard = 0;
+    while (JSON.stringify(next) === lastQuizRuleFeedback && guard < 8) {
+      next = pool[Math.floor(Math.random() * pool.length)] || pool[0];
+      guard += 1;
+    }
+  }
+  lastQuizRuleFeedback = JSON.stringify(next);
+  return next;
+}
+
+function quizFeedbackMessage(question, isCorrect, serverFeedback = null) {
+  const saved = isCorrect ? question.feedback?.correct : question.feedback?.incorrect;
+  if (hasQuizText(saved)) return saved;
+  if (hasQuizText(serverFeedback)) return serverFeedback;
+  return randomQuizRuleFeedback(isCorrect);
 }
 
 function renderQuizOptionContent(option = {}) {
@@ -3908,7 +3982,6 @@ function renderQuizPanel(course, lesson, mode, quizData, targetId = 'selected-le
   target.innerHTML = `
     <section class="quiz-panel" id="lesson-quiz-panel">
       <h2>${escapeHtml(quizData.title || 'Lesson Quiz')}</h2>
-      <div class="mode-help">${mode === 'popup' ? 'Timed pop-up quiz questions are connected to this video.' : 'This quiz can be attempted separately from the video.'}</div>
       <div id="lesson-quiz-question"></div>
     </section>`;
   renderQuizQuestion(course, lesson, mode, quizData, 0);
@@ -3928,8 +4001,8 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
     <div class="quiz-feedback" id="lesson-quiz-feedback" aria-live="polite"></div>
     <div class="quiz-save-status" aria-live="polite"></div>
     <div class="lesson-action-row">
-      <button class="quiz-sound-toggle" type="button" id="lesson-quiz-prev" ${index === 0 ? 'disabled' : ''}>Previous</button>
-      <button class="btn-enroll" type="button" id="lesson-quiz-next">${index + 1 < quizData.questions.length ? 'Next' : 'Finish'}</button>
+      <button class="quiz-nav-btn quiz-nav-prev" type="button" id="lesson-quiz-prev" ${index === 0 ? 'disabled' : ''}>Previous</button>
+      <button class="quiz-nav-btn quiz-nav-next" type="button" id="lesson-quiz-next">${index + 1 < quizData.questions.length ? 'Next' : 'Finish'}</button>
     </div>`;
   holder.querySelectorAll('.quiz-option').forEach(button => {
     button.onclick = () => {
@@ -3980,10 +4053,7 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
       targetFeedback.className = inlineFeedback
         ? `option-inline-feedback ${localCorrect ? 'correct' : 'wrong'}`
         : `quiz-feedback ${localCorrect ? 'correct' : 'wrong'}`;
-      const localMessage = localCorrect
-        ? question.feedback?.correct
-        : question.feedback?.incorrect;
-      targetFeedback.innerHTML = renderBilingualLines(localMessage, localCorrect ? 'Correct!' : 'Try again');
+      targetFeedback.innerHTML = renderBilingualLines(quizFeedbackMessage(question, localCorrect));
     }
     playQuizTone(localCorrect ? 'correct' : 'wrong', popupConfig?.soundEnabled !== false);
     launchQuizConfetti(selected || container, localCorrect ? 'correct' : 'wrong');
@@ -4005,7 +4075,7 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
     syncStatus: 'pending'
   };
   upsertPendingQuizResponse(pendingItem);
-  if (saveStatus) saveStatus.innerHTML = `${renderBilingualLines({ en: 'Saving progress...', hi: 'प्रगति सहेजी जा रही है...' })}`;
+  if (saveStatus) saveStatus.innerHTML = '';
   try {
     const result = await submitLessonQuizAnswerFn({
       courseId: course.id,
@@ -4032,12 +4102,10 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
       targetFeedback.className = inlineFeedback
         ? `option-inline-feedback ${data.correct ? 'correct' : 'wrong'}`
         : `quiz-feedback ${data.correct ? 'correct' : 'wrong'}`;
-      targetFeedback.innerHTML = renderBilingualLines(data.feedback, data.correct ? 'Correct!' : 'Try again');
+      targetFeedback.innerHTML = renderBilingualLines(quizFeedbackMessage(question, data.correct === true, data.feedback));
     }
     if (saveStatus) {
-      saveStatus.innerHTML = data.remoteSaved === false
-        ? renderBilingualLines({ en: 'Answer saved on this device. It will sync when the connection returns.', hi: 'उत्तर इस डिवाइस पर सुरक्षित है। इंटरनेट आने पर सिंक हो जाएगा।' })
-        : renderBilingualLines({ en: 'Progress saved', hi: 'प्रगति सुरक्षित हो गई' });
+      saveStatus.innerHTML = '';
     }
     if (localCorrect === null) {
       playQuizTone(data.correct ? 'correct' : 'wrong', popupConfig?.soundEnabled !== false);
@@ -4061,10 +4129,7 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
       });
     }
     if (saveStatus) {
-      saveStatus.innerHTML = renderBilingualLines({
-        en: 'It will sync when the connection returns.',
-        hi: 'इंटरनेट आने पर सिंक हो जाएगा।'
-      });
+      saveStatus.innerHTML = '';
     }
     upsertPendingQuizResponse({ ...pendingItem, localSaved: true, remoteSaved: false, syncStatus: 'pending', lastError: error?.code || error?.message || 'network-error' });
     window.setTimeout(retryPendingQuizResponses, 3500);
