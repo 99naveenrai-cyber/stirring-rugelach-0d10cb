@@ -541,23 +541,24 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .popup-quiz-layer,.interactive-lesson-layer{position:absolute;inset:0;z-index:22;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2.2vw,18px);pointer-events:none;opacity:0;transform:translateY(20px) scale(.982);transition:opacity 620ms cubic-bezier(.22,1,.36,1),transform 680ms cubic-bezier(.19,1,.22,1),filter 480ms ease}
 .popup-quiz-layer.show,.interactive-lesson-layer.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
 .popup-quiz-layer.dull,.interactive-lesson-layer.dull{filter:saturate(.7) brightness(.78);opacity:.16;transform:translateY(18px) scale(.99)}
-.interactive-lesson-panel{position:relative;width:var(--quiz-width);max-height:min(86vh,620px);overflow:visible;padding:clamp(9px,2vw,17px);font-size:var(--quiz-font-scale);color:var(--quiz-primary-text);text-shadow:0 2px 10px rgba(0,4,16,.98),0 0 20px rgba(0,8,24,.8);background:linear-gradient(145deg,rgba(1,7,24,.98),rgba(4,22,61,.96) 48%,rgba(3,38,89,.94));border:1px solid rgba(118,188,255,.58);border-radius:18px;box-shadow:0 26px 80px rgba(0,8,28,.62),0 0 42px rgba(50,132,255,.34),inset 0 1px 0 rgba(190,226,255,.22),inset 0 -26px 50px rgba(0,0,0,.18);backdrop-filter:none;-webkit-backdrop-filter:none}
-.interactive-lesson-panel::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;background:linear-gradient(120deg,rgba(110,181,255,.28),rgba(110,181,255,0) 34%,rgba(82,255,196,.16) 72%,rgba(110,181,255,.18));opacity:.46;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);padding:1px;mask-composite:exclude;-webkit-mask-composite:xor}
+.interactive-lesson-panel{position:relative;width:var(--quiz-width);max-height:min(86vh,620px);overflow:visible;padding:clamp(10px,2.1vw,18px);font-size:var(--quiz-font-scale);color:var(--quiz-primary-text);text-shadow:0 2px 10px rgba(0,4,16,.98),0 0 20px rgba(0,8,24,.86);background:radial-gradient(circle at 50% -18%,rgba(255,211,101,.24),rgba(14,46,104,.2) 30%,rgba(2,9,28,.98) 68%),linear-gradient(145deg,rgba(1,6,22,.99),rgba(4,18,60,.98) 46%,rgba(1,10,32,.98));border:1px solid rgba(255,211,101,.82);border-radius:22px;box-shadow:0 28px 90px rgba(0,5,22,.74),0 0 58px rgba(255,198,73,.26),0 0 78px rgba(51,132,255,.26),inset 0 1px 0 rgba(255,238,176,.3),inset 0 -28px 54px rgba(0,0,0,.28);backdrop-filter:none;-webkit-backdrop-filter:none}
+.interactive-lesson-panel::before{content:"";position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;background:linear-gradient(120deg,rgba(255,225,123,.9),rgba(255,225,123,0) 28%,rgba(77,171,255,.58) 52%,rgba(255,225,123,.82));opacity:.72;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);padding:2px;mask-composite:exclude;-webkit-mask-composite:xor}
+.interactive-lesson-panel::after{content:"";position:absolute;left:7%;right:7%;top:-10px;height:18px;border-radius:999px;background:radial-gradient(ellipse at center,rgba(255,226,126,.7),rgba(255,226,126,0) 72%);filter:blur(6px);pointer-events:none}
 .popup-quiz-card{width:var(--quiz-width);max-height:min(86vh,620px);overflow:hidden;padding:clamp(10px,2.2vw,18px);font-size:var(--quiz-font-scale)}
-.popup-quiz-card .quiz-kicker,.interactive-lesson-panel .quiz-kicker{font-size:clamp(.62rem,1.8vw,.78rem);font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--quiz-accent-blue);margin-bottom:.32rem;text-shadow:0 0 16px rgba(110,181,255,.56)}
-.lesson-teacher-cue{display:block;color:rgba(185,213,255,.9);font-size:clamp(.58rem,1.6vw,.72rem);font-weight:800;letter-spacing:.04em;margin-bottom:.18rem;opacity:0;transform:translateY(8px);transition:opacity 520ms ease 80ms,transform 560ms cubic-bezier(.19,1,.22,1) 80ms}
+.popup-quiz-card .quiz-kicker,.interactive-lesson-panel .quiz-kicker{font-size:clamp(.66rem,1.9vw,.82rem);font-weight:950;letter-spacing:.11em;text-transform:uppercase;color:#ffe08a;margin-bottom:.34rem;text-shadow:0 0 16px rgba(255,211,101,.74),0 0 28px rgba(77,171,255,.3)}
+.lesson-teacher-cue{display:block;color:rgba(224,236,255,.94);font-size:clamp(.6rem,1.65vw,.74rem);font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.2rem;opacity:0;transform:translateY(8px);transition:opacity 520ms ease 80ms,transform 560ms cubic-bezier(.19,1,.22,1) 80ms}
 .popup-quiz-layer.show .lesson-teacher-cue{opacity:1;transform:translateY(0)}
 .popup-quiz-card .qtext,.interactive-lesson-panel .qtext{font-weight:950;line-height:1.16;margin-bottom:clamp(7px,1.8vw,12px)}
 .interactive-lesson-panel .qtext{opacity:0;transform:translateY(10px);transition:opacity 560ms ease 150ms,transform 620ms cubic-bezier(.19,1,.22,1) 150ms}
 .popup-quiz-layer.show .interactive-lesson-panel .qtext{opacity:1;transform:translateY(0)}
-.quiz-line-en{display:block;color:#fff;font-size:1em;text-shadow:0 2px 9px rgba(0,0,0,.98),0 0 18px rgba(104,179,255,.35)}
-.quiz-line-hi{display:block;color:#d8e9ff;font-size:.92em;margin-top:.12rem;text-shadow:0 2px 9px rgba(0,0,0,.95),0 0 16px rgba(104,179,255,.28)}
+.quiz-line-en{display:block;color:#fff;font-size:1em;text-shadow:0 2px 9px rgba(0,0,0,.98),0 0 18px rgba(255,211,101,.18)}
+.quiz-line-hi{display:block;color:#e7f0ff;font-size:.92em;margin-top:.12rem;text-shadow:0 2px 9px rgba(0,0,0,.95),0 0 16px rgba(77,171,255,.34)}
 .quiz-options{display:grid;gap:clamp(5px,1.35vw,9px)}
 .interactive-lesson-panel .quiz-options{perspective:900px}
-.quiz-option{position:relative;overflow:hidden;display:block;width:100%;text-align:left;border:1px solid rgba(126,193,255,.52);background:linear-gradient(90deg,rgba(9,35,86,.78),rgba(7,25,62,.62));border-radius:12px;padding:clamp(7px,1.7vw,11px) clamp(9px,2vw,13px);min-height:44px;font-weight:850;color:#fff;box-shadow:inset 0 1px 0 rgba(170,218,255,.18),0 10px 26px rgba(0,7,22,.28);transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease,opacity .34s ease;background-color:#061638}
+.quiz-option{position:relative;overflow:hidden;display:block;width:100%;text-align:left;border:1px solid rgba(255,211,101,.52);background:linear-gradient(90deg,rgba(7,21,64,.95),rgba(9,33,92,.9) 48%,rgba(7,21,64,.95));border-radius:999px;padding:clamp(8px,1.8vw,12px) clamp(11px,2.2vw,16px);min-height:46px;font-weight:900;color:#fff;box-shadow:inset 0 1px 0 rgba(255,234,163,.18),0 10px 28px rgba(0,7,22,.34),0 0 18px rgba(255,211,101,.12);transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease,opacity .34s ease;background-color:#061638}
 .interactive-lesson-panel .quiz-option{opacity:0;transform:translateY(12px);transition:opacity 480ms ease,transform 580ms cubic-bezier(.19,1,.22,1),border-color .18s ease,box-shadow .18s ease}
 .popup-quiz-layer.show .interactive-lesson-panel .quiz-option{opacity:1;transform:translateY(0);transition-delay:calc(230ms + (var(--option-index,0) * 70ms)),calc(230ms + (var(--option-index,0) * 70ms)),0ms,0ms}
-.quiz-option:hover,.quiz-option:focus-visible{border-color:rgba(110,181,255,.62);box-shadow:0 0 18px rgba(74,153,255,.22);outline:0}
+.quiz-option:hover,.quiz-option:focus-visible{border-color:rgba(255,226,126,.9);box-shadow:0 0 24px rgba(255,211,101,.34),0 0 18px rgba(74,153,255,.24);outline:0}
 .quiz-option:active{transform:scale(.985)}
 .quiz-option::before{content:"";position:absolute;left:0;right:0;bottom:0;height:0%;pointer-events:none;transition:height 700ms cubic-bezier(.22,.8,.24,1);z-index:1}
 .quiz-option::after{content:"";position:absolute;left:-20%;right:-20%;bottom:-18px;height:24px;opacity:0;z-index:1;filter:blur(2px);transition:opacity .28s ease}
@@ -566,7 +567,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .quiz-option.is-correct::after,.quiz-option.correct::after{opacity:1;background:radial-gradient(ellipse at center,rgba(185,255,225,.95),rgba(34,255,146,0) 72%);animation:quizWave .9s ease infinite}
 .quiz-option.is-wrong,.quiz-option.wrong{border-color:rgba(255,62,86,1);box-shadow:0 0 44px rgba(255,45,72,1),0 0 110px rgba(255,45,72,.66),0 0 175px rgba(255,45,72,.32),inset 0 0 34px rgba(255,48,76,.42);animation:quizWrongShake 480ms ease}
 .quiz-option-content{position:relative;z-index:2;display:grid;grid-template-columns:auto 1fr;gap:.55rem;align-items:start}
-.quiz-option-id{color:var(--quiz-accent-blue);font-weight:950;text-shadow:0 0 14px rgba(110,181,255,.55)}
+.quiz-option-id{display:grid;place-items:center;width:1.7em;height:1.7em;border-radius:50%;background:linear-gradient(145deg,#0c2c75,#061334);border:1px solid rgba(255,211,101,.72);color:#ffe08a;font-weight:950;text-shadow:0 0 14px rgba(255,211,101,.65);box-shadow:0 0 14px rgba(255,211,101,.18)}
 .quiz-feedback{font-size:clamp(.72rem,2vw,.9rem);font-weight:900;margin-top:clamp(7px,1.6vw,11px);padding-top:.45rem;border-top:1px solid rgba(130,190,255,.34);color:#dbeafe;min-height:1.3rem;text-shadow:0 2px 9px rgba(0,0,0,.95)}
 .interactive-lesson-panel .quiz-feedback{opacity:0;transform:translateY(6px);transition:opacity 360ms ease,transform 420ms cubic-bezier(.19,1,.22,1)}
 .interactive-lesson-panel .quiz-feedback.active,.interactive-lesson-panel .quiz-feedback.correct,.interactive-lesson-panel .quiz-feedback.wrong{opacity:1;transform:translateY(0)}
@@ -4126,8 +4127,8 @@ function showTimedPopupQuestion(question, popupConfig, player) {
   layer.className = 'popup-quiz-layer interactive-lesson-layer';
   layer.innerHTML = `
     <div class="interactive-lesson-panel" role="group" aria-label="Interactive lesson question">
-      <span class="lesson-teacher-cue">Lesson paused for a quick check</span>
-      <div class="quiz-kicker">Interactive Lesson</div>
+      <span class="lesson-teacher-cue">IdeaKDC Hot Seat</span>
+      <div class="quiz-kicker">Question Round</div>
       <div class="qtext">${renderBilingualLines(question.question)}</div>
       <div class="quiz-options">
         ${(question.options || []).map((option, optionIndex) => `<button type="button" class="quiz-option" data-option-id="${escapeHtml(option.id)}" style="--option-index:${optionIndex}"><span class="quiz-option-content">${renderQuizOptionContent(option)}</span></button>`).join('')}
