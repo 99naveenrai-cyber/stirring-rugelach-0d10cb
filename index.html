@@ -555,6 +555,8 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .quiz-zoom-group{display:flex;align-items:center;justify-content:center;gap:.32rem;border:1px solid rgba(255,211,101,.25);border-radius:999px;padding:.22rem;background:rgba(2,9,28,.5)}
 .quiz-zoom-label{font-size:.68rem;font-weight:950;color:#ffe08a}
 .quiz-zoom-btn{width:34px;height:34px;border-radius:50%;border:1px solid rgba(110,181,255,.55);background:linear-gradient(145deg,#071943,#102b70);color:#fff;font-size:1rem;font-weight:950;box-shadow:0 0 14px rgba(110,181,255,.18)}
+.quiz-panel .quiz-sound-toggle,.interactive-lesson-panel .quiz-sound-toggle{min-height:34px;border-color:rgba(255,211,101,.46);background:linear-gradient(145deg,#071943,#102b70);color:#ffe08a}
+.quiz-panel .quiz-sound-toggle{width:100%;margin:.05rem 0 .55rem}
 .popup-quiz-layer,.interactive-lesson-layer{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2.2vw,18px);pointer-events:none;opacity:0;transform:translateY(20px) scale(.982);transition:opacity 620ms cubic-bezier(.22,1,.36,1),transform 680ms cubic-bezier(.19,1,.22,1),filter 480ms ease}
 .popup-quiz-layer.show,.interactive-lesson-layer.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
 .popup-quiz-layer.dull,.interactive-lesson-layer.dull{filter:saturate(.7) brightness(.78);opacity:.16;transform:translateY(18px) scale(.99)}
@@ -3767,7 +3769,7 @@ let quizSoundMuted = false;
 const QUIZ_CORRECT_FEEDBACK_POOL = [
   { hi: 'सही है' },
   { en: 'Good Going!' },
-  { hi: 'वाह!' },
+  { en: 'Wah!' },
   { hi: 'शानदार' },
   { hi: 'अद्भुत' },
   { hi: 'कमाल कर दिया' },
@@ -3777,7 +3779,7 @@ const QUIZ_CORRECT_FEEDBACK_POOL = [
   { hi: 'ठीक है' },
   { en: 'Miracle Miracle!' },
   { hi: 'झक्कास!' },
-  { en: '100% Correct!' },
+  { en: '100% correct' },
   { hi: 'अति शोभनम्!' },
   { hi: 'सही तो होना ही था!' }
 ];
@@ -4004,46 +4006,64 @@ function playQuizTone(kind, enabled = true) {
   if (quizSoundMuted || !enabled) return;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const freqs = kind === 'correct' ? [660, 880] : [220];
+    const freqs = kind === 'result'
+      ? [523, 659, 784, 1046]
+      : kind === 'correct'
+        ? [660, 880]
+        : [220, 180];
     freqs.forEach((freq, index) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.frequency.value = freq;
-      osc.type = 'sine';
-      const start = ctx.currentTime + index * 0.09;
-      gain.gain.setValueAtTime(0.045, start);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+      osc.type = kind === 'wrong' ? 'triangle' : 'sine';
+      const start = ctx.currentTime + index * (kind === 'result' ? 0.11 : 0.09);
+      gain.gain.setValueAtTime(kind === 'result' ? 0.055 : 0.04, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + (kind === 'result' ? 0.24 : 0.16));
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(start);
-      osc.stop(start + 0.16);
+      osc.stop(start + (kind === 'result' ? 0.24 : 0.16));
     });
   } catch (_) {}
 }
 
-function launchQuizConfetti(container, kind = 'correct') {
+function launchQuizConfetti(container, kind = 'correct', size = 'small') {
   if (!container) return;
   const colors = kind === 'correct'
-    ? ['#8fffc9', '#43ffad', '#7dd3fc', '#bbf7d0']
+    ? ['#8fffc9', '#43ffad', '#7dd3fc', '#bbf7d0', '#fde68a']
     : ['#ffb6c0', '#ff4860', '#fecdd3', '#fda4af'];
   const host = container.closest?.('.interactive-lesson-panel') || container.closest?.('.popup-quiz-card') || container;
   const hostRect = host.getBoundingClientRect?.();
   const itemRect = container.getBoundingClientRect?.();
   const baseLeft = hostRect && itemRect ? itemRect.left - hostRect.left + itemRect.width / 2 : 180;
   const baseTop = hostRect && itemRect ? itemRect.top - hostRect.top + itemRect.height / 2 : 120;
-  const count = kind === 'correct' ? 42 : 14;
+  const isBig = size === 'big' || kind === 'result';
+  const count = kind === 'correct' ? (isBig ? 96 : 34) : 12;
   for (let i = 0; i < count; i++) {
     const piece = document.createElement('span');
     piece.className = 'quiz-sparkle';
-    const spread = kind === 'correct' ? 190 : 86;
+    const spread = kind === 'correct' ? (isBig ? 310 : 170) : 78;
     piece.style.cssText += `left:${baseLeft + (Math.random() - .5) * spread}px;top:${baseTop + (Math.random() - .5) * 36}px;background:${colors[i % colors.length]}`;
     host.appendChild(piece);
-    const lift = kind === 'correct' ? 135 + Math.random() * 190 : 46 + Math.random() * 64;
+    const lift = kind === 'correct' ? (isBig ? 230 + Math.random() * 260 : 110 + Math.random() * 150) : 42 + Math.random() * 58;
     const anim = piece.animate([
       { transform: 'translate(0,0) scale(1)', opacity: 1 },
-      { transform: `translate(${(Math.random()-.5)*(kind === 'correct' ? 250 : 105)}px, ${-lift}px) scale(.24)`, opacity: 0 }
-    ], { duration: (kind === 'correct' ? 1180 : 700) + Math.random()*420, easing: 'cubic-bezier(.15,.6,.4,1)' });
+      { transform: `translate(${(Math.random()-.5)*(kind === 'correct' ? (isBig ? 360 : 220) : 95)}px, ${-lift}px) scale(.24)`, opacity: 0 }
+    ], { duration: (kind === 'correct' ? (isBig ? 1650 : 980) : 620) + Math.random()*420, easing: 'cubic-bezier(.15,.6,.4,1)' });
     anim.onfinish = () => piece.remove();
+  }
+}
+
+function triggerQuizMilestone(container, count, forceResult = false) {
+  if (!container) return;
+  if (forceResult) {
+    playQuizTone('result', true);
+    launchQuizConfetti(container, 'correct', 'big');
+    return;
+  }
+  if (count > 0 && count % 5 === 0) {
+    playQuizTone('result', true);
+    launchQuizConfetti(container, 'correct', 'big');
   }
 }
 
@@ -4074,6 +4094,7 @@ function renderQuizPanel(course, lesson, mode, quizData, targetId = 'selected-le
           <button class="quiz-zoom-btn" type="button" onclick="adjustLessonZoom('quiz', 0.08)" aria-label="Zoom quiz in">+</button>
         </div>
       </div>
+      <button class="quiz-sound-toggle js-quiz-sound-toggle" type="button" onclick="toggleQuizSoundMute()">Sound: ${quizSoundMuted ? 'OFF' : 'ON'}</button>
       <div id="lesson-quiz-question"></div>
     </section>`;
   renderQuizQuestion(course, lesson, mode, quizData, 0);
@@ -4084,6 +4105,7 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
   const question = quizData.questions?.[index];
   if (!holder || !question) return;
   quizData._correctAnswers = quizData._correctAnswers || {};
+  quizData._correctCount = Number(quizData._correctCount || 0);
   holder.innerHTML = `
     <div class="qnum">Question ${index + 1} of ${quizData.questions.length}</div>
     <div class="qtext">${renderBilingualLines(question.question)}</div>
@@ -4101,10 +4123,20 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
       const selectedOption = button.dataset.optionId;
       const localCorrect = question.correctOption ? String(question.correctOption) === String(selectedOption) : null;
       if (localCorrect === true) {
-        quizData._correctAnswers[String(question.id)] = true;
+        const qid = String(question.id);
+        if (quizData._correctAnswers[qid] !== true) {
+          quizData._correctAnswers[qid] = true;
+          quizData._correctCount += 1;
+          triggerQuizMilestone(holder, quizData._correctCount);
+        }
       }
       submitQuizAnswer(course, lesson, mode, question, selectedOption, holder, quizData.popupQuiz).then(result => {
-        if (result.correct) quizData._correctAnswers[String(question.id)] = true;
+        const qid = String(question.id);
+        if (result.correct && quizData._correctAnswers[qid] !== true) {
+          quizData._correctAnswers[qid] = true;
+          quizData._correctCount += 1;
+          triggerQuizMilestone(holder, quizData._correctCount);
+        }
       });
     };
   });
@@ -4119,7 +4151,10 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
       return;
     }
     if (index + 1 < quizData.questions.length) renderQuizQuestion(course, lesson, mode, quizData, index + 1);
-    else holder.innerHTML = '<div class="quiz-feedback correct">Quiz completed.</div>';
+    else {
+      holder.innerHTML = '<div class="quiz-feedback correct">शानदार! Quiz completed.</div>';
+      triggerQuizMilestone(holder, quizData._correctCount, true);
+    }
   });
 }
 
@@ -4242,12 +4277,15 @@ function renderLessonActionControls(course, lesson, idx, hasVideo = true) {
       ${hasVideo ? `<button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx}, { autoplay: true, mode: 'video' })">Play Video</button>` : ''}
       ${separate ? `<button class="btn-enroll" type="button" onclick="startLessonQuiz(${idx}, 'separate')">Start Quiz</button>` : ''}
       ${hasVideo && separate ? `<button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
-      ${popup ? `<button class="quiz-sound-toggle" type="button" onclick="toggleQuizSoundMute()">Sound: ${quizSoundMuted ? 'Muted' : 'On'}</button>` : ''}
+      ${popup ? `<button class="quiz-sound-toggle js-quiz-sound-toggle" type="button" onclick="toggleQuizSoundMute()">Sound: ${quizSoundMuted ? 'OFF' : 'ON'}</button>` : ''}
     </div>`;
 }
 
 window.toggleQuizSoundMute = () => {
   quizSoundMuted = !quizSoundMuted;
+  document.querySelectorAll('.js-quiz-sound-toggle').forEach(button => {
+    button.textContent = `Sound: ${quizSoundMuted ? 'OFF' : 'ON'}`;
+  });
   const course = window._currentCourse;
   const videos = window._currentVideos || [];
   const idx = Number(window._activeLessonIndex || 0);
@@ -4280,6 +4318,8 @@ async function configurePopupQuizForPlayer(course, lesson, idx) {
       idx,
       quizData,
       answeredThisSession: new Set(),
+      correctThisSession: new Set(),
+      correctCount: 0,
       lastTime: 0,
       active: false
     };
@@ -4342,6 +4382,7 @@ function showTimedPopupQuestion(question, popupConfig, player) {
     <div class="interactive-lesson-panel" role="group" aria-label="Interactive lesson question">
       <span class="lesson-teacher-cue">IdeaKDC Hot Seat</span>
       <div class="quiz-kicker">Question Round</div>
+      <button class="quiz-sound-toggle js-quiz-sound-toggle" type="button" onclick="toggleQuizSoundMute()">Sound: ${quizSoundMuted ? 'OFF' : 'ON'}</button>
       <div class="qtext">${renderBilingualLines(question.question)}</div>
       <div class="quiz-options">
         ${(question.options || []).map((option, optionIndex) => `<div class="quiz-option-shell" style="--option-index:${optionIndex}"><button type="button" class="quiz-option" data-option-id="${escapeHtml(option.id)}"><span class="quiz-option-content">${renderQuizOptionContent(option)}</span></button><div class="option-inline-feedback" aria-live="polite"></div></div>`).join('')}
@@ -4360,6 +4401,13 @@ function showTimedPopupQuestion(question, popupConfig, player) {
       const localCorrect = question.correctOption ? String(question.correctOption) === String(selectedOption) : null;
       submitQuizAnswer(activeLessonQuiz.course, activeLessonQuiz.lesson, 'popup', question, selectedOption, layer, popupConfig);
       if (localCorrect === true) {
+        const qid = String(question.id);
+        if (!activeLessonQuiz.correctThisSession.has(qid)) {
+          activeLessonQuiz.correctThisSession.add(qid);
+          activeLessonQuiz.correctCount += 1;
+          const popupTotal = activeLessonQuiz.quizData.popupQuiz?.timestamps?.length || 0;
+          triggerQuizMilestone(layer, activeLessonQuiz.correctCount, popupTotal > 0 && activeLessonQuiz.correctCount >= popupTotal);
+        }
         window.setTimeout(() => {
           dismissPopup(layer);
         }, 2000);
