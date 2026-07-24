@@ -505,7 +505,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
    VIDEO PLAYER
 ══════════════════════════════ */
 .video-page{--lesson-player-zoom:1;--quiz-panel-zoom:1;max-width:900px;margin:0 auto;padding:.8rem 1rem calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 24px);overflow-anchor:none}
-.lesson-player-stage{--quiz-width:min(94vw,760px);--quiz-font-scale:clamp(.78rem,2.45vw,1.02rem);--quiz-primary-text:#f3f8ff;--quiz-secondary-text:#b9d5ff;--quiz-muted-text:#82a8d8;--quiz-accent-blue:#6eb5ff;--quiz-stage-glow:rgba(77,160,255,.22);position:sticky;top:calc(var(--nav-h));z-index:10;margin-bottom:.8rem;isolation:isolate}
+.lesson-player-stage{--quiz-width:min(94vw,760px);--quiz-font-scale:clamp(.78rem,2.45vw,1.02rem);--quiz-primary-text:#f3f8ff;--quiz-secondary-text:#b9d5ff;--quiz-muted-text:#82a8d8;--quiz-accent-blue:#6eb5ff;--quiz-stage-glow:rgba(77,160,255,.22);position:sticky;top:calc(var(--nav-h));z-index:10;margin-bottom:.8rem;isolation:isolate;touch-action:pan-y}
 .lesson-player-stage.popup-quiz-active,.lesson-player-stage.interactive-lesson-active{z-index:45}
 .video-wrap{background:#020713;border-radius:14px;overflow:hidden;aspect-ratio:16/9;min-height:180px;display:flex;align-items:center;justify-content:center;position:relative;contain:layout paint;transition:min-height .18s ease}
 .video-page .lesson-player-stage .video-wrap{min-height:calc(180px * var(--lesson-player-zoom))}
@@ -541,7 +541,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .video-page .lesson-action-row .btn-enroll:active{transform:scale(.97)}
 .quiz-panel{background:linear-gradient(135deg,rgba(3,16,46,.14),rgba(12,44,94,.08),rgba(2,10,30,.04));border:1px solid rgba(93,164,255,.26);border-radius:14px;padding:.85rem;margin:.75rem 0;box-shadow:0 18px 55px rgba(0,10,35,.18),inset 0 1px 0 rgba(130,190,255,.12);color:var(--quiz-primary-text,#f3f8ff);text-shadow:0 1px 14px rgba(0,10,35,.45);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 .quiz-panel h2{font-size:.95rem;margin:0 0 .55rem;color:var(--quiz-primary-text,#f3f8ff)}
-.quiz-panel{background:radial-gradient(circle at 50% -10%,rgba(255,211,101,.18),rgba(14,46,104,.18) 32%,rgba(2,9,28,.98) 72%),linear-gradient(145deg,rgba(1,6,22,.98),rgba(4,18,60,.97));border-color:rgba(255,211,101,.6);border-radius:18px;box-shadow:0 22px 70px rgba(0,5,22,.54),0 0 42px rgba(255,198,73,.18),inset 0 1px 0 rgba(255,238,176,.22);padding:clamp(.85rem,2.6vw,1.15rem)}
+.quiz-panel{background:radial-gradient(circle at 50% -10%,rgba(255,211,101,.18),rgba(14,46,104,.18) 32%,rgba(2,9,28,.98) 72%),linear-gradient(145deg,rgba(1,6,22,.98),rgba(4,18,60,.97));border-color:rgba(255,211,101,.6);border-radius:18px;box-shadow:0 22px 70px rgba(0,5,22,.54),0 0 42px rgba(255,198,73,.18),inset 0 1px 0 rgba(255,238,176,.22);padding:clamp(.85rem,2.6vw,1.15rem);touch-action:pan-y}
 .video-page .quiz-panel{font-size:calc(1rem * var(--quiz-panel-zoom));transition:font-size .18s ease,padding .18s ease}
 .quiz-panel h2{font-size:clamp(1.05rem,3.5vw,1.45rem);font-weight:950;letter-spacing:.01em;color:#ffe08a;text-shadow:0 0 20px rgba(255,211,101,.45)}
 .quiz-panel .qnum{color:#ffd365;font-weight:950;text-transform:uppercase;letter-spacing:.04em}
@@ -592,7 +592,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .interactive-lesson-panel .quiz-feedback.active,.interactive-lesson-panel .quiz-feedback.correct,.interactive-lesson-panel .quiz-feedback.wrong{opacity:1;transform:translateY(0)}
 .quiz-feedback.correct{color:#a7ffd4;border-top-color:rgba(67,255,173,.95);text-shadow:0 0 18px rgba(67,255,173,.9),0 0 44px rgba(28,245,137,.52)}
 .quiz-feedback.wrong{color:#ffd1d8;border-top-color:rgba(255,72,92,.95);text-shadow:0 0 18px rgba(255,72,92,.9),0 0 44px rgba(255,48,76,.54)}
-.option-inline-feedback{display:none;padding:0 clamp(10px,2vw,16px) clamp(2px,.8vw,4px) clamp(38px,8vw,54px);font-size:clamp(.66rem,1.9vw,.82rem);font-weight:900;line-height:1.15;text-shadow:0 2px 9px rgba(0,0,0,.95)}
+.option-inline-feedback{display:none;padding:0 clamp(10px,2vw,16px) clamp(2px,.8vw,4px) clamp(38px,8vw,54px);font-size:clamp(.9rem,2.7vw,1.25rem);font-weight:950;line-height:1.14;text-shadow:0 2px 9px rgba(0,0,0,.95)}
 .option-inline-feedback.correct,.option-inline-feedback.wrong{display:block;animation:quizInlineFeedback .22s ease both}
 .option-inline-feedback.correct{color:#a7ffd4;text-shadow:0 0 16px rgba(67,255,173,.9),0 0 38px rgba(28,245,137,.44)}
 .option-inline-feedback.wrong{color:#ffd1d8;text-shadow:0 0 16px rgba(255,72,92,.9),0 0 34px rgba(255,48,76,.42)}
@@ -3876,6 +3876,68 @@ function adjustLessonZoom(target, delta) {
 
 window.adjustLessonZoom = adjustLessonZoom;
 
+let lessonPinchState = null;
+
+function touchDistance(touches) {
+  if (!touches || touches.length < 2) return 0;
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.hypot(dx, dy);
+}
+
+function lessonZoomValue(target) {
+  const page = document.querySelector('.video-page');
+  if (!page) return 1;
+  const prop = target === 'player' ? '--lesson-player-zoom' : '--quiz-panel-zoom';
+  return Number.parseFloat(page.style.getPropertyValue(prop)) || 1;
+}
+
+function setLessonZoom(target, value) {
+  const page = document.querySelector('.video-page');
+  if (!page) return;
+  const prop = target === 'player' ? '--lesson-player-zoom' : '--quiz-panel-zoom';
+  const min = target === 'player' ? 0.82 : 0.78;
+  const max = target === 'player' ? 1.28 : 1.22;
+  page.style.setProperty(prop, Math.min(max, Math.max(min, value)).toFixed(2));
+}
+
+function setupLessonPinchZoom() {
+  document.removeEventListener('touchstart', handleLessonPinchStart, { capture: true });
+  document.removeEventListener('touchmove', handleLessonPinchMove, { capture: true });
+  document.removeEventListener('touchend', handleLessonPinchEnd, { capture: true });
+  document.addEventListener('touchstart', handleLessonPinchStart, { passive: false, capture: true });
+  document.addEventListener('touchmove', handleLessonPinchMove, { passive: false, capture: true });
+  document.addEventListener('touchend', handleLessonPinchEnd, { passive: true, capture: true });
+}
+
+function handleLessonPinchStart(event) {
+  if (event.touches?.length !== 2) return;
+  const quizPanel = event.target.closest?.('.quiz-panel, .interactive-lesson-panel');
+  const stage = event.target.closest?.('.lesson-player-stage');
+  if (!quizPanel && !stage) return;
+  const target = quizPanel ? 'quiz' : 'player';
+  lessonPinchState = {
+    target,
+    distance: touchDistance(event.touches),
+    startZoom: lessonZoomValue(target)
+  };
+}
+
+function handleLessonPinchMove(event) {
+  if (!lessonPinchState || event.touches?.length !== 2) return;
+  const distance = touchDistance(event.touches);
+  if (!distance || !lessonPinchState.distance) return;
+  event.preventDefault();
+  const ratio = distance / lessonPinchState.distance;
+  setLessonZoom(lessonPinchState.target, lessonPinchState.startZoom * ratio);
+}
+
+function handleLessonPinchEnd(event) {
+  if (!event.touches || event.touches.length < 2) lessonPinchState = null;
+}
+
+setupLessonPinchZoom();
+
 function quizResponseId(course, lesson, mode, questionId) {
   return [
     currentUser?.uid || 'guest',
@@ -4152,11 +4214,8 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
     console.warn('[IdeaKDC quiz answer]', error?.code || error?.message || error);
     const targetFeedback = inlineFeedback || feedback;
     if (targetFeedback && localCorrect === null) {
-      targetFeedback.className = inlineFeedback ? 'option-inline-feedback correct' : 'quiz-feedback active';
-      targetFeedback.innerHTML = renderBilingualLines({
-        en: 'Answer saved on this device.',
-        hi: 'उत्तर इस डिवाइस पर सुरक्षित है।'
-      });
+      targetFeedback.className = inlineFeedback ? 'option-inline-feedback wrong' : 'quiz-feedback wrong';
+      targetFeedback.innerHTML = renderBilingualLines(randomQuizRuleFeedback(false));
     }
     if (saveStatus) {
       saveStatus.innerHTML = '';
