@@ -580,12 +580,13 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .popup-quiz-layer.show .interactive-lesson-panel .quiz-option{opacity:1;transform:translateY(0);transition-delay:calc(230ms + (var(--option-index,0) * 70ms)),calc(230ms + (var(--option-index,0) * 70ms)),0ms,0ms}
 .quiz-option:hover,.quiz-option:focus-visible{border-color:rgba(255,226,126,.9);box-shadow:0 0 24px rgba(255,211,101,.34),0 0 18px rgba(74,153,255,.24);outline:0}
 .quiz-option:active{transform:scale(.985)}
+.quiz-option:disabled{cursor:default}
 .quiz-option::before{content:"";position:absolute;left:0;right:0;bottom:0;height:0%;pointer-events:none;transition:height 700ms cubic-bezier(.22,.8,.24,1);z-index:1}
 .quiz-option::after{content:"";position:absolute;left:-20%;right:-20%;bottom:-18px;height:24px;opacity:0;z-index:1;filter:blur(2px);transition:opacity .28s ease}
-.quiz-option.is-correct,.quiz-option.correct{border-color:rgba(74,255,176,1)!important;background:linear-gradient(90deg,rgba(4,64,40,.98),rgba(10,114,72,.96),rgba(4,64,40,.98))!important;box-shadow:0 0 50px rgba(28,245,137,1),0 0 132px rgba(28,245,137,.8),0 0 210px rgba(28,245,137,.42),inset 0 0 42px rgba(27,221,132,.58)!important}
-.quiz-option.is-correct::before,.quiz-option.correct::before{height:100%;background:linear-gradient(180deg,rgba(189,255,226,.34),rgba(18,214,118,.96))}
+.quiz-option.is-correct,.quiz-option.correct{border-color:rgba(74,255,176,1)!important;background:linear-gradient(90deg,rgba(2,76,43,1),rgba(13,164,92,.98),rgba(2,88,50,1))!important;box-shadow:0 0 56px rgba(28,245,137,1),0 0 150px rgba(28,245,137,.86),0 0 235px rgba(28,245,137,.48),inset 0 0 54px rgba(34,255,146,.72)!important}
+.quiz-option.is-correct::before,.quiz-option.correct::before{height:100%;background:linear-gradient(180deg,rgba(214,255,235,.55),rgba(41,255,155,.98))}
 .quiz-option.is-correct::after,.quiz-option.correct::after{opacity:1;background:radial-gradient(ellipse at center,rgba(185,255,225,.95),rgba(34,255,146,0) 72%);animation:quizWave .9s ease infinite}
-.quiz-option.is-wrong,.quiz-option.wrong{border-color:rgba(255,62,86,1)!important;background:linear-gradient(90deg,rgba(74,9,22,.98),rgba(120,20,38,.96),rgba(74,9,22,.98))!important;box-shadow:0 0 50px rgba(255,45,72,1),0 0 122px rgba(255,45,72,.76),0 0 190px rgba(255,45,72,.38),inset 0 0 38px rgba(255,48,76,.52)!important;animation:quizWrongShake 480ms ease}
+.quiz-option.is-wrong,.quiz-option.wrong{border-color:rgba(255,62,86,1)!important;background:linear-gradient(90deg,rgba(86,8,24,1),rgba(177,28,52,.98),rgba(86,8,24,1))!important;box-shadow:0 0 56px rgba(255,45,72,1),0 0 138px rgba(255,45,72,.82),0 0 215px rgba(255,45,72,.46),inset 0 0 48px rgba(255,48,76,.68)!important;animation:quizWrongShake 480ms ease}
 .quiz-option-shell{display:grid;gap:clamp(3px,.9vw,5px)}
 .quiz-option-content{position:relative;z-index:2;display:grid;grid-template-columns:auto 1fr;gap:.55rem;align-items:start}
 .quiz-option-id{display:grid;place-items:center;width:1.7em;height:1.7em;border-radius:50%;background:linear-gradient(145deg,#0c2c75,#061334);border:1px solid rgba(255,211,101,.72);color:#ffe08a;font-weight:950;text-shadow:0 0 14px rgba(255,211,101,.65);box-shadow:0 0 14px rgba(255,211,101,.18)}
@@ -3816,23 +3817,6 @@ function clearQuizFeedbackTimer() {
   }
 }
 
-function scheduleQuizFeedbackClear(container, selected) {
-  clearQuizFeedbackTimer();
-  quizFeedbackTimer = window.setTimeout(() => {
-    selected?.classList.remove('is-correct', 'is-wrong');
-    container?.querySelectorAll('.option-inline-feedback').forEach(node => {
-      node.className = 'option-inline-feedback';
-      node.innerHTML = '';
-    });
-    const feedback = container?.querySelector('.quiz-feedback');
-    if (feedback) {
-      feedback.className = 'quiz-feedback';
-      feedback.innerHTML = '';
-    }
-    quizFeedbackTimer = null;
-  }, 1500);
-}
-
 function hasSeparateQuiz(lesson = {}) {
   return lesson.quizConfig?.separateQuiz?.enabled === true;
 }
@@ -4256,8 +4240,18 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
   const saveStatus = container.querySelector('.quiz-save-status');
   const responseId = quizResponseId(course, lesson, mode, question.id);
   const localCorrect = question.correctOption ? String(question.correctOption) === String(selectedOption) : null;
-  if (selected) selected.disabled = true;
+  const lockSolvedQuestion = () => {
+    container.querySelectorAll('.quiz-option').forEach(btn => {
+      btn.disabled = true;
+    });
+  };
+  const keepQuestionRetryable = () => {
+    container.querySelectorAll('.quiz-option').forEach(btn => {
+      btn.disabled = false;
+    });
+  };
   if (localCorrect !== null) {
+    if (selected) void selected.offsetWidth;
     selected?.classList.add(localCorrect ? 'is-correct' : 'is-wrong');
     const targetFeedback = inlineFeedback || feedback;
     if (targetFeedback) {
@@ -4268,12 +4262,8 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
     }
     playQuizTone(localCorrect ? 'correct' : 'wrong', popupConfig?.soundEnabled !== false);
     launchQuizConfetti(selected || container, localCorrect ? 'correct' : 'wrong');
-    scheduleQuizFeedbackClear(container, selected);
-    if (!localCorrect) {
-      window.setTimeout(() => {
-        container.querySelectorAll('.quiz-option').forEach(btn => { if (btn !== selected) btn.disabled = false; });
-      }, 350);
-    }
+    if (localCorrect) lockSolvedQuestion();
+    else keepQuestionRetryable();
   }
   const pendingItem = {
     responseId,
@@ -4299,6 +4289,7 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
     });
     const data = result.data || {};
     if (localCorrect === null) {
+      if (selected) void selected.offsetWidth;
       selected?.classList.add(data.correct ? 'is-correct' : 'is-wrong');
     }
     upsertPendingQuizResponse({
@@ -4322,11 +4313,8 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
     if (localCorrect === null) {
       playQuizTone(data.correct ? 'correct' : 'wrong', popupConfig?.soundEnabled !== false);
       launchQuizConfetti(selected || container, data.correct ? 'correct' : 'wrong');
-      if (!data.correct) {
-        window.setTimeout(() => {
-          container.querySelectorAll('.quiz-option').forEach(btn => { if (btn !== selected) btn.disabled = false; });
-        }, 350);
-      }
+      if (data.correct) lockSolvedQuestion();
+      else keepQuestionRetryable();
     }
     if (data.remoteSaved === false) window.setTimeout(retryPendingQuizResponses, 3000);
     return { correct: localCorrect !== null ? localCorrect : data.correct === true };
@@ -4342,11 +4330,7 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
     }
     upsertPendingQuizResponse({ ...pendingItem, localSaved: true, remoteSaved: false, syncStatus: 'pending', lastError: error?.code || error?.message || 'network-error' });
     window.setTimeout(retryPendingQuizResponses, 3500);
-    if (localCorrect === false) {
-      window.setTimeout(() => {
-        container.querySelectorAll('.quiz-option').forEach(btn => { if (btn !== selected) btn.disabled = false; });
-      }, 350);
-    }
+    if (localCorrect !== true) keepQuestionRetryable();
     return { correct: localCorrect === true };
   }
   return { correct: localCorrect === true };
