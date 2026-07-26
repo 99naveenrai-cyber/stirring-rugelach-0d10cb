@@ -3906,6 +3906,13 @@ function quizOptionTextValues(option = {}) {
   ].filter(value => String(value ?? '').trim());
 }
 
+function quizCorrectCandidateValue(value) {
+  if (value && typeof value === 'object') {
+    return value.id ?? value.key ?? value.optionId ?? value.value ?? value.text ?? value.en ?? value.hi ?? '';
+  }
+  return value;
+}
+
 function resolveQuizCorrectOption(question = {}) {
   const options = Array.isArray(question.options) ? question.options : [];
   const renderedOptions = options.map((option, index) => ({
@@ -3919,11 +3926,13 @@ function resolveQuizCorrectOption(question = {}) {
     ['answer', question.answer],
     ['correct', question.correct],
     ['correct_option', question.correct_option],
+    ['correctOptionIndex', question.correctOptionIndex],
+    ['correctAnswerIndex', question.correctAnswerIndex],
     ['correctIndex', question.correctIndex]
   ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '');
 
   for (const [sourceField, sourceValue] of candidateFields) {
-    const raw = String(sourceValue).trim();
+    const raw = String(quizCorrectCandidateValue(sourceValue)).trim();
     const normalizedRaw = normalizeQuizMatchValue(raw);
     const exactId = renderedOptions.find(item => normalizeQuizMatchValue(item.optionId) === normalizedRaw);
     if (exactId) return { optionId: exactId.optionId, sourceField, sourceValue, format: 'option-id' };
@@ -3957,6 +3966,9 @@ function resolveQuizCorrectOption(question = {}) {
     if (textMatch) return { optionId: textMatch.optionId, sourceField, sourceValue, format: 'option-text' };
   }
 
+  const booleanCorrectOption = renderedOptions.find(item => item.option?.correct === true || item.option?.isCorrect === true);
+  if (booleanCorrectOption) return { optionId: booleanCorrectOption.optionId, sourceField: 'option.correct', sourceValue: true, format: 'option-flag' };
+
   if (window.location.hostname === 'localhost' || window.localStorage?.getItem('ideakdcQuizDebug') === '1') {
     console.warn('Quiz correct option could not be resolved', {
       questionId: question.id,
@@ -3968,6 +3980,28 @@ function resolveQuizCorrectOption(question = {}) {
     });
   }
   return { optionId: '', sourceField: '', sourceValue: '', format: 'unresolved' };
+}
+
+function logQuizAnswerTap(question, selectedOptionId, resolvedCorrectOptionId, localCorrect) {
+  if (!(window.location.hostname === 'localhost' || window.localStorage?.getItem('ideakdcQuizDebug') === '1')) return;
+  const selectedOption = (question.options || []).find((option, index) => getQuizOptionId(option, index) === selectedOptionId);
+  console.log({
+    questionId: question.id,
+    selectedOptionId,
+    selectedOptionText: quizText(selectedOption || ''),
+    rawCorrectOption: question.correctOption,
+    rawCorrectAnswer: question.correctAnswer,
+    rawAnswer: question.answer,
+    optionIds: question.options?.map((option, index) => ({
+      index,
+      id: option?.id,
+      key: option?.key,
+      value: option?.value,
+      text: option?.text ?? option
+    })),
+    resolvedCorrectOptionId,
+    localCorrect
+  });
 }
 
 function renderQuizOptionContent(option = {}, index = 0) {
@@ -4306,6 +4340,7 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
     bindFastQuizOption(button, () => {
       const selectedOption = button.dataset.optionId;
       const localCorrect = correctOptionId ? String(correctOptionId) === String(selectedOption) : null;
+      logQuizAnswerTap(question, selectedOption, correctOptionId, localCorrect);
       if (quizData._correctAnswers[questionId]) return;
       quizData._responses[questionId] = {
         selectedOption,
@@ -4612,6 +4647,7 @@ function showTimedPopupQuestion(question, popupConfig, player) {
     bindFastQuizOption(button, () => {
       const selectedOption = button.dataset.optionId;
       const localCorrect = correctOptionId ? String(correctOptionId) === String(selectedOption) : null;
+      logQuizAnswerTap(question, selectedOption, correctOptionId, localCorrect);
       submitQuizAnswer(activeLessonQuiz.course, activeLessonQuiz.lesson, 'popup', question, selectedOption, layer, popupConfig);
       if (localCorrect === true) {
         const qid = String(question.id);

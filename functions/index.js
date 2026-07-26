@@ -734,23 +734,128 @@ function visibleQuizText(value) {
   return normalized.en || normalized.hi || "";
 }
 
+function normalizeQuizMatchValue(value = "") {
+  return String(value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function getQuizOptionId(option = {}, index = 0) {
+  const rawId = option.id ?? option.key ?? option.optionId ?? option.value;
+  const fallback = ["A", "B", "C", "D"][index] || String(index + 1);
+  return String(rawId || fallback).trim();
+}
+
+function quizCorrectCandidateValue(value) {
+  if (value && typeof value === "object") {
+    return value.id ?? value.key ?? value.optionId ?? value.value ?? value.text ?? value.en ?? value.hi ?? "";
+  }
+  return value;
+}
+
+function quizOptionTextValues(option = {}) {
+  const pair = localizedQuizText(option);
+  return [
+    option.id,
+    option.key,
+    option.optionId,
+    option.value,
+    option.text,
+    option.label,
+    option.en,
+    option.hi,
+    pair.en,
+    pair.hi
+  ].filter((value) => String(value ?? "").trim());
+}
+
+function resolveQuizCorrectOptionId(question = {}) {
+  const options = Array.isArray(question.options) ? question.options : [];
+  const renderedOptions = options.map((option, index) => ({
+    option,
+    index,
+    optionId: getQuizOptionId(option, index)
+  }));
+  const candidateFields = [
+    ["correctOption", question.correctOption],
+    ["correctAnswer", question.correctAnswer],
+    ["answer", question.answer],
+    ["correct", question.correct],
+    ["correct_option", question.correct_option],
+    ["correctOptionIndex", question.correctOptionIndex],
+    ["correctAnswerIndex", question.correctAnswerIndex],
+    ["correctIndex", question.correctIndex]
+  ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "");
+
+  for (const [sourceField, sourceValue] of candidateFields) {
+    const raw = String(quizCorrectCandidateValue(sourceValue)).trim();
+    const normalizedRaw = normalizeQuizMatchValue(raw);
+    const exactId = renderedOptions.find((item) => normalizeQuizMatchValue(item.optionId) === normalizedRaw);
+    if (exactId) return { optionId: exactId.optionId, sourceField, sourceValue, format: "option-id" };
+
+    const upper = raw.toUpperCase();
+    if (/^[A-D]$/.test(upper)) {
+      const alphaOption = renderedOptions[upper.charCodeAt(0) - 65];
+      if (alphaOption) return { optionId: alphaOption.optionId, sourceField, sourceValue, format: "letter-index" };
+    }
+
+    if (/^\d+$/.test(raw)) {
+      const numeric = Number(raw);
+      const shouldPreferZeroBased = sourceField.toLowerCase().includes("index") || numeric === 0;
+      const zeroBased = renderedOptions[numeric];
+      const oneBased = renderedOptions[numeric - 1];
+      if (shouldPreferZeroBased && numeric >= 0 && numeric <= 3 && zeroBased) {
+        return { optionId: zeroBased.optionId, sourceField, sourceValue, format: "zero-based-index" };
+      }
+      if (numeric >= 1 && numeric <= 4 && oneBased) {
+        return { optionId: oneBased.optionId, sourceField, sourceValue, format: "one-based-index" };
+      }
+      if (numeric >= 0 && numeric <= 3 && zeroBased) {
+        return { optionId: zeroBased.optionId, sourceField, sourceValue, format: "zero-based-index" };
+      }
+    }
+
+    const textMatch = renderedOptions.find((item) =>
+      quizOptionTextValues(item.option).some((value) => normalizeQuizMatchValue(value) === normalizedRaw)
+    );
+    if (textMatch) return { optionId: textMatch.optionId, sourceField, sourceValue, format: "option-text" };
+  }
+
+  const booleanCorrectOption = renderedOptions.find((item) => item.option?.correct === true || item.option?.isCorrect === true);
+  if (booleanCorrectOption) return { optionId: booleanCorrectOption.optionId, sourceField: "option.correct", sourceValue: true, format: "option-flag" };
+
+  logger.warn("Quiz correct option could not be resolved", {
+    questionId: question.id || "",
+    optionIds: renderedOptions.map((item) => item.optionId),
+    correctOption: question.correctOption ?? "",
+    correctAnswer: question.correctAnswer ?? "",
+    answer: question.answer ?? "",
+    correct: question.correct ?? ""
+  });
+  return { optionId: "", sourceField: "", sourceValue: "", format: "unresolved" };
+}
+
 function sanitizeQuizQuestion(question = {}) {
+  const normalizedOptions = Array.isArray(question.options)
+    ? question.options.map((option, index) => {
+        if (typeof option === "string") {
+          return { id: String.fromCharCode(65 + index), en: option, hi: "" };
+        }
+        return {
+          id: getQuizOptionId(option, index),
+          key: option.key ? String(option.key) : "",
+          value: option.value ? String(option.value) : "",
+          en: String(option.en || option.text || option.value || ""),
+          hi: String(option.hi || ""),
+          correct: option.correct === true,
+          isCorrect: option.isCorrect === true
+        };
+      }).filter((option) => option.id && (option.en || option.hi))
+    : [];
+  const correctResolution = resolveQuizCorrectOptionId({ ...question, options: normalizedOptions });
   return {
     id: String(question.id || ""),
     question: localizedQuizText(question.question || question.q || ""),
-    options: Array.isArray(question.options)
-      ? question.options.map((option, index) => {
-          if (typeof option === "string") {
-            return { id: String.fromCharCode(65 + index), en: option, hi: "" };
-          }
-          return {
-            id: String(option.id || String.fromCharCode(65 + index)),
-            en: String(option.en || option.text || option.value || ""),
-            hi: String(option.hi || "")
-          };
-        }).filter((option) => option.id && (option.en || option.hi))
-      : [],
-    correctOption: String(question.correctOption || ""),
+    options: normalizedOptions.map(({ id, en, hi }) => ({ id, en, hi })),
+    correctOption: correctResolution.optionId,
     feedback: {
       correct: localizedQuizText(question.feedback?.correct || "Correct."),
       incorrect: localizedQuizText(question.feedback?.incorrect || "Please try again.")
@@ -1265,7 +1370,21 @@ exports.submitLessonQuizAnswer = onCall({
   const question = questionSet?.questions?.find((item) => String(item.id) === questionId);
   if (!question) throw new HttpsError("not-found", "Question was not found.");
 
-  const correct = String(question.correctOption || "") === selectedOption;
+  const correctResolution = resolveQuizCorrectOptionId(question);
+  if (!correctResolution.optionId) {
+    logger.warn("Quiz answer submitted with unresolved correct option", {
+      uid: auth.uid,
+      courseId,
+      lessonId,
+      mode,
+      questionId,
+      selectedOption,
+      optionIds: Array.isArray(question.options)
+        ? question.options.map((option, index) => getQuizOptionId(option, index))
+        : []
+    });
+  }
+  const correct = !!correctResolution.optionId && String(correctResolution.optionId) === selectedOption;
   const feedback = correct
     ? localizedQuizText(question.feedback?.correct || "Correct.")
     : localizedQuizText(question.feedback?.incorrect || "Please try again.");
@@ -1320,6 +1439,7 @@ exports.submitLessonQuizAnswer = onCall({
     correct,
     feedback,
     correctOption: correct ? selectedOption : "",
+    resolvedCorrectOptionId: correct ? selectedOption : "",
     questionId,
     responseId,
     remoteSaved
