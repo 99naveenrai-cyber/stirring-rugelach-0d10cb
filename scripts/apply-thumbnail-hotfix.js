@@ -18,12 +18,15 @@ function replaceAllSafe(source, search, replacement) {
 }
 
 function replaceSnippet(source, search, replacement) {
-  if (source.includes(replacement)) return source;
-  if (!source.includes(search)) {
+  const lineBreak = source.includes('\r\n') ? '\r\n' : '\n';
+  const sourceSearch = search.replace(/\n/g, lineBreak);
+  const sourceReplacement = replacement.replace(/\n/g, lineBreak);
+  if (source.includes(sourceReplacement)) return source;
+  if (!source.includes(sourceSearch)) {
     console.warn(`Skipping already-diverged snippet:\n${search.slice(0, 160)}`);
     return source;
   }
-  return source.replace(search, replacement);
+  return source.replace(sourceSearch, sourceReplacement);
 }
 
 let functionsSource = fs.readFileSync(functionsFile, 'utf8');

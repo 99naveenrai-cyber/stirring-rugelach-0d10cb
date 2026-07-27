@@ -35,6 +35,19 @@ jobs:
           check "mqdefault thumbnail fallback exists" 'mqdefault'
           check "mobile thumbnail height is moderate and responsive" 'height:[[:space:]]*clamp\([[:space:]]*160px,[[:space:]]*48vw,[[:space:]]*190px[[:space:]]*\)'
           check "playlist card desktop thumbnail width is moderate" 'minmax\([[:space:]]*118px,[[:space:]]*30%[[:space:]]*\)'
+      - name: Verify Functions
+        working-directory: functions
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          npm test
+      - name: Authenticate Firebase deployment
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IDEAKDC_24B0B }}
+      - name: Deploy Functions and quiz rules
+        run: npx --yes firebase-tools@15.24.0 deploy --only functions,firestore:rules --project ideakdc-24b0b --non-interactive
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

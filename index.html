@@ -512,7 +512,8 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .video-wrap.popup-quiz-active{overflow:visible;contain:layout;z-index:40}
 .video-wrap::after{content:"";position:absolute;inset:0;z-index:2;background:radial-gradient(circle at 50% 88%,rgba(35,116,255,.18),rgba(2,8,20,.10) 42%,rgba(0,0,0,0) 70%);opacity:0;pointer-events:none;transition:opacity 520ms ease}
 .lesson-player-stage.interactive-lesson-active .video-wrap::after{opacity:1}
-.video-wrap iframe{position:relative;z-index:1;width:100%;height:100%;border:none}
+.video-wrap iframe,.video-wrap video{position:relative;z-index:1;width:100%;height:100%;border:none;display:block;background:#000}
+.video-wrap video{object-fit:contain}
 .video-placeholder{color:#fff;text-align:center;padding:1rem}
 .video-placeholder.standalone-ready{width:100%;height:100%;padding:0;position:relative}
 .standalone-ready .thumb-frame{height:100%;border-radius:0}
@@ -621,6 +622,31 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 @media(min-width:700px) and (orientation:portrait){.lesson-player-stage{--quiz-width:min(92%,760px);--quiz-font-scale:clamp(.72rem,1.45vw,.94rem)}.lesson-player-stage.has-timed-quiz .video-wrap{height:clamp(520px,64vh,680px);min-height:520px}.popup-quiz-layer,.interactive-lesson-layer{inset:0;padding:clamp(10px,1.8vw,16px)}.popup-quiz-card,.interactive-lesson-panel{max-height:calc(100% - 20px);padding:clamp(10px,1.8vw,16px)}}
 @media(max-height:700px){.lesson-player-stage.has-timed-quiz .video-wrap{height:clamp(410px,76vh,520px);min-height:410px}.popup-quiz-card,.interactive-lesson-panel{padding:6px 8px}.quiz-options{gap:4px}.quiz-option{padding:5px 7px}.popup-quiz-card .qtext,.interactive-lesson-panel .qtext{margin-bottom:4px}.quiz-feedback{margin-top:4px;padding-top:3px}.option-inline-feedback{padding-top:0;padding-bottom:1px}}
 @media(prefers-reduced-motion:reduce){.popup-quiz-layer,.interactive-lesson-layer,.interactive-lesson-panel .qtext,.lesson-teacher-cue,.interactive-lesson-panel .quiz-option,.quiz-option::before,.quiz-option::after,.quiz-feedback{transition:none!important;animation:none!important}}
+.separate-quiz-workspace{--separate-quiz-split:50;display:block;min-width:0}
+.separate-quiz-divider{display:none;position:relative;background:rgba(255,211,101,.12);border:1px solid rgba(255,211,101,.38);border-radius:999px;touch-action:none;user-select:none;cursor:col-resize;min-width:12px;min-height:12px}
+.separate-quiz-divider::after{content:"";position:absolute;inset:50% auto auto 50%;width:4px;height:44px;border-radius:999px;background:#ffd365;box-shadow:0 0 14px rgba(255,211,101,.55);transform:translate(-50%,-50%)}
+.video-page.separate-quiz-active,.video-page.video-quiz-layout.quiz-active.separate-quiz-active{display:block;width:min(100%,1580px);max-width:1580px}
+.video-page.separate-quiz-active .separate-quiz-workspace{display:grid;grid-template-columns:minmax(0,var(--separate-quiz-first-track,50fr)) 12px minmax(0,var(--separate-quiz-second-track,50fr));gap:clamp(8px,1.2vw,16px);align-items:stretch;height:clamp(430px,calc(100dvh - var(--nav-h) - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 28px),820px);min-height:0}
+.video-page.separate-quiz-active .separate-quiz-divider{display:block}
+.video-page.separate-quiz-active #lesson-player-stage{position:relative;top:auto;margin:0;min-width:0;height:100%}
+.video-page.separate-quiz-active #lesson-player-stage .video-wrap{width:100%;height:100%;min-height:0;aspect-ratio:auto}
+.video-page.separate-quiz-active #selected-lesson-info{display:block;min-width:0;min-height:0;height:100%}
+.video-page.separate-quiz-active #lesson-quiz-panel{height:100%;max-height:none;overflow-y:auto;margin:0;padding-bottom:calc(1rem + env(safe-area-inset-bottom));overscroll-behavior:contain}
+.separate-quiz-progress{display:grid;gap:.35rem;margin:.45rem 0 .7rem}
+.separate-quiz-progress-row{display:flex;justify-content:space-between;gap:.75rem;color:#d9e7ff;font-size:.78rem;font-weight:800}
+.separate-quiz-progress-track{height:7px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+.separate-quiz-progress-bar{height:100%;width:0;background:linear-gradient(90deg,#4da0ff,#43ffad);transition:width .25s ease}
+.quiz-retry-btn,.quiz-restart-btn,.quiz-review-btn{width:100%;min-height:44px;border:1px solid rgba(255,211,101,.55);border-radius:12px;background:#10285f;color:#f8fbff;font-weight:900;cursor:pointer}
+.quiz-retry-btn{display:none;margin-top:.55rem}
+.quiz-retry-btn.show{display:block}
+.quiz-result{display:grid;gap:.8rem;text-align:center;padding:1rem 0}
+.quiz-result-score{font-size:clamp(1.8rem,7vw,3.2rem);font-weight:950;color:#ffe08a}
+.quiz-result-actions{display:grid;gap:.65rem}
+@media(max-width:760px),(orientation:portrait){
+  .video-page.separate-quiz-active .separate-quiz-workspace{grid-template-columns:1fr;grid-template-rows:minmax(0,var(--separate-quiz-first-track,50fr)) 12px minmax(0,var(--separate-quiz-second-track,50fr));height:calc(100dvh - var(--nav-h) - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 18px);min-height:480px}
+  .video-page.separate-quiz-active .separate-quiz-divider{cursor:row-resize}
+  .video-page.separate-quiz-active .separate-quiz-divider::after{width:44px;height:4px}
+}
 .selected-lesson-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:.8rem;margin:.6rem 0 .75rem;box-shadow:0 12px 28px rgba(16,24,47,.06)}
 .selected-lesson-kicker{font-size:.72rem;font-weight:900;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
 .selected-lesson-title{font-size:1rem;font-weight:900;color:var(--deep);line-height:1.35;margin-bottom:.35rem}
@@ -1097,13 +1123,16 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   <div class="video-page">
     <button class="back-btn" onclick="goBack()">← वापस जाएं</button>
     <section id="course-viewer-header" aria-label="Course details"></section>
-    <div class="lesson-player-stage" id="lesson-player-stage">
-      <div class="video-wrap" id="video-wrap">
-        <div class="video-placeholder"><div class="v-icon">▶️</div><div>Video select करें</div></div>
-      </div>
-    </div>
     <div class="video-title-bar" id="video-title"></div>
-    <section id="selected-lesson-info" aria-live="polite"></section>
+    <div class="separate-quiz-workspace" id="separate-quiz-workspace">
+      <div class="lesson-player-stage" id="lesson-player-stage">
+        <div class="video-wrap" id="video-wrap">
+          <div class="video-placeholder"><div class="v-icon">▶️</div><div>Video select करें</div></div>
+        </div>
+      </div>
+      <div class="separate-quiz-divider" id="separate-quiz-divider" role="separator" aria-label="Resize video and quiz panels" aria-orientation="vertical" tabindex="0" hidden></div>
+      <section id="selected-lesson-info" aria-live="polite"></section>
+    </div>
     <div class="full-playlist" id="full-playlist"></div>
     <section id="course-qa-slot"></section>
   </div>
@@ -1309,6 +1338,60 @@ const REG_PENDING_KEY = 'ideakdcPendingRegistration';
 // Dashboard navigation state
 let dashState = { view:'subjects', subject:null, chapter:null };
 
+async function handleAdminSeparateQuizPreview(user) {
+  const previewId = new URLSearchParams(window.location.search).get('adminQuizPreview');
+  if (!previewId) return false;
+  if (!user || !ADMIN_EMAILS.includes(String(user.email || '').toLowerCase())) {
+    showToast('Admin sign-in is required for quiz preview.', 'error');
+    return false;
+  }
+  let preview;
+  try {
+    preview = JSON.parse(localStorage.getItem(`ideakdcSeparateQuizPreview:${previewId}`) || 'null');
+  } catch (_) {
+    preview = null;
+  }
+  if (!preview || Date.now() - Number(preview.createdAt || 0) > 15 * 60 * 1000) {
+    showToast('This quiz preview expired. Open it again from Admin.', 'error');
+    return false;
+  }
+  const course = { id: preview.courseId || 'admin-preview', name: preview.title || 'Separate Quiz Preview' };
+  const lesson = {
+    contentId: preview.lessonId || 'unsaved-preview',
+    lessonId: preview.lessonId || 'unsaved-preview',
+    title: preview.title || 'Separate Quiz Preview',
+    quizMode: 'separate',
+    quizConfig: { separateQuiz: { enabled: true, questionSetId: 'separate' } }
+  };
+  window._currentCourse = course;
+  window._currentVideos = [lesson];
+  window._activeLessonIndex = 0;
+  showPage('video');
+  document.getElementById('course-viewer-header').innerHTML = `<header class="course-viewer-header"><h1 class="course-viewer-title">${escapeHtml(preview.title || 'Separate Quiz Preview')}</h1></header>`;
+  const sourceType = detectVideoSourceType(preview.videoUrl || '');
+  const videoId = sourceType === 'youtube' ? extractYouTubeVideoId(preview.videoUrl) : '';
+  const wrap = document.getElementById('video-wrap');
+  if (wrap) {
+    wrap.innerHTML = videoId
+      ? `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0&playsinline=1" title="Admin lesson preview" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+      : sourceType === 'native'
+        ? `<video src="${escapeHtml(preview.videoUrl)}" controls playsinline preload="metadata"></video>`
+        : '<div class="video-placeholder"><div class="v-icon">▶️</div><div>Quiz-only preview</div></div>';
+  }
+  const quizData = { ...(preview.quizData || {}), _preview: true };
+  initializeSeparateQuizMode({
+    container: document.getElementById('selected-lesson-info'),
+    courseId: course.id,
+    lessonId: lesson.lessonId,
+    lesson,
+    videoUrl: preview.videoUrl || '',
+    questions: quizData.questions || [],
+    quizData,
+    course
+  });
+  return true;
+}
+
 // ════════════════════════════════════════
 // AUTH STATE
 // ════════════════════════════════════════
@@ -1326,6 +1409,7 @@ onAuthStateChanged(auth, async (user) => {
     updateNav(false);
   }
   hideLoader();
+  if (await handleAdminSeparateQuizPreview(user)) return;
   await loadCourses();
   await handleCashfreeReturnFromUrl();
   if (user) await completePendingRegistrationAfterAuth(user);
@@ -1848,6 +1932,14 @@ function extractYouTubeVideoId(value) {
   return '';
 }
 
+function detectVideoSourceType(videoUrl) {
+  const value = String(videoUrl || '').trim();
+  if (extractYouTubeVideoId(value)) return 'youtube';
+  if (/^https:\/\/.+\.(mp4|webm)(?:[?#].*)?$/i.test(value)) return 'native';
+  return 'unsupported';
+}
+
+window.detectVideoSourceType = detectVideoSourceType;
 
 function normalizeImageUrl(value) {
   const url = String(value || '').trim();
@@ -3761,6 +3853,7 @@ function ensureYouTubeIframeApi() {
 
 function destroyActiveLessonPlayer() {
   try {
+    window._activeLessonPlayer?.pause?.();
     window._activeLessonPlayer?.destroy?.();
   } catch (error) {
     console.warn('[IdeaKDC player] previous player cleanup skipped', error?.message || error);
@@ -3772,12 +3865,15 @@ function destroyActiveLessonPlayer() {
   document.getElementById('video-wrap')?.classList.remove('popup-quiz-active');
   document.querySelector('.video-page')?.classList.remove('quiz-active');
   document.querySelector('.video-page')?.classList.remove('video-quiz-layout');
+  clearSeparateQuizAutoAdvance(activeSeparateQuizState);
+  activateSeparateQuizWorkspace(false);
   clearQuizFeedbackTimer();
   activeLessonQuiz = null;
   window._activeLessonPlayer = null;
 }
 
 let activeLessonQuiz = null;
+let activeSeparateQuizState = null;
 let quizSoundMuted = false;
 let quizFeedbackTimer = null;
 const QUIZ_CORRECT_FEEDBACK_POOL = [
@@ -3825,12 +3921,22 @@ function clearQuizFeedbackTimer() {
   }
 }
 
+function normalizeLessonQuizMode(lesson = {}) {
+  if (['none', 'separate', 'popup'].includes(lesson.quizMode)) return lesson.quizMode;
+  if (lesson.quizConfig?.popupQuiz?.enabled === true && lesson.quizConfig?.popupQuiz?.timestamps?.length) return 'popup';
+  if (lesson.quizConfig?.separateQuiz?.enabled === true || lesson.separateQuiz || lesson.separateQuizRef) return 'separate';
+  return 'none';
+}
+
 function hasSeparateQuiz(lesson = {}) {
-  return lesson.quizConfig?.separateQuiz?.enabled === true;
+  return normalizeLessonQuizMode(lesson) === 'separate';
 }
 
 function hasPopupQuiz(lesson = {}) {
-  return lesson.quizConfig?.popupQuiz?.enabled === true && Array.isArray(lesson.quizConfig?.popupQuiz?.timestamps) && lesson.quizConfig.popupQuiz.timestamps.length > 0;
+  return normalizeLessonQuizMode(lesson) === 'popup' &&
+    lesson.quizConfig?.popupQuiz?.enabled === true &&
+    Array.isArray(lesson.quizConfig?.popupQuiz?.timestamps) &&
+    lesson.quizConfig.popupQuiz.timestamps.length > 0;
 }
 
 function quizText(value = {}) {
@@ -4073,6 +4179,117 @@ function resetLessonLayout() {
 
 window.resetLessonLayout = resetLessonLayout;
 
+const SEPARATE_SPLIT_DESKTOP_KEY = 'ideakdc-separate-quiz-split-desktop';
+const SEPARATE_SPLIT_MOBILE_KEY = 'ideakdc-separate-quiz-split-mobile';
+let separateQuizDividerCleanup = null;
+
+function separateQuizIsStacked() {
+  return window.matchMedia('(max-width: 760px), (orientation: portrait)').matches;
+}
+
+function separateQuizSplitKey() {
+  return separateQuizIsStacked() ? SEPARATE_SPLIT_MOBILE_KEY : SEPARATE_SPLIT_DESKTOP_KEY;
+}
+
+function setSeparateQuizSplit(value, persist = true) {
+  const workspace = document.getElementById('separate-quiz-workspace');
+  const divider = document.getElementById('separate-quiz-divider');
+  if (!workspace) return 50;
+  const split = Math.min(80, Math.max(20, Number(value) || 50));
+  workspace.style.setProperty('--separate-quiz-split', String(split));
+  workspace.style.setProperty('--separate-quiz-first-track', `${split}fr`);
+  workspace.style.setProperty('--separate-quiz-second-track', `${100 - split}fr`);
+  divider?.setAttribute('aria-valuemin', '20');
+  divider?.setAttribute('aria-valuemax', '80');
+  divider?.setAttribute('aria-valuenow', String(Math.round(split)));
+  divider?.setAttribute('aria-orientation', separateQuizIsStacked() ? 'horizontal' : 'vertical');
+  if (persist) {
+    try { localStorage.setItem(separateQuizSplitKey(), String(split)); } catch (_) {}
+  }
+  return split;
+}
+
+function restoreSeparateQuizSplit() {
+  let saved = 50;
+  try { saved = Number(localStorage.getItem(separateQuizSplitKey()) || 50); } catch (_) {}
+  setSeparateQuizSplit(saved, false);
+}
+
+function resetSeparateQuizSplit() {
+  try {
+    localStorage.removeItem(SEPARATE_SPLIT_DESKTOP_KEY);
+    localStorage.removeItem(SEPARATE_SPLIT_MOBILE_KEY);
+  } catch (_) {}
+  setSeparateQuizSplit(50, false);
+}
+
+window.resetSeparateQuizSplit = resetSeparateQuizSplit;
+
+function setupSeparateQuizDivider() {
+  separateQuizDividerCleanup?.();
+  const workspace = document.getElementById('separate-quiz-workspace');
+  const divider = document.getElementById('separate-quiz-divider');
+  if (!workspace || !divider) return;
+  let activePointerId = null;
+  const updateFromPointer = (event) => {
+    if (activePointerId === null || event.pointerId !== activePointerId) return;
+    const rect = workspace.getBoundingClientRect();
+    const stacked = separateQuizIsStacked();
+    const position = stacked ? event.clientY - rect.top : event.clientX - rect.left;
+    const total = stacked ? rect.height : rect.width;
+    if (total > 0) setSeparateQuizSplit((position / total) * 100);
+  };
+  const endDrag = (event) => {
+    if (activePointerId === null || (event.pointerId !== undefined && event.pointerId !== activePointerId)) return;
+    try { divider.releasePointerCapture(activePointerId); } catch (_) {}
+    activePointerId = null;
+    divider.classList.remove('dragging');
+  };
+  const startDrag = (event) => {
+    activePointerId = event.pointerId;
+    divider.setPointerCapture(event.pointerId);
+    divider.classList.add('dragging');
+    event.preventDefault();
+  };
+  const keyboardResize = (event) => {
+    const stacked = separateQuizIsStacked();
+    const decrease = stacked ? event.key === 'ArrowUp' : event.key === 'ArrowLeft';
+    const increase = stacked ? event.key === 'ArrowDown' : event.key === 'ArrowRight';
+    if (!decrease && !increase) return;
+    event.preventDefault();
+    const current = Number(workspace.style.getPropertyValue('--separate-quiz-split') || 50);
+    setSeparateQuizSplit(current + (increase ? 5 : -5));
+  };
+  const orientationChanged = () => restoreSeparateQuizSplit();
+  divider.addEventListener('pointerdown', startDrag);
+  window.addEventListener('pointermove', updateFromPointer, { passive: true });
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+  divider.addEventListener('keydown', keyboardResize);
+  window.addEventListener('resize', orientationChanged);
+  separateQuizDividerCleanup = () => {
+    divider.removeEventListener('pointerdown', startDrag);
+    window.removeEventListener('pointermove', updateFromPointer);
+    window.removeEventListener('pointerup', endDrag);
+    window.removeEventListener('pointercancel', endDrag);
+    divider.removeEventListener('keydown', keyboardResize);
+    window.removeEventListener('resize', orientationChanged);
+  };
+  restoreSeparateQuizSplit();
+}
+
+function activateSeparateQuizWorkspace(active) {
+  const page = document.querySelector('.video-page');
+  const divider = document.getElementById('separate-quiz-divider');
+  page?.classList.toggle('separate-quiz-active', active);
+  if (divider) divider.hidden = !active;
+  if (active) setupSeparateQuizDivider();
+  else {
+    separateQuizDividerCleanup?.();
+    separateQuizDividerCleanup = null;
+  }
+}
+
 function setupLessonPinchZoom() {
   document.removeEventListener('touchstart', handleLessonPinchStart, { capture: true });
   document.removeEventListener('touchmove', handleLessonPinchMove, { capture: true });
@@ -4252,28 +4469,136 @@ function renderQuizPanel(course, lesson, mode, quizData, targetId = 'selected-le
   const target = document.getElementById(targetId);
   if (!target || !quizData?.questions?.length) return;
   document.querySelector('.video-page')?.classList.add('quiz-active');
+  if (mode === 'separate') activateSeparateQuizWorkspace(true);
   restoreLessonLayoutPrefs();
   target.innerHTML = `
     <section class="quiz-panel" id="lesson-quiz-panel">
       <h2>${escapeHtml(quizData.title || 'Lesson Quiz')}</h2>
-      <div class="quiz-zoom-controls" aria-label="Player and quiz zoom controls">
-        <div class="quiz-zoom-group">
-          <span class="quiz-zoom-label">Video</span>
-          <button class="quiz-zoom-btn" type="button" onclick="adjustLessonZoom('player', -0.1)" aria-label="Zoom video out">-</button>
-          <button class="quiz-zoom-btn" type="button" onclick="adjustLessonZoom('player', 0.1)" aria-label="Zoom video in">+</button>
-        </div>
-        <div class="quiz-zoom-group">
-          <span class="quiz-zoom-label">Quiz</span>
-          <button class="quiz-zoom-btn" type="button" onclick="adjustLessonZoom('quiz', -0.08)" aria-label="Zoom quiz out">-</button>
-          <button class="quiz-zoom-btn" type="button" onclick="adjustLessonZoom('quiz', 0.08)" aria-label="Zoom quiz in">+</button>
-        </div>
-        <button class="quiz-reset-layout" type="button" onclick="resetLessonLayout()">Reset Layout</button>
-      </div>
+      ${mode === 'separate' ? '<button class="quiz-reset-layout" type="button" onclick="resetSeparateQuizSplit()">Reset Split</button>' : ''}
       <button class="quiz-sound-toggle js-quiz-sound-toggle" type="button" onclick="toggleQuizSoundMute()">Sound: ${quizSoundMuted ? 'OFF' : 'ON'}</button>
       <div id="lesson-quiz-question"></div>
     </section>`;
-  renderQuizQuestion(course, lesson, mode, quizData, 0);
+  if (mode === 'separate') {
+    quizData._separateState = quizData._separateState || createSeparateQuizState(quizData.questions.length);
+    activeSeparateQuizState = quizData._separateState;
+    renderQuizQuestion(course, lesson, mode, quizData, quizData._separateState.currentQuestionIndex);
+  } else {
+    renderQuizQuestion(course, lesson, mode, quizData, 0);
+  }
 }
+
+function createSeparateQuizState(questionCount) {
+  return {
+    currentQuestionIndex: 0,
+    score: 0,
+    answers: Array.from({ length: questionCount }, () => null),
+    completedQuestions: new Set(),
+    autoAdvanceTimer: null,
+    reviewing: false
+  };
+}
+
+function clearSeparateQuizAutoAdvance(state) {
+  if (!state?.autoAdvanceTimer) return;
+  clearTimeout(state.autoAdvanceTimer);
+  state.autoAdvanceTimer = null;
+}
+
+function separateQuizFeedback(question, isCorrect) {
+  const configured = isCorrect ? question.feedback?.correct : question.feedback?.incorrect;
+  return hasQuizText(configured) ? configured : randomQuizRuleFeedback(isCorrect);
+}
+
+function separateQuizPerformance(percentage) {
+  if (percentage >= 90) return 'Outstanding';
+  if (percentage >= 75) return 'Very Good';
+  if (percentage >= 50) return 'Good effort';
+  return 'Keep practising';
+}
+
+function renderSeparateQuizResult(course, lesson, mode, quizData) {
+  const holder = document.getElementById('lesson-quiz-question');
+  const state = quizData._separateState;
+  if (!holder || !state) return;
+  clearSeparateQuizAutoAdvance(state);
+  const total = quizData.questions.length;
+  const percentage = total ? Math.round((state.score / total) * 100) : 0;
+  holder.innerHTML = `
+    <div class="quiz-result">
+      <div class="qnum">Quiz complete</div>
+      <div class="quiz-result-score">${state.score} / ${total}</div>
+      <div class="qtext">${percentage}% · ${escapeHtml(separateQuizPerformance(percentage))}</div>
+      <div class="quiz-result-actions">
+        <button class="quiz-review-btn" type="button">Review Answers</button>
+        <button class="quiz-restart-btn" type="button">Restart Quiz</button>
+      </div>
+    </div>`;
+  triggerQuizMilestone(holder, state.score, true);
+  holder.querySelector('.quiz-review-btn')?.addEventListener('click', () => {
+    state.reviewing = true;
+    state.currentQuestionIndex = 0;
+    renderQuizQuestion(course, lesson, mode, quizData, 0);
+  });
+  holder.querySelector('.quiz-restart-btn')?.addEventListener('click', () => {
+    quizData._separateState = createSeparateQuizState(total);
+    renderQuizQuestion(course, lesson, mode, quizData, 0);
+  });
+}
+
+async function persistSeparateQuizAnswer(course, lesson, question, selectedOption, localCorrect) {
+  const responseId = `${quizResponseId(course, lesson, 'separate', question.id)}__${Date.now()}`;
+  const pendingItem = {
+    responseId,
+    courseId: course.id,
+    lessonId: lesson.contentId || lesson.lessonId || '',
+    mode: 'separate',
+    questionId: String(question.id),
+    selectedOption,
+    isCorrect: localCorrect,
+    answeredAt: new Date().toISOString(),
+    timestamp: Date.now(),
+    syncStatus: 'pending'
+  };
+  upsertPendingQuizResponse(pendingItem);
+  try {
+    const result = await submitLessonQuizAnswerFn({
+      courseId: pendingItem.courseId,
+      lessonId: pendingItem.lessonId,
+      mode: 'separate',
+      questionId: pendingItem.questionId,
+      selectedOption,
+      responseId
+    });
+    const data = result.data || {};
+    if (data.remoteSaved !== false) markPendingQuizSynced(responseId);
+    else window.setTimeout(retryPendingQuizResponses, 3000);
+    return { correct: data.correct === true, remoteSaved: data.remoteSaved !== false };
+  } catch (error) {
+    upsertPendingQuizResponse({
+      ...pendingItem,
+      localSaved: true,
+      remoteSaved: false,
+      syncStatus: 'pending',
+      lastError: error?.code || error?.message || 'network-error'
+    });
+    window.setTimeout(retryPendingQuizResponses, 3500);
+    return { correct: localCorrect, remoteSaved: false };
+  }
+}
+
+function initializeSeparateQuizMode({ container, courseId, lessonId, lesson, videoUrl, questions, quizData, course }) {
+  void courseId;
+  void lessonId;
+  void videoUrl;
+  const target = typeof container === 'string' ? document.querySelector(container) : container;
+  if (!target) throw new Error('Separate Quiz container is missing.');
+  const normalizedQuizData = quizData || { title: 'Lesson Quiz', questions: questions || [] };
+  if (!normalizedQuizData.questions?.length) throw new Error('Separate Quiz has no valid questions.');
+  renderQuizPanel(course, lesson, 'separate', normalizedQuizData, target.id || 'selected-lesson-info');
+  return normalizedQuizData._separateState;
+}
+
+window.initializeSeparateQuizMode = initializeSeparateQuizMode;
 
 function bindFastQuizOption(button, handler) {
   let firedAt = 0;
@@ -4298,6 +4623,102 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
   const holder = document.getElementById('lesson-quiz-question');
   const question = quizData.questions?.[index];
   if (!holder || !question) return;
+  if (mode === 'separate') {
+    const state = quizData._separateState || createSeparateQuizState(quizData.questions.length);
+    quizData._separateState = state;
+    clearSeparateQuizAutoAdvance(state);
+    state.currentQuestionIndex = index;
+    const answer = state.answers[index] || {
+      selectedOptionId: '',
+      attemptedWrongOptionIds: [],
+      solved: false,
+      correct: false,
+      completed: false,
+      scoreAwarded: false,
+      feedback: null
+    };
+    const questionId = String(question.id);
+    const correctOptionId = resolveQuizCorrectOption(question).optionId;
+    const completed = state.completedQuestions.size;
+    const progress = Math.round((completed / quizData.questions.length) * 100);
+    holder.innerHTML = `
+      <div class="separate-quiz-progress">
+        <div class="separate-quiz-progress-row"><span>Question ${index + 1} of ${quizData.questions.length}</span><span>Score ${state.score}</span></div>
+        <div class="separate-quiz-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><div class="separate-quiz-progress-bar" style="width:${progress}%"></div></div>
+      </div>
+      <div class="qtext">${renderBilingualLines(question.question)}</div>
+      <div class="quiz-options">
+        ${(question.options || []).map((option, optionIndex) => {
+          const optionId = getQuizOptionId(option, optionIndex);
+          const wrongAttempt = answer.attemptedWrongOptionIds.includes(optionId);
+          const correctSelected = answer.solved && answer.selectedOptionId === optionId;
+          const className = correctSelected ? 'is-correct' : (wrongAttempt ? 'is-wrong' : '');
+          return `<div class="quiz-option-shell"><button type="button" class="quiz-option ${className}" data-option-id="${escapeHtml(optionId)}" ${answer.solved ? 'disabled' : ''}><span class="quiz-option-content">${renderQuizOptionContent(option, optionIndex)}</span></button>${answer.selectedOptionId === optionId && answer.feedback ? `<div class="option-inline-feedback ${answer.correct ? 'correct' : 'wrong'}" aria-live="polite">${renderBilingualLines(answer.feedback)}</div>` : '<div class="option-inline-feedback" aria-live="polite"></div>'}</div>`;
+        }).join('')}
+      </div>
+      <div class="quiz-feedback" aria-live="polite"></div>
+      <button class="quiz-retry-btn ${!answer.solved && answer.attemptedWrongOptionIds.length ? 'show' : ''}" type="button">Retry Question</button>
+      <div class="quiz-navigation">
+        <button class="quiz-nav-btn quiz-nav-prev" type="button" ${index === 0 ? 'disabled' : ''}>Previous</button>
+        <button class="quiz-nav-btn quiz-nav-next" type="button" ${answer.solved ? '' : 'disabled'}>${index + 1 < quizData.questions.length ? 'Next' : 'Finish'}</button>
+      </div>`;
+
+    const goNext = () => {
+      clearSeparateQuizAutoAdvance(state);
+      if (!answer.solved) return;
+      if (index + 1 < quizData.questions.length) renderQuizQuestion(course, lesson, mode, quizData, index + 1);
+      else renderSeparateQuizResult(course, lesson, mode, quizData);
+    };
+    holder.querySelectorAll('.quiz-option').forEach(button => {
+      bindFastQuizOption(button, () => {
+        if (answer.solved) return;
+        const selectedOptionId = button.dataset.optionId;
+        const localCorrect = !!correctOptionId && String(correctOptionId) === String(selectedOptionId);
+        logQuizAnswerTap(question, selectedOptionId, correctOptionId, localCorrect);
+        answer.selectedOptionId = selectedOptionId;
+        answer.correct = localCorrect;
+        answer.feedback = separateQuizFeedback(question, localCorrect);
+        if (localCorrect) {
+          answer.solved = true;
+          answer.completed = true;
+          if (!answer.scoreAwarded) {
+            answer.scoreAwarded = true;
+            state.score += 1;
+            state.completedQuestions.add(questionId);
+          }
+        } else if (!answer.attemptedWrongOptionIds.includes(selectedOptionId)) {
+          answer.attemptedWrongOptionIds.push(selectedOptionId);
+        }
+        state.answers[index] = answer;
+        playQuizTone(localCorrect ? 'correct' : 'wrong', true);
+        renderQuizQuestion(course, lesson, mode, quizData, index);
+        if (localCorrect) {
+          const renderedSelected = document.querySelector(`#lesson-quiz-question [data-option-id="${CSS.escape(selectedOptionId)}"]`);
+          launchQuizConfetti(renderedSelected, 'correct');
+        }
+        if (!quizData._preview) void persistSeparateQuizAnswer(course, lesson, question, selectedOptionId, localCorrect);
+        if (localCorrect) {
+          triggerQuizMilestone(document.getElementById('lesson-quiz-question'), state.score);
+          state.autoAdvanceTimer = window.setTimeout(goNext, 1500);
+        }
+      });
+    });
+    holder.querySelector('.quiz-retry-btn')?.addEventListener('click', () => {
+      clearSeparateQuizAutoAdvance(state);
+      answer.selectedOptionId = '';
+      answer.correct = false;
+      answer.feedback = null;
+      answer.attemptedWrongOptionIds = [];
+      state.answers[index] = answer;
+      renderQuizQuestion(course, lesson, mode, quizData, index);
+    });
+    holder.querySelector('.quiz-nav-prev')?.addEventListener('click', () => {
+      clearSeparateQuizAutoAdvance(state);
+      renderQuizQuestion(course, lesson, mode, quizData, Math.max(0, index - 1));
+    });
+    holder.querySelector('.quiz-nav-next')?.addEventListener('click', goNext);
+    return;
+  }
   quizData._correctAnswers = quizData._correctAnswers || {};
   quizData._responses = quizData._responses || {};
   quizData._correctCount = Number(quizData._correctCount || 0);
@@ -4508,6 +4929,9 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
 function renderLessonActionControls(course, lesson, idx, hasVideo = true) {
   const selectedInfo = document.getElementById('selected-lesson-info');
   if (!selectedInfo) return;
+  clearSeparateQuizAutoAdvance(activeSeparateQuizState);
+  activeSeparateQuizState = null;
+  activateSeparateQuizWorkspace(false);
   document.querySelector('.video-page')?.classList.remove('quiz-active');
   document.querySelector('.video-page')?.classList.remove('video-quiz-layout');
   clearQuizFeedbackTimer();
@@ -4538,13 +4962,36 @@ window.startLessonQuiz = async (idx, mode = 'separate', options = {}) => {
   const course = window._currentCourse;
   const lesson = (window._currentVideos || [])[idx];
   if (!course || !lesson) return;
+  const target = document.getElementById('selected-lesson-info');
+  if (target) target.innerHTML = '<div class="course-viewer-state loading"><h2>Loading quiz…</h2><p>Please wait while this lesson quiz is prepared.</p></div>';
   try {
     document.querySelector('.video-page')?.classList.toggle('video-quiz-layout', options.withVideo === true);
     const quizData = await loadLessonQuiz(course, lesson, mode);
-    renderQuizPanel(course, lesson, mode, quizData);
+    if (mode === 'separate') {
+      initializeSeparateQuizMode({
+        container: document.getElementById('selected-lesson-info'),
+        courseId: course.id,
+        lessonId: lesson.contentId || lesson.lessonId || '',
+        lesson,
+        videoUrl: '',
+        questions: quizData.questions,
+        quizData,
+        course
+      });
+    } else {
+      renderQuizPanel(course, lesson, mode, quizData);
+    }
   } catch (error) {
     console.warn('[IdeaKDC quiz load]', error?.code || error?.message || error);
-    showToast('Quiz is not available for this lesson yet.', 'error');
+    activateSeparateQuizWorkspace(false);
+    const message = error?.code === 'functions/permission-denied'
+      ? 'Access denied. Purchase or open a free lesson before loading its quiz.'
+      : error?.code === 'functions/not-found'
+        ? 'This lesson does not have a published quiz.'
+        : 'The quiz could not be loaded. Check your connection and retry.';
+    if (target) {
+      target.innerHTML = `<div class="course-viewer-state error"><h2>Quiz unavailable</h2><p>${escapeHtml(message)}</p><button class="btn-enroll" type="button" onclick="startLessonQuiz(${idx}, '${mode}', { withVideo: ${options.withVideo === true} })">Retry</button></div>`;
+    }
   }
 };
 
@@ -4825,7 +5272,10 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
       }
       return;
     }
-    const selectedVideoId = extractYouTubeVideoId(resolvedLesson.videoId || '');
+    const resolvedSource = resolvedLesson.videoId || resolvedLesson.videoUrl || '';
+    const sourceType = resolvedLesson.sourceType || detectVideoSourceType(resolvedSource);
+    const selectedVideoId = sourceType === 'youtube' ? extractYouTubeVideoId(resolvedSource) : '';
+    const nativeVideoUrl = sourceType === 'native' ? String(resolvedLesson.videoUrl || resolvedSource || '').trim() : '';
     const embedSrc = selectedVideoId
       ? `https://www.youtube.com/embed/${selectedVideoId}?rel=0&playsinline=1&enablejsapi=1&origin=${origin}&autoplay=1`
       : '';
@@ -4840,7 +5290,9 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen></iframe>`
-      : `<div class="video-placeholder"><div class="v-icon">⚠️</div><div>Video unavailable</div></div>`;
+      : nativeVideoUrl
+        ? `<video id="${iframeId}" src="${escapeHtml(nativeVideoUrl)}" controls playsinline preload="metadata" autoplay aria-label="${escapeHtml(v.title || 'IdeaKDC lesson player')}"></video>`
+        : `<div class="video-placeholder"><div class="v-icon">⚠️</div><div>Unsupported or unavailable video source</div></div>`;
     if (embedSrc) {
       ensureYouTubeIframeApi()
         .then((YT) => {
@@ -4858,13 +5310,14 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
           });
         })
         .catch((error) => console.warn('[IdeaKDC player] YouTube ended hook unavailable', error?.message || error));
+    } else if (nativeVideoUrl) {
+      const nativePlayer = document.getElementById(iframeId);
+      nativePlayer?.addEventListener('ended', () => startNextLessonAfterEnd(idx), { once: true });
+      window._activeLessonPlayer = nativePlayer;
     }
     document.getElementById('video-title').textContent = '';
     renderSelectedLessonInfo(course, v, idx);
-    renderLessonActionControls(course, v, idx, !!embedSrc);
-    if (options.mode === 'video-quiz' && hasSeparateQuiz(v)) {
-      window.startLessonQuiz(idx, 'separate', { withVideo: true });
-    }
+    renderLessonActionControls(course, v, idx, !!(embedSrc || nativeVideoUrl));
     if (playlistCourse) {
       renderPlaylist(idx);
       keepSelectedLessonVisibleInsidePlaylist();
@@ -4874,6 +5327,9 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
       const selectedInfo = document.getElementById('selected-lesson-info');
       if (qaSlot) qaSlot.innerHTML = '';
       if (selectedInfo) selectedInfo.innerHTML = '';
+    }
+    if (hasSeparateQuiz(v)) {
+      await window.startLessonQuiz(idx, 'separate', { withVideo: true });
     }
     setLessonRoute(course.id, v.contentId || '', true);
     window.scrollTo({ top: preserveScrollY, behavior: 'auto' });
@@ -4887,6 +5343,9 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
     setTimeout(() => window.playFromPlaylist(initialIdx), 100);
   } else {
     renderStandaloneReadyState(course, videos[initialIdx], initialIdx);
+    if (hasSeparateQuiz(videos[initialIdx])) {
+      setTimeout(() => window.startLessonQuiz(initialIdx, 'separate', { withVideo: true }), 100);
+    }
   }
 }
 

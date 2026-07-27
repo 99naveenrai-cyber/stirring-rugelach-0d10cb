@@ -80,6 +80,13 @@ function extractYouTubeVideoId(value) {
   return "";
 }
 
+function detectVideoSourceType(value) {
+  const source = String(value || "").trim();
+  if (extractYouTubeVideoId(source)) return "youtube";
+  if (/^https:\/\/.+\.(mp4|webm)(?:[?#].*)?$/i.test(source)) return "native";
+  return "unsupported";
+}
+
 function normalizeImageUrl(value) {
   const url = String(value || "").trim();
   if (!url) return "";
@@ -586,6 +593,8 @@ function contentToPublicCourses(items) {
       price: itemPrice,
       paymentRequired: !itemIsFree,
       accessType: itemIsFree ? "free" : "paid",
+      quizMode: normalizeLessonQuizMode(data),
+      separateQuizQuestionCount: Number(data.separateQuiz?.questionCount || 0),
       quizConfig: publicQuizConfig(data.quizConfig || {}),
       orderIndex: Number.isFinite(Number(data.orderIndex)) ? Number(data.orderIndex) : 999999,
       sequenceNumber: Number.isFinite(Number(data.sequenceNumber)) ? Number(data.sequenceNumber) : 999999,
@@ -734,6 +743,13 @@ function visibleQuizText(value) {
   return normalized.en || normalized.hi || "";
 }
 
+function normalizeLessonQuizMode(lesson = {}) {
+  if (["none", "separate", "popup"].includes(lesson.quizMode)) return lesson.quizMode;
+  if (lesson.quizConfig?.popupQuiz?.enabled === true && lesson.quizConfig?.popupQuiz?.timestamps?.length) return "popup";
+  if (lesson.quizConfig?.separateQuiz?.enabled === true || lesson.separateQuiz || lesson.separateQuizRef) return "separate";
+  return "none";
+}
+
 function normalizeQuizMatchValue(value = "") {
   return String(value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 }
@@ -863,13 +879,29 @@ function sanitizeQuizQuestion(question = {}) {
   };
 }
 
-function findQuizQuestionSet(lesson = {}, mode = "separate") {
+async function findQuizQuestionSet(lesson = {}, mode = "separate", lessonId = "") {
   const config = publicQuizConfig(lesson.quizConfig || {});
   const setId = mode === "popup"
     ? config.popupQuiz.questionSetId || "popup"
     : config.separateQuiz.questionSetId || "separate";
   const sets = lesson.quizQuestionSets || {};
-  const set = sets[setId] || sets[mode] || null;
+  if (mode === "separate" && lessonId) {
+    const protectedSnap = await db.doc(`content/${lessonId}/quizzes/separate`).get();
+    if (protectedSnap.exists) {
+      const protectedQuiz = protectedSnap.data() || {};
+      if (Array.isArray(protectedQuiz.questions)) {
+        return {
+          id: setId,
+          title: String(protectedQuiz.title || "Lesson Quiz"),
+          questions: protectedQuiz.questions
+        };
+      }
+    }
+  }
+  const legacySeparate = mode === "separate" && Array.isArray(lesson.separateQuiz?.questions)
+    ? { title: lesson.separateQuiz.title || "Lesson Quiz", questions: lesson.separateQuiz.questions }
+    : null;
+  const set = sets[setId] || sets[mode] || legacySeparate || null;
   if (!set || !Array.isArray(set.questions)) return null;
   return { id: setId, title: String(set.title || "Lesson Quiz"), questions: set.questions };
 }
@@ -1281,10 +1313,13 @@ exports.getAuthorizedLessonVideo = onCall({
   const uid = request.auth?.uid || "";
   const access = await hasCourseAccess(uid, courseId, request.auth);
   const canUsePublicLesson = lessonPlayableWithoutPurchase(lesson, docs, lessonIndex);
-  const fullVideoId = extractYouTubeVideoId(lesson.videoId || lesson.vid || lesson.youtubeVideoId || lesson.videoUrl || lesson.youtubeUrl || "");
+  const sourceValue = lesson.videoUrl || lesson.videoId || lesson.vid || lesson.youtubeVideoId || lesson.youtubeUrl || "";
+  const sourceType = detectVideoSourceType(sourceValue);
+  const fullVideoId = sourceType === "youtube" ? extractYouTubeVideoId(sourceValue) : "";
+  const nativeVideoUrl = sourceType === "native" ? String(sourceValue).trim() : "";
 
   if (access || canUsePublicLesson) {
-    if (!fullVideoId) {
+    if (!fullVideoId && !nativeVideoUrl) {
       throw new HttpsError("failed-precondition", "Playable video is not configured for this lesson.");
     }
     logger.info("Authorized full lesson video resolved", {
@@ -1296,7 +1331,9 @@ exports.getAuthorizedLessonVideo = onCall({
     });
     return {
       mode: access ? "full" : "free",
+      sourceType,
       videoId: fullVideoId,
+      videoUrl: nativeVideoUrl,
       title: lesson.title || "",
       allowFullPlayback: access || canUsePublicLesson
     };
@@ -1327,8 +1364,10 @@ exports.getAuthorizedLessonQuiz = onCall({
 
   const config = publicQuizConfig(lesson.quizConfig || {});
   const modeConfig = mode === "popup" ? config.popupQuiz : config.separateQuiz;
-  if (!modeConfig.enabled) throw new HttpsError("not-found", "Quiz is not enabled for this lesson.");
-  const questionSet = findQuizQuestionSet(lesson, mode);
+  if (!modeConfig.enabled && normalizeLessonQuizMode(lesson) !== mode) {
+    throw new HttpsError("not-found", "Quiz is not enabled for this lesson.");
+  }
+  const questionSet = await findQuizQuestionSet(lesson, mode, lessonId);
   if (!questionSet) throw new HttpsError("failed-precondition", "Quiz question set is missing.");
   const questions = questionSet.questions
     .map(sanitizeQuizQuestion)
@@ -1366,7 +1405,7 @@ exports.submitLessonQuizAnswer = onCall({
   const canUsePublicLesson = lessonPlayableWithoutPurchase(lesson, docs, lessonIndex);
   if (!access && !canUsePublicLesson) throw new HttpsError("permission-denied", "This lesson is locked.");
 
-  const questionSet = findQuizQuestionSet(lesson, mode);
+  const questionSet = await findQuizQuestionSet(lesson, mode, lessonId);
   const question = questionSet?.questions?.find((item) => String(item.id) === questionId);
   if (!question) throw new HttpsError("not-found", "Question was not found.");
 
@@ -1400,7 +1439,8 @@ exports.submitLessonQuizAnswer = onCall({
     await db.runTransaction(async (transaction) => {
       const snap = await transaction.get(progressRef);
       const previous = snap.exists ? snap.get(`${mode}.answered.${answerKey}`) : null;
-      const alreadyCounted = !!previous;
+      const alreadyAttempted = !!previous;
+      const alreadyCorrect = previous?.correct === true;
       const payload = {
         uid: auth.uid,
         courseId,
@@ -1416,10 +1456,10 @@ exports.submitLessonQuizAnswer = onCall({
           answeredAt: FieldValue.serverTimestamp()
         }
       };
-      if (!alreadyCounted) {
+      if (!alreadyAttempted) {
         payload[`${mode}.questionsAnswered`] = FieldValue.increment(1);
-        payload[`${mode}.correctAnswers`] = FieldValue.increment(correct ? 1 : 0);
       }
+      if (correct && !alreadyCorrect) payload[`${mode}.correctAnswers`] = FieldValue.increment(1);
       transaction.set(progressRef, payload, { merge: true });
     });
   } catch (error) {

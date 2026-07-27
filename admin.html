@@ -100,16 +100,14 @@ body{padding-bottom:65px}
 .upload-status.success{color:var(--green);border-color:rgba(34,197,94,.25);background:#f0fdf4}
 .upload-status.warning{color:#a16207;border-color:rgba(234,179,8,.35);background:#fefce8}
 .upload-status.error{color:var(--red);border-color:rgba(239,68,68,.28);background:#fef2f2}
-.quiz-option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;margin:.45rem 0 .75rem}
-.quiz-option-card{border:1px solid var(--border);border-radius:12px;background:#fff;padding:.75rem;display:flex;gap:.55rem;align-items:flex-start}
-.quiz-option-card input{width:auto;margin-top:.2rem}
-.quiz-option-card strong{display:block;font-size:.85rem;color:var(--text)}
-.quiz-option-card span{display:block;font-size:.72rem;color:var(--muted);line-height:1.35;margin-top:.2rem}
+.quiz-mode-select{width:100%;min-height:46px}
 .quiz-config-box{border:1px solid var(--border);border-radius:12px;background:#f8fafc;padding:.75rem;margin:.65rem 0;display:none}
 .quiz-config-box.show{display:block}
 .quiz-validation{font-size:.75rem;margin-top:.45rem;color:var(--muted)}
 .quiz-validation.error{color:var(--red);font-weight:700}
 .quiz-validation.success{color:var(--green);font-weight:700}
+.quiz-file-name{font-size:.74rem;color:var(--text);margin-top:.45rem;overflow-wrap:anywhere}
+.quiz-action-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.65rem}
 .timestamp-builder{display:grid;grid-template-columns:1.3fr .7fr .7fr auto auto;gap:.5rem;align-items:end;margin-top:.65rem}
 .timestamp-list{display:grid;gap:.45rem;margin-top:.7rem}
 .timestamp-row{display:grid;grid-template-columns:1fr auto auto;gap:.45rem;align-items:center;padding:.5rem;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:.78rem}
@@ -117,7 +115,7 @@ body{padding-bottom:65px}
 .admin-video-preview{display:none;margin-top:.65rem;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#000;aspect-ratio:16/9}
 .admin-video-preview.show{display:block}
 .admin-video-preview iframe{width:100%;height:100%;border:0;display:block}
-@media(max-width:760px){.quiz-option-grid,.timestamp-builder,.timestamp-row{grid-template-columns:1fr}}
+@media(max-width:760px){.timestamp-builder,.timestamp-row{grid-template-columns:1fr}.quiz-action-row .small-action-btn{width:100%;min-height:44px}}
 
 /* Free/Paid toggle */
 .free-paid-toggle{display:flex;gap:.5rem}
@@ -421,26 +419,27 @@ body{padding-bottom:65px}
       </div>
 
       <div class="form-group">
-        <label>Quiz Options</label>
-        <div class="quiz-option-grid">
-          <label class="quiz-option-card">
-            <input type="checkbox" id="quiz-separate-enabled" onchange="updateQuizOptionVisibility()">
-            <span><strong>Separate Quiz</strong><span>Students can open the quiz independently from the video.</span></span>
-          </label>
-          <label class="quiz-option-card">
-            <input type="checkbox" id="quiz-popup-enabled" onchange="updateQuizOptionVisibility()">
-            <span><strong>Pop-up Quiz</strong><span>Questions pause the video and appear at selected timestamps.</span></span>
-          </label>
-        </div>
-        <div class="mode-help">Both options can be enabled together, or both can be left off.</div>
+        <label for="quiz-mode">Quiz Mode</label>
+        <select class="quiz-mode-select" id="quiz-mode" onchange="updateQuizOptionVisibility()">
+          <option value="none">No Quiz</option>
+          <option value="separate">Separate Quiz</option>
+          <option value="popup">Popup Timed Quiz</option>
+        </select>
+        <div class="mode-help">Separate Quiz appears beside this lesson. Popup Timed Quiz keeps the existing timestamp flow.</div>
       </div>
 
       <div class="quiz-config-box" id="separate-quiz-box">
         <div class="form-group">
           <label>Upload Question JSON File</label>
           <input type="file" id="separate-quiz-file" accept="application/json,.json" onchange="handleQuizJsonUpload('separate', this.files && this.files[0])">
+          <div class="quiz-file-name" id="separate-quiz-file-name">No file selected.</div>
           <div class="quiz-validation" id="separate-quiz-status">No Separate Quiz file selected.</div>
-          <button type="button" class="small-action-btn" onclick="clearQuizJson('separate')">Remove Separate Quiz File</button>
+          <div class="quiz-action-row">
+            <button type="button" class="small-action-btn" onclick="validateCurrentQuiz('separate')">Validate JSON</button>
+            <button type="button" class="small-action-btn" onclick="document.getElementById('separate-quiz-file').click()">Replace Quiz</button>
+            <button type="button" class="small-action-btn" onclick="removeLessonQuiz('separate')">Remove Quiz</button>
+            <button type="button" class="small-action-btn" onclick="previewSeparateQuiz()">Preview Separate Quiz</button>
+          </div>
         </div>
       </div>
 
@@ -595,7 +594,7 @@ import { getAuth, signInWithEmailAndPassword, signInWithPopup,
          GoogleAuthProvider, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc,
-         updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, onSnapshot }
+         updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, onSnapshot, writeBatch }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getStorage, ref as storageRef }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
@@ -836,10 +835,8 @@ function resetUploadState() {
     .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
   const freeComplete = document.getElementById('up-free-complete');
   if (freeComplete) freeComplete.checked = false;
-  const separateQuiz = document.getElementById('quiz-separate-enabled');
-  const popupQuiz = document.getElementById('quiz-popup-enabled');
-  if (separateQuiz) separateQuiz.checked = false;
-  if (popupQuiz) popupQuiz.checked = false;
+  const quizMode = document.getElementById('quiz-mode');
+  if (quizMode) quizMode.value = 'none';
   clearQuizJson('separate');
   clearQuizJson('popup');
   updateQuizOptionVisibility();
@@ -1115,6 +1112,18 @@ function extractVideoIdFromLink(link) {
     if (match) return match[1];
   }
   return text;
+}
+
+function normalizeUploadVideoSource(link) {
+  const value = String(link || '').trim();
+  const extracted = extractVideoIdFromLink(value);
+  if (/^[a-zA-Z0-9_-]{11}$/.test(extracted)) {
+    return { sourceType: 'youtube', videoId: extracted, videoUrl: '' };
+  }
+  if (/^https:\/\/.+\.(mp4|webm)(?:[?#].*)?$/i.test(value)) {
+    return { sourceType: 'native', videoId: '', videoUrl: value };
+  }
+  throw new Error('Use a valid YouTube URL/ID or a direct HTTPS MP4/WebM URL.');
 }
 
 function thumbnailLeaksVideoId(url, videoId) {
@@ -1643,7 +1652,59 @@ function localizedTextValue(value) {
   return normalized.en || normalized.hi || '';
 }
 
-function validateQuizQuestionSet(raw) {
+function normalizedQuizMatch(value) {
+  return String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function adminOptionId(option, index) {
+  return String(option?.id || option?.key || option?.optionId || String.fromCharCode(65 + index)).trim();
+}
+
+function resolveAdminCorrectOption(question, options, questionNumber, errors) {
+  const correctIndexFields = ['correctIndex', 'correctOptionIndex', 'correctAnswerIndex'];
+  for (const field of correctIndexFields) {
+    if (question[field] === undefined || question[field] === null || question[field] === '') continue;
+    const index = Number(question[field]);
+    if (!Number.isInteger(index) || index < 0 || index >= options.length) {
+      errors.push(`Question ${questionNumber}: ${field} ${question[field]} is invalid because only ${options.length} options exist.`);
+      return '';
+    }
+    return adminOptionId(options[index], index);
+  }
+
+  const candidates = [
+    ['correctOption', question.correctOption],
+    ['correctAnswer', question.correctAnswer],
+    ['answer', question.answer],
+    ['correct', question.correct]
+  ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '');
+  for (const [field, value] of candidates) {
+    if (Number.isInteger(value) && field === 'correct') {
+      if (value >= 0 && value < options.length) return adminOptionId(options[value], value);
+      errors.push(`Question ${questionNumber}: ${field} ${value} is invalid because only ${options.length} options exist.`);
+      return '';
+    }
+    const raw = String(value?.id ?? value?.key ?? value?.value ?? value?.text ?? value).trim();
+    const normalized = normalizedQuizMatch(raw);
+    const exact = options.findIndex((option, index) =>
+      [adminOptionId(option, index), option.en, option.hi, option.text, option.value]
+        .some(candidate => normalizedQuizMatch(candidate) === normalized)
+    );
+    if (exact >= 0) return adminOptionId(options[exact], exact);
+    if (/^[a-d]$/i.test(raw)) {
+      const index = raw.toUpperCase().charCodeAt(0) - 65;
+      if (options[index]) return adminOptionId(options[index], index);
+    }
+    if (/^[1-9]\d*$/.test(raw)) {
+      const oneBasedIndex = Number(raw) - 1;
+      if (options[oneBasedIndex]) return adminOptionId(options[oneBasedIndex], oneBasedIndex);
+    }
+  }
+  errors.push(`Question ${questionNumber}: no valid correct answer could be resolved.`);
+  return '';
+}
+
+function normalizeQuizData(raw) {
   const errors = [];
   const data = raw && typeof raw === 'object' ? raw : {};
   const rawQuestions = Array.isArray(data.questions) ? data.questions : [];
@@ -1668,14 +1729,14 @@ function validateQuizQuestionSet(raw) {
       };
     }) : [];
     if (options.length < 2) errors.push(`Question ${idString || index + 1} needs at least two options.`);
-    const optionIds = new Set(options.map(option => option.id));
-    const legacyCorrect = Number.isInteger(question.correct) ? options[question.correct]?.id : '';
-    const correctOption = String(question.correctOption || question.answer || legacyCorrect || '').trim();
-    if (!correctOption || !optionIds.has(correctOption)) errors.push(`Question ${idString || index + 1} has invalid correctOption.`);
+    options.forEach((option, optionIndex) => {
+      if (!localizedTextValue(option)) errors.push(`Question ${idString || index + 1}: option ${optionIndex + 1} has no text.`);
+    });
+    const correctOption = resolveAdminCorrectOption(question, options, idString || index + 1, errors);
     const feedback = question.feedback && typeof question.feedback === 'object'
       ? question.feedback
       : {
-          correct: question.explanation || 'Correct.',
+          correct: question.correctFeedback || question.explanation || 'Correct.',
           incorrect: question.incorrectFeedback || 'Please try again.'
         };
     return {
@@ -1684,7 +1745,7 @@ function validateQuizQuestionSet(raw) {
       options,
       correctOption,
       feedback: {
-        correct: normalizeLocalizedText(feedback.correct || question.explanation || 'Correct.'),
+        correct: normalizeLocalizedText(feedback.correct || question.correctFeedback || question.explanation || 'Correct.'),
         incorrect: normalizeLocalizedText(feedback.incorrect || 'Please review this concept.')
       }
     };
@@ -1696,9 +1757,13 @@ function validateQuizQuestionSet(raw) {
   };
 }
 
+const validateQuizQuestionSet = normalizeQuizData;
+
 window.handleQuizJsonUpload = (kind, file) => {
   const status = document.getElementById(`${kind}-quiz-status`);
   if (!file) return;
+  const fileName = document.getElementById(`${kind}-quiz-file-name`);
+  if (fileName) fileName.textContent = file.name;
   const reader = new FileReader();
   reader.onload = (event) => {
     let parsed;
@@ -1746,13 +1811,25 @@ window.handleQuizJsonUpload = (kind, file) => {
   reader.readAsText(file);
 };
 
+window.validateCurrentQuiz = (kind) => {
+  const status = document.getElementById(`${kind}-quiz-status`);
+  const state = uploadQuizState[kind];
+  if (!status) return;
+  status.className = `quiz-validation ${state?.questionSet ? 'success' : 'error'}`;
+  status.textContent = state?.questionSet
+    ? `${state.questionSet.questions.length} valid questions ready to save.`
+    : (state?.errors?.join(' ') || 'Choose a valid quiz JSON file first.');
+};
+
 window.clearQuizJson = (kind) => {
   uploadQuizState[kind] = kind === 'popup'
     ? { questionSet: null, errors: [], timestamps: [] }
     : { questionSet: null, errors: [] };
   const input = document.getElementById(`${kind}-quiz-file`);
+  const fileName = document.getElementById(`${kind}-quiz-file-name`);
   const status = document.getElementById(`${kind}-quiz-status`);
   if (input) input.value = '';
+  if (fileName) fileName.textContent = 'No file selected.';
   if (status) {
     status.className = 'quiz-validation';
     status.textContent = kind === 'popup' ? 'No Pop-up Quiz file selected.' : 'No Separate Quiz file selected.';
@@ -1761,11 +1838,17 @@ window.clearQuizJson = (kind) => {
   renderPopupTimestampList();
 };
 
+window.removeLessonQuiz = (kind) => {
+  clearQuizJson(kind);
+  const mode = document.getElementById('quiz-mode');
+  if (mode?.value === kind) mode.value = 'none';
+  updateQuizOptionVisibility();
+};
+
 window.updateQuizOptionVisibility = () => {
-  const separateEnabled = document.getElementById('quiz-separate-enabled')?.checked === true;
-  const popupEnabled = document.getElementById('quiz-popup-enabled')?.checked === true;
-  document.getElementById('separate-quiz-box')?.classList.toggle('show', separateEnabled);
-  document.getElementById('popup-quiz-box')?.classList.toggle('show', popupEnabled);
+  const mode = document.getElementById('quiz-mode')?.value || 'none';
+  document.getElementById('separate-quiz-box')?.classList.toggle('show', mode === 'separate');
+  document.getElementById('popup-quiz-box')?.classList.toggle('show', mode === 'popup');
 };
 
 function renderPopupQuestionSelector() {
@@ -1858,9 +1941,17 @@ function renderPopupTimestampList() {
   }
 }
 
-function buildQuizConfigForUpload() {
-  const separateEnabled = document.getElementById('quiz-separate-enabled')?.checked === true;
-  const popupEnabled = document.getElementById('quiz-popup-enabled')?.checked === true;
+function normalizeLessonQuizMode(lesson = {}) {
+  if (['none', 'separate', 'popup'].includes(lesson.quizMode)) return lesson.quizMode;
+  if (lesson.quizConfig?.popupQuiz?.enabled === true && lesson.quizConfig?.popupQuiz?.timestamps?.length) return 'popup';
+  if (lesson.quizConfig?.separateQuiz?.enabled === true || lesson.separateQuiz || lesson.separateQuizRef) return 'separate';
+  return 'none';
+}
+
+function buildQuizConfigForUpload(baseContent = null) {
+  const quizMode = document.getElementById('quiz-mode')?.value || 'none';
+  const separateEnabled = quizMode === 'separate';
+  const popupEnabled = quizMode === 'popup';
   if (separateEnabled && !uploadQuizState.separate.questionSet) {
     throw new Error('Separate Quiz is enabled, but its JSON is missing or invalid.');
   }
@@ -1870,19 +1961,27 @@ function buildQuizConfigForUpload() {
   if (popupEnabled && !uploadQuizState.popup.timestamps.length) {
     throw new Error('Pop-up Quiz needs at least one timestamp mapping.');
   }
-  const questionSets = {};
+  const questionSets = { ...(baseContent?.quizQuestionSets || {}) };
+  delete questionSets.separate;
+  const previousSeparateSetId = baseContent?.quizConfig?.separateQuiz?.questionSetId || '';
+  if (previousSeparateSetId) delete questionSets[previousSeparateSetId];
   const quizConfig = {
-    separateQuiz: { enabled: false, questionSetId: '' },
-    popupQuiz: {
+    ...(baseContent?.quizConfig || {}),
+    separateQuiz: {
+      ...(baseContent?.quizConfig?.separateQuiz || {}),
       enabled: false,
-      questionSetId: '',
+      questionSetId: baseContent?.quizConfig?.separateQuiz?.questionSetId || 'separate'
+    },
+    popupQuiz: {
+      ...(baseContent?.quizConfig?.popupQuiz || {}),
+      enabled: false,
+      questionSetId: baseContent?.quizConfig?.popupQuiz?.questionSetId || 'popup',
       requireAnswer: true,
       soundEnabled: true,
-      timestamps: []
+      timestamps: baseContent?.quizConfig?.popupQuiz?.timestamps || []
     }
   };
   if (separateEnabled) {
-    questionSets.separate = uploadQuizState.separate.questionSet;
     quizConfig.separateQuiz = { enabled: true, questionSetId: 'separate' };
   }
   if (popupEnabled) {
@@ -1898,8 +1997,44 @@ function buildQuizConfigForUpload() {
       }))
     };
   }
-  return { quizConfig, quizQuestionSets: questionSets };
+  return {
+    quizMode,
+    quizConfig,
+    quizQuestionSets: questionSets,
+    separateQuiz: separateEnabled
+      ? { version: 1, questionCount: uploadQuizState.separate.questionSet.questions.length }
+      : (baseContent?.separateQuiz || null),
+    separateQuizDocument: separateEnabled ? uploadQuizState.separate.questionSet : null
+  };
 }
+
+function buildDisabledQuizPayload() {
+  return {
+    quizMode: 'none',
+    quizConfig: {
+      separateQuiz: { enabled: false, questionSetId: 'separate' },
+      popupQuiz: { enabled: false, questionSetId: 'popup', requireAnswer: true, soundEnabled: true, timestamps: [] }
+    },
+    quizQuestionSets: {},
+    separateQuiz: null
+  };
+}
+
+window.previewSeparateQuiz = () => {
+  const questionSet = uploadQuizState.separate.questionSet;
+  if (!questionSet) return showToast('Upload and validate a Separate Quiz JSON file first.', 'error');
+  const previewId = `preview_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const videoUrl = document.getElementById('up-video-link')?.value.trim() || '';
+  localStorage.setItem(`ideakdcSeparateQuizPreview:${previewId}`, JSON.stringify({
+    createdAt: Date.now(),
+    title: document.getElementById('up-title')?.value.trim() || 'Separate Quiz Preview',
+    courseId: editingCourseId ? (allContent.find(item => item._id === editingCourseId)?.courseId || 'admin-preview') : 'admin-preview',
+    lessonId: editingCourseId || 'unsaved-preview',
+    videoUrl,
+    quizData: questionSet
+  }));
+  window.open(`index.html?adminQuizPreview=${encodeURIComponent(previewId)}`, '_blank', 'noopener');
+};
 
 window.loadQuizTimingPreview = async () => {
   const link = uploadType === 'playlist'
@@ -2052,8 +2187,58 @@ function withUploadTimeout(promise, timeoutMs, label) {
 }
 
 async function saveContentDoc(data, label = 'Firestore course save') {
+  const contentRef = doc(collection(db, 'content'));
+  const quizPayload = data.__separateQuizDocument || null;
+  const publicData = { ...data };
+  delete publicData.__separateQuizDocument;
+  if (quizPayload) {
+    publicData.separateQuizRef = `content/${contentRef.id}/quizzes/separate`;
+    publicData.separateQuizQuestionCount = quizPayload.questions.length;
+  }
+  const batch = writeBatch(db);
+  batch.set(contentRef, publicData);
+  if (quizPayload) {
+    batch.set(doc(db, 'content', contentRef.id, 'quizzes', 'separate'), {
+      version: 1,
+      title: quizPayload.title || 'Lesson Quiz',
+      questions: quizPayload.questions,
+      courseId: publicData.courseId,
+      lessonId: contentRef.id,
+      ownerUid: auth.currentUser?.uid || '',
+      published: true,
+      updatedAt: serverTimestamp()
+    });
+  }
   return withUploadTimeout(
-    addDoc(collection(db, 'content'), data),
+    batch.commit().then(() => contentRef),
+    25000,
+    `${label} timed out. Check Firestore permissions and internet connection.`
+  );
+}
+
+async function updateContentDocWithQuiz(contentId, data, quizPayload, label = 'Firestore lesson update') {
+  const contentRef = doc(db, 'content', contentId);
+  const publicData = { ...data };
+  if (quizPayload) {
+    publicData.separateQuizRef = `content/${contentId}/quizzes/separate`;
+    publicData.separateQuizQuestionCount = quizPayload.questions.length;
+  }
+  const batch = writeBatch(db);
+  batch.set(contentRef, publicData, { merge: true });
+  if (quizPayload) {
+    batch.set(doc(db, 'content', contentId, 'quizzes', 'separate'), {
+      version: 1,
+      title: quizPayload.title || 'Lesson Quiz',
+      questions: quizPayload.questions,
+      courseId: publicData.courseId,
+      lessonId: contentId,
+      ownerUid: auth.currentUser?.uid || '',
+      published: true,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  }
+  return withUploadTimeout(
+    batch.commit(),
     25000,
     `${label} timed out. Check Firestore permissions and internet connection.`
   );
@@ -2098,16 +2283,17 @@ window.uploadContent = async () => {
   const fp      = uploadFP;
   const faqs    = collectCourseFaqs();
   if (faqs === null) return;
+  const editingItem = editingCourseId ? allContent.find(item => item._id === editingCourseId) : null;
   let quizPayload;
   try {
-    quizPayload = buildQuizConfigForUpload();
+    quizPayload = buildQuizConfigForUpload(editingItem);
   } catch (error) {
     showVisibleUploadError(error);
     return;
   }
 
-  if (uploadMode === 'edit-course') {
-    return showToast('Edit existing course mode अलग action है। पहले content list से course select करें।', 'error');
+  if (uploadMode === 'edit-course' && !editingItem) {
+    return showToast('Select an exact lesson from Content before editing.', 'error');
   }
 
   if (uploadMode !== 'add-video-playlist') {
@@ -2120,7 +2306,7 @@ window.uploadContent = async () => {
   if (uploadMode !== 'add-video-playlist' && fp !== 'free' && (!price || price < 1)) return showToast('Course price सही डालें।','error');
 
   const link = uploadType === 'video' ? vidLink : plLink;
-  if (!link)    return showToast('YouTube link डालें।','error');
+  if (!link) return showToast('Video or playlist source डालें।', 'error');
 
   uploadInProgress = true;
   setBtn('upload-btn', 'upload-label', true, 'Checking upload setup...');
@@ -2134,7 +2320,38 @@ window.uploadContent = async () => {
   setUploading(true, uploadType==='playlist' ? 'Playlist se videos fetch ho rahi hain...' : 'Upload ho raha hai...');
 
   try {
-    if (uploadMode === 'add-video-playlist') {
+    if (uploadMode === 'edit-course') {
+      const sourceValue = vidLink || editingItem.videoUrl || editingItem.youtubeUrl || editingItem.videoId || editingItem.vid || '';
+      const source = normalizeUploadVideoSource(sourceValue);
+      const pricingState = normalizeUploadPricing(fp, price, makeCompleteVideoFree);
+      setUploadStatus('Updating this exact lesson and quiz...', 'info');
+      await withOperationTimeout(
+        updateContentDocWithQuiz(editingCourseId, {
+          courseId: editingItem.courseId,
+          title,
+          courseTitle: editingItem.courseTitle || title,
+          classNum: cls,
+          stream: uploadStream || editingItem.stream || '',
+          subject,
+          chapter,
+          topic,
+          videoId: source.videoId,
+          videoUrl: source.videoUrl,
+          videoSourceType: source.sourceType,
+          desc,
+          faqs,
+          quizMode: quizPayload.quizMode,
+          quizConfig: quizPayload.quizConfig,
+          quizQuestionSets: quizPayload.quizQuestionSets,
+          separateQuiz: quizPayload.separateQuiz,
+          quizUpdatedAt: serverTimestamp(),
+          ...pricingState,
+          updatedAt: serverTimestamp()
+        }, quizPayload.separateQuizDocument),
+        'Firestore lesson update'
+      );
+      showToast('Lesson and quiz updated successfully.', 'success');
+    } else if (uploadMode === 'add-video-playlist') {
       const targetCourseId = document.getElementById('existing-playlist-course')?.value || '';
       const targetItems = allContent
         .filter(item => item.courseId === targetCourseId && item.courseType === 'playlist')
@@ -2151,7 +2368,7 @@ window.uploadContent = async () => {
         return;
       }
 
-	      const videoId = extractVideoIdFromLink(vidLink);
+	      const source = normalizeUploadVideoSource(vidLink);
 	      const nextIndex = targetItems.reduce((max, item) => Math.max(max, Number(item.orderIndex || 0)), -1) + 1;
       const pricingState = normalizeUploadPricing(isContentMarkedFree(base) ? 'free' : fp, Number(base.price || price), makeCompleteVideoFree || isContentMarkedFree(base));
       setUploadStatus('Saving new playlist lesson...', 'info');
@@ -2166,15 +2383,21 @@ window.uploadContent = async () => {
         subject: base.subject || subject,
         chapter: base.chapter || chapter,
         topic: `${base.topic || topic} — Part ${nextIndex + 1}`,
-        videoId,
+        videoId: source.videoId,
+        videoUrl: source.videoUrl,
+        videoSourceType: source.sourceType,
         playlistId: base.playlistId || '',
-        firstVideoId: base.firstVideoId || videoId,
+        firstVideoId: base.firstVideoId || source.videoId,
         videoCount: targetItems.length + 1,
         thumbnailUrl: '',
         courseThumbnailUrl: courseThumbnailUrl || base.courseThumbnailUrl || base.thumbnailUrl || '',
         faqs: faqs.length ? faqs : (Array.isArray(base.faqs) ? base.faqs.slice(0, 8) : []),
+        quizMode: quizPayload.quizMode,
         quizConfig: quizPayload.quizConfig,
         quizQuestionSets: quizPayload.quizQuestionSets,
+        separateQuiz: quizPayload.separateQuiz,
+        __separateQuizDocument: quizPayload.separateQuizDocument,
+        quizUpdatedAt: serverTimestamp(),
         desc: desc || base.desc || '',
         ...pricingState,
         orderIndex: nextIndex,
@@ -2191,20 +2414,24 @@ window.uploadContent = async () => {
         return;
 	      }
 	      const courseId = uniqueCourseId('single');
-	      const videoId = extractVideoIdFromLink(link);
+	      const source = normalizeUploadVideoSource(link);
       const pricingState = normalizeUploadPricing(fp, price, makeCompleteVideoFree);
       setUploadStatus('Saving single-video course...', 'info');
 		      const createdDoc = await saveContentDoc({
         type: 'video', contentType: 'single', courseType: 'single', courseId,
         title, courseTitle: title, classNum: cls, stream: uploadStream || '',
-        subject, chapter, topic, videoId, playlistId: '', desc,
-        firstVideoId: videoId,
+        subject, chapter, topic, videoId: source.videoId, videoUrl: source.videoUrl, videoSourceType: source.sourceType, playlistId: '', desc,
+        firstVideoId: source.videoId,
         videoCount: 1,
         thumbnailUrl: '',
         courseThumbnailUrl: '',
         faqs,
+        quizMode: quizPayload.quizMode,
         quizConfig: quizPayload.quizConfig,
         quizQuestionSets: quizPayload.quizQuestionSets,
+        separateQuiz: quizPayload.separateQuiz,
+        __separateQuizDocument: quizPayload.separateQuizDocument,
+        quizUpdatedAt: serverTimestamp(),
         orderIndex: 0,
         ...pricingState,
         createdAt: serverTimestamp(),
@@ -2239,6 +2466,7 @@ window.uploadContent = async () => {
       const pricingState = normalizeUploadPricing(fp, price, makeCompleteVideoFree);
 	      for (let i = 0; i < videos.length; i++) {
 	        const v = videos[i];
+          const lessonQuizPayload = i === 0 ? quizPayload : buildDisabledQuizPayload();
 	        setUploadStatus(`Saving lesson ${i + 1} of ${videos.length}...`, 'info');
 		        const createdDoc = await saveContentDoc({
           type: 'video', // each playlist video becomes its own video entry
@@ -2261,8 +2489,12 @@ window.uploadContent = async () => {
           dur: v.duration,
           orderIndex: i,
           faqs,
-          quizConfig: quizPayload.quizConfig,
-          quizQuestionSets: quizPayload.quizQuestionSets,
+          quizMode: lessonQuizPayload.quizMode,
+          quizConfig: lessonQuizPayload.quizConfig,
+          quizQuestionSets: lessonQuizPayload.quizQuestionSets,
+          separateQuiz: lessonQuizPayload.separateQuiz,
+          __separateQuizDocument: lessonQuizPayload.separateQuizDocument,
+          quizUpdatedAt: serverTimestamp(),
           desc,
           ...pricingState,
           createdAt: serverTimestamp(),
@@ -2271,6 +2503,9 @@ window.uploadContent = async () => {
         createdContentIds.push(createdDoc.id);
       }
       queuePostUploadThumbnailRepair(createdContentIds);
+      if (quizPayload.quizMode !== 'none' && videos.length > 1) {
+        setUploadStatus('Playlist saved. The uploaded quiz is attached to lesson 1; use Edit lesson to configure other lessons independently.', 'warning');
+      }
       showToast(`✅ ${videos.length} videos playlist से upload हो गए!`,'success');
     } else {
       showToast('Upload mode सही select करें।', 'error');
@@ -2299,14 +2534,111 @@ window.setClassFilter = (cls, el) => {
 window.filterContent = () => renderContent();
 
 function adminQuizStatus(item = {}) {
-  const config = item.quizConfig || {};
-  const hasSeparate = config.separateQuiz?.enabled === true;
-  const hasPopup = config.popupQuiz?.enabled === true;
-  if (hasSeparate && hasPopup) return { label: 'Separate + Pop-up Quiz', className: 'free' };
-  if (hasSeparate) return { label: 'Separate Quiz', className: 'free' };
-  if (hasPopup) return { label: 'Pop-up Quiz', className: 'free' };
+  const mode = normalizeLessonQuizMode(item);
+  if (mode === 'separate') return { label: 'Separate Quiz', className: 'free' };
+  if (mode === 'popup') return { label: 'Pop-up Quiz', className: 'free' };
   return { label: 'No Quiz', className: 'paid' };
 }
+
+function loadQuizStateFromContent(item = {}) {
+  const mode = normalizeLessonQuizMode(item);
+  const sets = item.quizQuestionSets || {};
+  const separateSetId = item.quizConfig?.separateQuiz?.questionSetId || 'separate';
+  const popupSetId = item.quizConfig?.popupQuiz?.questionSetId || 'popup';
+  uploadQuizState.separate = {
+    questionSet: sets[separateSetId] || sets.separate || null,
+    errors: []
+  };
+  uploadQuizState.popup = {
+    questionSet: sets[popupSetId] || sets.popup || null,
+    errors: [],
+    timestamps: Array.isArray(item.quizConfig?.popupQuiz?.timestamps)
+      ? item.quizConfig.popupQuiz.timestamps.map(row => ({
+          questionId: String(row.questionId || ''),
+          timeSeconds: Number(row.timeSeconds || 0)
+        }))
+      : []
+  };
+  const modeSelect = document.getElementById('quiz-mode');
+  if (modeSelect) modeSelect.value = mode;
+  ['separate', 'popup'].forEach(kind => {
+    const questionSet = uploadQuizState[kind].questionSet;
+    const status = document.getElementById(`${kind}-quiz-status`);
+    const fileName = document.getElementById(`${kind}-quiz-file-name`);
+    if (status) {
+      status.className = `quiz-validation ${questionSet ? 'success' : ''}`;
+      status.textContent = questionSet
+        ? `${questionSet.questions?.length || 0} saved questions loaded.`
+        : `No ${kind === 'popup' ? 'Pop-up' : 'Separate'} Quiz file selected.`;
+    }
+    if (fileName) fileName.textContent = questionSet ? 'Saved quiz loaded from this lesson.' : 'No file selected.';
+  });
+  const requireAnswer = document.getElementById('popup-require-answer');
+  const soundEnabled = document.getElementById('popup-sound-enabled');
+  if (requireAnswer) requireAnswer.checked = item.quizConfig?.popupQuiz?.requireAnswer !== false;
+  if (soundEnabled) soundEnabled.checked = item.quizConfig?.popupQuiz?.soundEnabled !== false;
+  updateQuizOptionVisibility();
+  renderPopupQuestionSelector();
+  renderPopupTimestampList();
+}
+
+window.beginEditContent = async (contentId) => {
+  const item = allContent.find(row => row._id === contentId);
+  if (!item) return showToast('Lesson could not be loaded for editing.', 'error');
+  switchPanel('upload', document.getElementById('btab-upload'));
+  uploadMode = 'edit-course';
+  editingCourseId = contentId;
+  selectedCourseId = item.courseId || '';
+  selectedCourseRef = item;
+  uploadType = 'video';
+  syncUploadModeButtons();
+  document.getElementById('vid-link-group').style.display = 'block';
+  document.getElementById('pl-link-group').style.display = 'none';
+  document.getElementById('up-class').value = item.classNum || '';
+  onClassChange();
+  if (item.stream) selectStream(item.stream);
+  document.getElementById('up-subject').value = item.subject || '';
+  document.getElementById('up-chapter').value = item.chapter || '';
+  document.getElementById('up-topic').value = item.topic || '';
+  document.getElementById('up-title').value = item.title || '';
+  document.getElementById('up-desc').value = item.desc || item.description || '';
+  document.getElementById('up-video-link').value = item.videoUrl || item.youtubeUrl || item.videoId || item.vid || '';
+  document.getElementById('up-price').value = Number(item.price ?? item.amount ?? item.coursePrice ?? 450);
+  document.getElementById('up-free-complete').checked = item.isFree === true;
+  setFP(isContentMarkedFree(item) ? 'free' : 'paid');
+  for (let index = 1; index <= 8; index++) {
+    const faq = Array.isArray(item.faqs) ? item.faqs[index - 1] : null;
+    document.getElementById(`faq-q-${index}`).value = faq?.question || '';
+    document.getElementById(`faq-a-${index}`).value = faq?.answer || '';
+  }
+  loadQuizStateFromContent(item);
+  if (normalizeLessonQuizMode(item) === 'separate') {
+    try {
+      const quizSnap = await getDoc(doc(db, 'content', contentId, 'quizzes', 'separate'));
+      if (quizSnap.exists()) {
+        const savedQuiz = quizSnap.data();
+        uploadQuizState.separate.questionSet = {
+          title: savedQuiz.title || 'Lesson Quiz',
+          questions: Array.isArray(savedQuiz.questions) ? savedQuiz.questions : []
+        };
+        uploadQuizState.separate.errors = [];
+        const status = document.getElementById('separate-quiz-status');
+        const fileName = document.getElementById('separate-quiz-file-name');
+        if (status) {
+          status.className = 'quiz-validation success';
+          status.textContent = `${uploadQuizState.separate.questionSet.questions.length} protected questions loaded.`;
+        }
+        if (fileName) fileName.textContent = 'Saved protected quiz loaded from this lesson.';
+      }
+    } catch (error) {
+      console.warn('[IdeaKDC admin quiz edit]', error?.code || error?.message || error);
+      setUploadStatus('Lesson loaded, but its Separate Quiz could not be read. Retry before replacing it.', 'warning');
+    }
+  }
+  setBtn('upload-btn', 'upload-label', false, 'Update this lesson');
+  setUploadStatus(`Editing lesson ${contentId}. Course ID will remain ${item.courseId || 'unchanged'}.`, 'info');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
 
 function adminCourseKindLabel(item = {}) {
   const kind = String(item.courseType || item.contentType || item.type || 'video').toLowerCase();
@@ -2361,6 +2693,7 @@ function renderContent() {
       </div>
       ${c.desc ? `<div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">${c.desc}</div>` : ''}
       <div class="content-item-actions">
+        <button class="btn-edit" type="button" onclick="beginEditContent('${c._id}')">Edit lesson</button>
         <button class="btn-delete" onclick="deleteContent('${c._id}','${(c.title||'').replace(/'/g,'')}')">🗑️ Delete</button>
       </div>
     </div>`;
