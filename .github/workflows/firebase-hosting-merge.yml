@@ -42,12 +42,6 @@ jobs:
           npm run lint
           npm run build
           npm test
-      - name: Authenticate Firebase deployment
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IDEAKDC_24B0B }}
-      - name: Deploy Functions and quiz rules
-        run: npx --yes firebase-tools@15.24.0 deploy --only functions,firestore:rules --project ideakdc-24b0b --non-interactive
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
