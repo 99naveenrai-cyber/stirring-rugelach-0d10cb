@@ -612,9 +612,12 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .interactive-lesson-panel .quiz-save-status{opacity:.74;text-align:right}
 .quiz-sound-toggle{border:1px solid rgba(103,173,255,.28);background:linear-gradient(90deg,rgba(22,67,129,.12),rgba(22,67,129,.04));border-radius:999px;padding:.38rem .65rem;font-size:.74rem;font-weight:900;color:#dbeafe}
 .quiz-sparkle{position:absolute;width:8px;height:8px;border-radius:50%;background:#8fffc9;box-shadow:0 0 18px rgba(143,255,201,1),0 0 38px rgba(67,255,173,.65);pointer-events:none;z-index:8}
+.quiz-confetti-layer{position:fixed;inset:0;z-index:2147483000;overflow:hidden;pointer-events:none;contain:strict}
+.quiz-confetti-piece{position:absolute;left:0;top:0;width:var(--confetti-width,8px);height:var(--confetti-height,12px);border-radius:2px;background:var(--confetti-color,#43ffad);box-shadow:0 0 12px var(--confetti-color,#43ffad);opacity:0;will-change:transform,opacity;animation:quizConfettiRise var(--confetti-duration,1100ms) cubic-bezier(.16,.72,.26,1) var(--confetti-delay,0ms) forwards}
 @keyframes quizWave{0%,100%{transform:translateX(-6%)}50%{transform:translateX(6%)}}
 @keyframes quizWrongShake{0%,100%{transform:translateX(0)}18%{transform:translateX(-7px)}36%{transform:translateX(6px)}54%{transform:translateX(-4px)}72%{transform:translateX(3px)}}
 @keyframes quizInlineFeedback{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes quizConfettiRise{0%{opacity:0;transform:translate3d(0,10px,0) rotate(0deg) scale(.72)}10%{opacity:1}68%{opacity:1}100%{opacity:0;transform:translate3d(var(--confetti-x,0),var(--confetti-y,-150px),0) rotate(var(--confetti-spin,360deg)) scale(.58)}}
 @media(orientation:landscape){.lesson-player-stage{--quiz-width:min(78%,760px);--quiz-font-scale:clamp(.74rem,1.45vw,.98rem)}.popup-quiz-layer,.interactive-lesson-layer{inset:0}.popup-quiz-card,.interactive-lesson-panel{max-height:82%;overflow:visible}.quiz-options{grid-template-columns:1fr 1fr}}
 @media(orientation:landscape){.video-page.video-quiz-layout.quiz-active{display:grid;grid-template-columns:minmax(300px,calc(var(--lesson-video-size) * 1vw)) minmax(360px,1fr);grid-template-areas:"back back" "header header" "player quiz" "title quiz" "playlist playlist" "qa qa";gap:.75rem;align-items:start;width:min(100%,1580px);max-width:1580px;padding-left:.75rem;padding-right:.75rem}.video-page.video-quiz-layout.quiz-active>.back-btn{grid-area:back;justify-self:start}.video-page.video-quiz-layout.quiz-active>#course-viewer-header{grid-area:header}.video-page.video-quiz-layout.quiz-active>#lesson-player-stage{grid-area:player;position:sticky;top:calc(var(--nav-h) + 8px);margin:0}.video-page.video-quiz-layout.quiz-active>#video-title{grid-area:title}.video-page.video-quiz-layout.quiz-active>#selected-lesson-info{grid-area:quiz;min-width:0}.video-page.video-quiz-layout.quiz-active>#full-playlist{grid-area:playlist}.video-page.video-quiz-layout.quiz-active>#course-qa-slot{grid-area:qa}.video-page.video-quiz-layout.quiz-active .lesson-player-stage .video-wrap{min-height:0}.video-page.video-quiz-layout.quiz-active .quiz-panel{margin:0;max-height:calc(100dvh - var(--nav-h) - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 20px);overflow-y:auto;padding-bottom:1rem}.video-page.video-quiz-layout.quiz-active .quiz-panel .lesson-action-row{position:static;left:auto;bottom:auto;z-index:auto;width:100%;transform:none;margin:1rem 0 0;padding:.28rem;background:transparent;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}.video-page.video-quiz-layout.quiz-active .quiz-panel .quiz-navigation{position:static;left:auto;right:auto;top:auto;bottom:auto;transform:none;margin:16px 0 0}.video-page.video-quiz-layout.quiz-active .quiz-nav-btn{min-height:38px}}
 @media(orientation:landscape) and (max-height:520px){.video-page.video-quiz-layout.quiz-active{grid-template-columns:minmax(220px,32vw) minmax(0,1fr);grid-template-areas:"player quiz" "title quiz" "playlist playlist" "qa qa";gap:.45rem;padding:.35rem .5rem calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 8px)}.video-page.video-quiz-layout.quiz-active>.back-btn,.video-page.video-quiz-layout.quiz-active>#course-viewer-header{display:none}.video-page.video-quiz-layout.quiz-active>#lesson-player-stage{top:.35rem}.video-page.video-quiz-layout.quiz-active .quiz-panel{max-height:calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 12px);padding:.5rem}.video-page.video-quiz-layout.quiz-active .quiz-panel h2{font-size:clamp(.86rem,2.2vw,.98rem);margin-bottom:.18rem}.video-page.video-quiz-layout.quiz-active .quiz-panel .qtext{font-size:clamp(.78rem,1.9vw,.92rem);line-height:1.08;margin:.14rem 0 .28rem}.video-page.video-quiz-layout.quiz-active .quiz-options{gap:4px}.video-page.video-quiz-layout.quiz-active .quiz-option{min-height:34px;padding:4px 6px;font-size:clamp(.74rem,1.7vw,.86rem);line-height:1.08}.video-page.video-quiz-layout.quiz-active .quiz-option-id{width:1.45em;height:1.45em}.video-page.video-quiz-layout.quiz-active .quiz-line-hi{font-size:.78em}.video-page.video-quiz-layout.quiz-active .option-inline-feedback{font-size:clamp(.68rem,1.65vw,.8rem);padding-bottom:0}.video-page.video-quiz-layout.quiz-active .quiz-panel .lesson-action-row{margin:.4rem 0 0}.video-page.video-quiz-layout.quiz-active .quiz-panel .quiz-navigation{margin:.45rem 0 0;gap:7px}.video-page.video-quiz-layout.quiz-active .quiz-nav-btn{min-height:30px;font-size:clamp(.7rem,1.8vw,.82rem);padding:4px 10px}}
@@ -4442,26 +4445,39 @@ function launchQuizConfetti(container, kind = 'correct', size = 'small') {
   const colors = kind === 'correct'
     ? ['#8fffc9', '#43ffad', '#7dd3fc', '#bbf7d0', '#fde68a']
     : ['#ffb6c0', '#ff4860', '#fecdd3', '#fda4af'];
-  const host = container.closest?.('.interactive-lesson-panel') || container.closest?.('.popup-quiz-card') || container;
-  const hostRect = host.getBoundingClientRect?.();
   const itemRect = container.getBoundingClientRect?.();
-  const baseLeft = hostRect && itemRect ? itemRect.left - hostRect.left + itemRect.width / 2 : 180;
-  const baseTop = hostRect && itemRect ? itemRect.top - hostRect.top + itemRect.height / 2 : 120;
+  if (!itemRect) return;
+  const layer = document.createElement('div');
+  layer.className = 'quiz-confetti-layer';
+  layer.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(layer);
+  const baseLeft = itemRect.left + itemRect.width / 2;
+  const baseTop = itemRect.top + itemRect.height * .62;
   const isBig = size === 'big' || kind === 'result';
   const count = kind === 'correct' ? (isBig ? 96 : 34) : 12;
+  let longestDuration = 0;
   for (let i = 0; i < count; i++) {
     const piece = document.createElement('span');
-    piece.className = 'quiz-sparkle';
+    piece.className = 'quiz-confetti-piece';
     const spread = kind === 'correct' ? (isBig ? 310 : 170) : 78;
-    piece.style.cssText += `left:${baseLeft + (Math.random() - .5) * spread}px;top:${baseTop + (Math.random() - .5) * 36}px;background:${colors[i % colors.length]}`;
-    host.appendChild(piece);
     const lift = kind === 'correct' ? (isBig ? 230 + Math.random() * 260 : 110 + Math.random() * 150) : 42 + Math.random() * 58;
-    const anim = piece.animate([
-      { transform: 'translate(0,0) scale(1)', opacity: 1 },
-      { transform: `translate(${(Math.random()-.5)*(kind === 'correct' ? (isBig ? 360 : 220) : 95)}px, ${-lift}px) scale(.24)`, opacity: 0 }
-    ], { duration: (kind === 'correct' ? (isBig ? 1650 : 980) : 620) + Math.random()*420, easing: 'cubic-bezier(.15,.6,.4,1)' });
-    anim.onfinish = () => piece.remove();
+    const duration = Math.round((kind === 'correct' ? (isBig ? 1650 : 980) : 620) + Math.random() * 420);
+    const delay = Math.round(Math.random() * (isBig ? 180 : 90));
+    longestDuration = Math.max(longestDuration, duration + delay);
+    piece.style.left = `${baseLeft + (Math.random() - .5) * spread}px`;
+    piece.style.top = `${baseTop + (Math.random() - .5) * 28}px`;
+    piece.style.setProperty('--confetti-color', colors[i % colors.length]);
+    piece.style.setProperty('--confetti-width', `${5 + Math.random() * 5}px`);
+    piece.style.setProperty('--confetti-height', `${8 + Math.random() * 8}px`);
+    piece.style.setProperty('--confetti-x', `${(Math.random() - .5) * (kind === 'correct' ? (isBig ? 360 : 220) : 95)}px`);
+    piece.style.setProperty('--confetti-y', `${-lift}px`);
+    piece.style.setProperty('--confetti-spin', `${(Math.random() - .5) * 1080}deg`);
+    piece.style.setProperty('--confetti-duration', `${duration}ms`);
+    piece.style.setProperty('--confetti-delay', `${delay}ms`);
+    piece.addEventListener('animationend', () => piece.remove(), { once: true });
+    layer.appendChild(piece);
   }
+  window.setTimeout(() => layer.remove(), longestDuration + 250);
 }
 
 function triggerQuizMilestone(container, count, forceResult = false) {
