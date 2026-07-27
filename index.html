@@ -4774,16 +4774,13 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
     <div class="quiz-save-status" aria-live="polite"></div>
     <div class="quiz-navigation">
       <button class="quiz-nav-btn quiz-nav-prev" type="button" id="lesson-quiz-prev" ${index === 0 ? 'disabled' : ''}>Previous</button>
-      <button class="quiz-nav-btn quiz-nav-next" type="button" id="lesson-quiz-next">${index + 1 < quizData.questions.length ? 'Next' : 'Finish'}</button>
+      <button class="quiz-nav-btn quiz-nav-next" type="button" id="lesson-quiz-next" ${quizData._correctAnswers[questionId] ? '' : 'disabled'}>${index + 1 < quizData.questions.length ? 'Next' : 'Finish'}</button>
     </div>`;
   const savedResponse = quizData._responses[questionId];
   if (savedResponse?.selectedOption) {
     const savedSelected = holder.querySelector(`[data-option-id="${CSS.escape(savedResponse.selectedOption)}"]`);
     const savedCorrect = savedResponse.correct === true;
     savedSelected?.classList.add(savedCorrect ? 'is-correct' : 'is-wrong');
-    if (!savedCorrect && correctOptionId) {
-      holder.querySelector(`[data-option-id="${CSS.escape(correctOptionId)}"]`)?.classList.add('is-correct');
-    }
     const savedFeedback = savedSelected?.closest('.quiz-option-shell')?.querySelector('.option-inline-feedback') || holder.querySelector('.quiz-feedback');
     if (savedFeedback) {
       savedFeedback.className = savedFeedback.classList.contains('option-inline-feedback')
@@ -4810,6 +4807,8 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
           quizData._correctCount += 1;
           triggerQuizMilestone(holder, quizData._correctCount);
         }
+        const nextButton = holder.querySelector('#lesson-quiz-next');
+        if (nextButton) nextButton.disabled = false;
       }
       submitQuizAnswer(course, lesson, mode, question, selectedOption, holder, quizData.popupQuiz).then(result => {
         const qid = String(question.id);
@@ -4818,6 +4817,8 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
           quizData._correctCount += 1;
           triggerQuizMilestone(holder, quizData._correctCount);
           if (quizData._responses[qid]) quizData._responses[qid].correct = true;
+          const nextButton = holder.querySelector('#lesson-quiz-next');
+          if (nextButton) nextButton.disabled = false;
         }
       });
     });
@@ -4876,9 +4877,6 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
   if (localCorrect !== null) {
     if (selected) void selected.offsetWidth;
     selected?.classList.add(localCorrect ? 'is-correct' : 'is-wrong');
-    if (!localCorrect && correctOptionId) {
-      container.querySelector(`[data-option-id="${CSS.escape(correctOptionId)}"]`)?.classList.add('is-correct');
-    }
     const targetFeedback = inlineFeedback || feedback;
     if (targetFeedback) {
       targetFeedback.className = inlineFeedback
@@ -5116,14 +5114,11 @@ function showTimedPopupQuestion(question, popupConfig, player) {
           return `<div class="quiz-option-shell" style="--option-index:${optionIndex}"><button type="button" class="quiz-option" data-option-id="${escapeHtml(optionId)}"><span class="quiz-option-content">${renderQuizOptionContent(option, optionIndex)}</span></button><div class="option-inline-feedback" aria-live="polite"></div></div>`;
         }).join('')}
       </div>
-      ${popupConfig?.requireAnswer === false ? '<button type="button" class="quiz-sound-toggle" id="popup-skip-btn">Skip</button>' : ''}
       <div class="quiz-feedback" aria-live="polite"></div>
       <div class="quiz-save-status" aria-live="polite"></div>
     </div>`;
   overlayRoot.appendChild(layer);
   requestAnimationFrame(() => layer.classList.add('show'));
-  const skip = layer.querySelector('#popup-skip-btn');
-  if (skip) skip.onclick = () => dismissPopup(layer);
   const correctResolution = resolveQuizCorrectOption(question);
   const correctOptionId = correctResolution.optionId;
   layer.querySelectorAll('.quiz-option').forEach(button => {
