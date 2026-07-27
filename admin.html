@@ -1737,7 +1737,7 @@ function normalizeQuizData(raw) {
     const feedback = question.feedback && typeof question.feedback === 'object'
       ? question.feedback
       : {
-          correct: question.correctFeedback || question.explanation || 'Correct.',
+          correct: question.correctFeedback || 'Correct.',
           incorrect: question.incorrectFeedback || 'Please try again.'
         };
     return {
@@ -1746,8 +1746,8 @@ function normalizeQuizData(raw) {
       options,
       correctOption,
       feedback: {
-        correct: normalizeLocalizedText(feedback.correct || question.correctFeedback || question.explanation || 'Correct.'),
-        incorrect: normalizeLocalizedText(feedback.incorrect || 'Please review this concept.')
+        correct: normalizeLocalizedText(feedback.correct || question.correctFeedback || 'Correct.'),
+        incorrect: normalizeLocalizedText(feedback.incorrect || question.incorrectFeedback || 'Please try again.')
       }
     };
   });
