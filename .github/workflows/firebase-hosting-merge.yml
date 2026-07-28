@@ -114,6 +114,7 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state=success \
             -f context='ideakdc/firebase-deploy' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
             -f description='Firebase deployment workflow passed'
       - name: Report Firebase deployment failure
         if: failure()
@@ -123,6 +124,7 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state=failure \
             -f context='ideakdc/firebase-deploy' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
             -f description='Firebase deployment workflow failed'
 
 # Security hardening deployment trigger
