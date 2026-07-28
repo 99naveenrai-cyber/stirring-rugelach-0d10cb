@@ -1,7 +1,3 @@
-Exit code: 0
-Wall time: 0.7 seconds
-Total output lines: 2951
-Output:
 <!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -271,7 +267,2262 @@ body{padding-bottom:65px}
     <div class="stats-row">
       <div class="stat-card"><div class="stat-label">Total Enrollments</div><div class="stat-value total" id="stat-total">—</div></div>
       <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending" id="stat-pending">—</div></div>
-      <…25643 tokens truncated…g,
+      <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value approved" id="stat-approved">—</div></div>
+      <div class="stat-card"><div class="stat-label">Total Content</div><div class="stat-value courses" id="stat-content">—</div></div>
+    </div>
+    <!-- Recent enrollments preview -->
+    <div class="form-card">
+      <div class="form-card-title">⏳ Recent Pending</div>
+      <div id="recent-pending"></div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: UPLOAD ══ -->
+  <div class="panel" id="panel-upload">
+    <div class="panel-title">➕ Content Upload</div>
+
+    <div class="form-card" id="migrate-card" style="display:none;border:2px dashed var(--accent)">
+      <div class="form-card-title">🔄 पुराना Data Migrate करें</div>
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:.8rem">
+        आपका पुराना "Fluid Dynamics" course मिला है। इसे नए structure (Class → Subject → Chapter → Topic) में migrate करें।
+      </div>
+      <button class="btn-submit" style="background:var(--green)" onclick="migrateOldCourses()">
+        <span id="migrate-label">🔄 Migrate करें</span>
+      </button>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">Upload Mode</div>
+      <div class="upload-mode-grid">
+        <button class="upload-mode-btn active" id="mode-create-single" onclick="setUploadMode('create-single')">Create single-video course</button>
+        <button class="upload-mode-btn" id="mode-create-playlist" onclick="setUploadMode('create-playlist')">Create playlist course</button>
+        <button class="upload-mode-btn" id="mode-add-video-playlist" onclick="setUploadMode('add-video-playlist')">Add video to existing playlist</button>
+        <button class="upload-mode-btn" id="mode-edit-course" onclick="setUploadMode('edit-course')">Edit existing course</button>
+      </div>
+      <div class="mode-help" id="upload-mode-help">New upload will create a fresh courseId.</div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">Public Thumbnail Repair</div>
+      <div class="mode-help" style="margin-bottom:.7rem">
+        One-time safe migration: copy only non-protected thumbnail fields into the public thumbnailUrl metadata. It skips YouTube thumbnails that reveal a paid video ID.
+      </div>
+      <div class="mode-help" style="font-size:.7rem;color:var(--muted);margin-bottom:.55rem">Admin build: thumbnail-repair-v2</div>
+      <div class="thumbnail-repair-actions" aria-label="Thumbnail repair controls">
+        <button class="btn-submit" id="diagnose-thumbnails-btn" type="button" style="background:var(--accent)" onclick="diagnosePublicCourseThumbnails()">
+          Diagnose Live Thumbnails
+        </button>
+        <button class="btn-submit" id="deep-diagnose-thumbnails-btn" type="button" style="background:#0f766e" onclick="diagnoseDeepCourseThumbnails()">
+          Deep Thumbnail Diagnosis
+        </button>
+        <button class="btn-submit" id="repair-thumbnails-btn" type="button" style="background:var(--blue)" onclick="repairPublicCourseThumbnails()">
+          Repair All Missing Thumbnails
+        </button>
+      </div>
+      <div id="thumbnail-repair-status" class="mode-help thumbnail-repair-status" aria-live="polite"></div>
+      <div id="thumbnail-repair-summary" class="mode-help" style="margin-top:.65rem"></div>
+      <div id="thumbnail-diagnostic-output" style="margin-top:.8rem"></div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">📹 Upload Type</div>
+      <div class="type-toggle">
+        <button class="type-btn active" id="type-video" onclick="setType('video')">🎬 Single Video</button>
+        <button class="type-btn" id="type-playlist" onclick="setType('playlist')">📋 Playlist</button>
+      </div>
+      <div class="form-group" id="existing-playlist-group" style="display:none">
+        <label>Existing Playlist Course</label>
+        <select id="existing-playlist-course">
+          <option value="">-- Select playlist course --</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">🏫 Class & Subject</div>
+
+      <!-- Class selector -->
+      <div class="form-group">
+        <label>Class</label>
+        <select id="up-class" onchange="onClassChange()">
+          <option value="">-- Class Select करें --</option>
+          <option>5</option><option>6</option><option>7</option>
+          <option>8</option><option>9</option><option>10</option>
+          <option>11</option><option>12</option>
+        </select>
+      </div>
+
+      <!-- Stream (only for 11/12) -->
+      <div class="form-group" id="stream-group" style="display:none">
+        <label>Stream</label>
+        <div class="stream-pills">
+          <button type="button" class="stream-pill" onclick="selectStream('science')" id="sp-science">🔬 Science</button>
+          <button type="button" class="stream-pill" onclick="selectStream('commerce')" id="sp-commerce">📈 Commerce</button>
+          <button type="button" class="stream-pill" onclick="selectStream('humanities')" id="sp-humanities">📖 Humanities</button>
+        </div>
+      </div>
+
+      <!-- Subject -->
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="up-subject">
+          <option value="">-- पहले Class Select करें --</option>
+        </select>
+      </div>
+
+      <!-- Chapter & Topic -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Chapter</label>
+          <input type="text" id="up-chapter" placeholder="जैसे Chapter 1">
+        </div>
+        <div class="form-group">
+          <label>Topic</label>
+          <input type="text" id="up-topic" placeholder="जैसे Introduction">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">📝 Content Details</div>
+
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="up-title" placeholder="Video या Playlist का title">
+      </div>
+
+      <div class="form-group">
+        <label>Course Price</label>
+        <input type="number" id="up-price" min="1" step="1" value="450" placeholder="450">
+      </div>
+
+      <div class="form-group">
+        <label>Course Thumbnail</label>
+        <div class="mode-help">Thumbnail will be generated automatically from the YouTube video on the server after upload.</div>
+      </div>
+
+      <div class="form-group" id="vid-link-group">
+        <label>Full Paid Video URL or ID</label>
+        <input type="text" id="up-video-link" placeholder="https://youtu.be/xxxxx या Video ID">
+      </div>
+
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:.5rem;font-weight:800">
+          <input type="checkbox" id="up-free-complete" style="width:auto">
+          Make this complete video free
+        </label>
+        <div class="mode-help">Default is locked/paid. Enable this only when the complete video may be watched without purchase.</div>
+      </div>
+
+      <div class="form-group" id="pl-link-group" style="display:none">
+        <label>YouTube Playlist Link</label>
+        <input type="text" id="up-playlist-link" placeholder="https://youtube.com/playlist?list=xxxxx">
+      </div>
+
+      <div class="form-group">
+        <label for="quiz-mode">Quiz Mode</label>
+        <select class="quiz-mode-select" id="quiz-mode" onchange="updateQuizOptionVisibility()">
+          <option value="none">No Quiz</option>
+          <option value="separate">Separate Quiz</option>
+          <option value="popup">Popup Timed Quiz</option>
+        </select>
+        <div class="mode-help">Separate Quiz appears beside this lesson. Popup Timed Quiz keeps the existing timestamp flow.</div>
+      </div>
+
+      <div class="quiz-config-box" id="separate-quiz-box">
+        <div class="form-group">
+          <label>Upload Question JSON File</label>
+          <input type="file" id="separate-quiz-file" accept="application/json,.json" onchange="handleQuizJsonUpload('separate', this.files && this.files[0])">
+          <div class="quiz-file-name" id="separate-quiz-file-name">No file selected.</div>
+          <div class="quiz-validation" id="separate-quiz-status">No Separate Quiz file selected.</div>
+          <div class="quiz-action-row">
+            <button type="button" class="small-action-btn" onclick="validateCurrentQuiz('separate')">Validate JSON</button>
+            <button type="button" class="small-action-btn" onclick="document.getElementById('separate-quiz-file').click()">Replace Quiz</button>
+            <button type="button" class="small-action-btn" onclick="removeLessonQuiz('separate')">Remove Quiz</button>
+            <button type="button" class="small-action-btn" onclick="previewSeparateQuiz()">Preview Separate Quiz</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-config-box" id="popup-quiz-box">
+        <div class="form-group">
+          <label>Step 1 - Upload JSON file of question set</label>
+          <input type="file" id="popup-quiz-file" accept="application/json,.json" onchange="handleQuizJsonUpload('popup', this.files && this.files[0])">
+          <div class="quiz-validation" id="popup-quiz-status">No Pop-up Quiz file selected.</div>
+          <button type="button" class="small-action-btn" onclick="clearQuizJson('popup')">Remove Pop-up Quiz File</button>
+        </div>
+        <div class="form-group">
+          <label>Video timing helper</label>
+          <div class="mode-help">Paste the video URL above, then load this preview to use the current video time.</div>
+          <button type="button" class="small-action-btn" onclick="loadQuizTimingPreview()">Load video preview</button>
+          <div class="admin-video-preview" id="quiz-video-preview"><div id="quiz-preview-player"></div></div>
+        </div>
+        <div class="form-group">
+          <label>Step 2 - Set timestamp with question number</label>
+          <div class="timestamp-builder">
+            <select id="popup-question-select"><option value="">Upload JSON first</option></select>
+            <input type="number" id="popup-minutes" min="0" value="0" placeholder="Minutes">
+            <input type="number" id="popup-seconds" min="0" max="59" value="0" placeholder="Seconds">
+            <button type="button" class="small-action-btn" onclick="useCurrentVideoTimeForPopup()">Use Current Video Time</button>
+            <button type="button" class="small-action-btn" onclick="addPopupTimestamp()">Add timestamp</button>
+          </div>
+          <div class="timestamp-list" id="popup-timestamp-list"></div>
+          <div class="quiz-validation" id="popup-timestamp-status">No timestamps mapped yet.</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:.5rem;font-weight:800;margin-top:.5rem">
+          <input type="checkbox" id="popup-require-answer" checked style="width:auto">
+          Answer required before continuing
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;font-weight:800;margin-top:.5rem">
+          <input type="checkbox" id="popup-sound-enabled" checked style="width:auto">
+          Quiz sounds enabled by default
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>Description (Optional)</label>
+        <textarea id="up-desc" placeholder="इस video/playlist के बारे में बताएं..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Questions & Answers (Optional)</label>
+        <div class="faq-fields" id="faq-fields">
+          <div class="faq-row"><div class="faq-row-title">Question 1</div><input type="text" id="faq-q-1" placeholder="What will you learn in this course?"><textarea id="faq-a-1" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 2</div><input type="text" id="faq-q-2" placeholder="Who should watch this course?"><textarea id="faq-a-2" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 3</div><input type="text" id="faq-q-3" placeholder="What prior knowledge is required?"><textarea id="faq-a-3" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 4</div><input type="text" id="faq-q-4" placeholder="What topics are covered?"><textarea id="faq-a-4" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 5</div><input type="text" id="faq-q-5" placeholder="How should this lesson be studied?"><textarea id="faq-a-5" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 6</div><input type="text" id="faq-q-6" placeholder="What practice should be done after watching?"><textarea id="faq-a-6" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 7</div><input type="text" id="faq-q-7" placeholder="What common mistakes should be avoided?"><textarea id="faq-a-7" placeholder="Answer"></textarea></div>
+          <div class="faq-row"><div class="faq-row-title">Question 8</div><input type="text" id="faq-q-8" placeholder="What should the student do next?"><textarea id="faq-a-8" placeholder="Answer"></textarea></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Free or Paid?</label>
+        <div class="free-paid-toggle">
+          <button type="button" class="fp-btn" id="fp-free" onclick="setFP('free')">🆓 Free Course</button>
+          <button type="button" class="fp-btn active-paid" id="fp-paid" onclick="setFP('paid')">💎 Paid Course</button>
+        </div>
+      </div>
+
+      <div id="upload-status" class="mode-help upload-status" aria-live="polite"></div>
+
+      <button type="button" class="btn-submit" id="upload-btn" onclick="uploadContent()">
+        <span id="upload-label">✅ Content Upload करें</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: CONTENT ══ -->
+  <div class="panel" id="panel-content">
+    <div class="panel-title">📚 Uploaded Content</div>
+
+    <!-- Filters -->
+    <input class="content-search" type="text" placeholder="🔍 Title, subject, chapter search करें..." oninput="filterContent()">
+
+    <div class="content-filters" id="class-filter-chips">
+      <div class="filter-chip active" onclick="setClassFilter('all',this)">All</div>
+      <div class="filter-chip" onclick="setClassFilter('5',this)">Class 5</div>
+      <div class="filter-chip" onclick="setClassFilter('6',this)">Class 6</div>
+      <div class="filter-chip" onclick="setClassFilter('7',this)">Class 7</div>
+      <div class="filter-chip" onclick="setClassFilter('8',this)">Class 8</div>
+      <div class="filter-chip" onclick="setClassFilter('9',this)">Class 9</div>
+      <div class="filter-chip" onclick="setClassFilter('10',this)">Class 10</div>
+      <div class="filter-chip" onclick="setClassFilter('11',this)">Class 11</div>
+      <div class="filter-chip" onclick="setClassFilter('12',this)">Class 12</div>
+    </div>
+
+    <div id="content-list"></div>
+  </div>
+
+  <!-- ══ PANEL: ENROLLMENTS ══ -->
+  <div class="panel" id="panel-enrollments">
+    <div class="panel-title">📋 Enrollments</div>
+    <div class="filter-tabs">
+      <button class="ftab active" onclick="setEnrollTab('pending',this)">⏳ Pending</button>
+      <button class="ftab" onclick="setEnrollTab('approved',this)">✅ Approved</button>
+      <button class="ftab" onclick="setEnrollTab('rejected',this)">❌ Rejected</button>
+    </div>
+    <div id="enrollment-list"></div>
+  </div>
+
+  <!-- ══ PANEL: COUPONS ══ -->
+  <div class="panel" id="panel-coupons">
+    <div class="panel-title">🎟️ Coupons</div>
+    <div class="form-card">
+      <div class="form-card-title">➕ Add Discount Code</div>
+      <div class="form-group">
+        <label>Coupon Code</label>
+        <input type="text" id="coupon-code" placeholder="जैसे IDEAKDC100">
+      </div>
+      <div class="form-group">
+        <label>Special Price</label>
+        <input type="number" id="coupon-price" min="1" step="1" placeholder="जैसे 299">
+      </div>
+      <button class="btn-submit" id="coupon-btn" onclick="saveCoupon()">
+        <span id="coupon-label">✅ Coupon Save करें</span>
+      </button>
+    </div>
+    <div id="coupon-list"></div>
+  </div>
+
+  <!-- Bottom Tab Nav -->
+  <div class="bottom-tabs">
+    <button class="btab active" id="btab-dashboard" onclick="switchPanel('dashboard',this)">
+      <span class="btab-icon">📊</span>Dashboard
+    </button>
+    <button class="btab" id="btab-upload" onclick="switchPanel('upload',this)">
+      <span class="btab-icon">➕</span>Upload
+    </button>
+    <button class="btab" id="btab-content" onclick="switchPanel('content',this)">
+      <span class="btab-icon">📚</span>Content
+    </button>
+    <button class="btab" id="btab-enrollments" onclick="switchPanel('enrollments',this)">
+      <span class="btab-icon">📋</span>Enrollments
+      <span id="pending-dot" style="display:none;width:7px;height:7px;background:var(--red);border-radius:50%;margin-top:1px"></span>
+    </button>
+    <button class="btab" id="btab-coupons" onclick="switchPanel('coupons',this)">
+      <span class="btab-icon">🎟️</span>Coupons
+    </button>
+  </div>
+
+</div><!-- /app-shell -->
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signInWithPopup,
+         GoogleAuthProvider, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc,
+         updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, onSnapshot, writeBatch }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getStorage, ref as storageRef }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import { getFunctions, httpsCallable }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+
+// ── CONFIG ──
+const firebaseConfig = {
+  apiKey:"AIzaSyDDSiGJJdoySLmJLHJaQBdj213DxVKCwaQ",
+  authDomain:"betalaunch.ideakdc.in",
+  projectId:"ideakdc-24b0b",
+  storageBucket:"ideakdc-24b0b.firebasestorage.app",
+  messagingSenderId:"577382246228",
+  appId:"1:577382246228:web:e3ec8a45d65b2799268ac1"
+};
+const ADMIN_EMAILS = ["99naveenrai@gmail.com"];
+const YOUTUBE_API_KEY = "AIzaSyAi4zGbfdWxvd-Q76PLBF4FtTTh7g9B_FE";
+const SUBJECTS = {
+  '5-10': ['Maths','Science','English','SST','Hindi'],
+  science: ['Physics','Chemistry','Maths'],
+  commerce: ['Accounts','Business Studies','Economics'],
+  humanities: ['Political Science','History','English','Geography'],
+};
+
+const app       = initializeApp(firebaseConfig);
+const auth      = getAuth(app);
+const db        = getFirestore(app);
+const storage   = getStorage(app);
+const functions = getFunctions(app, 'asia-south1');
+const adminUploadPreflightFn = httpsCallable(functions, 'adminUploadPreflight');
+const repairProtectedCourseThumbnailsFn = httpsCallable(functions, 'repairProtectedCourseThumbnails');
+const diagnoseCourseThumbnailsFn = httpsCallable(functions, 'diagnoseCourseThumbnails');
+const gProvider = new GoogleAuthProvider();
+
+// ── STATE ──
+let uploadType  = 'video';
+let uploadMode  = 'create-single';
+let uploadFP    = 'paid';
+let uploadStream = '';
+let selectedCourseId = '';
+let editingCourseId = '';
+let activePlaylistId = '';
+let currentVideos = [];
+let selectedCourseRef = null;
+let allContent  = [];
+let allEnrollments = [];
+let allCoupons = [];
+let enrollTab   = 'pending';
+let classFilter = 'all';
+
+// ════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════
+onAuthStateChanged(auth, async (user) => {
+  hideLoader();
+  if (user && ADMIN_EMAILS.includes(user.email)) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'block';
+    document.getElementById('admin-email-badge').textContent = user.email.split('@')[0];
+    startListeners();
+  } else {
+    if (user) { await signOut(auth); showErr(document.getElementById('login-err'), 'Admin access नहीं है।'); }
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-shell').style.display = 'none';
+  }
+});
+
+window.doLogin = async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const pwd   = document.getElementById('login-pwd').value;
+  const err   = document.getElementById('login-err');
+  err.classList.remove('show');
+  if (!email || !pwd) return showErr(err, 'Email और password डालें।');
+  setBtn('login-btn','login-label',true,'Login हो रहा है...');
+  try { await signInWithEmailAndPassword(auth, email, pwd); }
+  catch(e) { showErr(err, fireErr(e.code)); }
+  setBtn('login-btn','login-label',false,'Login करें');
+};
+
+window.doGoogleLogin = async () => {
+  try { await signInWithPopup(auth, gProvider); }
+  catch(e) { if(e.code!=='auth/popup-closed-by-user') showErr(document.getElementById('login-err'), fireErr(e.code)); }
+};
+
+window.doLogout = async () => { await signOut(auth); };
+
+// ════════════════════════════════════════
+// REAL-TIME LISTENERS
+// ════════════════════════════════════════
+function startListeners() {
+  // Enrollments real-time
+  onSnapshot(query(collection(db,'enrollments'), orderBy('submittedAt','desc')), snap => {
+    allEnrollments = snap.docs.map(d => ({ _id:d.id, ...d.data() }));
+    updateStats();
+    renderEnrollments();
+    renderRecentPending();
+    const pending = allEnrollments.filter(e=>e.status==='pending').length;
+    document.getElementById('pending-dot').style.display = pending ? 'block' : 'none';
+  });
+
+  // Content real-time
+  onSnapshot(query(collection(db,'content'), orderBy('createdAt','desc')), snap => {
+    allContent = snap.docs.map(d => ({ _id:d.id, ...d.data() }));
+    renderContent();
+    populateExistingPlaylistSelect();
+    document.getElementById('stat-content').textContent = allContent.length;
+  });
+
+  // Coupons real-time
+  onSnapshot(query(collection(db,'coupons'), orderBy('createdAt','desc')), snap => {
+    allCoupons = snap.docs.map(d => ({ _id:d.id, ...d.data() }));
+    renderCoupons();
+  });
+
+  // Check for old 'courses' collection to offer migration
+  checkOldCourses();
+}
+
+async function checkOldCourses() {
+  try {
+    const snap = await getDocs(collection(db,'courses'));
+    if (!snap.empty) {
+      document.getElementById('migrate-card').style.display = 'block';
+      window._oldCoursesData = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    }
+  } catch(e) {}
+}
+
+window.migrateOldCourses = async () => {
+  const old = window._oldCoursesData || [];
+  if (!old.length) return showToast('कोई पुराना course नहीं मिला।');
+  document.getElementById('migrate-label').textContent = 'Migrate हो रहा है...';
+  try {
+    let count = 0;
+    for (const c of old) {
+      const videos = c.videos || [];
+      const courseId = uniqueCourseId(videos.some(v => v.playlistId) ? 'playlist' : 'single');
+      const firstVideoId = videos[0]?.videoId || videos[0]?.vid || '';
+      for (let i = 0; i < videos.length; i++) {
+        const v = videos[i];
+        const createdDoc = await addDoc(collection(db,'content'), {
+          type: v.playlistId ? 'playlist' : 'video',
+          contentType: v.playlistId ? 'playlist' : 'single',
+          courseType: v.playlistId ? 'playlist' : 'single',
+          courseId,
+          courseTitle: c.name || v.title || 'Migrated Course',
+          title: v.title || c.name,
+          classNum: '11', // Fluid Dynamics was 11th Physics
+          stream: 'science',
+          subject: 'Physics',
+          chapter: c.name || 'Fluid Dynamics',
+          topic: v.title || `Part ${i+1}`,
+          videoId: v.vid || '',
+          playlistId: v.playlistId || '',
+          firstVideoId: firstVideoId || v.vid || '',
+          videoCount: videos.length,
+          thumbnailUrl: '',
+          desc: c.desc || '',
+          isFree: false,
+          price: 450,
+          createdAt: serverTimestamp(),
+        thumbnailStatus: 'pending-repair'
+      });
+        count++;
+      }
+    }
+    showToast(`✅ ${count} videos migrate हो गए!`,'success');
+    document.getElementById('migrate-card').style.display = 'none';
+  } catch(e) {
+    console.error(e);
+    showToast('Migration में error आया।','error');
+  }
+  document.getElementById('migrate-label').textContent = '🔄 Migrate करें';
+};
+
+// ════════════════════════════════════════
+// STATS
+// ════════════════════════════════════════
+function updateStats() {
+  const total    = allEnrollments.length;
+  const pending  = allEnrollments.filter(e=>e.status==='pending').length;
+  const approved = allEnrollments.filter(e=>e.status==='approved').length;
+  document.getElementById('stat-total').textContent    = total;
+  document.getElementById('stat-pending').textContent  = pending;
+  document.getElementById('stat-approved').textContent = approved;
+}
+
+function createEnrollmentElement(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = String(text);
+  return element;
+}
+
+function createEnrollmentAction(className, label, id, status, style = '') {
+  const button = createEnrollmentElement('button', className, label);
+  button.type = 'button';
+  if (style) button.style.cssText = style;
+  button.addEventListener('click', () => window.updateStatus(id, status));
+  return button;
+}
+
+function renderRecentPending() {
+  const pending = allEnrollments.filter(e=>e.status==='pending').slice(0,3);
+  const el = document.getElementById('recent-pending');
+  el.replaceChildren();
+  if (!pending.length) {
+    const empty = createEnrollmentElement('div', '', 'कोई pending enrollment नहीं।');
+    empty.style.cssText = 'color:var(--muted);font-size:.83rem;padding:.5rem 0';
+    el.appendChild(empty);
+    return;
+  }
+
+  pending.forEach(e => {
+    const row = createEnrollmentElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border)';
+
+    const details = createEnrollmentElement('div');
+    const name = createEnrollmentElement('div', '', e.userName || '—');
+    name.style.cssText = 'font-weight:600;font-size:.85rem';
+    const course = createEnrollmentElement('div', '', e.courseName || e.userEmail || '');
+    course.style.cssText = 'font-size:.72rem;color:var(--muted)';
+    details.append(name, course);
+
+    const actions = createEnrollmentElement('div');
+    actions.style.cssText = 'display:flex;gap:.3rem';
+    actions.append(
+      createEnrollmentAction('btn-approve', '✅', e._id, 'approved', 'padding:5px 10px;font-size:.75rem'),
+      createEnrollmentAction('btn-reject', '❌', e._id, 'rejected', 'padding:5px 10px;font-size:.75rem')
+    );
+    row.append(details, actions);
+    el.appendChild(row);
+  });
+}
+
+// ════════════════════════════════════════
+// UPLOAD FORM
+// ════════════════════════════════════════
+function uniqueCourseId(prefix = 'course') {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function playlistCourseOptions() {
+  const byCourse = new Map();
+  allContent.forEach(item => {
+    const courseId = item.courseId || '';
+    if (!courseId || item.courseType !== 'playlist') return;
+    if (!byCourse.has(courseId)) byCourse.set(courseId, item);
+  });
+  return [...byCourse.values()].sort((a,b) => String(a.title || '').localeCompare(String(b.title || '')));
+}
+
+function populateExistingPlaylistSelect() {
+  const sel = document.getElementById('existing-playlist-course');
+  if (!sel) return;
+  const options = playlistCourseOptions();
+  sel.innerHTML = '<option value="">-- Select playlist course --</option>' +
+    options.map(c => `<option value="${c.courseId}">${c.title || c.chapter || c.courseId} • Class ${c.classNum || '—'} • ${c.subject || '—'}</option>`).join('');
+}
+
+function resetUploadState() {
+  selectedCourseId = '';
+  editingCourseId = '';
+  activePlaylistId = '';
+  currentVideos = [];
+  selectedCourseRef = null;
+  uploadStream = '';
+  ['up-class','up-subject','up-chapter','up-topic','up-title','up-desc','up-video-link','up-playlist-link']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  const freeComplete = document.getElementById('up-free-complete');
+  if (freeComplete) freeComplete.checked = false;
+  const quizMode = document.getElementById('quiz-mode');
+  if (quizMode) quizMode.value = 'none';
+  clearQuizJson('separate');
+  clearQuizJson('popup');
+  updateQuizOptionVisibility();
+  for (let i = 1; i <= 8; i++) {
+    const q = document.getElementById(`faq-q-${i}`);
+    const a = document.getElementById(`faq-a-${i}`);
+    if (q) q.value = '';
+    if (a) a.value = '';
+  }
+  const priceEl = document.getElementById('up-price');
+  if (priceEl) priceEl.value = '450';
+  document.querySelectorAll('.stream-pill').forEach(p=>p.classList.remove('active'));
+  const streamGroup = document.getElementById('stream-group');
+  if (streamGroup) streamGroup.style.display='none';
+  setUploadMode('create-single');
+  setFP('paid');
+}
+
+function syncUploadModeButtons() {
+  document.querySelectorAll('.upload-mode-btn').forEach(btn => btn.classList.remove('active'));
+  const active = document.getElementById('mode-' + uploadMode);
+  if (active) active.classList.add('active');
+}
+
+window.setUploadMode = (mode) => {
+  uploadMode = mode;
+  syncUploadModeButtons();
+
+  const existingGroup = document.getElementById('existing-playlist-group');
+  const help = document.getElementById('upload-mode-help');
+  if (mode === 'create-single') {
+    setType('video');
+    if (help) help.textContent = 'Creates a new independent single-video course with a fresh courseId.';
+    if (existingGroup) existingGroup.style.display = 'none';
+  } else if (mode === 'create-playlist') {
+    setType('playlist');
+    if (help) help.textContent = 'Creates a new independent playlist course with one fresh courseId shared only by this playlist.';
+    if (existingGroup) existingGroup.style.display = 'none';
+  } else if (mode === 'add-video-playlist') {
+    setType('video');
+    populateExistingPlaylistSelect();
+    if (help) help.textContent = 'Adds one video only to the playlist course selected below.';
+    if (existingGroup) existingGroup.style.display = 'block';
+  } else {
+    populateExistingPlaylistSelect();
+    if (help) help.textContent = 'Edit existing course is intentionally separate from new upload. Select a course before saving edits.';
+    if (existingGroup) existingGroup.style.display = 'block';
+  }
+};
+
+function isPermanentThumbnailUrl(value) {
+  const url = String(value || '').trim();
+  if (!url) return false;
+  if (/^(blob:|data:|file:)/i.test(url)) return false;
+  if (/^[a-zA-Z]:[\\/]/.test(url) || url.startsWith('\\\\')) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && !['localhost', '127.0.0.1'].includes(parsed.hostname);
+  } catch (_) {
+    return false;
+  }
+}
+
+window.setType = (type) => {
+  if (uploadMode === 'add-video-playlist' && type === 'playlist') {
+    showToast('Add video mode allows only one video append. Use Create playlist course for a new playlist.', 'error');
+    type = 'video';
+  }
+  if (uploadMode === 'create-single' && type === 'playlist') uploadMode = 'create-playlist';
+  if (uploadMode === 'create-playlist' && type === 'video') uploadMode = 'create-single';
+  syncUploadModeButtons();
+  uploadType = type;
+  document.getElementById('type-video').classList.toggle('active', type==='video');
+  document.getElementById('type-playlist').classList.toggle('active', type==='playlist');
+  document.getElementById('vid-link-group').style.display = type==='video' ? 'block' : 'none';
+  document.getElementById('pl-link-group').style.display  = type==='playlist' ? 'block' : 'none';
+};
+
+window.setFP = (fp) => {
+  uploadFP = fp;
+  document.getElementById('fp-free').className = 'fp-btn' + (fp==='free' ? ' active-free' : '');
+  document.getElementById('fp-paid').className = 'fp-btn' + (fp==='paid' ? ' active-paid' : '');
+};
+
+function normalizeUploadPricing(fp, rawPrice, forceFree = false) {
+  const isFreeCourse = fp === 'free' || forceFree === true;
+  const numericPrice = Number(rawPrice || 0);
+  if (isFreeCourse) {
+    return {
+      isFree: true,
+      free: true,
+      price: 0,
+      amount: 0,
+      coursePrice: 0,
+      paymentRequired: false,
+      accessType: 'free'
+    };
+  }
+  const price = numericPrice > 0 ? numericPrice : 450;
+  return {
+    isFree: false,
+    free: false,
+    price,
+    amount: price,
+    coursePrice: price,
+    paymentRequired: true,
+    accessType: 'paid'
+  };
+}
+
+function isContentMarkedFree(item = {}) {
+  return item.isFree === true ||
+    item.free === true ||
+    item.paymentRequired === false ||
+    String(item.accessType || '').toLowerCase() === 'free' ||
+    ['price', 'amount', 'coursePrice'].some(field => {
+      const value = item[field];
+      return value !== undefined && value !== null && value !== '' && Number(value) === 0;
+    });
+}
+
+window.onClassChange = () => {
+  const cls = document.getElementById('up-class').value;
+  const isHigher = cls === '11' || cls === '12';
+  document.getElementById('stream-group').style.display = isHigher ? 'block' : 'none';
+  uploadStream = '';
+  document.querySelectorAll('.stream-pill').forEach(p => p.classList.remove('active'));
+  populateSubjects(cls, '');
+};
+
+window.selectStream = (stream) => {
+  uploadStream = stream;
+  document.querySelectorAll('.stream-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById('sp-' + stream).classList.add('active');
+  const cls = document.getElementById('up-class').value;
+  populateSubjects(cls, stream);
+};
+
+function populateSubjects(cls, stream) {
+  const sel = document.getElementById('up-subject');
+  let subjects = [];
+  if (!cls) { sel.innerHTML = '<option value="">-- पहले Class Select करें --</option>'; return; }
+  const n = parseInt(cls);
+  if (n >= 5 && n <= 10) subjects = SUBJECTS['5-10'];
+  else if (n === 11 || n === 12) subjects = stream ? SUBJECTS[stream] : [];
+  sel.innerHTML = '<option value="">-- Subject Select करें --</option>' +
+    subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+// ── Fetch all videos from a YouTube playlist using Data API v3 ──
+async function fetchJsonWithAbort(url, label, timeoutMs = 20000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (_) {
+      data = {};
+    }
+    if (!res.ok) {
+      const apiMessage = data?.error?.message || `${label} failed with HTTP ${res.status}`;
+      throw new Error(apiMessage);
+    }
+    if (data.error) throw new Error(data.error.message || `${label} failed`);
+    return data;
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error(`${label} timed out. Check playlist link, internet, or YouTube API quota.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function extractPlaylistIdFromLink(link) {
+  const value = String(link || '').trim();
+  if (!value) return '';
+  try {
+    const parsed = new URL(value);
+    return parsed.searchParams.get('list') || value;
+  } catch (_) {
+    const match = value.match(/[?&]list=([^&]+)/);
+    return match ? decodeURIComponent(match[1]) : value;
+  }
+}
+
+async function fetchPlaylistVideos(playlistId, onProgress = () => {}) {
+  let videos = [];
+  let pageToken = '';
+  const seenTokens = new Set();
+  let pageCount = 0;
+  do {
+    if (seenTokens.has(pageToken)) throw new Error('YouTube playlist pagination repeated. Upload stopped safely.');
+    seenTokens.add(pageToken);
+    pageCount++;
+    if (pageCount > 25) throw new Error('Playlist is too large for one upload. Please split it into smaller courses.');
+    onProgress(`Fetching playlist page ${pageCount}...`);
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}${pageToken ? '&pageToken='+pageToken : ''}`;
+    const data = await fetchJsonWithAbort(url, `YouTube playlist page ${pageCount}`);
+
+    const items = data.items || [];
+    videos.push(...items.map(it => ({
+      title: it.snippet.title,
+      videoId: it.contentDetails.videoId,
+      position: it.snippet.position,
+      youtubeThumbnailSourceUrl: it.snippet.thumbnails?.maxres?.url ||
+        it.snippet.thumbnails?.standard?.url ||
+        it.snippet.thumbnails?.high?.url ||
+        it.snippet.thumbnails?.medium?.url ||
+        it.snippet.thumbnails?.default?.url ||
+        ''
+    })));
+    pageToken = data.nextPageToken || '';
+  } while (pageToken);
+
+  const idsChunks = [];
+  for (let i = 0; i < videos.length; i += 50) {
+    idsChunks.push(videos.slice(i, i+50).map(v=>v.videoId).join(','));
+  }
+  const durationMap = {};
+  let durationStart = 1;
+  for (const ids of idsChunks) {
+    const batchSize = ids ? ids.split(',').length : 0;
+    onProgress(`Fetching video durations ${durationStart}-${durationStart + batchSize - 1}...`);
+    const durUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${ids}&key=${YOUTUBE_API_KEY}`;
+    const durData = await fetchJsonWithAbort(durUrl, 'YouTube video duration lookup');
+    (durData.items||[]).forEach(it => {
+      durationMap[it.id] = parseISO8601Duration(it.contentDetails.duration);
+    });
+    durationStart += batchSize;
+  }
+  videos.forEach(v => { v.duration = durationMap[v.videoId] || ''; });
+
+  return videos;
+}
+
+// Convert YouTube's ISO8601 duration (PT1H2M10S) to readable "1:02:10" / "12:48"
+function parseISO8601Duration(iso) {
+  const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!m) return '';
+  const h = parseInt(m[1]||0), min = parseInt(m[2]||0), s = parseInt(m[3]||0);
+  const pad = n => String(n).padStart(2,'0');
+  return h > 0 ? `${h}:${pad(min)}:${pad(s)}` : `${min}:${pad(s)}`;
+}
+
+function extractVideoIdFromLink(link) {
+  const text = String(link || '').trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(text)) return text;
+  try {
+    const url = new URL(text);
+    const host = url.hostname.replace(/^www\./, '');
+    const parts = url.pathname.split('/').filter(Boolean);
+    const v = url.searchParams.get('v');
+    if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+    if (host === 'youtu.be' && parts[0] && /^[a-zA-Z0-9_-]{11}$/.test(parts[0])) return parts[0];
+    if ((host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com' || host === 'youtube-nocookie.com') && parts.length) {
+      if (['embed', 'shorts', 'live'].includes(parts[0]) && parts[1] && /^[a-zA-Z0-9_-]{11}$/.test(parts[1])) return parts[1];
+    }
+  } catch(e) {}
+  const patterns = [
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /[?&]v=([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/live\/([a-zA-Z0-9_-]{11})/,
+    /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]{11})/
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[1];
+  }
+  return text;
+}
+
+function normalizeUploadVideoSource(link) {
+  const value = String(link || '').trim();
+  const extracted = extractVideoIdFromLink(value);
+  if (/^[a-zA-Z0-9_-]{11}$/.test(extracted)) {
+    return { sourceType: 'youtube', videoId: extracted, videoUrl: '' };
+  }
+  if (/^https:\/\/.+\.(mp4|webm)(?:[?#].*)?$/i.test(value)) {
+    return { sourceType: 'native', videoId: '', videoUrl: value };
+  }
+  throw new Error('Use a valid YouTube URL/ID or a direct HTTPS MP4/WebM URL.');
+}
+
+function thumbnailLeaksVideoId(url, videoId) {
+  if (!url || !videoId) return false;
+  return String(url).includes(`/vi/${videoId}/`) || String(url).includes(encodeURIComponent(videoId));
+}
+
+function isDirectYoutubeThumbnailUrl(url = '') {
+  try {
+    const host = new URL(String(url || '').trim()).hostname.toLowerCase();
+    return host === 'img.youtube.com' ||
+      host.endsWith('.img.youtube.com') ||
+      host === 'i.ytimg.com' ||
+      host.endsWith('.i.ytimg.com') ||
+      host === 'ytimg.com' ||
+      host.endsWith('.ytimg.com');
+  } catch (_) {
+    return false;
+  }
+}
+
+function adminThumbnailFallbackUrl() {
+  return 'assets/course-thumbnail-fallback.svg';
+}
+
+window.handleAdminThumbnailError = (img) => {
+  const fallback = img.dataset.fallback || adminThumbnailFallbackUrl();
+  if ((img.getAttribute('src') || '') !== fallback) img.src = fallback;
+};
+
+function firstSafeThumbnailForAdmin(item) {
+  const protectedVideoId = extractVideoIdFromLink(item.videoId || item.vid || item.youtubeVideoId || item.videoUrl || item.youtubeUrl || '');
+  const candidates = [
+    item.courseThumbnailUrl,
+    item.courseThumbnail,
+    item.courseImage,
+    item.coursePoster,
+    item.courseImageUrl,
+    item.coverImage,
+    item.coverUrl,
+    item.bannerUrl,
+    item.thumbnailUrl,
+    item.thumbnail,
+    item.image,
+    item.poster,
+    item.previewThumbnailUrl,
+    item.imageUrl
+  ];
+  for (const candidate of candidates) {
+    const url = String(candidate || '').trim();
+    if (url && !isDirectYoutubeThumbnailUrl(url) && !thumbnailLeaksVideoId(url, protectedVideoId)) return url;
+  }
+  return '';
+}
+
+window.repairPublicCourseThumbnails = async () => {
+  if (!confirm('Copy safe public thumbnails into thumbnailUrl where missing?')) return;
+  let updated = 0;
+  let skipped = 0;
+  try {
+    for (const item of allContent) {
+      const safeThumb = firstSafeThumbnailForAdmin(item);
+      if (!safeThumb) { skipped++; continue; }
+      const protectedVideoId = extractVideoIdFromLink(item.videoId || item.vid || item.youtubeVideoId || item.videoUrl || item.youtubeUrl || '');
+      const existingThumb = String(item.thumbnailUrl || '').trim();
+      const existingIsUnsafe = thumbnailLeaksVideoId(existingThumb, protectedVideoId);
+      const courseThumbMismatch = item.courseThumbnailUrl && existingThumb !== item.courseThumbnailUrl;
+      if (existingThumb && !existingIsUnsafe && !courseThumbMismatch) { skipped++; continue; }
+      await updateDoc(doc(db, 'content', item._id), {
+        thumbnailUrl: safeThumb,
+        courseThumbnailUrl: item.courseThumbnailUrl || safeThumb,
+        publicThumbnailRepairedAt: serverTimestamp()
+      });
+      updated++;
+    }
+    showToast(`✅ ${updated} records updated, ${skipped} skipped.`, 'success');
+  } catch (error) {
+    console.error('[IdeaKDC thumbnail repair]', error);
+    showToast('Thumbnail repair failed. Console देखें।', 'error');
+  }
+};
+
+function resolveThumbnailDiagnostic(item = {}) {
+  const protectedVideoId = extractVideoIdFromLink(item.videoId || item.vid || item.youtubeVideoId || item.videoUrl || item.youtubeUrl || '');
+  const fields = {
+    courseThumbnailUrl: item.courseThumbnailUrl || '',
+    thumbnailUrl: item.thumbnailUrl || '',
+    thumbnail: item.thumbnail || '',
+    image: item.image || item.imageUrl || '',
+    poster: item.poster || ''
+  };
+  const candidates = [
+    fields.courseThumbnailUrl,
+    fields.thumbnailUrl,
+    fields.thumbnail,
+    fields.image,
+    fields.poster,
+    item.courseThumbnail,
+    item.courseImage,
+    item.coursePoster,
+    item.courseImageUrl,
+    item.coverImage,
+    item.coverUrl,
+    item.bannerUrl,
+    item.previewThumbnailUrl
+  ];
+  const resolved = candidates.find(candidate => {
+    const url = String(candidate || '').trim();
+    return isPermanentThumbnailUrl(url) && !isDirectYoutubeThumbnailUrl(url) && !thumbnailLeaksVideoId(url, protectedVideoId);
+  }) || '';
+  return { fields, resolved, protectedVideoId };
+}
+
+function firstSafePermanentThumbnailForAdmin(item) {
+  return resolveThumbnailDiagnostic(item).resolved;
+}
+
+async function fetchCollectionForThumbnailDiagnostics(collectionName) {
+  try {
+    const snap = await getDocs(collection(db, collectionName));
+    return snap.docs.map(d => ({ _id: d.id, _path: `${collectionName}/${d.id}`, _collection: collectionName, ...d.data() }));
+  } catch (error) {
+    console.warn('[IdeaKDC thumbnail diagnostic] collection read failed', { collectionName, code: error.code || error.message });
+    return [];
+  }
+}
+
+function testThumbnailImage(url) {
+  return new Promise(resolve => {
+    if (!url) {
+      resolve({ ok: false, reason: 'missing-url' });
+      return;
+    }
+    if (!isPermanentThumbnailUrl(url)) {
+      resolve({ ok: false, reason: 'not-permanent-https' });
+      return;
+    }
+    const img = new Image();
+    const timer = setTimeout(() => {
+      img.onload = null;
+      img.onerror = null;
+      resolve({ ok: false, reason: 'timeout-or-blocked' });
+    }, 7000);
+    img.onload = () => {
+      clearTimeout(timer);
+      resolve({ ok: true, reason: `${img.naturalWidth}x${img.naturalHeight}` });
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      resolve({ ok: false, reason: 'browser-image-load-failed' });
+    };
+    img.referrerPolicy = 'no-referrer';
+    img.src = url;
+  });
+}
+
+function shortThumbnailUrl(url) {
+  let value = String(url || '').trim();
+  if (!value) return '-';
+  try {
+    const parsed = new URL(value);
+    if (/youtube\.com$|youtube-nocookie\.com$|youtu\.be$|img\.youtube\.com$/i.test(parsed.hostname)) {
+      return '[direct-youtube-thumbnail-redacted]';
+    }
+    if (parsed.searchParams.has('token')) parsed.searchParams.set('token', '[redacted]');
+    value = parsed.toString();
+  } catch (_) {}
+  return value.length > 74 ? `${value.slice(0, 40)}...${value.slice(-24)}` : value;
+}
+
+function renderThumbnailDiagnostics(rows) {
+  const output = document.getElementById('thumbnail-diagnostic-output');
+  if (!output) return;
+  if (!rows.length) {
+    output.innerHTML = '<div class="mode-help">No readable course/content records found.</div>';
+    return;
+  }
+  output.innerHTML = `
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:12px;background:#fff">
+      <table style="width:100%;min-width:980px;border-collapse:collapse;font-size:.72rem">
+        <thead>
+          <tr style="background:#f1f5f9;color:#0f172a;text-align:left">
+            <th style="padding:.55rem">Path</th>
+            <th style="padding:.55rem">courseId</th>
+            <th style="padding:.55rem">courseThumbnailUrl</th>
+            <th style="padding:.55rem">thumbnailUrl</th>
+            <th style="padding:.55rem">thumbnail/image/poster</th>
+            <th style="padding:.55rem">resolved final URL</th>
+            <th style="padding:.55rem">browser load</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr style="border-top:1px solid var(--border)">
+              <td style="padding:.55rem;font-weight:800">${row.path}</td>
+              <td style="padding:.55rem">${row.courseId || '-'}</td>
+              <td style="padding:.55rem">${shortThumbnailUrl(row.courseThumbnailUrl)}</td>
+              <td style="padding:.55rem">${shortThumbnailUrl(row.thumbnailUrl)}</td>
+              <td style="padding:.55rem">${shortThumbnailUrl(row.otherThumb)}</td>
+              <td style="padding:.55rem;color:${row.resolved ? '#0a7a3d' : '#b42318'}">${shortThumbnailUrl(row.resolved)}</td>
+              <td style="padding:.55rem">${row.loadOk ? 'OK' : 'FAIL'} ${row.loadReason}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+window.diagnosePublicCourseThumbnails = async () => {
+  const output = document.getElementById('thumbnail-diagnostic-output');
+  if (output) output.innerHTML = '<div class="mode-help">Reading live thumbnail fields and testing image URLs...</div>';
+  try {
+    const courseDocs = await fetchCollectionForThumbnailDiagnostics('courses');
+    const contentDocs = allContent.map(item => ({ _path: `content/${item._id}`, _collection: 'content', ...item }));
+    const rows = [];
+    for (const item of [...courseDocs, ...contentDocs]) {
+      const diagnostic = resolveThumbnailDiagnostic(item);
+      const load = await testThumbnailImage(diagnostic.resolved);
+      rows.push({
+        path: item._path || `${item._collection || 'content'}/${item._id || item.id || 'unknown'}`,
+        courseId: item.courseId || item.id || '',
+        courseThumbnailUrl: diagnostic.fields.courseThumbnailUrl,
+        thumbnailUrl: diagnostic.fields.thumbnailUrl,
+        otherThumb: diagnostic.fields.thumbnail || diagnostic.fields.image || diagnostic.fields.poster || '',
+        resolved: diagnostic.resolved,
+        loadOk: load.ok,
+        loadReason: load.reason
+      });
+    }
+    renderThumbnailDiagnostics(rows);
+  } catch (error) {
+    console.error('[IdeaKDC thumbnail diagnostic]', error);
+    if (output) output.innerHTML = '<div class="mode-help" style="color:var(--red)">Thumbnail diagnostic failed. Check console.</div>';
+  }
+};
+
+function renderDeepThumbnailDiagnostics(result = {}) {
+  const output = document.getElementById('thumbnail-diagnostic-output');
+  if (!output) return;
+  const rows = Array.isArray(result.rows) ? result.rows : [];
+  if (!rows.length) {
+    output.innerHTML = '<div class="mode-help">Deep diagnosis returned no content rows.</div>';
+    return;
+  }
+  const missing = rows.filter(row => !row.resolvedField).length;
+  const failed = rows.filter(row => !row.imageOk).length;
+  output.innerHTML = `
+    <div class="mode-help" style="margin-bottom:.65rem">
+      Deep diagnosis ${result.diagnosticVersion || ''}: scanned ${result.scanned || rows.length},
+      missing ${missing}, failed URL/image ${failed}, raw YouTube URLs remaining ${result.rawYoutubeUrlsRemaining ?? rows.filter(row => row.hasRawYoutubeThumbnail).length}.
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:12px;background:#fff">
+      <table style="width:100%;min-width:1500px;border-collapse:collapse;font-size:.7rem">
+        <thead>
+          <tr style="background:#f1f5f9;color:#0f172a;text-align:left">
+            <th style="padding:.5rem">Path</th>
+            <th style="padding:.5rem">document.id</th>
+            <th style="padding:.5rem">courseId</th>
+            <th style="padding:.5rem">lessonId</th>
+            <th style="padding:.5rem">type</th>
+            <th style="padding:.5rem">sourceField</th>
+            <th style="padding:.5rem">sourceValue</th>
+            <th style="padding:.5rem">raw YouTube URL?</th>
+            <th style="padding:.5rem">status</th>
+            <th style="padding:.5rem">thumbnailUrl</th>
+            <th style="padding:.5rem">courseThumbnailUrl</th>
+            <th style="padding:.5rem">other fields</th>
+            <th style="padding:.5rem">resolved</th>
+            <th style="padding:.5rem">catalogue course</th>
+            <th style="padding:.5rem">catalogue lesson</th>
+            <th style="padding:.5rem">HTTP</th>
+            <th style="padding:.5rem">content-type</th>
+            <th style="padding:.5rem">Storage path</th>
+            <th style="padding:.5rem">result</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr style="border-top:1px solid var(--border)">
+              <td style="padding:.5rem;font-weight:800">${row.path || '-'}</td>
+              <td style="padding:.5rem">${row.documentId || '-'}</td>
+              <td style="padding:.5rem">${row.courseId || '-'}</td>
+              <td style="padding:.5rem">${row.lessonId || '-'}</td>
+              <td style="padding:.5rem">${row.courseType || '-'}</td>
+              <td style="padding:.5rem">${row.sourceField || '-'}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.sourceValue || '')}</td>
+              <td style="padding:.5rem;color:${row.hasRawYoutubeThumbnail ? '#b42318' : '#0a7a3d'}">${row.hasRawYoutubeThumbnail ? 'YES' : 'no'}</td>
+              <td style="padding:.5rem">${row.thumbnailStatus || '-'}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.thumbnailUrl)}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.courseThumbnailUrl)}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.thumbnail || row.image || row.poster || '')}</td>
+              <td style="padding:.5rem;color:${row.resolvedUrl ? '#0a7a3d' : '#b42318'}">${row.resolvedField || 'none'}<br>${shortThumbnailUrl(row.resolvedUrl)}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.catalogueThumbnailUrl)}</td>
+              <td style="padding:.5rem">${shortThumbnailUrl(row.catalogueLessonThumbnailUrl)}</td>
+              <td style="padding:.5rem">${row.httpStatus || '-'}</td>
+              <td style="padding:.5rem">${row.contentType || '-'}</td>
+              <td style="padding:.5rem">${row.storagePath || '-'}${row.storageRuleExpectedPublic ? '<br><span style="color:#0a7a3d">course-thumbnails public read expected</span>' : ''}</td>
+              <td style="padding:.5rem;color:${row.imageOk ? '#0a7a3d' : '#b42318'}">${row.imageOk ? 'OK image' : `FAIL ${row.failureReason || ''}`}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+window.diagnoseDeepCourseThumbnails = async () => {
+  const output = document.getElementById('thumbnail-diagnostic-output');
+  const status = document.getElementById('thumbnail-repair-status');
+  if (output) output.innerHTML = '<div class="mode-help">Running server-side deep thumbnail diagnosis...</div>';
+  if (status) status.textContent = 'Deep diagnosis running...';
+  try {
+    const result = await diagnoseCourseThumbnailsFn({});
+    renderDeepThumbnailDiagnostics(result.data || {});
+    if (status) status.textContent = 'Deep thumbnail diagnosis completed.';
+  } catch (error) {
+    console.error('[IdeaKDC deep thumbnail diagnosis]', error);
+    const safeMessage = safeCallableError(error);
+    if (status) status.textContent = safeMessage;
+    if (output) output.innerHTML = `<div class="mode-help" style="color:var(--red)">${safeMessage}</div>`;
+  }
+};
+
+async function repairThumbnailDocs(collectionName, docs) {
+  let updated = 0;
+  let skipped = 0;
+  for (const item of docs) {
+    const safeThumb = firstSafePermanentThumbnailForAdmin(item);
+    if (!safeThumb) { skipped++; continue; }
+    const diagnostic = resolveThumbnailDiagnostic(item);
+    const existingThumb = String(item.thumbnailUrl || '').trim();
+    const existingValid = isPermanentThumbnailUrl(existingThumb) && !thumbnailLeaksVideoId(existingThumb, diagnostic.protectedVideoId);
+    const courseThumb = String(item.courseThumbnailUrl || '').trim();
+    const shouldRepair = !existingValid || (courseThumb && existingThumb !== courseThumb);
+    if (!shouldRepair) { skipped++; continue; }
+    await updateDoc(doc(db, collectionName, item._id || item.id), {
+      thumbnailUrl: safeThumb,
+      courseThumbnailUrl: item.courseThumbnailUrl || safeThumb,
+      publicThumbnailRepairedAt: serverTimestamp()
+    });
+    updated++;
+  }
+  return { updated, skipped };
+}
+
+window.repairPublicCourseThumbnails = async () => {
+  if (!confirm('Copy safe public thumbnails into thumbnailUrl where missing?')) return;
+  let updated = 0;
+  let skipped = 0;
+  try {
+    const contentResult = await repairThumbnailDocs('content', allContent);
+    updated += contentResult.updated;
+    skipped += contentResult.skipped;
+    const courseDocs = await fetchCollectionForThumbnailDiagnostics('courses');
+    const courseResult = await repairThumbnailDocs('courses', courseDocs);
+    updated += courseResult.updated;
+    skipped += courseResult.skipped;
+    showToast(`âœ… ${updated} records updated, ${skipped} skipped.`, 'success');
+    await diagnosePublicCourseThumbnails();
+  } catch (error) {
+    console.error('[IdeaKDC thumbnail repair]', error);
+    showToast('Thumbnail repair failed. Console à¤¦à¥‡à¤–à¥‡à¤‚à¥¤', 'error');
+  }
+};
+
+function renderRepairSummary(result = {}) {
+  const target = document.getElementById('thumbnail-repair-summary');
+  if (!target) return;
+  const failed = Array.isArray(result.failedRecords) ? result.failedRecords : [];
+  target.innerHTML = `
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:.75rem">
+      <strong>Repair result:</strong>
+      scanned ${result.totalScanned || 0},
+      repaired ${result.repaired || 0},
+      already valid ${result.alreadyValid || 0},
+      failed ${result.failed || 0},
+      needs manual upload ${result.needsManualUpload || 0}.
+      ${failed.length ? `
+        <div style="margin-top:.55rem;color:var(--red)">
+          ${failed.slice(0, 12).map(item => `
+            <div>
+              ${item.courseId || 'course'} / ${item.contentId || 'content'}: ${item.reason || 'failed'}
+              <button type="button" class="mini-btn" onclick="retryThumbnailRepair('${item.contentId || ''}')">Retry</button>
+            </div>`).join('')}
+        </div>` : ''}
+    </div>`;
+}
+
+window.retryThumbnailRepair = async (contentId) => {
+  if (!contentId) return;
+  const summary = document.getElementById('thumbnail-repair-summary');
+  if (summary) summary.textContent = 'Retrying thumbnail repair...';
+  try {
+    const result = await repairProtectedCourseThumbnailsFn({ contentIds: [contentId] });
+    renderRepairSummary(result.data || {});
+    await diagnosePublicCourseThumbnails();
+  } catch (error) {
+    console.error('[IdeaKDC protected thumbnail retry]', error);
+    showToast('Thumbnail retry failed. Console देखें।', 'error');
+  }
+};
+
+window.repairPublicCourseThumbnails = async () => {
+  if (!confirm('Repair all missing thumbnails using protected video IDs on the server?')) return;
+  const summary = document.getElementById('thumbnail-repair-summary');
+  if (summary) summary.textContent = 'Repairing thumbnails on server...';
+  try {
+    const result = await repairProtectedCourseThumbnailsFn({});
+    renderRepairSummary(result.data || {});
+    showToast('Thumbnail repair completed.', 'success');
+    await diagnosePublicCourseThumbnails();
+  } catch (error) {
+    console.error('[IdeaKDC protected thumbnail repair]', error);
+    if (summary) summary.textContent = 'Thumbnail repair failed. Check console.';
+    showToast('Thumbnail repair failed. Console देखें।', 'error');
+  }
+};
+
+function setRepairButtonLoading(isLoading) {
+  const button = document.getElementById('repair-thumbnails-btn');
+  if (!button) return;
+  button.disabled = isLoading;
+  button.textContent = isLoading ? 'Scanning...' : 'Repair All Missing Thumbnails';
+}
+
+function setRepairStatus(message, type = 'info') {
+  const status = document.getElementById('thumbnail-repair-status');
+  if (!status) return;
+  status.style.color = type === 'error' ? 'var(--red)' : type === 'success' ? 'var(--green)' : 'var(--muted)';
+  status.textContent = message || '';
+}
+
+function safeCallableError(error) {
+  const code = error?.code || 'unknown';
+  const message = error?.message || 'Request failed.';
+  if (code === 'functions/not-found' || code === 'not-found') return 'Repair function is not deployed or unavailable.';
+  if (code === 'functions/permission-denied' || code === 'permission-denied') return 'Permission denied. Please login with the IdeaKDC admin account.';
+  if (code === 'functions/unauthenticated' || code === 'unauthenticated') return 'Admin login is required before repair.';
+  return `${code}: ${message}`;
+}
+
+window.retryThumbnailRepair = async (contentId) => {
+  if (!contentId) return;
+  const summary = document.getElementById('thumbnail-repair-summary');
+  if (summary) summary.textContent = 'Retrying thumbnail repair...';
+  setRepairStatus('Scanning...', 'info');
+  try {
+    const result = await repairProtectedCourseThumbnailsFn({ contentIds: [contentId] });
+    const data = result.data || {};
+    renderRepairSummary(data);
+    setRepairStatus(`Repaired ${data.repaired || 0}. Already valid ${data.alreadyValid || 0}. Failed ${data.failed || 0}.`, data.failed ? 'error' : 'success');
+    await diagnosePublicCourseThumbnails();
+  } catch (error) {
+    console.error('[IdeaKDC protected thumbnail retry]', error);
+    const safeMessage = safeCallableError(error);
+    setRepairStatus(safeMessage, 'error');
+    showToast(safeMessage, 'error');
+  }
+};
+
+window.repairPublicCourseThumbnails = async () => {
+  if (!confirm('Repair all missing thumbnails using protected video IDs on the server?')) return;
+  const summary = document.getElementById('thumbnail-repair-summary');
+  if (summary) summary.textContent = '';
+  setRepairButtonLoading(true);
+  setRepairStatus('Scanning...', 'info');
+  try {
+    const result = await repairProtectedCourseThumbnailsFn({});
+    const data = result.data || {};
+    renderRepairSummary(data);
+    setRepairStatus(`Repaired ${data.repaired || 0}. Already valid ${data.alreadyValid || 0}. Failed ${data.failed || 0}.`, data.failed ? 'error' : 'success');
+    showToast('Thumbnail repair completed.', 'success');
+    await diagnosePublicCourseThumbnails();
+  } catch (error) {
+    console.error('[IdeaKDC protected thumbnail repair]', error);
+    const safeMessage = safeCallableError(error);
+    if (summary) summary.textContent = safeMessage;
+    setRepairStatus(safeMessage, 'error');
+    showToast(safeMessage, 'error');
+  } finally {
+    setRepairButtonLoading(false);
+  }
+};
+
+function collectCourseFaqs() {
+  const faqs = [];
+  for (let i = 1; i <= 8; i++) {
+    const question = document.getElementById(`faq-q-${i}`)?.value.trim() || '';
+    const answer = document.getElementById(`faq-a-${i}`)?.value.trim() || '';
+    if (!question && !answer) continue;
+    if (!question || !answer) {
+      showToast(`Q&A ${i} में question और answer दोनों भरें।`, 'error');
+      return null;
+    }
+    faqs.push({ question, answer });
+  }
+  return faqs.slice(0, 8);
+}
+
+const uploadQuizState = {
+  separate: { questionSet: null, errors: [] },
+  popup: { questionSet: null, errors: [], timestamps: [] }
+};
+let quizPreviewPlayer = null;
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[char]);
+}
+
+function normalizeLocalizedText(value) {
+  if (typeof value === 'string') return { en: value.trim(), hi: '' };
+  if (value && typeof value === 'object') {
+    return {
+      en: String(value.en || value.text || value.value || '').trim(),
+      hi: String(value.hi || '').trim()
+    };
+  }
+  return { en: '', hi: '' };
+}
+
+function localizedTextValue(value) {
+  const normalized = normalizeLocalizedText(value);
+  return normalized.en || normalized.hi || '';
+}
+
+function normalizedQuizMatch(value) {
+  return String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function adminOptionId(option, index) {
+  return String(option?.id || option?.key || option?.optionId || String.fromCharCode(65 + index)).trim();
+}
+
+function resolveAdminCorrectOption(question, options, questionNumber, errors) {
+  const correctIndexFields = ['correctIndex', 'correctOptionIndex', 'correctAnswerIndex'];
+  for (const field of correctIndexFields) {
+    if (question[field] === undefined || question[field] === null || question[field] === '') continue;
+    const index = Number(question[field]);
+    if (!Number.isInteger(index) || index < 0 || index >= options.length) {
+      errors.push(`Question ${questionNumber}: ${field} ${question[field]} is invalid because only ${options.length} options exist.`);
+      return '';
+    }
+    return adminOptionId(options[index], index);
+  }
+
+  const candidates = [
+    ['correctOption', question.correctOption],
+    ['correctAnswer', question.correctAnswer],
+    ['answer', question.answer],
+    ['correct', question.correct]
+  ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '');
+  for (const [field, value] of candidates) {
+    if (Number.isInteger(value) && field === 'correct') {
+      if (value >= 0 && value < options.length) return adminOptionId(options[value], value);
+      errors.push(`Question ${questionNumber}: ${field} ${value} is invalid because only ${options.length} options exist.`);
+      return '';
+    }
+    const raw = String(value?.id ?? value?.key ?? value?.value ?? value?.text ?? value).trim();
+    const normalized = normalizedQuizMatch(raw);
+    const exact = options.findIndex((option, index) =>
+      [adminOptionId(option, index), option.en, option.hi, option.text, option.value]
+        .some(candidate => normalizedQuizMatch(candidate) === normalized)
+    );
+    if (exact >= 0) return adminOptionId(options[exact], exact);
+    if (/^[a-d]$/i.test(raw)) {
+      const index = raw.toUpperCase().charCodeAt(0) - 65;
+      if (options[index]) return adminOptionId(options[index], index);
+    }
+    if (/^[1-9]\d*$/.test(raw)) {
+      const oneBasedIndex = Number(raw) - 1;
+      if (options[oneBasedIndex]) return adminOptionId(options[oneBasedIndex], oneBasedIndex);
+    }
+  }
+  errors.push(`Question ${questionNumber}: no valid correct answer could be resolved.`);
+  return '';
+}
+
+function normalizeQuizData(raw) {
+  const errors = [];
+  const data = raw && typeof raw === 'object' ? raw : {};
+  const rawQuestions = Array.isArray(data.questions) ? data.questions : [];
+  if (!rawQuestions.length) errors.push('JSON must contain a non-empty questions array.');
+  const usedIds = new Set();
+  const questions = rawQuestions.map((question, index) => {
+    const id = question.id ?? index + 1;
+    const idString = String(id).trim();
+    if (!idString) errors.push(`Question ${index + 1} has no id.`);
+    if (usedIds.has(idString)) errors.push(`Duplicate question id: ${idString}`);
+    usedIds.add(idString);
+    const prompt = question.question !== undefined ? normalizeLocalizedText(question.question) : normalizeLocalizedText(question.q || question.prompt || '');
+    if (!localizedTextValue(prompt)) errors.push(`Question ${idString || index + 1} has no text.`);
+    const options = Array.isArray(question.options) ? question.options.map((option, optionIndex) => {
+      if (typeof option === 'string') {
+        return { id: String.fromCharCode(65 + optionIndex), en: option.trim(), hi: '' };
+      }
+      return {
+        id: String(option.id || String.fromCharCode(65 + optionIndex)).trim(),
+        en: String(option.en || option.text || option.value || '').trim(),
+        hi: String(option.hi || '').trim()
+      };
+    }) : [];
+    if (options.length < 2) errors.push(`Question ${idString || index + 1} needs at least two options.`);
+    options.forEach((option, optionIndex) => {
+      if (!localizedTextValue(option)) errors.push(`Question ${idString || index + 1}: option ${optionIndex + 1} has no text.`);
+    });
+    const correctOption = resolveAdminCorrectOption(question, options, idString || index + 1, errors);
+    const feedback = question.feedback && typeof question.feedback === 'object'
+      ? question.feedback
+      : {
+          correct: question.correctFeedback || 'Correct.',
+          incorrect: question.incorrectFeedback || 'Please try again.'
+        };
+    return {
+      id: idString || String(index + 1),
+      question: prompt,
+      options,
+      correctOption,
+      feedback: {
+        correct: normalizeLocalizedText(feedback.correct || question.correctFeedback || 'Correct.'),
+        incorrect: normalizeLocalizedText(feedback.incorrect || question.incorrectFeedback || 'Please try again.')
+      }
+    };
+  });
+  return {
+    title: String(data.title || 'Lesson Quiz').trim(),
+    questions,
+    errors
+  };
+}
+
+const validateQuizQuestionSet = normalizeQuizData;
+
+window.handleQuizJsonUpload = (kind, file) => {
+  const status = document.getElementById(`${kind}-quiz-status`);
+  if (!file) return;
+  const fileName = document.getElementById(`${kind}-quiz-file-name`);
+  if (fileName) fileName.textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    let parsed;
+    try {
+      parsed = JSON.parse(event.target.result);
+    } catch (error) {
+      uploadQuizState[kind].questionSet = null;
+      uploadQuizState[kind].errors = [error.message || 'Invalid JSON.'];
+      if (status) {
+        status.className = 'quiz-validation error';
+        status.textContent = `Invalid JSON: ${error.message || 'Unable to parse file.'}`;
+      }
+      return;
+    }
+
+    try {
+      const result = validateQuizQuestionSet(parsed);
+      uploadQuizState[kind].questionSet = result.errors.length ? null : {
+        title: result.title,
+        questions: result.questions
+      };
+      uploadQuizState[kind].errors = result.errors;
+      if (status) {
+        status.className = `quiz-validation ${result.errors.length ? 'error' : 'success'}`;
+        status.textContent = result.errors.length
+          ? result.errors.join(' ')
+          : `${result.questions.length} valid questions loaded.`;
+      }
+      if (kind === 'popup') {
+        uploadQuizState.popup.timestamps = uploadQuizState.popup.timestamps
+          .filter(item => result.questions.some(q => String(q.id) === String(item.questionId)));
+        renderPopupQuestionSelector();
+        renderPopupTimestampList();
+      }
+    } catch (error) {
+      console.error('[IdeaKDC quiz upload render]', error);
+      uploadQuizState[kind].questionSet = null;
+      uploadQuizState[kind].errors = [error.message || 'Quiz UI render failed.'];
+      if (status) {
+        status.className = 'quiz-validation error';
+        status.textContent = `Quiz UI error: ${error.message || 'Unable to render quiz options.'}`;
+      }
+    }
+  };
+  reader.readAsText(file);
+};
+
+window.validateCurrentQuiz = (kind) => {
+  const status = document.getElementById(`${kind}-quiz-status`);
+  const state = uploadQuizState[kind];
+  if (!status) return;
+  status.className = `quiz-validation ${state?.questionSet ? 'success' : 'error'}`;
+  status.textContent = state?.questionSet
+    ? `${state.questionSet.questions.length} valid questions ready to save.`
+    : (state?.errors?.join(' ') || 'Choose a valid quiz JSON file first.');
+};
+
+window.clearQuizJson = (kind) => {
+  uploadQuizState[kind] = kind === 'popup'
+    ? { questionSet: null, errors: [], timestamps: [] }
+    : { questionSet: null, errors: [] };
+  const input = document.getElementById(`${kind}-quiz-file`);
+  const fileName = document.getElementById(`${kind}-quiz-file-name`);
+  const status = document.getElementById(`${kind}-quiz-status`);
+  if (input) input.value = '';
+  if (fileName) fileName.textContent = 'No file selected.';
+  if (status) {
+    status.className = 'quiz-validation';
+    status.textContent = kind === 'popup' ? 'No Pop-up Quiz file selected.' : 'No Separate Quiz file selected.';
+  }
+  renderPopupQuestionSelector();
+  renderPopupTimestampList();
+};
+
+window.removeLessonQuiz = (kind) => {
+  clearQuizJson(kind);
+  const mode = document.getElementById('quiz-mode');
+  if (mode?.value === kind) mode.value = 'none';
+  updateQuizOptionVisibility();
+};
+
+window.updateQuizOptionVisibility = () => {
+  const mode = document.getElementById('quiz-mode')?.value || 'none';
+  document.getElementById('separate-quiz-box')?.classList.toggle('show', mode === 'separate');
+  document.getElementById('popup-quiz-box')?.classList.toggle('show', mode === 'popup');
+};
+
+function renderPopupQuestionSelector() {
+  const select = document.getElementById('popup-question-select');
+  if (!select) return;
+  const questions = uploadQuizState.popup.questionSet?.questions || [];
+  select.innerHTML = questions.length
+    ? questions.map(q => `<option value="${escapeHtml(q.id)}">Question ${escapeHtml(q.id)} - ${escapeHtml(localizedTextValue(q.question)).slice(0, 64)}</option>`).join('')
+    : '<option value="">Upload JSON first</option>';
+}
+
+function formatTimeSeconds(seconds) {
+  const safe = Math.max(0, Number(seconds) || 0);
+  const minutes = Math.floor(safe / 60);
+  const secs = Math.floor(safe % 60);
+  return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function currentPopupTimeSeconds() {
+  const minutes = Number(document.getElementById('popup-minutes')?.value || 0);
+  const seconds = Number(document.getElementById('popup-seconds')?.value || 0);
+  if (!Number.isFinite(minutes) || !Number.isFinite(seconds) || minutes < 0 || seconds < 0 || seconds > 59) return null;
+  return minutes * 60 + seconds;
+}
+
+function popupVideoDurationSeconds() {
+  try {
+    const duration = quizPreviewPlayer?.getDuration?.();
+    return Number.isFinite(duration) && duration > 0 ? duration : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+window.addPopupTimestamp = () => {
+  const questionId = document.getElementById('popup-question-select')?.value || '';
+  const timeSeconds = currentPopupTimeSeconds();
+  const status = document.getElementById('popup-timestamp-status');
+  const questions = uploadQuizState.popup.questionSet?.questions || [];
+  const duration = popupVideoDurationSeconds();
+  const fail = (message) => {
+    if (status) {
+      status.className = 'quiz-validation error';
+      status.textContent = message;
+    }
+  };
+  if (!questions.some(q => String(q.id) === String(questionId))) return fail('Selected question does not exist in the uploaded JSON.');
+  if (timeSeconds === null) return fail('Invalid timestamp. Use minutes and 0-59 seconds.');
+  if (duration !== null && timeSeconds > duration) return fail('Timestamp is beyond the loaded video duration.');
+  if (uploadQuizState.popup.timestamps.some(item => String(item.questionId) === String(questionId))) return fail('This question is already mapped. Delete it first to change the time.');
+  if (uploadQuizState.popup.timestamps.some(item => Number(item.timeSeconds) === Number(timeSeconds))) return fail('Another question already uses this timestamp.');
+  uploadQuizState.popup.timestamps.push({ questionId: String(questionId), timeSeconds });
+  uploadQuizState.popup.timestamps.sort((a, b) => a.timeSeconds - b.timeSeconds);
+  renderPopupTimestampList();
+};
+
+window.deletePopupTimestamp = (questionId) => {
+  uploadQuizState.popup.timestamps = uploadQuizState.popup.timestamps.filter(item => String(item.questionId) !== String(questionId));
+  renderPopupTimestampList();
+};
+
+window.editPopupTimestamp = (questionId) => {
+  const item = uploadQuizState.popup.timestamps.find(row => String(row.questionId) === String(questionId));
+  if (!item) return;
+  document.getElementById('popup-question-select').value = String(item.questionId);
+  document.getElementById('popup-minutes').value = Math.floor(item.timeSeconds / 60);
+  document.getElementById('popup-seconds').value = Math.floor(item.timeSeconds % 60);
+  window.deletePopupTimestamp(questionId);
+};
+
+function renderPopupTimestampList() {
+  const list = document.getElementById('popup-timestamp-list');
+  const status = document.getElementById('popup-timestamp-status');
+  if (!list) return;
+  const questions = uploadQuizState.popup.questionSet?.questions || [];
+  list.innerHTML = uploadQuizState.popup.timestamps.map(item => {
+    const question = questions.find(q => String(q.id) === String(item.questionId));
+    return `
+      <div class="timestamp-row">
+        <span>Question ${escapeHtml(item.questionId)} at ${formatTimeSeconds(item.timeSeconds)}<br><small>${escapeHtml(localizedTextValue(question?.question || '')).slice(0, 90)}</small></span>
+        <button type="button" onclick="editPopupTimestamp('${escapeHtml(item.questionId)}')">Edit</button>
+        <button type="button" onclick="deletePopupTimestamp('${escapeHtml(item.questionId)}')">Delete</button>
+      </div>`;
+  }).join('');
+  if (status) {
+    status.className = `quiz-validation ${uploadQuizState.popup.timestamps.length ? 'success' : ''}`;
+    status.textContent = uploadQuizState.popup.timestamps.length
+      ? `${uploadQuizState.popup.timestamps.length} timestamp mappings ready.`
+      : 'No timestamps mapped yet.';
+  }
+}
+
+function normalizeLessonQuizMode(lesson = {}) {
+  if (['none', 'separate', 'popup'].includes(lesson.quizMode)) return lesson.quizMode;
+  if (lesson.quizConfig?.popupQuiz?.enabled === true && lesson.quizConfig?.popupQuiz?.timestamps?.length) return 'popup';
+  if (lesson.quizConfig?.separateQuiz?.enabled === true || lesson.separateQuiz || lesson.separateQuizRef) return 'separate';
+  return 'none';
+}
+
+function buildQuizConfigForUpload(baseContent = null) {
+  const quizMode = document.getElementById('quiz-mode')?.value || 'none';
+  const separateEnabled = quizMode === 'separate';
+  const popupEnabled = quizMode === 'popup';
+  if (separateEnabled && !uploadQuizState.separate.questionSet) {
+    throw new Error('Separate Quiz is enabled, but its JSON is missing or invalid.');
+  }
+  if (popupEnabled && !uploadQuizState.popup.questionSet) {
+    throw new Error('Pop-up Quiz is enabled, but its JSON is missing or invalid.');
+  }
+  if (popupEnabled && !uploadQuizState.popup.timestamps.length) {
+    throw new Error('Pop-up Quiz needs at least one timestamp mapping.');
+  }
+  const questionSets = { ...(baseContent?.quizQuestionSets || {}) };
+  delete questionSets.separate;
+  const previousSeparateSetId = baseContent?.quizConfig?.separateQuiz?.questionSetId || '';
+  if (previousSeparateSetId) delete questionSets[previousSeparateSetId];
+  const quizConfig = {
+    ...(baseContent?.quizConfig || {}),
+    separateQuiz: {
+      ...(baseContent?.quizConfig?.separateQuiz || {}),
+      enabled: false,
+      questionSetId: baseContent?.quizConfig?.separateQuiz?.questionSetId || 'separate'
+    },
+    popupQuiz: {
+      ...(baseContent?.quizConfig?.popupQuiz || {}),
+      enabled: false,
+      questionSetId: baseContent?.quizConfig?.popupQuiz?.questionSetId || 'popup',
+      requireAnswer: true,
+      soundEnabled: true,
+      timestamps: baseContent?.quizConfig?.popupQuiz?.timestamps || []
+    }
+  };
+  if (separateEnabled) {
+    quizConfig.separateQuiz = { enabled: true, questionSetId: 'separate' };
+  }
+  if (popupEnabled) {
+    questionSets.popup = uploadQuizState.popup.questionSet;
+    quizConfig.popupQuiz = {
+      enabled: true,
+      questionSetId: 'popup',
+      requireAnswer: document.getElementById('popup-require-answer')?.checked !== false,
+      soundEnabled: document.getElementById('popup-sound-enabled')?.checked !== false,
+      timestamps: uploadQuizState.popup.timestamps.map(item => ({
+        questionId: String(item.questionId),
+        timeSeconds: Number(item.timeSeconds)
+      }))
+    };
+  }
+  return {
+    quizMode,
+    quizConfig,
+    quizQuestionSets: questionSets,
+    separateQuiz: separateEnabled
+      ? { version: 1, questionCount: uploadQuizState.separate.questionSet.questions.length }
+      : (baseContent?.separateQuiz || null),
+    separateQuizDocument: separateEnabled ? uploadQuizState.separate.questionSet : null
+  };
+}
+
+function buildDisabledQuizPayload() {
+  return {
+    quizMode: 'none',
+    quizConfig: {
+      separateQuiz: { enabled: false, questionSetId: 'separate' },
+      popupQuiz: { enabled: false, questionSetId: 'popup', requireAnswer: true, soundEnabled: true, timestamps: [] }
+    },
+    quizQuestionSets: {},
+    separateQuiz: null
+  };
+}
+
+window.previewSeparateQuiz = () => {
+  const questionSet = uploadQuizState.separate.questionSet;
+  if (!questionSet) return showToast('Upload and validate a Separate Quiz JSON file first.', 'error');
+  const previewId = `preview_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const videoUrl = document.getElementById('up-video-link')?.value.trim() || '';
+  localStorage.setItem(`ideakdcSeparateQuizPreview:${previewId}`, JSON.stringify({
+    createdAt: Date.now(),
+    title: document.getElementById('up-title')?.value.trim() || 'Separate Quiz Preview',
+    courseId: editingCourseId ? (allContent.find(item => item._id === editingCourseId)?.courseId || 'admin-preview') : 'admin-preview',
+    lessonId: editingCourseId || 'unsaved-preview',
+    videoUrl,
+    quizData: questionSet
+  }));
+  window.open(`index.html?adminQuizPreview=${encodeURIComponent(previewId)}`, '_blank', 'noopener');
+};
+
+window.loadQuizTimingPreview = async () => {
+  const link = uploadType === 'playlist'
+    ? document.getElementById('up-playlist-link')?.value.trim()
+    : document.getElementById('up-video-link')?.value.trim();
+  const videoId = extractVideoIdFromLink(link);
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) return showToast('Valid YouTube video URL/ID required for timing preview.', 'error');
+  const preview = document.getElementById('quiz-video-preview');
+  if (preview) preview.classList.add('show');
+  await ensureAdminYouTubeApi();
+  try { quizPreviewPlayer?.destroy?.(); } catch (_) {}
+  quizPreviewPlayer = new YT.Player('quiz-preview-player', {
+    videoId,
+    playerVars: { rel: 0, playsinline: 1 }
+  });
+};
+
+function ensureAdminYouTubeApi() {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (window._adminYtApiPromise) return window._adminYtApiPromise;
+  window._adminYtApiPromise = new Promise((resolve, reject) => {
+    const previousReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof previousReady === 'function') previousReady();
+      resolve(window.YT);
+    };
+    const script = document.createElement('script');
+    script.src = 'https://www.youtube.com/iframe_api';
+    script.async = true;
+    script.onerror = () => reject(new Error('YouTube timing preview failed to load.'));
+    document.head.appendChild(script);
+  });
+  return window._adminYtApiPromise;
+}
+
+window.useCurrentVideoTimeForPopup = () => {
+  try {
+    const time = Math.floor(quizPreviewPlayer?.getCurrentTime?.() || 0);
+    document.getElementById('popup-minutes').value = Math.floor(time / 60);
+    document.getElementById('popup-seconds').value = time % 60;
+  } catch (_) {
+    showToast('Load and play the timing preview first.', 'error');
+  }
+};
+
+let uploadInProgress = false;
+
+function setUploadStatus(message = '', type = 'info') {
+  const status = document.getElementById('upload-status');
+  if (!status) return;
+  status.textContent = message;
+  status.className = `mode-help upload-status${message ? ' show' : ''}${type ? ` ${type}` : ''}`;
+}
+
+function setUploading(isUploading, label = '') {
+  uploadInProgress = isUploading;
+  setBtn('upload-btn', 'upload-label', isUploading, label || (isUploading ? 'Upload ho raha hai...' : 'Content Upload karein'));
+}
+
+function safeUploadError(error) {
+  const code = error?.code || '';
+  const message = error?.message || '';
+  if (code.includes('storage/unauthorized')) return 'Thumbnail upload permission denied. Please check admin login and Storage rules.';
+  if (code.includes('storage/retry-limit-exceeded')) return 'Thumbnail upload network timeout. Please try again.';
+  if (code.includes('permission-denied')) return 'Permission denied. Please login with the IdeaKDC admin account.';
+  if (code.includes('unauthenticated')) return 'Admin login required. Please login again.';
+  if (code.includes('functions/not-found') || code.includes('not-found')) return 'Required upload Function is unavailable. Deploy functions before uploading courses.';
+  if (/network|failed to fetch|offline/i.test(message)) return 'Network problem during upload. Please check internet and try again.';
+  return message || code || 'Upload failed. Please try again.';
+}
+
+function showVisibleUploadError(error) {
+  const safeMessage = safeUploadError(error);
+  const code = error?.code || '';
+  const visibleMessage = code && !safeMessage.includes(code) ? `${code}: ${safeMessage}` : safeMessage;
+  console.error('[IdeaKDC upload]', error);
+  setUploadStatus(visibleMessage, 'error');
+  showToast(visibleMessage, 'error');
+}
+
+async function runUploadPreflight() {
+  setUploadStatus('Checking upload setup...', 'info');
+  if (!firebaseConfig.projectId || firebaseConfig.projectId !== 'ideakdc-24b0b') {
+    throw new Error(`Firebase project mismatch: ${firebaseConfig.projectId || 'missing'}`);
+  }
+  if (!firebaseConfig.storageBucket) {
+    throw new Error('Storage bucket missing in Firebase config.');
+  }
+  if (!storage) {
+    throw new Error('Storage not initialized.');
+  }
+  if (!db) {
+    throw new Error('Firestore not initialized.');
+  }
+  if (!functions || !adminUploadPreflightFn || !repairProtectedCourseThumbnailsFn) {
+    throw new Error('Required Function unavailable.');
+  }
+
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('Admin authentication missing.');
+  }
+  const email = String(user.email || '').toLowerCase();
+  if (!ADMIN_EMAILS.map(item => item.toLowerCase()).includes(email)) {
+    throw new Error('Current user is not recognized as IdeaKDC admin.');
+  }
+
+  const diagnosticRef = storageRef(storage, 'course-thumbnails/diagnostics/upload-preflight-check.txt');
+  if (!diagnosticRef || !diagnosticRef.fullPath || !diagnosticRef.bucket) {
+    throw new Error('Storage diagnostic reference could not be created.');
+  }
+  setUploadStatus(`Storage ready: ${diagnosticRef.bucket}`, 'info');
+
+  let serverResult;
+  try {
+    serverResult = await withUploadTimeout(
+      adminUploadPreflightFn({ expectedProjectId: firebaseConfig.projectId }),
+      15000,
+      'Required Function unavailable or timed out.'
+    );
+  } catch (error) {
+    if ((error?.code || '').includes('permission-denied')) {
+      throw new Error('Required Function permission denied. Please login with admin account.');
+    }
+    if ((error?.code || '').includes('not-found')) {
+      throw new Error('Required Function unavailable. Deploy functions before uploading courses.');
+    }
+    throw error;
+  }
+
+  const data = serverResult?.data || {};
+  if (!data.ok) {
+    throw new Error('Required Function preflight failed.');
+  }
+  const preflightVersion = data.preflightVersion || 'unknown-version';
+  setUploadStatus(`Storage ready. Firestore ready. Functions ready (${preflightVersion}). Bucket: ${firebaseConfig.storageBucket}`, 'success');
+  return {
+    bucket: firebaseConfig.storageBucket,
+    serverBucket: data.storageBucket || '',
+    preflightVersion
+  };
+}
+
+function withUploadTimeout(promise, timeoutMs, label) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(label || 'Operation timed out.')), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
+async function saveContentDoc(data, label = 'Firestore course save') {
+  const contentRef = doc(collection(db, 'content'));
+  const quizPayload = data.__separateQuizDocument || null;
+  const publicData = { ...data };
+  delete publicData.__separateQuizDocument;
+  if (quizPayload) {
+    publicData.separateQuizRef = `content/${contentRef.id}/quizzes/separate`;
+    publicData.separateQuizQuestionCount = quizPayload.questions.length;
+  }
+  const batch = writeBatch(db);
+  batch.set(contentRef, publicData);
+  if (quizPayload) {
+    batch.set(doc(db, 'content', contentRef.id, 'quizzes', 'separate'), {
+      version: 1,
+      title: quizPayload.title || 'Lesson Quiz',
+      questions: quizPayload.questions,
+      courseId: publicData.courseId,
+      lessonId: contentRef.id,
+      ownerUid: auth.currentUser?.uid || '',
+      published: true,
+      updatedAt: serverTimestamp()
+    });
+  }
+  return withUploadTimeout(
+    batch.commit().then(() => contentRef),
+    25000,
+    `${label} timed out. Check Firestore permissions and internet connection.`
+  );
+}
+
+async function updateContentDocWithQuiz(contentId, data, quizPayload, label = 'Firestore lesson update') {
+  const contentRef = doc(db, 'content', contentId);
+  const publicData = { ...data };
+  if (quizPayload) {
+    publicData.separateQuizRef = `content/${contentId}/quizzes/separate`;
+    publicData.separateQuizQuestionCount = quizPayload.questions.length;
+  }
+  const batch = writeBatch(db);
+  batch.set(contentRef, publicData, { merge: true });
+  if (quizPayload) {
+    batch.set(doc(db, 'content', contentId, 'quizzes', 'separate'), {
+      version: 1,
+      title: quizPayload.title || 'Lesson Quiz',
+      questions: quizPayload.questions,
+      courseId: publicData.courseId,
+      lessonId: contentId,
+      ownerUid: auth.currentUser?.uid || '',
+      published: true,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  }
+  return withUploadTimeout(
+    batch.commit(),
+    25000,
+    `${label} timed out. Check Firestore permissions and internet connection.`
+  );
+}
+
+function queuePostUploadThumbnailRepair(contentIds = []) {
+  const safeIds = contentIds.filter(Boolean);
+  if (!safeIds.length) return;
+  setUploadStatus('Course saved. Public thumbnail repair is running in background...', 'success');
+  withUploadTimeout(
+      repairProtectedCourseThumbnailsFn({ contentIds: safeIds }),
+      120000,
+      'Thumbnail repair is taking too long. Run Repair All Missing Thumbnails from admin panel if needed.'
+    )
+    .then(() => {
+      setUploadStatus('Upload completed. Thumbnail is ready.', 'success');
+    })
+    .catch((error) => {
+      console.warn('[IdeaKDC upload thumbnail repair skipped]', {
+        code: error?.code || '',
+        message: error?.message || ''
+      });
+      setUploadStatus('Course saved. Thumbnail repair did not finish now; use Repair All Missing Thumbnails if the image is missing.', 'warning');
+    });
+}
+
+
+window.uploadContent = async () => {
+  if (uploadInProgress) return;
+  setUploadStatus('');
+  const cls     = document.getElementById('up-class').value;
+  const subject = document.getElementById('up-subject').value;
+  const chapter = document.getElementById('up-chapter').value.trim();
+  const topic   = document.getElementById('up-topic').value.trim();
+  const title   = document.getElementById('up-title').value.trim();
+  const price   = Number(document.getElementById('up-price').value || 0);
+  const desc    = document.getElementById('up-desc').value.trim();
+  let courseThumbnailUrl = '';
+  const vidLink = document.getElementById('up-video-link').value.trim();
+  const makeCompleteVideoFree = document.getElementById('up-free-complete')?.checked === true;
+  const plLink  = document.getElementById('up-playlist-link').value.trim();
+  const fp      = uploadFP;
+  const faqs    = collectCourseFaqs();
+  if (faqs === null) return;
+  const editingItem = editingCourseId ? allContent.find(item => item._id === editingCourseId) : null;
+  let quizPayload;
+  try {
+    quizPayload = buildQuizConfigForUpload(editingItem);
+  } catch (error) {
+    showVisibleUploadError(error);
+    return;
+  }
+
+  if (uploadMode === 'edit-course' && !editingItem) {
+    return showToast('Select an exact lesson from Content before editing.', 'error');
+  }
+
+  if (uploadMode !== 'add-video-playlist') {
+    if (!cls)     return showToast('Class select करें।','error');
+    if (!subject) return showToast('Subject select करें।','error');
+    if (!chapter) return showToast('Chapter लिखें।','error');
+    if (!topic)   return showToast('Topic लिखें।','error');
+  }
+  if (!title)   return showToast('Title लिखें।','error');
+  if (uploadMode !== 'add-video-playlist' && fp !== 'free' && (!price || price < 1)) return showToast('Course price सही डालें।','error');
+
+  const link = uploadType === 'video' ? vidLink : plLink;
+  if (!link) return showToast('Video or playlist source डालें।', 'error');
+
+  uploadInProgress = true;
+  setBtn('upload-btn', 'upload-label', true, 'Checking upload setup...');
+  try {
+    await runUploadPreflight();
+  } catch (error) {
+    showVisibleUploadError(error);
+    setUploading(false, '✅ Content Upload करें');
+    return;
+  }
+  setUploading(true, uploadType==='playlist' ? 'Playlist se videos fetch ho rahi hain...' : 'Upload ho raha hai...');
+
+  try {
+    if (uploadMode === 'edit-course') {
+      const sourceValue = vidLink || editingItem.videoUrl || editingItem.youtubeUrl || editingItem.videoId || editingItem.vid || '';
+      const source = normalizeUploadVideoSource(sourceValue);
+      const pricingState = normalizeUploadPricing(fp, price, makeCompleteVideoFree);
+      setUploadStatus('Updating this exact lesson and quiz...', 'info');
+      await withOperationTimeout(
+        updateContentDocWithQuiz(editingCourseId, {
+          courseId: editingItem.courseId,
+          title,
+          courseTitle: editingItem.courseTitle || title,
+          classNum: cls,
+          stream: uploadStream || editingItem.stream || '',
+          subject,
+          chapter,
+          topic,
+          videoId: source.videoId,
+          videoUrl: source.videoUrl,
+          videoSourceType: source.sourceType,
+          desc,
+          faqs,
+          quizMode: quizPayload.quizMode,
+          quizConfig: quizPayload.quizConfig,
+          quizQuestionSets: quizPayload.quizQuestionSets,
+          separateQuiz: quizPayload.separateQuiz,
+          quizUpdatedAt: serverTimestamp(),
+          ...pricingState,
+          updatedAt: serverTimestamp()
+        }, quizPayload.separateQuizDocument),
+        'Firestore lesson update'
+      );
+      showToast('Lesson and quiz updated successfully.', 'success');
+    } else if (uploadMode === 'add-video-playlist') {
+      const targetCourseId = document.getElementById('existing-playlist-course')?.value || '';
+      const targetItems = allContent
+        .filter(item => item.courseId === targetCourseId && item.courseType === 'playlist')
+        .sort((a,b) => Number(a.orderIndex || 0) - Number(b.orderIndex || 0));
+      const base = targetItems[0];
+      if (!targetCourseId || !base) {
+        showToast('Existing playlist course select करें।', 'error');
+        setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+        return;
+      }
+      if (uploadType !== 'video') {
+        showToast('Add video mode में playlist upload allowed नहीं है।', 'error');
+        setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+        return;
+      }
+
+	      const source = normalizeUploadVideoSource(vidLink);
+	      const nextIndex = targetItems.reduce((max, item) => Math.max(max, Number(item.orderIndex || 0)), -1) + 1;
+      const pricingState = normalizeUploadPricing(isContentMarkedFree(base) ? 'free' : fp, Number(base.price || price), makeCompleteVideoFree || isContentMarkedFree(base));
+      setUploadStatus('Saving new playlist lesson...', 'info');
+		      const createdDoc = await saveContentDoc({
+        type: 'video',
+        contentType: 'playlist',
+        courseType: 'playlist',
+        courseId: targetCourseId,
+        title,
+        classNum: base.classNum || cls,
+        stream: base.stream || uploadStream || '',
+        subject: base.subject || subject,
+        chapter: base.chapter || chapter,
+        topic: `${base.topic || topic} — Part ${nextIndex + 1}`,
+        videoId: source.videoId,
+        videoUrl: source.videoUrl,
+        videoSourceType: source.sourceType,
+        playlistId: base.playlistId || '',
+        firstVideoId: base.firstVideoId || source.videoId,
+        videoCount: targetItems.length + 1,
+        thumbnailUrl: '',
+        courseThumbnailUrl: courseThumbnailUrl || base.courseThumbnailUrl || base.thumbnailUrl || '',
+        faqs: faqs.length ? faqs : (Array.isArray(base.faqs) ? base.faqs.slice(0, 8) : []),
+        quizMode: quizPayload.quizMode,
+        quizConfig: quizPayload.quizConfig,
+        quizQuestionSets: quizPayload.quizQuestionSets,
+        separateQuiz: quizPayload.separateQuiz,
+        __separateQuizDocument: quizPayload.separateQuizDocument,
+        quizUpdatedAt: serverTimestamp(),
+        desc: desc || base.desc || '',
+        ...pricingState,
+        orderIndex: nextIndex,
+        createdAt: serverTimestamp(),
+        thumbnailStatus: 'pending-repair'
+      });
+      queuePostUploadThumbnailRepair([createdDoc.id]);
+      showToast('✅ Existing playlist में नया video add हो गया!','success');
+
+    } else if (uploadMode === 'create-single') {
+      if (uploadType !== 'video') {
+        showToast('Single-video course के लिए video upload type चुनें।', 'error');
+        setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+        return;
+	      }
+	      const courseId = uniqueCourseId('single');
+	      const source = normalizeUploadVideoSource(link);
+      const pricingState = normalizeUploadPricing(fp, price, makeCompleteVideoFree);
+      setUploadStatus('Saving single-video course...', 'info');
+		      const createdDoc = await saveContentDoc({
+        type: 'video', contentType: 'single', courseType: 'single', courseId,
+        title, courseTitle: title, classNum: cls, stream: uploadStream || '',
+        subject, chapter, topic, videoId: source.videoId, videoUrl: source.videoUrl, videoSourceType: source.sourceType, playlistId: '', desc,
+        firstVideoId: source.videoId,
+        videoCount: 1,
+        thumbnailUrl: '',
+        courseThumbnailUrl: '',
+        faqs,
+        quizMode: quizPayload.quizMode,
+        quizConfig: quizPayload.quizConfig,
+        quizQuestionSets: quizPayload.quizQuestionSets,
+        separateQuiz: quizPayload.separateQuiz,
+        __separateQuizDocument: quizPayload.separateQuizDocument,
+        quizUpdatedAt: serverTimestamp(),
+        orderIndex: 0,
+        ...pricingState,
+        createdAt: serverTimestamp(),
+        thumbnailStatus: 'pending-repair'
+      });
+      queuePostUploadThumbnailRepair([createdDoc.id]);
+      showToast('✅ Video upload हो गया!','success');
+
+    } else if (uploadMode === 'create-playlist') {
+      if (uploadType !== 'playlist') {
+        showToast('Playlist course के लिए playlist upload type चुनें।', 'error');
+        setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+        return;
+	      }
+	      const courseId = uniqueCourseId('playlist');
+      setUploadStatus('Saving playlist course metadata...', 'info');
+      // ── PLAYLIST: fetch all videos via YouTube API, create one entry per video ──
+	      const playlistId = extractPlaylistIdFromLink(link);
+	
+	      setUploadStatus('Fetching playlist videos from YouTube...', 'info');
+	      const videos = await fetchPlaylistVideos(playlistId, message => setUploadStatus(message, 'info'));
+      const firstVideoId = videos[0]?.videoId || '';
+      if (!videos.length) {
+        showToast('Playlist में कोई video नहीं मिला। Link check करें।','error');
+        setBtn('upload-btn','upload-label',false,'✅ Content Upload करें');
+        return;
+      }
+
+      setBtn('upload-btn','upload-label',true,`${videos.length} videos save हो रही हैं...`);
+
+	      const createdContentIds = [];
+      const pricingState = normalizeUploadPricing(fp, price, makeCompleteVideoFree);
+	      for (let i = 0; i < videos.length; i++) {
+	        const v = videos[i];
+          const lessonQuizPayload = i === 0 ? quizPayload : buildDisabledQuizPayload();
+	        setUploadStatus(`Saving lesson ${i + 1} of ${videos.length}...`, 'info');
+		        const createdDoc = await saveContentDoc({
+          type: 'video', // each playlist video becomes its own video entry
+          contentType: 'playlist',
+          courseType: 'playlist',
+          courseId,
+          title: v.title,
+          courseTitle: title,
+          classNum: cls,
+          stream: uploadStream || '',
+          subject,
+          chapter,
+          topic: `${topic} — Part ${i+1}`,
+          videoId: v.videoId,
+          playlistId,
+          firstVideoId,
+          videoCount: videos.length,
+          thumbnailUrl: '',
+          courseThumbnailUrl: courseThumbnailUrl || '',
+          dur: v.duration,
+          orderIndex: i,
+          faqs,
+          quizMode: lessonQuizPayload.quizMode,
+          quizConfig: lessonQuizPayload.quizConfig,
           quizQuestionSets: lessonQuizPayload.quizQuestionSets,
           separateQuiz: lessonQuizPayload.separateQuiz,
           __separateQuizDocument: lessonQuizPayload.separateQuizDocument,
