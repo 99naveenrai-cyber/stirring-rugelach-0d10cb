@@ -1,4 +1,5 @@
 "use strict";
+// Deployment trigger: exact-course-access-2026-07-28
 
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
