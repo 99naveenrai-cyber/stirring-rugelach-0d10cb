@@ -1,5 +1,5 @@
 "use strict";
-// Deployment synchronization: security-hardening-2026-07-28
+// Deployment synchronization: security-hardening-2026-07-28-retry-1
 
 const crypto = require("crypto");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
