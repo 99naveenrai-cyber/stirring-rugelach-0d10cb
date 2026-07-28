@@ -100,3 +100,5 @@ jobs:
         if: always() && (steps.reviewed_changes.outputs.functions == 'true' || steps.reviewed_changes.outputs.firestore_rules == 'true')
         shell: bash
         run: rm -f "$RUNNER_TEMP/ideakdc-firebase-service-account.json"
+
+# Security hardening deployment trigger
