@@ -6,6 +6,12 @@ on:
   push:
     branches:
       - main
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+  statuses: write
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
@@ -100,5 +106,23 @@ jobs:
         if: always() && (steps.reviewed_changes.outputs.functions == 'true' || steps.reviewed_changes.outputs.firestore_rules == 'true')
         shell: bash
         run: rm -f "$RUNNER_TEMP/ideakdc-firebase-service-account.json"
+      - name: Report Firebase deployment success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state=success \
+            -f context='ideakdc/firebase-deploy' \
+            -f description='Firebase deployment workflow passed'
+      - name: Report Firebase deployment failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state=failure \
+            -f context='ideakdc/firebase-deploy' \
+            -f description='Firebase deployment workflow failed'
 
 # Security hardening deployment trigger
