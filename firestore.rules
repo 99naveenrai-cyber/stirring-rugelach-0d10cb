@@ -1,74 +1,212 @@
+Exit code: 0
+Wall time: 0.6 seconds
+Output:
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── USERS ──
-    match /users/{userId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == userId;
+    function signedIn() {
+      return request.auth != null;
     }
 
-    // ── ENROLLMENTS ──
-    match /enrollments/{enrollId} {
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email in ['99naveenrai@gmail.com'];
+    }
 
-      // Student can CREATE their own enrollment
-      allow create: if request.auth != null
+    function optionalString(data, field, maxLength) {
+      return !data.keys().hasAny([field])
+        || (data[field] is string && data[field].size() <= maxLength);
+    }
+
+    function optionalNumber(data, field) {
+      return !data.keys().hasAny([field])
+        || (data[field] is number && data[field] >= 0);
+    }
+
+    function optionalTimestamp(data, field) {
+      return !data.keys().hasAny([field])
+        || data[field] is timestamp;
+    }
+
+    function validUserProfile(data) {
+      return optionalString(data, 'name', 120)
+        && optionalString(data, 'email', 254)
+        && optionalString(data, 'classNum', 40)
+        && optionalString(data, 'stream', 80)
+        && optionalString(data, 'state', 100)
+        && optionalString(data, 'mobile', 24)
+        && optionalString(data, 'phone', 24)
+        && optionalString(data, 'registrationSource', 80)
+        && optionalTimestamp(data, 'createdAt')
+        && optionalTimestamp(data, 'updatedAt');
+    }
+
+    function validUserCreate(userId) {
+      return request.resource.data.keys().hasOnly([
+          'name',
+          'email',
+          'classNum',
+          'stream',
+          'state',
+          'mobile',
+          'phone',
+          'registrationSource',
+          'createdAt',
+          'updatedAt',
+          'role'
+        ])
+        && request.auth.uid == userId
+        && validUserProfile(request.resource.data)
+        && (!request.resource.data.keys().hasAny(['role'])
+          || request.resource.data.role == 'student');
+    }
+
+    function validUserUpdate(userId) {
+      return request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name',
+          'email',
+          'classNum',
+          'stream',
+          'state',
+          'mobile',
+          'phone',
+          'registrationSource',
+          'updatedAt'
+        ])
+        && validUserProfile(request.resource.data);
+    }
+
+    function validEnrollmentCreate() {
+      return request.resource.data.keys().hasOnly([
+          'userId',
+          'userName',
+          'userEmail',
+          'userPhone',
+          'courseId',
+          'courseName',
+          'courseEmoji',
+          'originalPrice',
+          'coursePrice',
+          'couponCode',
+          'discountAmount',
+          'finalPrice',
+          'paymentMode',
+          'screenshotBase64',
+          'status',
+          'submittedAt',
+          'updatedAt'
+        ])
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.status == 'pending';
-
-      // Student can READ their own enrollments
-      allow read: if request.auth != null
-        && resource.data.userId == request.auth.uid;
-
-      // Admin can READ and UPDATE any enrollment
-      allow read, update: if request.auth != null
-        && request.auth.token.email in ['99naveenrai@gmail.com'];
+        && request.resource.data.status == 'pending'
+        && optionalString(request.resource.data, 'userName', 120)
+        && optionalString(request.resource.data, 'userEmail', 254)
+        && optionalString(request.resource.data, 'userPhone', 24)
+        && optionalString(request.resource.data, 'courseId', 180)
+        && optionalString(request.resource.data, 'courseName', 240)
+        && optionalString(request.resource.data, 'courseEmoji', 16)
+        && optionalString(request.resource.data, 'couponCode', 80)
+        && optionalString(request.resource.data, 'paymentMode', 40)
+        && optionalString(request.resource.data, 'screenshotBase64', 700000)
+        && optionalNumber(request.resource.data, 'originalPrice')
+        && optionalNumber(request.resource.data, 'coursePrice')
+        && optionalNumber(request.resource.data, 'discountAmount')
+        && optionalNumber(request.resource.data, 'finalPrice')
+        && optionalTimestamp(request.resource.data, 'submittedAt')
+        && optionalTimestamp(request.resource.data, 'updatedAt');
     }
 
-    // ── CONTENT (Class → Subject → Chapter → Topic → Video/Playlist) ──
+    function validEnrollmentAdminUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'reviewedAt'
+        ])
+        && request.resource.data.status in ['pending', 'approved', 'rejected']
+        && optionalTimestamp(request.resource.data, 'reviewedAt');
+    }
+
+    function validSeparateQuizCreate(contentId, quizId) {
+      return quizId == 'separate'
+        && request.resource.data.keys().hasOnly([
+          'version',
+          'title',
+          'questions',
+          'courseId',
+          'lessonId',
+          'ownerUid',
+          'published',
+          'updatedAt'
+        ])
+        && request.resource.data.version == 1
+        && request.resource.data.title is string
+        && request.resource.data.title.size() <= 200
+        && request.resource.data.questions is list
+        && request.resource.data.questions.size() > 0
+        && request.resource.data.questions.size() <= 100
+        && request.resource.data.courseId is string
+        && request.resource.data.courseId.size() <= 180
+        && request.resource.data.lessonId == contentId
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.published is bool
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validSeparateQuizUpdate(contentId, quizId) {
+      return quizId == 'separate'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'version',
+          'title',
+          'questions',
+          'courseId',
+          'lessonId',
+          'published',
+          'updatedAt'
+        ])
+        && request.resource.data.lessonId == contentId
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && validSeparateQuizCreate(contentId, quizId);
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && validUserCreate(userId);
+      allow update: if signedIn() && validUserUpdate(userId);
+      allow delete: if false;
+    }
+
+    match /enrollments/{enrollId} {
+      allow create: if signedIn() && validEnrollmentCreate();
+      allow read: if (signedIn() && resource.data.userId == request.auth.uid)
+        || isAdmin();
+      allow update: if isAdmin() && validEnrollmentAdminUpdate();
+      allow delete: if false;
+    }
+
     match /content/{contentId} {
-      // Everyone (even logged-out visitors) can READ content listings
       allow read: if true;
+      allow create, update, delete: if isAdmin();
 
-      // Only admin can CREATE, UPDATE, DELETE content
-      allow create, update, delete: if request.auth != null
-        && request.auth.token.email in ['99naveenrai@gmail.com'];
-
-      // Full Separate Quiz data stays private; students receive it only
-      // through the authorized lesson-quiz callable.
       match /quizzes/{quizId} {
-        allow read, write: if request.auth != null
-          && request.auth.token.email in ['99naveenrai@gmail.com'];
+        allow read: if isAdmin();
+        allow create: if isAdmin() && validSeparateQuizCreate(contentId, quizId);
+        allow update: if isAdmin() && validSeparateQuizUpdate(contentId, quizId);
+        allow delete: if isAdmin();
       }
     }
 
-    // ── COUPONS ──
     match /coupons/{couponCode} {
-      // Students can check an active coupon code, but cannot list all coupons
-      allow get: if resource.data.active == true
-        || (request.auth != null
-            && request.auth.token.email in ['99naveenrai@gmail.com']);
-      allow list: if request.auth != null
-        && request.auth.token.email in ['99naveenrai@gmail.com'];
-
-      // Only admin can manage coupons
-      allow create, update, delete: if request.auth != null
-        && request.auth.token.email in ['99naveenrai@gmail.com'];
+      allow get: if resource.data.active == true || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // ── PROGRESS (Continue Learning tracking) ──
     match /progress/{userId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == userId;
+      allow read, write: if signedIn() && request.auth.uid == userId;
     }
 
-    // ── LEGACY: courses (old structure, kept for migration read) ──
     match /courses/{courseId} {
-      allow read: if request.auth != null
-        && request.auth.token.email in ['99naveenrai@gmail.com'];
-      allow write: if request.auth != null
-        && request.auth.token.email in ['99naveenrai@gmail.com'];
+      allow read, write: if isAdmin();
     }
-
   }
 }
