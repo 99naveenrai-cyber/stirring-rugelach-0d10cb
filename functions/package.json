@@ -1,3 +1,6 @@
+Exit code: 0
+Wall time: 0.7 seconds
+Output:
 {
   "name": "ideakdc-cashfree-functions",
   "description": "Firebase Cloud Functions foundation for IdeaKDC Cashfree payments.",
@@ -9,7 +12,8 @@
   "scripts": {
     "lint": "node --check index.js",
     "build": "node --check index.js",
-    "test": "node --check index.js"
+    "test": "node --test test/security-utils.test.js test/admin-security.test.js test/config-security.test.js",
+    "test:rules": "node --test test/firestore.rules.test.js"
   },
   "dependencies": {
     "firebase-admin": "^12.7.0",
