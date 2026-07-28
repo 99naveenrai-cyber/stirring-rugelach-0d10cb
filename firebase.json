@@ -1,3 +1,6 @@
+Exit code: 0
+Wall time: 0.6 seconds
+Output:
 {
   "firestore": {
     "rules": "firestore.rules"
@@ -14,11 +17,53 @@
   ],
   "hosting": {
     "public": ".",
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self' https://*.cashfree.com; upgrade-insecure-requests"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "SAMEORIGIN"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=()"
+          },
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=31536000; includeSubDomains"
+          }
+        ]
+      }
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
       "functions/**"
     ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": false
+    }
   }
 }
