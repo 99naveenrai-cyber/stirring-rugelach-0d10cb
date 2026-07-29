@@ -1323,7 +1323,6 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   }
 })();
 </script>
-<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword,
@@ -1435,12 +1434,18 @@ async function handleAdminSeparateQuizPreview(user) {
 // AUTH STATE
 // ════════════════════════════════════════
 onAuthStateChanged(auth, async (user) => {
+  let profilePromise = Promise.resolve();
   if (user) {
     clearAccessState({ keepPendingCourse: true });
     currentUser = user;
-    const snap = await getDoc(doc(db, 'users', user.uid));
-    if (snap.exists()) currentUserData = snap.data();
     updateNav(true);
+    profilePromise = getDoc(doc(db, 'users', user.uid))
+      .then((snap) => {
+        if (snap.exists()) currentUserData = snap.data();
+      })
+      .catch((error) => {
+        console.warn('[IdeaKDC profile] load delayed', error?.code || error?.message || error);
+      });
   } else {
     clearAccessState();
     currentUser = null;
@@ -1449,7 +1454,7 @@ onAuthStateChanged(auth, async (user) => {
   }
   hideLoader();
   if (await handleAdminSeparateQuizPreview(user)) return;
-  await loadCourses();
+  await Promise.all([profilePromise, loadCourses()]);
   await handleCashfreeReturnFromUrl();
   if (user) await completePendingRegistrationAfterAuth(user);
   await handleCourseRouteFromUrl();
@@ -2994,11 +2999,30 @@ function cashfreeVerifyMessage(result) {
   return 'Payment failed or cancelled. Course access was not unlocked.';
 }
 
-function getCashfreeCheckout() {
-  if (!window.Cashfree) {
-    throw new Error('Cashfree checkout is still loading. Please try again.');
-  }
-  return window.Cashfree({ mode: 'sandbox' });
+let cashfreeSdkPromise = null;
+
+function loadCashfreeSdk() {
+  if (window.Cashfree) return Promise.resolve(window.Cashfree);
+  if (cashfreeSdkPromise) return cashfreeSdkPromise;
+  cashfreeSdkPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+    script.async = true;
+    script.onload = () => window.Cashfree
+      ? resolve(window.Cashfree)
+      : reject(new Error('Cashfree checkout failed to initialize.'));
+    script.onerror = () => reject(new Error('Cashfree checkout could not be loaded. Check your connection and try again.'));
+    document.head.appendChild(script);
+  }).catch((error) => {
+    cashfreeSdkPromise = null;
+    throw error;
+  });
+  return cashfreeSdkPromise;
+}
+
+async function getCashfreeCheckout() {
+  const Cashfree = await loadCashfreeSdk();
+  return Cashfree({ mode: 'sandbox' });
 }
 
 window.startCashfreeCheckout = async () => {
@@ -3013,6 +3037,7 @@ window.startCashfreeCheckout = async () => {
 
   setBtnLoading('cashfree-pay-btn', 'cashfree-pay-label', true, 'Creating TEST order...');
   try {
+    const cashfree = await getCashfreeCheckout();
     const result = await createCashfreeOrderFn({ courseId: selectedCourse.id });
     const order = result.data || {};
     if (!order.payment_session_id || !order.order_id) {
@@ -3020,7 +3045,6 @@ window.startCashfreeCheckout = async () => {
     }
     lastCashfreeOrderId = order.order_id;
     showToast('Opening Cashfree TEST checkout...', 'success');
-    const cashfree = getCashfreeCheckout();
     await cashfree.checkout({
       paymentSessionId: order.payment_session_id,
       redirectTarget: '_modal'
