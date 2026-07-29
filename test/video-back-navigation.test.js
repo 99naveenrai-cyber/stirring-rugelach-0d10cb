@@ -37,6 +37,10 @@ test("confirmation is scoped to video navigation and guarded against duplicates"
   assert.match(confirmation, /videoExitDecisionPending/);
   assert.match(popstate, /videoExitGuardRestoring/);
   assert.match(popstate, /showVideoExitConfirmation\(\)/);
+  assert.match(studentSource, /linear-gradient\(145deg,rgba\(7,24,58,.92\),rgba\(18,96,160,.72\)/);
+  assert.match(studentSource, /border:1px solid rgba\(112,211,255,.82\)/);
+  assert.match(studentSource, /videoExitParticleRise 1\.7s/);
+  assert.match(studentSource, /layer\.remove\(\), 1950/);
 });
 
 test("lifecycle helpers pause, resume, stop, and unload YouTube and HTML5 media", () => {

@@ -429,19 +429,20 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 ══════════════════════════════ */
 .payment-page{max-width:500px;margin:0 auto;padding:1.2rem 1rem}
 .back-btn{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted);cursor:pointer;margin-bottom:1.2rem;border:none;background:none;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif}
-.video-exit-confirm-layer{position:fixed;inset:0;z-index:10020;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:rgba(30,8,10,.38);opacity:0;visibility:hidden;transition:opacity .22s ease,visibility 0s linear .22s}
+.video-exit-confirm-layer{position:fixed;inset:0;z-index:10020;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:rgba(2,10,28,.44);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);opacity:0;visibility:hidden;transition:opacity .3s ease,visibility 0s linear .3s}
 .video-exit-confirm-layer.is-open{opacity:1;visibility:visible;transition-delay:0s}
 .video-exit-confirm-layer.is-closing{opacity:0;pointer-events:none}
-.video-exit-confirm{position:relative;width:min(92vw,440px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);overflow:auto;padding:clamp(18px,4vw,28px);border:1px solid rgba(255,255,255,.3);border-radius:14px;background:linear-gradient(145deg,#b31f2b,#811522);box-shadow:0 18px 45px rgba(83,8,18,.38);color:#fff;text-align:center;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;transform:translateY(14px) scale(.975);transition:transform .24s cubic-bezier(.2,.75,.3,1)}
+.video-exit-confirm{position:relative;width:min(92vw,440px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);overflow:auto;padding:clamp(18px,4vw,28px);border:1px solid rgba(112,211,255,.82);border-radius:14px;background:linear-gradient(145deg,rgba(7,24,58,.92),rgba(18,96,160,.72),rgba(5,20,52,.94));box-shadow:0 0 0 1px rgba(159,226,255,.18) inset,0 0 26px rgba(63,186,255,.42),0 22px 55px rgba(0,12,42,.5);color:#f7fbff;text-align:center;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;transform:translateY(14px) scale(.975);transition:transform .3s cubic-bezier(.2,.75,.3,1),box-shadow .3s ease}
 .video-exit-confirm-layer.is-open .video-exit-confirm{transform:translateY(0) scale(1)}
-.video-exit-confirm-title{margin:0 0 clamp(16px,3vw,22px);font-size:clamp(1.28rem,5vw,1.8rem);line-height:1.3;font-weight:900;letter-spacing:0}
+.video-exit-confirm-title{margin:0 0 clamp(16px,3vw,22px);font-size:clamp(1.28rem,5vw,1.8rem);line-height:1.3;font-weight:900;letter-spacing:0;background:linear-gradient(105deg,#fff 8%,#92dcff 52%,#d7efff 82%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 16px rgba(3,20,54,.72)}
 .video-exit-confirm-actions{display:grid;gap:10px}
-.video-exit-confirm-btn{min-height:48px;width:100%;padding:10px 14px;border:1px solid rgba(255,255,255,.44);border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.09));box-shadow:inset 0 1px 0 rgba(255,255,255,.22);color:#fff;font:800 clamp(.88rem,3.6vw,1.02rem)/1.35 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.video-exit-confirm-btn{min-height:48px;width:100%;padding:10px 14px;border:1px solid rgba(170,225,255,.48);border-radius:10px;background:linear-gradient(135deg,rgba(151,218,255,.2),rgba(11,35,81,.28));box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 7px 20px rgba(0,15,45,.2);color:#fff;font:800 clamp(.88rem,3.6vw,1.02rem)/1.35 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .2s ease,border-color .2s ease,transform .15s ease}
+.video-exit-confirm-btn:hover{border-color:rgba(190,235,255,.86);background:linear-gradient(135deg,rgba(151,218,255,.3),rgba(11,35,81,.38))}
 .video-exit-confirm-btn:focus-visible{outline:3px solid rgba(255,240,178,.9);outline-offset:2px}
 .video-exit-confirm-btn:active{transform:scale(.985)}
 .video-exit-particles{position:fixed;inset:0;z-index:10030;overflow:hidden;pointer-events:none}
-.video-exit-particle{position:absolute;left:var(--particle-left);bottom:max(12px,env(safe-area-inset-bottom));font-size:var(--particle-size);animation:videoExitParticleRise .78s ease-out forwards;will-change:transform,opacity}
-@keyframes videoExitParticleRise{0%{opacity:0;transform:translate3d(0,12px,0) rotate(0) scale(.75)}18%{opacity:1}100%{opacity:0;transform:translate3d(var(--particle-drift),-42vh,0) rotate(var(--particle-rotate)) scale(1.08)}}
+.video-exit-particle{position:absolute;left:var(--particle-left);bottom:max(12px,env(safe-area-inset-bottom));font-size:var(--particle-size);animation:videoExitParticleRise 1.7s cubic-bezier(.18,.7,.24,1) forwards;will-change:transform,opacity}
+@keyframes videoExitParticleRise{0%{opacity:0;transform:translate3d(0,12px,0) rotate(0) scale(.75)}12%{opacity:1}72%{opacity:1}100%{opacity:0;transform:translate3d(var(--particle-drift),-55vh,0) rotate(var(--particle-rotate)) scale(1.08)}}
 @media(orientation:landscape) and (max-height:520px){.video-exit-confirm{width:min(78vw,520px);padding:12px 16px}.video-exit-confirm-title{margin-bottom:10px;font-size:clamp(1.05rem,4vh,1.4rem)}.video-exit-confirm-actions{grid-template-columns:1fr 1fr;gap:9px}.video-exit-confirm-btn{min-height:44px;padding:7px 10px;font-size:clamp(.78rem,2.7vh,.94rem)}}
 @media(prefers-reduced-motion:reduce){.video-exit-confirm-layer,.video-exit-confirm,.video-exit-confirm-btn{transition-duration:1ms!important}.video-exit-particle{animation-duration:1ms!important}}
 .payment-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.5rem}
@@ -1693,7 +1694,7 @@ function emitVideoExitParticles(mood) {
     layer.appendChild(particle);
   }
   document.body.appendChild(layer);
-  window.setTimeout(() => layer.remove(), 950);
+  window.setTimeout(() => layer.remove(), 1950);
 }
 
 function closeVideoExitConfirmation(resumeVideo) {
