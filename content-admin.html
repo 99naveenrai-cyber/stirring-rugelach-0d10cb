@@ -9,7 +9,7 @@
 :root{--ink:#1c2321;--paper:#fafaf7;--panel:#fff;--line:#e6e2d8;--teal:#1e5f5a;--teal-light:#e4f0ee;--grey:#8e8a80;--grey-light:#f1efea;--danger:#b23a2e;--radius:10px}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--paper);color:var(--ink)}
 header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;background:var(--panel);border-bottom:1px solid var(--line)}
-header h1{font-size:19px;font-weight:800;margin:0}header h1 span{color:var(--teal)}.status{font-family:monospace;font-size:12px;color:var(--grey)}
+header h1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:19px;font-weight:800;margin:0}header h1>span:not(.content-label){color:inherit}.content-label{color:var(--teal)}.brand-wordmark{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid #d5dce8;border-radius:7px;background:#fff;font-family:Georgia,'Times New Roman',serif;font-size:1.18rem;font-weight:900;line-height:1;box-shadow:0 3px 10px rgba(31,52,88,.09)}.brand-idea{color:#0a2a5e}.brand-kdc{color:#1769ff}.status{font-family:monospace;font-size:12px;color:var(--grey)}
 .banner{background:#fbf2dc;border-bottom:1px solid #ebd9a0;padding:10px 28px;font-size:12.5px;color:#7a5c00}
 .layout{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 62px)}.ladder{border-right:1px solid var(--line);padding:22px 18px;background:var(--panel)}
 .step{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border-radius:8px;margin-bottom:2px;cursor:pointer}.step:hover{background:var(--grey-light)}.step.active{background:var(--teal-light)}
@@ -28,7 +28,7 @@ main{padding:28px}.picker-panel,.upload-panel{background:var(--panel);border:1px
 </style>
 </head>
 <body>
-<header><h1>IdeaKDC <span>Content Admin</span> <small style="font-weight:400;font-size:12px;color:#8e8a80">static export</small></h1><div class="status" id="connStatus">loading manifest...</div></header>
+<header><h1><span class="brand-wordmark" aria-label="ideaKDC"><span class="brand-idea">idea</span><span class="brand-kdc">KDC</span></span><span class="content-label">Content Admin</span> <small style="font-weight:400;font-size:12px;color:#8e8a80">static export</small></h1><div class="status" id="connStatus">loading manifest...</div></header>
 <div class="banner" id="banner"></div>
 <div class="layout"><nav class="ladder" id="ladder"></nav><main><div id="pickerArea"></div><div id="uploadArea"></div></main></div>
 <div class="export-bar"><div class="changes" id="changesLabel">No changes yet.</div><button class="export-btn" id="exportBtn" disabled>Download changes (.zip)</button></div>

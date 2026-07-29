@@ -34,7 +34,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 /* ── LOGIN ── */
 #login-screen{min-height:100vh;display:none;align-items:center;justify-content:center;padding:1.5rem}
 .login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem;width:100%;max-width:380px;box-shadow:var(--shadow)}
-.login-brand{font-family:'Berkshire Swash',cursive;font-size:1.4rem;color:var(--accent);margin-bottom:.2rem}
+.login-brand{margin-bottom:.55rem}
 .login-card h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--muted);margin-bottom:1.5rem}
 .btn-google{width:100%;padding:11px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Inter',sans-serif;font-size:.88rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:.6rem;transition:all .15s;margin-top:.8rem}
 .btn-google:hover{border-color:var(--accent)}
@@ -46,7 +46,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 
 /* ── TOP NAV ── */
 .top-nav{background:linear-gradient(135deg,#fffde7,#fff9c4);border-bottom:2px solid #f9d800;padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(249,216,0,.3)}
-.top-nav-brand{font-family:'Berkshire Swash',cursive;font-size:1.1rem;color:#0a2a5e}
+.top-nav-brand{display:flex;align-items:center;gap:.55rem;color:#0a2a5e;font-size:.78rem;font-weight:800}
+.brand-wordmark{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid #d5dce8;border-radius:7px;background:#fff;font-family:Georgia,'Times New Roman',serif;font-size:1.18rem;font-weight:900;line-height:1;box-shadow:0 3px 10px rgba(31,52,88,.09)}
+.brand-wordmark .brand-idea{color:#0a2a5e}
+.brand-wordmark .brand-kdc{color:#1769ff}
 .top-nav-right{display:flex;align-items:center;gap:.5rem}
 .admin-badge{font-size:.7rem;background:var(--accent-light);color:var(--accent);border-radius:99px;padding:3px 10px;font-weight:700}
 .btn-logout{font-size:.78rem;padding:6px 12px;border:1.5px solid var(--border);border-radius:8px;background:none;cursor:pointer;font-family:'Inter',sans-serif;color:var(--muted)}
@@ -227,7 +230,7 @@ body{padding-bottom:65px}
 <!-- ══ LOGIN ══ -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-brand">⭐ IDEAKDC ⭐</div>
+    <div class="login-brand"><span class="brand-wordmark" aria-label="ideaKDC"><span class="brand-idea">idea</span><span class="brand-kdc">KDC</span></span></div>
     <h2>Admin Panel Login</h2>
     <div class="err-msg" id="login-err"></div>
     <div class="form-group">
@@ -254,7 +257,7 @@ body{padding-bottom:65px}
 
   <!-- Top Nav -->
   <div class="top-nav">
-    <div class="top-nav-brand">⭐ IDEAKDC Admin</div>
+    <div class="top-nav-brand"><span class="brand-wordmark" aria-label="ideaKDC"><span class="brand-idea">idea</span><span class="brand-kdc">KDC</span></span><span>Admin</span></div>
     <div class="top-nav-right">
       <span class="admin-badge" id="admin-email-badge">Admin</span>
       <button class="btn-logout" onclick="doLogout()">Logout</button>

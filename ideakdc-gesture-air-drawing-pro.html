@@ -11,7 +11,9 @@ body{height:100vh;overflow:hidden;background:#05070d;color:white}
 #camera{transform:scaleX(-1);filter:brightness(.82) contrast(1.1)}
 #drawCanvas{z-index:2;pointer-events:none}
 .top{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:5;text-align:center;padding:12px 18px;border-radius:18px;background:rgba(0,0,0,.35);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.25)}
-.top h1{font-size:clamp(20px,4.8vw,44px);text-shadow:0 0 18px #ff38f8,0 0 35px #ff38f8}
+.top h1{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:clamp(20px,4.8vw,44px);text-shadow:0 0 18px #ff38f8,0 0 35px #ff38f8}
+.brand-wordmark{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid rgba(125,211,252,.72);border-radius:7px;background:rgba(5,7,13,.72);font-family:Georgia,'Times New Roman',serif;font-size:.78em;font-weight:900;line-height:1;box-shadow:0 0 18px rgba(56,189,248,.24)}
+.brand-idea{color:#f8fbff}.brand-kdc{color:#6eb5ff}
 .top p{font-size:13px;opacity:.85;margin-top:4px}
 .controls{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:96%}
 .glass-btn{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.45);background:linear-gradient(135deg,rgba(255,255,255,.24),rgba(255,255,255,.08));color:white;padding:12px 15px;border-radius:15px;backdrop-filter:blur(12px);font-weight:800;cursor:pointer;box-shadow:0 12px 25px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.55)}
@@ -35,7 +37,7 @@ body{height:100vh;overflow:hidden;background:#05070d;color:white}
 <div class="cursor" id="cursor"></div>
 
 <div class="top">
-  <h1>ideaKDC Gesture Draw Pro</h1>
+  <h1><span class="brand-wordmark" aria-label="ideaKDC"><span class="brand-idea">idea</span><span class="brand-kdc">KDC</span></span><span>Gesture Draw Pro</span></h1>
   <p>1 finger write • 2 fingers thick write • 3 fingers hold & move • palm erase</p>
 </div>
 
