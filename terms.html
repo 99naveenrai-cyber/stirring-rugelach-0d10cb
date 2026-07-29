@@ -21,10 +21,13 @@
 html{scroll-behavior:smooth}
 body{font-family:'Inter',sans-serif;background:linear-gradient(180deg,#fffdf4 0%,#eef6ff 44%,#ffffff 100%);color:var(--ink);min-height:100vh}
 a{color:inherit;text-decoration:none}
-.site-nav{height:62px;background:linear-gradient(135deg,#fffde7,#fff9c4);border-bottom:2px solid #f9d800;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:10;box-shadow:0 8px 24px rgba(249,216,0,.22)}
-.brand{font-family:'Berkshire Swash',cursive;color:var(--blue);font-size:1.25rem;white-space:nowrap}
-.brand::before{content:'* '}
-.brand::after{content:' *'}
+.site-nav{height:68px;background:linear-gradient(100deg,rgba(255,253,248,.97),rgba(246,249,255,.95));border-bottom:1px solid rgba(23,105,255,.17);display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:10;box-shadow:0 10px 28px rgba(10,42,94,.1);backdrop-filter:blur(14px)}
+.brand{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;white-space:nowrap;line-height:1}
+.brand-word{font-family:Georgia,'Times New Roman',serif;font-size:1.42rem;font-weight:900;letter-spacing:0}
+.brand-idea{color:#0a2a5e}
+.brand-kdc{position:relative;color:#1769ff}
+.brand-kdc::after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:2px;border-radius:2px;background:#c9953e}
+.brand-slogan{margin-top:6px;color:#64748b;font-family:'Inter',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:0}
 .nav-actions{display:flex;gap:8px;align-items:center}
 .nav-btn{border:1.5px solid var(--blue);color:var(--blue);background:transparent;border-radius:9px;padding:8px 11px;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:800}
 .nav-btn.primary{background:var(--blue);color:#fffde7}
@@ -68,7 +71,8 @@ footer a{color:var(--blue);font-weight:800}
 }
 @media (max-width:420px){
   .site-nav{padding:0 10px}
-  .brand{font-size:1.05rem}
+  .brand-word{font-size:1.08rem}
+  .brand-slogan{margin-top:5px;font-size:.56rem}
   .nav-btn{font-size:.7rem;padding:7px 8px}
   .academic-panel{min-height:250px}
   .document{width:58%;left:9%}
@@ -78,7 +82,10 @@ footer a{color:var(--blue);font-weight:800}
 </head>
 <body>
 <nav class="site-nav">
-  <a class="brand" href="index.html">IdeaKDC</a>
+  <a class="brand" href="index.html" aria-label="ideaKDC - Creating Thoughtful Minds">
+    <span class="brand-word"><span class="brand-idea">idea</span><span class="brand-kdc">KDC</span></span>
+    <span class="brand-slogan">Creating Thoughtful Minds</span>
+  </a>
   <div class="nav-actions">
     <a class="nav-btn" href="index.html">Home</a>
     <a class="nav-btn primary" href="contact.html">Contact</a>
