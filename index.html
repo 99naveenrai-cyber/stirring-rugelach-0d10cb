@@ -4411,6 +4411,24 @@ function quizCorrectCandidateValue(value) {
   return value;
 }
 
+function quizQuestionHasLocalAnswerKey(question = {}) {
+  const answerFields = [
+    'correctOption',
+    'correctAnswer',
+    'answer',
+    'correct',
+    'correct_option',
+    'correctOptionIndex',
+    'correctAnswerIndex',
+    'correctIndex'
+  ];
+  return answerFields.some(field =>
+    question[field] !== undefined &&
+    question[field] !== null &&
+    String(question[field]).trim() !== ''
+  ) || (question.options || []).some(option => option?.correct === true || option?.isCorrect === true);
+}
+
 function resolveQuizCorrectOption(question = {}) {
   const options = Array.isArray(question.options) ? question.options : [];
   const renderedOptions = options.map((option, index) => ({
@@ -4959,7 +4977,6 @@ async function persistSeparateQuizAnswer(course, lesson, question, selectedOptio
     mode: 'separate',
     questionId: String(question.id),
     selectedOption,
-    isCorrect: localCorrect,
     answeredAt: new Date().toISOString(),
     timestamp: Date.now(),
     syncStatus: 'pending'
@@ -4977,7 +4994,12 @@ async function persistSeparateQuizAnswer(course, lesson, question, selectedOptio
     const data = result.data || {};
     if (data.remoteSaved !== false) markPendingQuizSynced(responseId);
     else window.setTimeout(retryPendingQuizResponses, 3000);
-    return { correct: data.correct === true, remoteSaved: data.remoteSaved !== false };
+    return {
+      verified: true,
+      correct: data.correct === true,
+      feedback: data.feedback || null,
+      remoteSaved: data.remoteSaved !== false
+    };
   } catch (error) {
     upsertPendingQuizResponse({
       ...pendingItem,
@@ -4987,7 +5009,12 @@ async function persistSeparateQuizAnswer(course, lesson, question, selectedOptio
       lastError: error?.code || error?.message || 'network-error'
     });
     window.setTimeout(retryPendingQuizResponses, 3500);
-    return { correct: localCorrect, remoteSaved: false };
+    return {
+      verified: localCorrect !== null,
+      correct: localCorrect === true,
+      feedback: null,
+      remoteSaved: false
+    };
   }
 }
 
@@ -5043,7 +5070,7 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
       feedback: null
     };
     const questionId = String(question.id);
-    const correctOptionId = resolveQuizCorrectOption(question).optionId;
+    const correctOptionId = quizData._preview ? resolveQuizCorrectOption(question).optionId : '';
     const completed = state.completedQuestions.size;
     const progress = Math.round((completed / quizData.questions.length) * 100);
     holder.innerHTML = `
@@ -5075,15 +5102,32 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
       else renderSeparateQuizResult(course, lesson, mode, quizData);
     };
     holder.querySelectorAll('.quiz-option').forEach(button => {
-      bindFastQuizOption(button, () => {
-        if (answer.solved) return;
+      bindFastQuizOption(button, async () => {
+        if (answer.solved || answer.pending) return;
         const selectedOptionId = button.dataset.optionId;
-        const localCorrect = !!correctOptionId && String(correctOptionId) === String(selectedOptionId);
+        const localCorrect = quizData._preview
+          ? !!correctOptionId && String(correctOptionId) === String(selectedOptionId)
+          : null;
         logQuizAnswerTap(question, selectedOptionId, correctOptionId, localCorrect);
+        answer.pending = true;
+        holder.querySelectorAll('.quiz-option').forEach(option => { option.disabled = true; });
+        const evaluation = quizData._preview
+          ? {
+              verified: true,
+              correct: localCorrect === true,
+              feedback: separateQuizFeedback(question, localCorrect === true)
+            }
+          : await persistSeparateQuizAnswer(course, lesson, question, selectedOptionId, localCorrect);
+        answer.pending = false;
+        if (!evaluation.verified) {
+          holder.querySelectorAll('.quiz-option').forEach(option => { option.disabled = false; });
+          return;
+        }
+        const verifiedCorrect = evaluation.correct === true;
         answer.selectedOptionId = selectedOptionId;
-        answer.correct = localCorrect;
-        answer.feedback = separateQuizFeedback(question, localCorrect);
-        if (localCorrect) {
+        answer.correct = verifiedCorrect;
+        answer.feedback = evaluation.feedback || separateQuizFeedback(question, verifiedCorrect);
+        if (verifiedCorrect) {
           answer.solved = true;
           answer.completed = true;
           if (!answer.scoreAwarded) {
@@ -5095,14 +5139,13 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
           answer.attemptedWrongOptionIds.push(selectedOptionId);
         }
         state.answers[index] = answer;
-        playQuizTone(localCorrect ? 'correct' : 'wrong', true);
+        playQuizTone(verifiedCorrect ? 'correct' : 'wrong', true);
         renderQuizQuestion(course, lesson, mode, quizData, index);
-        if (localCorrect) {
+        if (verifiedCorrect) {
           const renderedSelected = document.querySelector(`#lesson-quiz-question [data-option-id="${CSS.escape(selectedOptionId)}"]`);
           launchQuizConfetti(renderedSelected, 'correct');
         }
-        if (!quizData._preview) void persistSeparateQuizAnswer(course, lesson, question, selectedOptionId, localCorrect);
-        if (localCorrect) {
+        if (verifiedCorrect) {
           triggerQuizMilestone(document.getElementById('lesson-quiz-question'), state.score);
           state.autoAdvanceTimer = window.setTimeout(goNext, 1500);
         }
@@ -5128,8 +5171,9 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
   quizData._responses = quizData._responses || {};
   quizData._correctCount = Number(quizData._correctCount || 0);
   const questionId = String(question.id);
-  const correctResolution = resolveQuizCorrectOption(question);
-  const correctOptionId = correctResolution.optionId;
+  const correctOptionId = quizData._preview && quizQuestionHasLocalAnswerKey(question)
+    ? resolveQuizCorrectOption(question).optionId
+    : '';
   holder.innerHTML = `
     <div class="qnum">Question ${index + 1} of ${quizData.questions.length}</div>
     <div class="qtext">${renderBilingualLines(question.question)}</div>
@@ -5160,17 +5204,18 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
     if (savedCorrect) holder.querySelectorAll('.quiz-option').forEach(btn => { btn.disabled = true; });
   }
   holder.querySelectorAll('.quiz-option').forEach(button => {
-    bindFastQuizOption(button, () => {
+    bindFastQuizOption(button, async () => {
       const selectedOption = button.dataset.optionId;
       const localCorrect = correctOptionId ? String(correctOptionId) === String(selectedOption) : null;
       logQuizAnswerTap(question, selectedOption, correctOptionId, localCorrect);
       if (quizData._correctAnswers[questionId]) return;
+      const result = await submitQuizAnswer(course, lesson, mode, question, selectedOption, holder, quizData.popupQuiz);
       quizData._responses[questionId] = {
         selectedOption,
-        correct: localCorrect === true,
-        feedback: randomQuizRuleFeedback(localCorrect === true)
+        correct: result.correct === true,
+        feedback: result.feedback || randomQuizRuleFeedback(result.correct === true)
       };
-      if (localCorrect === true) {
+      if (result.correct === true) {
         if (quizData._correctAnswers[questionId] !== true) {
           quizData._correctAnswers[questionId] = true;
           quizData._correctCount += 1;
@@ -5179,17 +5224,6 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
         const nextButton = holder.querySelector('#lesson-quiz-next');
         if (nextButton) nextButton.disabled = false;
       }
-      submitQuizAnswer(course, lesson, mode, question, selectedOption, holder, quizData.popupQuiz).then(result => {
-        const qid = String(question.id);
-        if (result.correct && quizData._correctAnswers[qid] !== true) {
-          quizData._correctAnswers[qid] = true;
-          quizData._correctCount += 1;
-          triggerQuizMilestone(holder, quizData._correctCount);
-          if (quizData._responses[qid]) quizData._responses[qid].correct = true;
-          const nextButton = holder.querySelector('#lesson-quiz-next');
-          if (nextButton) nextButton.disabled = false;
-        }
-      });
     });
   });
   holder.querySelector('#lesson-quiz-prev')?.addEventListener('click', () => {
@@ -5229,10 +5263,10 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
   const inlineFeedback = selected?.closest('.quiz-option-shell')?.querySelector('.option-inline-feedback');
   const saveStatus = container.querySelector('.quiz-save-status');
   const responseId = quizResponseId(course, lesson, mode, question.id);
-  const correctResolution = resolveQuizCorrectOption(question);
-  const correctOptionId = correctResolution.optionId;
+  const correctOptionId = quizQuestionHasLocalAnswerKey(question)
+    ? resolveQuizCorrectOption(question).optionId
+    : '';
   const localCorrect = correctOptionId ? String(correctOptionId) === String(selectedOption) : null;
-  const isPopupMode = mode === 'popup';
   const lockAnsweredQuestion = () => {
     container.querySelectorAll('.quiz-option').forEach(btn => {
       btn.disabled = true;
@@ -5243,6 +5277,11 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
       btn.disabled = false;
     });
   };
+  if (localCorrect === null) {
+    container.querySelectorAll('.quiz-option').forEach(btn => {
+      btn.disabled = true;
+    });
+  }
   if (localCorrect !== null) {
     if (selected) void selected.offsetWidth;
     selected?.classList.add(localCorrect ? 'is-correct' : 'is-wrong');
@@ -5310,7 +5349,10 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
       else keepQuestionRetryable();
     }
     if (data.remoteSaved === false) window.setTimeout(retryPendingQuizResponses, 3000);
-    return { correct: localCorrect !== null ? localCorrect : data.correct === true };
+    return {
+      correct: localCorrect !== null ? localCorrect : data.correct === true,
+      feedback: data.feedback || quizFeedbackMessage(question, data.correct === true)
+    };
   } catch (error) {
     console.warn('[IdeaKDC quiz answer]', error?.code || error?.message || error);
     const targetFeedback = inlineFeedback || feedback;
@@ -5324,9 +5366,9 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
     upsertPendingQuizResponse({ ...pendingItem, localSaved: true, remoteSaved: false, syncStatus: 'pending', lastError: error?.code || error?.message || 'network-error' });
     window.setTimeout(retryPendingQuizResponses, 3500);
     if (localCorrect !== true) keepQuestionRetryable();
-    return { correct: localCorrect === true };
+    return { correct: localCorrect === true, feedback: null };
   }
-  return { correct: localCorrect === true };
+  return { correct: localCorrect === true, feedback: null };
 }
 
 function renderLessonActionControls(course, lesson, idx, hasVideo = true) {
@@ -5488,15 +5530,20 @@ function showTimedPopupQuestion(question, popupConfig, player) {
     </div>`;
   overlayRoot.appendChild(layer);
   requestAnimationFrame(() => layer.classList.add('show'));
-  const correctResolution = resolveQuizCorrectOption(question);
-  const correctOptionId = correctResolution.optionId;
   layer.querySelectorAll('.quiz-option').forEach(button => {
-    bindFastQuizOption(button, () => {
+    bindFastQuizOption(button, async () => {
       const selectedOption = button.dataset.optionId;
-      const localCorrect = correctOptionId ? String(correctOptionId) === String(selectedOption) : null;
-      logQuizAnswerTap(question, selectedOption, correctOptionId, localCorrect);
-      submitQuizAnswer(activeLessonQuiz.course, activeLessonQuiz.lesson, 'popup', question, selectedOption, layer, popupConfig);
-      if (localCorrect === true) {
+      logQuizAnswerTap(question, selectedOption, '', null);
+      const result = await submitQuizAnswer(
+        activeLessonQuiz.course,
+        activeLessonQuiz.lesson,
+        'popup',
+        question,
+        selectedOption,
+        layer,
+        popupConfig
+      );
+      if (result.correct === true) {
         const qid = String(question.id);
         if (!activeLessonQuiz.correctThisSession.has(qid)) {
           activeLessonQuiz.correctThisSession.add(qid);

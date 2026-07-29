@@ -29,6 +29,28 @@ test("Firestore rules contain field allowlists and no globally open writes", () 
   assert.doesNotMatch(rules, /allow\s+(?:read,\s*)?write\s*:\s*if\s+true/);
 });
 
+test("lesson documents and protected quizzes require admin access", () => {
+  const rules = fs.readFileSync(path.join(root, "firestore.rules"), "utf8");
+  const contentBlock = rules.slice(
+    rules.indexOf("match /content/{contentId}"),
+    rules.indexOf("match /coupons/{couponCode}")
+  );
+  assert.match(contentBlock, /allow read:\s*if isAdmin\(\)/);
+  assert.doesNotMatch(contentBlock, /allow read:\s*if true/);
+  assert.match(contentBlock, /match \/quizzes\/\{quizId\}[\s\S]*allow read:\s*if isAdmin\(\)/);
+});
+
+test("student quiz payloads do not include answer keys", () => {
+  const functionsSource = fs.readFileSync(path.join(root, "functions", "index.js"), "utf8");
+  const start = functionsSource.indexOf("function sanitizeQuizQuestion");
+  const end = functionsSource.indexOf("async function findQuizQuestionSet", start);
+  const sanitizer = functionsSource.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.doesNotMatch(sanitizer, /correctOption\s*:/);
+  assert.doesNotMatch(sanitizer, /correctAnswer\s*:/);
+  assert.doesNotMatch(sanitizer, /isCorrect\s*:/);
+});
+
 test("deployment workflow runs Functions and Firestore rule verification", () => {
   const workflow = fs.readFileSync(
     path.join(root, ".github", "workflows", "firebase-hosting-merge.yml"),
