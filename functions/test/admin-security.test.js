@@ -127,3 +127,16 @@ test("quiz glow is immediate after access and scoring remains server validated",
   assert.match(popupBlock, /result\.correct\s*===\s*true/);
 });
 
+test("every correct answer launches a reliable large confetti burst", () => {
+  const confettiBlock = studentFunctionBlock("launchQuizConfetti", "function triggerQuizMilestone");
+  const separateBlock = studentFunctionBlock("renderQuizQuestion", "async function submitQuizAnswer");
+  const submitBlock = studentFunctionBlock("submitQuizAnswer", "function renderLessonActionControls");
+
+  assert.match(confettiBlock, /isBig\s*\?\s*140\s*:\s*78/);
+  assert.match(confettiBlock, /typeof piece\.animate\s*===\s*'function'/);
+  assert.match(confettiBlock, /window\.innerWidth\s*\/\s*2/);
+  assert.match(separateBlock, /launchQuizConfetti\([\s\S]*?'correct',\s*'big'\)/);
+  assert.match(submitBlock, /localCorrect\s*\?\s*'big'\s*:\s*'small'/);
+  assert.match(submitBlock, /data\.correct\s*\?\s*'big'\s*:\s*'small'/);
+});
+

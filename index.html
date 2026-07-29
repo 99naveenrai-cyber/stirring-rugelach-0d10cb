@@ -4828,28 +4828,31 @@ function playQuizTone(kind, enabled = true) {
 }
 
 function launchQuizConfetti(container, kind = 'correct', size = 'small') {
-  if (!container) return;
   const colors = kind === 'correct'
-    ? ['#8fffc9', '#43ffad', '#7dd3fc', '#bbf7d0', '#fde68a']
+    ? ['#8fffc9', '#43ffad', '#7dd3fc', '#bbf7d0', '#fde68a', '#f9a8d4', '#c4b5fd', '#ffffff']
     : ['#ffb6c0', '#ff4860', '#fecdd3', '#fda4af'];
-  const itemRect = container.getBoundingClientRect?.();
-  if (!itemRect) return;
+  const itemRect = container?.getBoundingClientRect?.();
+  const hasUsableOrigin = itemRect && itemRect.width > 0 && itemRect.height > 0;
   const layer = document.createElement('div');
   layer.className = 'quiz-confetti-layer';
   layer.setAttribute('aria-hidden', 'true');
   document.body.appendChild(layer);
-  const baseLeft = itemRect.left + itemRect.width / 2;
-  const baseTop = itemRect.top + itemRect.height * .62;
+  const baseLeft = hasUsableOrigin ? itemRect.left + itemRect.width / 2 : window.innerWidth / 2;
+  const baseTop = hasUsableOrigin ? itemRect.top + itemRect.height * .62 : window.innerHeight * .72;
   const isBig = size === 'big' || kind === 'result';
-  const count = kind === 'correct' ? (isBig ? 96 : 34) : 12;
+  const count = kind === 'correct' ? (isBig ? 140 : 78) : 12;
   let longestDuration = 0;
   for (let i = 0; i < count; i++) {
     const piece = document.createElement('span');
     piece.className = 'quiz-confetti-piece';
-    const spread = kind === 'correct' ? (isBig ? 310 : 170) : 78;
-    const lift = kind === 'correct' ? (isBig ? 230 + Math.random() * 260 : 110 + Math.random() * 150) : 42 + Math.random() * 58;
-    const duration = Math.round((kind === 'correct' ? (isBig ? 1650 : 980) : 620) + Math.random() * 420);
-    const delay = Math.round(Math.random() * (isBig ? 180 : 90));
+    const spread = kind === 'correct'
+      ? Math.min(window.innerWidth * .82, isBig ? 440 : 270)
+      : 78;
+    const lift = kind === 'correct'
+      ? (isBig ? 260 + Math.random() * 330 : 150 + Math.random() * 190)
+      : 42 + Math.random() * 58;
+    const duration = Math.round((kind === 'correct' ? (isBig ? 1750 : 1150) : 620) + Math.random() * 520);
+    const delay = Math.round(Math.random() * (isBig ? 260 : 120));
     longestDuration = Math.max(longestDuration, duration + delay);
     piece.style.left = `${baseLeft + (Math.random() - .5) * spread}px`;
     piece.style.top = `${baseTop + (Math.random() - .5) * 28}px`;
@@ -4861,10 +4864,30 @@ function launchQuizConfetti(container, kind = 'correct', size = 'small') {
     piece.style.setProperty('--confetti-spin', `${(Math.random() - .5) * 1080}deg`);
     piece.style.setProperty('--confetti-duration', `${duration}ms`);
     piece.style.setProperty('--confetti-delay', `${delay}ms`);
-    piece.addEventListener('animationend', () => piece.remove(), { once: true });
     layer.appendChild(piece);
+    if (typeof piece.animate === 'function') {
+      piece.style.animation = 'none';
+      const dx = piece.style.getPropertyValue('--confetti-x');
+      const dy = piece.style.getPropertyValue('--confetti-y');
+      const spin = piece.style.getPropertyValue('--confetti-spin');
+      const animation = piece.animate([
+        { opacity: 0, transform: 'translate3d(0,10px,0) rotate(0deg) scale(.72)' },
+        { opacity: 1, offset: .1 },
+        { opacity: 1, offset: .68 },
+        { opacity: 0, transform: `translate3d(${dx},${dy},0) rotate(${spin}) scale(.58)` }
+      ], {
+        duration,
+        delay,
+        easing: 'cubic-bezier(.16,.72,.26,1)',
+        fill: 'forwards'
+      });
+      animation.onfinish = () => piece.remove();
+      animation.oncancel = () => piece.remove();
+    } else {
+      piece.addEventListener('animationend', () => piece.remove(), { once: true });
+    }
   }
-  window.setTimeout(() => layer.remove(), longestDuration + 250);
+  window.setTimeout(() => layer.remove(), longestDuration + 500);
 }
 
 function triggerQuizMilestone(container, count, forceResult = false) {
@@ -5148,7 +5171,7 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
         renderQuizQuestion(course, lesson, mode, quizData, index);
         if (verifiedCorrect) {
           const renderedSelected = document.querySelector(`#lesson-quiz-question [data-option-id="${CSS.escape(selectedOptionId)}"]`);
-          launchQuizConfetti(renderedSelected, 'correct');
+          launchQuizConfetti(renderedSelected || document.getElementById('lesson-quiz-question'), 'correct', 'big');
         }
         if (!quizData._preview && localCorrect !== null) {
           void persistSeparateQuizAnswer(course, lesson, question, selectedOptionId, localCorrect);
@@ -5301,7 +5324,11 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
       targetFeedback.innerHTML = renderBilingualLines(quizFeedbackMessage(question, localCorrect));
     }
     playQuizTone(localCorrect ? 'correct' : 'wrong', popupConfig?.soundEnabled !== false);
-    launchQuizConfetti(selected || container, localCorrect ? 'correct' : 'wrong');
+    launchQuizConfetti(
+      selected || container,
+      localCorrect ? 'correct' : 'wrong',
+      localCorrect ? 'big' : 'small'
+    );
     if (localCorrect) lockAnsweredQuestion();
     else keepQuestionRetryable();
   }
@@ -5352,7 +5379,11 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
     }
     if (localCorrect === null) {
       playQuizTone(data.correct ? 'correct' : 'wrong', popupConfig?.soundEnabled !== false);
-      launchQuizConfetti(selected || container, data.correct ? 'correct' : 'wrong');
+      launchQuizConfetti(
+        selected || container,
+        data.correct ? 'correct' : 'wrong',
+        data.correct ? 'big' : 'small'
+      );
       if (data.correct) lockAnsweredQuestion();
       else keepQuestionRetryable();
     }
