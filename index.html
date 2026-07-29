@@ -5070,7 +5070,9 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
       feedback: null
     };
     const questionId = String(question.id);
-    const correctOptionId = quizData._preview ? resolveQuizCorrectOption(question).optionId : '';
+    const correctOptionId = quizQuestionHasLocalAnswerKey(question)
+      ? resolveQuizCorrectOption(question).optionId
+      : '';
     const completed = state.completedQuestions.size;
     const progress = Math.round((completed / quizData.questions.length) * 100);
     holder.innerHTML = `
@@ -5105,19 +5107,22 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
       bindFastQuizOption(button, async () => {
         if (answer.solved || answer.pending) return;
         const selectedOptionId = button.dataset.optionId;
-        const localCorrect = quizData._preview
-          ? !!correctOptionId && String(correctOptionId) === String(selectedOptionId)
+        const localCorrect = correctOptionId
+          ? String(correctOptionId) === String(selectedOptionId)
           : null;
         logQuizAnswerTap(question, selectedOptionId, correctOptionId, localCorrect);
         answer.pending = true;
         holder.querySelectorAll('.quiz-option').forEach(option => { option.disabled = true; });
-        const evaluation = quizData._preview
-          ? {
-              verified: true,
-              correct: localCorrect === true,
-              feedback: separateQuizFeedback(question, localCorrect === true)
-            }
-          : await persistSeparateQuizAnswer(course, lesson, question, selectedOptionId, localCorrect);
+        let evaluation;
+        if (localCorrect !== null) {
+          evaluation = {
+            verified: true,
+            correct: localCorrect === true,
+            feedback: separateQuizFeedback(question, localCorrect === true)
+          };
+        } else {
+          evaluation = await persistSeparateQuizAnswer(course, lesson, question, selectedOptionId, localCorrect);
+        }
         answer.pending = false;
         if (!evaluation.verified) {
           holder.querySelectorAll('.quiz-option').forEach(option => { option.disabled = false; });
@@ -5145,6 +5150,9 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
           const renderedSelected = document.querySelector(`#lesson-quiz-question [data-option-id="${CSS.escape(selectedOptionId)}"]`);
           launchQuizConfetti(renderedSelected, 'correct');
         }
+        if (!quizData._preview && localCorrect !== null) {
+          void persistSeparateQuizAnswer(course, lesson, question, selectedOptionId, localCorrect);
+        }
         if (verifiedCorrect) {
           triggerQuizMilestone(document.getElementById('lesson-quiz-question'), state.score);
           state.autoAdvanceTimer = window.setTimeout(goNext, 1500);
@@ -5171,7 +5179,7 @@ function renderQuizQuestion(course, lesson, mode, quizData, index) {
   quizData._responses = quizData._responses || {};
   quizData._correctCount = Number(quizData._correctCount || 0);
   const questionId = String(question.id);
-  const correctOptionId = quizData._preview && quizQuestionHasLocalAnswerKey(question)
+  const correctOptionId = quizQuestionHasLocalAnswerKey(question)
     ? resolveQuizCorrectOption(question).optionId
     : '';
   holder.innerHTML = `

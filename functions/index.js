@@ -976,10 +976,12 @@ function sanitizeQuizQuestion(question = {}) {
         };
       }).filter((option) => option.id && (option.en || option.hi))
     : [];
+  const correctResolution = resolveQuizCorrectOptionId({ ...question, options: normalizedOptions });
   return {
     id: String(question.id || ""),
     question: localizedQuizText(question.question || question.q || ""),
     options: normalizedOptions.map(({ id, en, hi }) => ({ id, en, hi })),
+    correctOption: correctResolution.optionId,
     feedback: {
       correct: localizedQuizText(question.feedback?.correct || "Correct."),
       incorrect: localizedQuizText(question.feedback?.incorrect || "Please try again.")

@@ -40,15 +40,21 @@ test("lesson documents and protected quizzes require admin access", () => {
   assert.match(contentBlock, /match \/quizzes\/\{quizId\}[\s\S]*allow read:\s*if isAdmin\(\)/);
 });
 
-test("student quiz payloads do not include answer keys", () => {
+test("quiz answer keys are returned only after lesson access is checked", () => {
   const functionsSource = fs.readFileSync(path.join(root, "functions", "index.js"), "utf8");
-  const start = functionsSource.indexOf("function sanitizeQuizQuestion");
-  const end = functionsSource.indexOf("async function findQuizQuestionSet", start);
-  const sanitizer = functionsSource.slice(start, end);
-  assert.ok(start >= 0 && end > start);
-  assert.doesNotMatch(sanitizer, /correctOption\s*:/);
-  assert.doesNotMatch(sanitizer, /correctAnswer\s*:/);
-  assert.doesNotMatch(sanitizer, /isCorrect\s*:/);
+  const catalogueStart = functionsSource.indexOf("exports.getPublicCourseCatalogue");
+  const catalogueEnd = functionsSource.indexOf("function safeDiagnosticUrl", catalogueStart);
+  const catalogue = functionsSource.slice(catalogueStart, catalogueEnd);
+  const quizStart = functionsSource.indexOf("exports.getAuthorizedLessonQuiz");
+  const quizEnd = functionsSource.indexOf("exports.submitLessonQuizAnswer", quizStart);
+  const quizHandler = functionsSource.slice(quizStart, quizEnd);
+  const accessCheck = quizHandler.indexOf("if (!access && !canUsePublicLesson)");
+  const answerPayload = quizHandler.indexOf(".map(sanitizeQuizQuestion)");
+
+  assert.ok(catalogueStart >= 0 && catalogueEnd > catalogueStart);
+  assert.doesNotMatch(catalogue, /sanitizeQuizQuestion|correctOption/);
+  assert.ok(quizStart >= 0 && quizEnd > quizStart);
+  assert.ok(accessCheck >= 0 && answerPayload > accessCheck);
 });
 
 test("deployment workflow runs Functions and Firestore rule verification", () => {

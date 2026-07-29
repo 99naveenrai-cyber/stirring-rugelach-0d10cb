@@ -112,11 +112,13 @@ test("free lessons, free courses, and admins retain access", () => {
   assert.equal(adminRules.getLessonAccessRule(mixedCourse, 1, null).canPlay, true);
 });
 
-test("student quiz correctness comes from the authenticated answer function", () => {
+test("quiz glow is immediate after access and scoring remains server validated", () => {
   const separateBlock = studentFunctionBlock("renderQuizQuestion", "async function submitQuizAnswer");
   const submitBlock = studentFunctionBlock("submitQuizAnswer", "function renderLessonActionControls");
   const popupBlock = studentFunctionBlock("showTimedPopupQuestion", "async function openVideoPlayer");
 
+  assert.match(separateBlock, /localCorrect\s*=\s*correctOptionId/);
+  assert.match(separateBlock, /playQuizTone\(verifiedCorrect\s*\?\s*'correct'\s*:\s*'wrong'/);
   assert.match(separateBlock, /await persistSeparateQuizAnswer/);
   assert.match(separateBlock, /verifiedCorrect\s*=\s*evaluation\.correct\s*===\s*true/);
   assert.match(submitBlock, /await submitLessonQuizAnswerFn/);
