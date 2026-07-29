@@ -22,7 +22,17 @@ test("fullscreen implementation supports standard, WebKit, and exit paths", () =
   assert.match(source, /nativeVideo\?\.webkitEnterFullscreen/);
   assert.match(source, /document\.exitFullscreen/);
   assert.match(source, /document\.webkitExitFullscreen/);
-  assert.match(source, /document\.addEventListener\('fullscreenchange'/);
-  assert.match(source, /document\.addEventListener\('webkitfullscreenchange'/);
+  assert.match(source, /document\.addEventListener\('fullscreenchange', syncLessonFullscreenControls\)/);
+  assert.match(source, /document\.addEventListener\('webkitfullscreenchange', syncLessonFullscreenControls\)/);
   assert.match(source, /exitLessonFullscreen\(\);\s*stopAndUnloadActiveLessonVideo\(\)/);
+});
+
+test("landscape Separate Quiz can fullscreen the complete split workspace", () => {
+  assert.match(source, /id="separate-quiz-fullscreen-btn"/);
+  assert.match(source, /onclick="toggleSeparateQuizFullscreen\(\)"/);
+  assert.match(source, /workspace\.requestFullscreen\(\{ navigationUI: 'hide' \}\)/);
+  assert.match(source, /workspace\.webkitRequestFullscreen\(\)/);
+  assert.match(source, /\.separate-quiz-workspace:fullscreen/);
+  assert.match(source, /orientation:landscape[\s\S]*separate-quiz-fullscreen-btn\{display:inline-flex/);
+  assert.match(source, /button\.textContent = active \? '✕ Exit full page' : '⛶ Full page'/);
 });

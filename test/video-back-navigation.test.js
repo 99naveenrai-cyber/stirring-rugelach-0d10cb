@@ -66,7 +66,7 @@ test("lifecycle helpers pause, resume, stop, and unload YouTube and HTML5 media"
       querySelectorAll: (selector) => selector.endsWith(" video") ? [video] : [iframe],
       getElementById: () => ({ classList: { remove: () => calls.push("fullscreen-state-clear") } })
     },
-    syncLessonFullscreenButton: () => calls.push("fullscreen-button-sync"),
+    syncLessonFullscreenControls: () => calls.push("fullscreen-button-sync"),
     window: {
       _activeLessonPlayer: {
         pauseVideo: () => calls.push("yt-pause"),

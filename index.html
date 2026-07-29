@@ -652,7 +652,9 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 @media(min-width:700px) and (orientation:portrait){.lesson-player-stage{--quiz-width:min(92%,760px);--quiz-font-scale:clamp(.72rem,1.45vw,.94rem)}.lesson-player-stage.has-timed-quiz .video-wrap{height:clamp(520px,64vh,680px);min-height:520px}.popup-quiz-layer,.interactive-lesson-layer{inset:0;padding:clamp(10px,1.8vw,16px)}.popup-quiz-card,.interactive-lesson-panel{max-height:calc(100% - 20px);padding:clamp(10px,1.8vw,16px)}}
 @media(max-height:700px){.lesson-player-stage.has-timed-quiz .video-wrap{height:clamp(410px,76vh,520px);min-height:410px}.popup-quiz-card,.interactive-lesson-panel{padding:6px 8px}.quiz-options{gap:4px}.quiz-option{padding:5px 7px}.popup-quiz-card .qtext,.interactive-lesson-panel .qtext{margin-bottom:4px}.quiz-feedback{margin-top:4px;padding-top:3px}.option-inline-feedback{padding-top:0;padding-bottom:1px}}
 @media(prefers-reduced-motion:reduce){.popup-quiz-layer,.interactive-lesson-layer,.interactive-lesson-panel .qtext,.lesson-teacher-cue,.interactive-lesson-panel .quiz-option,.quiz-option::before,.quiz-option::after,.quiz-feedback{transition:none!important;animation:none!important}}
-.separate-quiz-workspace{--separate-quiz-split:50;display:block;min-width:0}
+.separate-quiz-workspace{--separate-quiz-split:50;display:block;position:relative;min-width:0}
+.separate-quiz-fullscreen-btn{display:none;position:absolute;top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));z-index:90;min-height:44px;padding:8px 13px;border:1px solid rgba(151,218,255,.72);border-radius:9px;background:linear-gradient(135deg,rgba(7,24,58,.92),rgba(18,96,160,.86));box-shadow:0 0 18px rgba(63,186,255,.35);color:#fff;font:800 .76rem/1 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;white-space:nowrap}
+.separate-quiz-fullscreen-btn:focus-visible{outline:3px solid #ffd75a;outline-offset:2px}
 .separate-quiz-divider{display:none;position:relative;background:rgba(255,211,101,.12);border:1px solid rgba(255,211,101,.38);border-radius:999px;touch-action:none;user-select:none;cursor:col-resize;min-width:12px;min-height:12px}
 .separate-quiz-divider::after{content:"";position:absolute;inset:50% auto auto 50%;width:4px;height:44px;border-radius:999px;background:#ffd365;box-shadow:0 0 14px rgba(255,211,101,.55);transform:translate(-50%,-50%)}
 .video-page.separate-quiz-active,.video-page.video-quiz-layout.quiz-active.separate-quiz-active{display:block;width:min(100%,1580px);max-width:1580px}
@@ -692,6 +694,13 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .quiz-result{display:grid;gap:.8rem;text-align:center;padding:1rem 0}
 .quiz-result-score{font-size:clamp(1.8rem,7vw,3.2rem);font-weight:950;color:#ffe08a}
 .quiz-result-actions{display:grid;gap:.65rem}
+@media(orientation:landscape){
+  .video-page.separate-quiz-active .separate-quiz-fullscreen-btn{display:inline-flex;align-items:center;justify-content:center}
+  .video-page.separate-quiz-active #lesson-quiz-panel{padding-top:4rem}
+}
+.separate-quiz-workspace:fullscreen,.separate-quiz-workspace:-webkit-full-screen{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh!important;min-height:0!important;margin:0;padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));gap:clamp(8px,1.2vw,16px);background:#030c20;z-index:2147483647}
+.separate-quiz-workspace:fullscreen .separate-quiz-fullscreen-btn,.separate-quiz-workspace:-webkit-full-screen .separate-quiz-fullscreen-btn{display:inline-flex;align-items:center;justify-content:center}
+.separate-quiz-workspace:fullscreen .player-fullscreen-btn,.separate-quiz-workspace:-webkit-full-screen .player-fullscreen-btn{display:none!important}
 @media(max-width:760px),(orientation:portrait){
   .video-page.separate-quiz-active .separate-quiz-workspace{grid-template-columns:1fr;grid-template-rows:minmax(0,var(--separate-quiz-first-track,50fr)) 12px minmax(0,var(--separate-quiz-second-track,50fr));height:calc(100dvh - var(--nav-h) - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 18px);min-height:480px}
   .video-page.separate-quiz-active .separate-quiz-divider{cursor:row-resize}
@@ -1178,6 +1187,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
     <section id="course-viewer-header" aria-label="Course details"></section>
     <div class="video-title-bar" id="video-title"></div>
     <div class="separate-quiz-workspace" id="separate-quiz-workspace">
+      <button class="separate-quiz-fullscreen-btn" id="separate-quiz-fullscreen-btn" type="button" onclick="toggleSeparateQuizFullscreen()" aria-label="वीडियो और क्विज़ को फुल पेज में देखें" title="वीडियो और क्विज़ को फुल पेज में देखें">⛶ Full page</button>
       <div class="lesson-player-stage" id="lesson-player-stage">
         <button class="player-fullscreen-btn" id="player-fullscreen-btn" type="button" onclick="toggleLessonFullscreen()" aria-label="वीडियो फुल स्क्रीन करें" title="वीडियो फुल स्क्रीन करें">⛶</button>
         <div class="video-wrap" id="video-wrap">
@@ -1556,9 +1566,20 @@ function syncLessonFullscreenButton() {
   button.title = active ? 'फुल स्क्रीन बंद करें' : 'वीडियो फुल स्क्रीन करें';
 }
 
+function syncSeparateQuizFullscreenButton() {
+  const button = document.getElementById('separate-quiz-fullscreen-btn');
+  const workspace = document.getElementById('separate-quiz-workspace');
+  if (!button || !workspace) return;
+  const active = lessonFullscreenElement() === workspace;
+  button.textContent = active ? '✕ Exit full page' : '⛶ Full page';
+  button.setAttribute('aria-label', active ? 'फुल पेज बंद करें' : 'वीडियो और क्विज़ को फुल पेज में देखें');
+  button.title = active ? 'फुल पेज बंद करें' : 'वीडियो और क्विज़ को फुल पेज में देखें';
+}
+
 async function exitLessonFullscreen() {
   const stage = document.getElementById('lesson-player-stage');
-  if (lessonFullscreenElement() !== stage) return;
+  const workspace = document.getElementById('separate-quiz-workspace');
+  if (![stage, workspace].includes(lessonFullscreenElement())) return;
   try {
     if (typeof document.exitFullscreen === 'function') await document.exitFullscreen();
     else if (typeof document.webkitExitFullscreen === 'function') document.webkitExitFullscreen();
@@ -1587,8 +1608,34 @@ window.toggleLessonFullscreen = async () => {
   }
 };
 
-document.addEventListener('fullscreenchange', syncLessonFullscreenButton);
-document.addEventListener('webkitfullscreenchange', syncLessonFullscreenButton);
+window.toggleSeparateQuizFullscreen = async () => {
+  const workspace = document.getElementById('separate-quiz-workspace');
+  const page = document.querySelector('.video-page');
+  if (!workspace || !page?.classList.contains('separate-quiz-active')) return;
+  if (lessonFullscreenElement() === workspace) {
+    await exitLessonFullscreen();
+    return;
+  }
+  try {
+    if (typeof workspace.requestFullscreen === 'function') {
+      await workspace.requestFullscreen({ navigationUI: 'hide' });
+    } else if (typeof workspace.webkitRequestFullscreen === 'function') {
+      workspace.webkitRequestFullscreen();
+    } else {
+      showToast('Full page view is not supported in this browser.', 'error');
+    }
+  } catch (error) {
+    console.warn('[IdeaKDC separate quiz fullscreen]', error?.name || error?.message || error);
+  }
+};
+
+function syncLessonFullscreenControls() {
+  syncLessonFullscreenButton();
+  syncSeparateQuizFullscreenButton();
+}
+
+document.addEventListener('fullscreenchange', syncLessonFullscreenControls);
+document.addEventListener('webkitfullscreenchange', syncLessonFullscreenControls);
 
 function armVideoExitGuard() {
   if (videoExitGuardArmed || !isVideoPageActive() || !hasMountedLessonVideo()) return;
@@ -1681,7 +1728,7 @@ function stopAndUnloadActiveLessonVideo() {
   });
   window._activeLessonPlayer = null;
   document.getElementById('lesson-player-stage')?.classList.remove('has-active-video');
-  syncLessonFullscreenButton();
+  syncLessonFullscreenControls();
 }
 
 function emitVideoExitParticles(mood) {
@@ -4628,6 +4675,7 @@ function activateSeparateQuizWorkspace(active) {
   const divider = document.getElementById('separate-quiz-divider');
   page?.classList.toggle('separate-quiz-active', active);
   if (divider) divider.hidden = !active;
+  syncSeparateQuizFullscreenButton();
   if (active) setupSeparateQuizDivider();
   else {
     separateQuizDividerCleanup?.();
