@@ -4838,7 +4838,9 @@ function launchQuizConfetti(container, kind = 'correct', size = 'small') {
   const layer = document.createElement('div');
   layer.className = 'quiz-confetti-layer';
   layer.setAttribute('aria-hidden', 'true');
-  document.body.appendChild(layer);
+  const fullscreenHost = lessonFullscreenElement();
+  const layerHost = fullscreenHost?.appendChild ? fullscreenHost : document.body;
+  layerHost.appendChild(layer);
   const baseLeft = hasUsableOrigin ? itemRect.left + itemRect.width / 2 : window.innerWidth / 2;
   const baseTop = hasUsableOrigin ? itemRect.top + itemRect.height * .62 : window.innerHeight * .72;
   const isBig = size === 'big' || kind === 'result';

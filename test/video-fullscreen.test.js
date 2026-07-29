@@ -36,3 +36,9 @@ test("landscape Separate Quiz can fullscreen the complete split workspace", () =
   assert.match(source, /orientation:landscape[\s\S]*separate-quiz-fullscreen-btn\{display:inline-flex/);
   assert.match(source, /button\.textContent = active \? '✕ Exit full page' : '⛶ Full page'/);
 });
+
+test("quiz confetti is mounted inside the active fullscreen tree", () => {
+  assert.match(source, /const fullscreenHost = lessonFullscreenElement\(\)/);
+  assert.match(source, /const layerHost = fullscreenHost\?\.appendChild \? fullscreenHost : document\.body/);
+  assert.match(source, /layerHost\.appendChild\(layer\)/);
+});
