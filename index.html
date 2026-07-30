@@ -269,6 +269,50 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .footer-links{display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap}
 .footer-links a{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:.55rem .85rem;font-size:.78rem;font-weight:800}
 
+/* Curiosity-led memory landing */
+.memory-landing{position:relative;background:#f7f9fc;color:#121a2e;overflow:hidden}
+.memory-scratch-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:90;pointer-events:none;mix-blend-mode:screen}
+.memory-scene{position:relative;min-height:min(82vh,760px);overflow:hidden;isolation:isolate}
+.memory-scene-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
+.memory-scene::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none}
+.memory-scene-inner{position:relative;z-index:2;width:min(1180px,100%);min-height:inherit;margin:0 auto;padding:clamp(1.3rem,4vw,3.8rem);display:flex;align-items:flex-end}
+.memory-copy{max-width:min(710px,92vw);padding-bottom:clamp(1rem,4vw,3.2rem);color:#111a2d;text-shadow:0 1px 18px rgba(255,255,255,.82)}
+.memory-hero::after{background:linear-gradient(90deg,rgba(250,252,255,.98) 0%,rgba(250,252,255,.87) 34%,rgba(250,252,255,.16) 68%,rgba(250,252,255,0) 100%)}
+.memory-hero .memory-scene-media{object-position:center}
+.memory-eyebrow{display:inline-flex;align-items:center;gap:.5rem;margin-bottom:.8rem;color:#c34e47;font-size:clamp(.72rem,1.5vw,.9rem);font-weight:900;text-transform:uppercase;letter-spacing:0}
+.memory-title{max-width:760px;margin:0;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-size:clamp(2.65rem,7.4vw,6.7rem);font-weight:900;line-height:.94;letter-spacing:0;overflow-wrap:anywhere}
+.memory-title .question-mark{display:inline-block;color:#1769ff;animation:memoryQuestionBounce 2.8s ease-in-out infinite}
+.memory-lead{max-width:610px;margin:1rem 0 1.25rem;font-size:clamp(1rem,2vw,1.26rem);line-height:1.55;color:#374156;font-weight:650}
+.memory-prompt{display:inline-flex;align-items:center;gap:.55rem;min-height:46px;padding:.72rem 1rem;border:1px solid rgba(23,105,255,.35);border-radius:8px;background:rgba(255,255,255,.88);color:#102554;font-size:.86rem;font-weight:900;box-shadow:0 12px 30px rgba(22,44,86,.12)}
+.memory-prompt-arrow{font-size:1.1rem;animation:memoryArrow 1.6s ease-in-out infinite}
+.memory-problem::after{background:linear-gradient(270deg,rgba(248,250,253,.98) 0%,rgba(248,250,253,.89) 34%,rgba(248,250,253,.08) 70%)}
+.memory-problem .memory-scene-inner{justify-content:flex-end;align-items:center}
+.memory-problem .memory-copy{max-width:530px;padding:0;text-shadow:none}
+.memory-statement{margin:0;font-size:clamp(2.25rem,6.4vw,5.6rem);font-weight:950;line-height:.96;letter-spacing:0}
+.memory-statement strong{color:#1769ff}
+.memory-small{margin-top:1rem;color:#48536a;font-size:clamp(.95rem,1.8vw,1.15rem);line-height:1.6;font-weight:650}
+.memory-coaching{padding:clamp(3rem,7vw,6.5rem) 1rem;background:#fff;text-align:center}
+.memory-coaching-inner{width:min(1180px,100%);margin:0 auto}
+.memory-coaching h2{margin:0 auto .9rem;max-width:980px;font-size:clamp(2.2rem,6vw,5.5rem);line-height:.98;letter-spacing:0}
+.memory-coaching h2 span{color:#1769ff}
+.memory-coaching p{max-width:740px;margin:0 auto;color:#515b70;font-size:clamp(1rem,2vw,1.2rem);line-height:1.65}
+.coaching-orbit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.6rem,2vw,1.1rem);margin:clamp(2rem,5vw,4rem) auto 0}
+.coaching-name{position:relative;min-height:150px;display:grid;place-items:center;border:1px solid #dce3ef;border-radius:8px;background:#f8fafc;color:#17213a;font-size:clamp(1.35rem,3vw,2.2rem);font-weight:950;overflow:hidden}
+.coaching-name::after{content:'+';position:absolute;right:.65rem;top:.25rem;color:#d19a36;font-size:clamp(2.8rem,7vw,5.5rem);font-weight:300;line-height:1;opacity:.68}
+.coaching-name span{position:relative;z-index:1}
+.coaching-missing{margin:1rem auto 0;color:#b14d48;font-size:clamp(1.15rem,2.6vw,1.8rem);font-weight:900}
+.memory-curiosity{min-height:min(84vh,780px);color:#fff}
+.memory-curiosity::after{background:linear-gradient(90deg,rgba(3,13,34,.9) 0%,rgba(3,13,34,.66) 34%,rgba(3,13,34,.04) 72%)}
+.memory-curiosity .memory-copy{color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.55)}
+.memory-curiosity .memory-eyebrow{color:#ffd26a}
+.memory-curiosity .memory-lead{color:#e7efff}
+.memory-curiosity .memory-prompt{background:rgba(11,31,74,.72);border-color:rgba(126,190,255,.65);color:#fff;backdrop-filter:blur(4px)}
+.memory-reveal{--reveal-y:34px;opacity:0;transform:translate3d(0,var(--reveal-y),0) scale(.96);transition:opacity .55s ease,transform .72s cubic-bezier(.18,.86,.24,1.16)}
+.memory-reveal.from-above{--reveal-y:-34px}
+.memory-reveal.is-visible{opacity:1;transform:translate3d(0,0,0) scale(1)}
+@keyframes memoryQuestionBounce{0%,100%{transform:translateY(0) rotate(0)}48%{transform:translateY(-9px) rotate(3deg)}62%{transform:translateY(0) rotate(-2deg)}}
+@keyframes memoryArrow{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
 .hero-kicker,.hero-title,.hero-lead,.hero-actions,.hero-proof,.hero-showcase,.hero-art-frame{
   animation:homeHeroFadeUp 900ms cubic-bezier(.16,.84,.24,1) both;
   will-change:transform,opacity;
@@ -328,6 +372,17 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   .hero-proof{grid-template-columns:1fr}
   .courses-head{display:block}
   .footer-links{justify-content:flex-start}
+  .memory-scene{min-height:min(78vh,680px)}
+  .memory-hero::after{background:linear-gradient(0deg,rgba(250,252,255,.98) 0%,rgba(250,252,255,.82) 44%,rgba(250,252,255,.08) 78%)}
+  .memory-hero .memory-scene-media{object-position:62% center}
+  .memory-scene-inner{align-items:flex-end}
+  .memory-copy{max-width:100%;padding-bottom:1rem}
+  .memory-problem::after{background:linear-gradient(0deg,rgba(248,250,253,.98) 0%,rgba(248,250,253,.82) 46%,rgba(248,250,253,.04) 82%)}
+  .memory-problem .memory-scene-inner{justify-content:flex-start;align-items:flex-end}
+  .memory-problem .memory-copy{max-width:100%;padding-bottom:1rem}
+  .coaching-orbit{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .memory-curiosity::after{background:linear-gradient(0deg,rgba(3,13,34,.93) 0%,rgba(3,13,34,.54) 47%,rgba(3,13,34,.06) 80%)}
+  .memory-curiosity .memory-scene-media{object-position:62% center}
 }
 
 @media (max-width: 520px){
@@ -350,6 +405,15 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   .trust-item,.benefit-card,.method-card{border-radius:18px}
   .story-panel{border-radius:22px}
   .courses-grid{grid-template-columns:1fr}
+  .memory-scene{min-height:min(76vh,630px)}
+  .memory-scene-inner{padding:1rem}
+  .memory-copy{width:100%;min-width:0}
+  .memory-title{font-size:clamp(2.2rem,11.5vw,3.4rem);line-height:.96}
+  .memory-statement{font-size:clamp(2.25rem,12vw,3.65rem)}
+  .memory-lead{font-size:.96rem}
+  .coaching-name{min-height:108px;font-size:1.25rem}
+  .memory-coaching{padding:3.2rem .9rem}
+  .memory-coaching h2{font-size:clamp(2.15rem,12vw,3.5rem)}
 }
 
 /* ══════════════════════════════
@@ -801,7 +865,61 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 ════════════════════════════════════════ -->
 <div class="page active" id="page-home">
   <div class="home-shell">
-    <section class="cinematic-hero" aria-label="IdeaKDC cinematic transformation hero">
+    <main class="memory-landing" id="memory-landing">
+      <canvas class="memory-scratch-canvas" id="memory-scratch-canvas" aria-hidden="true"></canvas>
+
+      <section class="memory-scene memory-hero" aria-label="The problem of forgetting after online lectures">
+        <img class="memory-scene-media" src="assets/landing-forgetting-hero.jpg" width="1600" height="900" fetchpriority="high" decoding="async" alt="Student watching an online lecture while remembered ideas fade like chalk dust">
+        <div class="memory-scene-inner">
+          <div class="memory-copy memory-reveal">
+            <div class="memory-eyebrow">You studied it. You understood it.</div>
+            <h1 class="memory-title">Then why did it <span class="question-mark">disappear?</span></h1>
+            <p class="memory-lead">Long lectures can feel productive. The exam asks a colder question: how much stayed with you?</p>
+            <a class="memory-prompt" href="#memory-problem">Find the missing part <span class="memory-prompt-arrow" aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+      </section>
+
+      <section class="memory-scene memory-problem" id="memory-problem" aria-label="Passive listening does not guarantee memory">
+        <img class="memory-scene-media" src="assets/landing-passive-listening.jpg" width="1600" height="900" loading="lazy" decoding="async" alt="Student surrounded by many online lectures while information fades away">
+        <div class="memory-scene-inner">
+          <div class="memory-copy memory-reveal">
+            <div class="memory-eyebrow">The quiet problem</div>
+            <h2 class="memory-statement">Watching is not the same as <strong>remembering.</strong></h2>
+            <p class="memory-small">Passive listening feels easy because your brain recognises the explanation. Recognition is not recall.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="memory-coaching" id="memory-coaching" aria-label="Keep your coaching and add the missing learning layer">
+        <div class="memory-coaching-inner memory-reveal">
+          <div class="memory-eyebrow">Do not replace what already works</div>
+          <h2>PW, ALLEN, Motion or Aakash… <span>keep it.</span></h2>
+          <p>Keep your main coaching. Add one IdeaKDC course beside it, then notice what your memory does differently.</p>
+          <div class="coaching-orbit" aria-label="Compatible with existing coaching choices">
+            <div class="coaching-name"><span>PW</span></div>
+            <div class="coaching-name"><span>ALLEN</span></div>
+            <div class="coaching-name"><span>Motion</span></div>
+            <div class="coaching-name"><span>Aakash</span></div>
+          </div>
+          <div class="coaching-missing">Not another lecture. Something your memory notices.</div>
+        </div>
+      </section>
+
+      <section class="memory-scene memory-curiosity" id="memory-curiosity" aria-label="A new layer for stronger memory">
+        <img class="memory-scene-media" src="assets/landing-curiosity-door.jpg" width="1600" height="900" loading="lazy" decoding="async" alt="Student following a study path toward a glowing unanswered question">
+        <div class="memory-scene-inner">
+          <div class="memory-copy memory-reveal">
+            <div class="memory-eyebrow">The missing layer is closer than you think</div>
+            <h2 class="memory-statement">What if the missing 10% changes the other 90%?</h2>
+            <p class="memory-lead">We will not explain it here. Experience the difference inside a course.</p>
+            <a class="memory-prompt" href="#courses">Open the next door <span class="memory-prompt-arrow" aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section class="cinematic-hero" aria-label="IdeaKDC cinematic transformation hero" hidden>
       <section class="cinema-panel cinema-launch" data-stage="launch">
         <div class="book-scene">
           <div class="cinema-book" aria-hidden="true">
@@ -883,7 +1001,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
       </section>
     </section>
 
-    <section class="home-hero">
+    <section class="home-hero" hidden>
       <div class="hero-copy">
         <div class="hero-kicker">Academic coaching for clear thinking</div>
         <h1 class="hero-title">Learn with clarity, practice, and <span>confidence.</span></h1>
@@ -940,14 +1058,14 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
       </div>
     </section>
 
-    <section class="trust-strip" aria-label="IdeaKDC trust points">
+    <section class="trust-strip" aria-label="IdeaKDC trust points" hidden>
       <div class="trust-item"><strong>Guided Study</strong><span>Every course is arranged as a clear path from concept building to exam practice.</span></div>
       <div class="trust-item"><strong>Practice Focus</strong><span>Students learn, revise, and solve questions so concepts stay longer in memory.</span></div>
       <div class="trust-item"><strong>Doubt Support</strong><span>Support is available for course access, login, payments, and learning roadblocks.</span></div>
       <div class="trust-item"><strong>Progress Mindset</strong><span>The experience encourages daily consistency, revision discipline, and confident preparation.</span></div>
     </section>
 
-    <section class="benefit-section">
+    <section class="benefit-section" hidden>
       <div class="section-eyebrow">Why students choose IdeaKDC</div>
       <h2 class="section-title">A calm, focused way to understand, practice, revise, and remember.</h2>
       <p class="section-intro">IdeaKDC is designed for students who want more than lectures. The learning flow explains concepts clearly, gives practice at the right time, supports revision, and keeps preparation aligned with exams.</p>
@@ -976,7 +1094,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
       </div>
     </section>
 
-    <section class="method-section">
+    <section class="method-section" hidden>
       <div class="section-eyebrow">The IdeaKDC method</div>
       <h2 class="section-title">A complete learning path from first explanation to exam readiness.</h2>
       <p class="section-intro">Students remember concepts longer when learning is connected: explanation, practice, correction, revision, doubt solving, and progress tracking all work together.</p>
@@ -1005,7 +1123,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
       </div>
     </section>
 
-    <section class="story-section">
+    <section class="story-section" hidden>
       <div class="story-panel">
         <div class="story-badge">
           <strong>Creating Thoughtful Minds</strong>
@@ -1207,11 +1325,9 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 <!-- ════════════════
      FIREBASE
 ════════════════ -->
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 <script>
 (function initCinematicHeroEarly(){
-  const hero = document.querySelector('.cinematic-hero');
+  const hero = document.querySelector('.cinematic-hero:not([hidden])');
   if (!hero || window.__ideakdcCinematicStarted) return;
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1913,8 +2029,123 @@ function initHomepageMotion() {
 }
 initHomepageMotion();
 
+function initMemoryLandingMotion() {
+  const landing = document.getElementById('memory-landing');
+  if (!landing) return;
+
+  const revealItems = [...landing.querySelectorAll('.memory-reveal')];
+  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+    revealItems.forEach(item => item.classList.add('is-visible'));
+  } else {
+    let lastScrollY = window.scrollY;
+    let scrollDirection = 'down';
+    window.addEventListener('scroll', () => {
+      const nextY = window.scrollY;
+      if (Math.abs(nextY - lastScrollY) > 3) scrollDirection = nextY > lastScrollY ? 'down' : 'up';
+      lastScrollY = nextY;
+    }, { passive: true });
+
+    const memoryObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.toggle('from-above', scrollDirection === 'up');
+          requestAnimationFrame(() => entry.target.classList.add('is-visible'));
+        } else {
+          entry.target.classList.remove('is-visible');
+        }
+      });
+    }, { threshold: .2, rootMargin: '-4% 0px -7% 0px' });
+    revealItems.forEach(item => memoryObserver.observe(item));
+  }
+
+  const canvas = document.getElementById('memory-scratch-canvas');
+  const context = canvas?.getContext?.('2d');
+  if (!canvas || !context || prefersReducedMotion) return;
+  const scratches = [];
+  const pointerPoints = new Map();
+  let scratchFrame = 0;
+  let canvasWidth = 0;
+  let canvasHeight = 0;
+
+  function resizeScratchCanvas() {
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    canvasWidth = window.innerWidth;
+    canvasHeight = window.innerHeight;
+    canvas.width = Math.round(canvasWidth * ratio);
+    canvas.height = Math.round(canvasHeight * ratio);
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  }
+
+  function drawScratches() {
+    scratchFrame = 0;
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
+    for (let index = scratches.length - 1; index >= 0; index--) {
+      const scratch = scratches[index];
+      scratch.life -= .045;
+      if (scratch.life <= 0) {
+        scratches.splice(index, 1);
+        continue;
+      }
+      context.beginPath();
+      context.moveTo(scratch.x1, scratch.y1);
+      context.quadraticCurveTo(
+        (scratch.x1 + scratch.x2) / 2 + scratch.wobble,
+        (scratch.y1 + scratch.y2) / 2 - scratch.wobble,
+        scratch.x2,
+        scratch.y2
+      );
+      context.strokeStyle = `rgba(255,255,255,${scratch.life * .82})`;
+      context.lineWidth = scratch.width;
+      context.lineCap = 'round';
+      context.shadowColor = 'rgba(255,255,255,.92)';
+      context.shadowBlur = 8;
+      context.stroke();
+    }
+    context.shadowBlur = 0;
+    if (scratches.length) scratchFrame = requestAnimationFrame(drawScratches);
+  }
+
+  function addScratch(pointerId, x, y) {
+    if (!document.getElementById('page-home')?.classList.contains('active')) return;
+    const previous = pointerPoints.get(pointerId);
+    pointerPoints.set(pointerId, { x, y });
+    if (!previous) return;
+    const distance = Math.hypot(x - previous.x, y - previous.y);
+    if (distance < 3 || distance > 90) return;
+    scratches.push({
+      x1: previous.x,
+      y1: previous.y,
+      x2: x,
+      y2: y,
+      width: 1.3 + Math.random() * 2.4,
+      wobble: (Math.random() - .5) * 12,
+      life: 1
+    });
+    if (scratches.length > 110) scratches.splice(0, scratches.length - 110);
+    if (!scratchFrame) scratchFrame = requestAnimationFrame(drawScratches);
+  }
+
+  window.addEventListener('pointermove', event => addScratch(event.pointerId, event.clientX, event.clientY), { passive: true });
+  window.addEventListener('pointerup', event => pointerPoints.delete(event.pointerId), { passive: true });
+  window.addEventListener('pointercancel', event => pointerPoints.delete(event.pointerId), { passive: true });
+  landing.addEventListener('touchmove', event => {
+    [...event.changedTouches].forEach(touch => addScratch(`touch-${touch.identifier}`, touch.clientX, touch.clientY));
+  }, { passive: true });
+  landing.addEventListener('touchend', event => {
+    [...event.changedTouches].forEach(touch => pointerPoints.delete(`touch-${touch.identifier}`));
+  }, { passive: true });
+  landing.addEventListener('touchcancel', event => {
+    [...event.changedTouches].forEach(touch => pointerPoints.delete(`touch-${touch.identifier}`));
+  }, { passive: true });
+  window.addEventListener('resize', resizeScratchCanvas, { passive: true });
+  resizeScratchCanvas();
+}
+initMemoryLandingMotion();
+
 function initCinematicHero() {
-  const hero = document.querySelector('.cinematic-hero');
+  const hero = document.querySelector('.cinematic-hero:not([hidden])');
   if (!hero) return;
   if (window.__ideakdcCinematicStarted) return;
 
