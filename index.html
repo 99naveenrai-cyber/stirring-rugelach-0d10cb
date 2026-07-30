@@ -270,37 +270,56 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .footer-links a{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:.55rem .85rem;font-size:.78rem;font-weight:800}
 
 /* Curiosity-led memory landing */
-.memory-landing{position:relative;background:#f7f9fc;color:#121a2e;overflow:hidden}
-.memory-scratch-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:90;pointer-events:none;mix-blend-mode:screen}
+.memory-landing{position:relative;background:#07162f;color:#f4f8ff;overflow:hidden}
+.memory-scratch-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:90;pointer-events:none;mix-blend-mode:screen;filter:drop-shadow(0 0 5px rgba(255,255,255,.92))}
 .memory-scene{position:relative;min-height:min(82vh,760px);overflow:hidden;isolation:isolate}
-.memory-scene-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
+.memory-scene-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;filter:saturate(1.16) contrast(1.09) brightness(.82)}
 .memory-scene::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none}
 .memory-scene-inner{position:relative;z-index:2;width:min(1180px,100%);min-height:inherit;margin:0 auto;padding:clamp(1.3rem,4vw,3.8rem);display:flex;align-items:flex-end}
-.memory-copy{max-width:min(710px,92vw);padding-bottom:clamp(1rem,4vw,3.2rem);color:#111a2d;text-shadow:0 1px 18px rgba(255,255,255,.82)}
-.memory-hero::after{background:linear-gradient(90deg,rgba(250,252,255,.98) 0%,rgba(250,252,255,.87) 34%,rgba(250,252,255,.16) 68%,rgba(250,252,255,0) 100%)}
+.memory-copy{max-width:min(710px,92vw);padding-bottom:clamp(1rem,4vw,3.2rem);color:#f6f9ff;text-shadow:0 2px 24px rgba(0,0,0,.72)}
+.memory-hero::after{background:linear-gradient(90deg,rgba(3,17,47,.96) 0%,rgba(4,26,65,.83) 38%,rgba(4,26,65,.22) 70%,rgba(4,26,65,.04) 100%)}
 .memory-hero .memory-scene-media{object-position:center}
-.memory-eyebrow{display:inline-flex;align-items:center;gap:.5rem;margin-bottom:.8rem;color:#c34e47;font-size:clamp(.72rem,1.5vw,.9rem);font-weight:900;text-transform:uppercase;letter-spacing:0}
+.memory-eyebrow{display:inline-flex;align-items:center;gap:.5rem;margin-bottom:.8rem;color:#ffcb66;font-size:clamp(.72rem,1.5vw,.9rem);font-weight:900;text-transform:uppercase;letter-spacing:0}
 .memory-title{max-width:760px;margin:0;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-size:clamp(2.65rem,7.4vw,6.7rem);font-weight:900;line-height:.94;letter-spacing:0;overflow-wrap:anywhere}
-.memory-title .question-mark{display:inline-block;color:#1769ff;animation:memoryQuestionBounce 2.8s ease-in-out infinite}
-.memory-lead{max-width:610px;margin:1rem 0 1.25rem;font-size:clamp(1rem,2vw,1.26rem);line-height:1.55;color:#374156;font-weight:650}
-.memory-prompt{display:inline-flex;align-items:center;gap:.55rem;min-height:46px;padding:.72rem 1rem;border:1px solid rgba(23,105,255,.35);border-radius:8px;background:rgba(255,255,255,.88);color:#102554;font-size:.86rem;font-weight:900;box-shadow:0 12px 30px rgba(22,44,86,.12)}
+.memory-title .question-mark{display:inline-block;color:#73c7ff;animation:memoryQuestionBounce 2.8s ease-in-out infinite}
+.memory-hindi-title{display:block;margin-top:.45rem;color:#bfe7ff;font-size:.48em;line-height:1.12;font-weight:850}
+.memory-lead{max-width:610px;margin:1rem 0 1.25rem;font-size:clamp(1rem,2vw,1.26rem);line-height:1.55;color:#e1edff;font-weight:650}
+.memory-prompt{display:inline-flex;align-items:center;gap:.55rem;min-height:46px;padding:.72rem 1rem;border:1px solid rgba(126,204,255,.56);border-radius:8px;background:rgba(5,31,72,.76);color:#fff;font-size:.86rem;font-weight:900;box-shadow:0 12px 30px rgba(0,7,25,.3);backdrop-filter:blur(3px)}
 .memory-prompt-arrow{font-size:1.1rem;animation:memoryArrow 1.6s ease-in-out infinite}
-.memory-problem::after{background:linear-gradient(270deg,rgba(248,250,253,.98) 0%,rgba(248,250,253,.89) 34%,rgba(248,250,253,.08) 70%)}
+.memory-problem::after{background:linear-gradient(270deg,rgba(22,14,51,.96) 0%,rgba(25,22,67,.84) 38%,rgba(18,30,72,.18) 72%)}
 .memory-problem .memory-scene-inner{justify-content:flex-end;align-items:center}
-.memory-problem .memory-copy{max-width:530px;padding:0;text-shadow:none}
+.memory-problem .memory-copy{max-width:560px;padding:0}
 .memory-statement{margin:0;font-size:clamp(2.25rem,6.4vw,5.6rem);font-weight:950;line-height:.96;letter-spacing:0}
-.memory-statement strong{color:#1769ff}
-.memory-small{margin-top:1rem;color:#48536a;font-size:clamp(.95rem,1.8vw,1.15rem);line-height:1.6;font-weight:650}
-.memory-coaching{padding:clamp(3rem,7vw,6.5rem) 1rem;background:#fff;text-align:center}
+.memory-statement strong{color:#78d7ff}
+.memory-small{margin-top:1rem;color:#dceaff;font-size:clamp(.95rem,1.8vw,1.15rem);line-height:1.6;font-weight:650}
+.memory-art-note{max-width:680px;margin:1.2rem 0 0;padding-left:1rem;border-left:2px solid #ffcb66;color:#b9d9ff;font-size:clamp(.82rem,1.6vw,1rem);font-style:italic;line-height:1.55}
+.memory-coaching{padding:clamp(3rem,7vw,6.5rem) 1rem;background:linear-gradient(135deg,#091a3b,#102b58 58%,#17213e);text-align:center}
 .memory-coaching-inner{width:min(1180px,100%);margin:0 auto}
 .memory-coaching h2{margin:0 auto .9rem;max-width:980px;font-size:clamp(2.2rem,6vw,5.5rem);line-height:.98;letter-spacing:0}
-.memory-coaching h2 span{color:#1769ff}
-.memory-coaching p{max-width:740px;margin:0 auto;color:#515b70;font-size:clamp(1rem,2vw,1.2rem);line-height:1.65}
+.memory-coaching h2 span{color:#73c7ff}
+.memory-coaching p{max-width:740px;margin:0 auto;color:#d4e6ff;font-size:clamp(1rem,2vw,1.2rem);line-height:1.65}
 .coaching-orbit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.6rem,2vw,1.1rem);margin:clamp(2rem,5vw,4rem) auto 0}
-.coaching-name{position:relative;min-height:150px;display:grid;place-items:center;border:1px solid #dce3ef;border-radius:8px;background:#f8fafc;color:#17213a;font-size:clamp(1.35rem,3vw,2.2rem);font-weight:950;overflow:hidden}
+.coaching-name{position:relative;min-height:150px;display:grid;place-items:center;border:1px solid rgba(127,204,255,.35);border-radius:8px;background:rgba(4,18,47,.54);color:#f5f9ff;font-size:clamp(1.35rem,3vw,2.2rem);font-weight:950;overflow:hidden}
 .coaching-name::after{content:'+';position:absolute;right:.65rem;top:.25rem;color:#d19a36;font-size:clamp(2.8rem,7vw,5.5rem);font-weight:300;line-height:1;opacity:.68}
 .coaching-name span{position:relative;z-index:1}
-.coaching-missing{margin:1rem auto 0;color:#b14d48;font-size:clamp(1.15rem,2.6vw,1.8rem);font-weight:900}
+.coaching-missing{margin:1rem auto 0;color:#ffcb66;font-size:clamp(1.15rem,2.6vw,1.8rem);font-weight:900}
+.memory-proof{position:relative;min-height:min(92vh,860px);overflow:hidden;isolation:isolate}
+.memory-proof-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;filter:saturate(1.08) contrast(1.08) brightness(.72)}
+.memory-proof::after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(3,16,45,.98) 0%,rgba(4,24,61,.91) 43%,rgba(5,29,67,.26) 77%);pointer-events:none}
+.memory-proof-inner{position:relative;z-index:2;width:min(1180px,100%);min-height:inherit;margin:0 auto;padding:clamp(2rem,5vw,4rem);display:flex;align-items:center}
+.memory-proof-copy{width:min(720px,100%)}
+.memory-proof h2{margin:0;max-width:700px;font-size:clamp(2.25rem,6vw,5.4rem);line-height:.96}
+.memory-proof-note{max-width:650px;margin:.9rem 0 1.4rem;color:#d8e8ff;line-height:1.6}
+.memory-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin:1.2rem 0}
+.memory-stat{min-width:0;padding:1rem;border:1px solid rgba(111,196,255,.34);border-radius:8px;background:rgba(4,21,53,.72)}
+.memory-stat strong{display:block;color:#ffcf68;font-size:clamp(1.8rem,4.4vw,3.35rem);line-height:1}
+.memory-stat span{display:block;margin-top:.4rem;color:#d8e9ff;font-size:.78rem;line-height:1.35}
+.memory-claims-note{margin:.6rem 0 1.2rem;color:#8fb2df;font-size:.72rem;line-height:1.45}
+.memory-voices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+.memory-voice{padding:.82rem .9rem;border:1px solid rgba(119,198,255,.25);border-radius:8px;background:rgba(5,18,46,.78)}
+.memory-voice blockquote{margin:0;color:#f5f8ff;font-size:clamp(.78rem,1.5vw,.92rem);line-height:1.48}
+.memory-voice footer{margin-top:.5rem;color:#7fd2ff;font-size:.68rem;font-weight:800}
+.memory-composite-label{display:inline-flex;margin-top:1rem;color:#b6ccec;font-size:.7rem}
 .memory-curiosity{min-height:min(84vh,780px);color:#fff}
 .memory-curiosity::after{background:linear-gradient(90deg,rgba(3,13,34,.9) 0%,rgba(3,13,34,.66) 34%,rgba(3,13,34,.04) 72%)}
 .memory-curiosity .memory-copy{color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.55)}
@@ -310,6 +329,14 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .memory-reveal{--reveal-y:34px;opacity:0;transform:translate3d(0,var(--reveal-y),0) scale(.96);transition:opacity .55s ease,transform .72s cubic-bezier(.18,.86,.24,1.16)}
 .memory-reveal.from-above{--reveal-y:-34px}
 .memory-reveal.is-visible{opacity:1;transform:translate3d(0,0,0) scale(1)}
+.memory-reveal>*{opacity:0;transform:translateY(12px);transition:opacity .55s ease,transform .65s cubic-bezier(.2,.8,.2,1)}
+.memory-reveal.is-visible>*{opacity:1;transform:translateY(0)}
+.memory-reveal.is-visible>*:nth-child(2){transition-delay:70ms}
+.memory-reveal.is-visible>*:nth-child(3){transition-delay:130ms}
+.memory-reveal.is-visible>*:nth-child(4){transition-delay:190ms}
+.memory-reveal.is-visible>*:nth-child(n+5){transition-delay:240ms}
+.memory-scroll-whisper{position:fixed;right:clamp(.65rem,2vw,1.4rem);top:48%;z-index:75;width:min(290px,42vw);padding:.72rem .85rem;border:1px solid rgba(145,215,255,.45);border-radius:8px;background:rgba(4,22,54,.88);color:#e9f6ff;font-size:clamp(.7rem,1.2vw,.82rem);font-weight:750;line-height:1.45;pointer-events:none;opacity:0;transform:translate3d(16px,0,0);transition:opacity .35s ease,transform .45s ease;box-shadow:0 12px 32px rgba(0,7,25,.26)}
+.memory-scroll-whisper.is-visible{opacity:1;transform:translate3d(0,0,0)}
 @keyframes memoryQuestionBounce{0%,100%{transform:translateY(0) rotate(0)}48%{transform:translateY(-9px) rotate(3deg)}62%{transform:translateY(0) rotate(-2deg)}}
 @keyframes memoryArrow{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
 
@@ -358,6 +385,12 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
     transform:none;
     transition:none;
   }
+  .memory-reveal,.memory-reveal>*{
+    opacity:1;
+    transform:none;
+    transition:none;
+  }
+  .memory-scroll-whisper{display:none}
   .btn-nav:hover,.course-card:hover{
     transform:none;
   }
@@ -373,14 +406,19 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   .courses-head{display:block}
   .footer-links{justify-content:flex-start}
   .memory-scene{min-height:min(78vh,680px)}
-  .memory-hero::after{background:linear-gradient(0deg,rgba(250,252,255,.98) 0%,rgba(250,252,255,.82) 44%,rgba(250,252,255,.08) 78%)}
+  .memory-hero::after{background:linear-gradient(0deg,rgba(3,17,47,.97) 0%,rgba(4,26,65,.84) 48%,rgba(4,26,65,.08) 84%)}
   .memory-hero .memory-scene-media{object-position:62% center}
   .memory-scene-inner{align-items:flex-end}
   .memory-copy{max-width:100%;padding-bottom:1rem}
-  .memory-problem::after{background:linear-gradient(0deg,rgba(248,250,253,.98) 0%,rgba(248,250,253,.82) 46%,rgba(248,250,253,.04) 82%)}
+  .memory-problem::after{background:linear-gradient(0deg,rgba(22,14,51,.97) 0%,rgba(25,22,67,.84) 48%,rgba(18,30,72,.06) 84%)}
   .memory-problem .memory-scene-inner{justify-content:flex-start;align-items:flex-end}
   .memory-problem .memory-copy{max-width:100%;padding-bottom:1rem}
   .coaching-orbit{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .memory-proof{min-height:auto}
+  .memory-proof::after{background:linear-gradient(0deg,rgba(3,16,45,.99) 0%,rgba(4,24,61,.91) 65%,rgba(5,29,67,.18) 100%)}
+  .memory-proof-media{position:relative;height:auto;aspect-ratio:16/9;object-position:66% center}
+  .memory-proof-inner{min-height:0;margin-top:-1px;padding-top:2rem;background:#06183d}
+  .memory-proof-copy{width:100%}
   .memory-curiosity::after{background:linear-gradient(0deg,rgba(3,13,34,.93) 0%,rgba(3,13,34,.54) 47%,rgba(3,13,34,.06) 80%)}
   .memory-curiosity .memory-scene-media{object-position:62% center}
 }
@@ -414,6 +452,9 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   .coaching-name{min-height:108px;font-size:1.25rem}
   .memory-coaching{padding:3.2rem .9rem}
   .memory-coaching h2{font-size:clamp(2.15rem,12vw,3.5rem)}
+  .memory-stats{grid-template-columns:1fr}
+  .memory-voices{grid-template-columns:1fr}
+  .memory-scroll-whisper{top:auto;right:.75rem;bottom:calc(var(--bottom-nav-height,78px) + env(safe-area-inset-bottom) + .75rem);width:min(310px,calc(100vw - 1.5rem))}
 }
 
 /* ══════════════════════════════
@@ -867,34 +908,37 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   <div class="home-shell">
     <main class="memory-landing" id="memory-landing">
       <canvas class="memory-scratch-canvas" id="memory-scratch-canvas" aria-hidden="true"></canvas>
+      <div class="memory-scroll-whisper" id="memory-scroll-whisper" aria-live="polite"></div>
 
-      <section class="memory-scene memory-hero" aria-label="The problem of forgetting after online lectures">
+      <section class="memory-scene memory-hero" aria-label="The problem of forgetting after online lectures" data-scroll-down="आगे बढ़िए... असली सवाल यह है कि बिना स्क्रीन कितना याद रहता है।" data-scroll-up="वापस आए? याद भी ऐसे ही लौटती है—जब दिमाग उसे दोबारा खोजता है।">
         <img class="memory-scene-media" src="assets/landing-forgetting-hero.jpg" width="1600" height="900" fetchpriority="high" decoding="async" alt="Student watching an online lecture while remembered ideas fade like chalk dust">
         <div class="memory-scene-inner">
           <div class="memory-copy memory-reveal">
-            <div class="memory-eyebrow">You studied it. You understood it.</div>
-            <h1 class="memory-title">Then why did it <span class="question-mark">disappear?</span></h1>
+            <div class="memory-eyebrow">You studied it. You understood it. · पढ़ा भी। समझा भी।</div>
+            <h1 class="memory-title">Then why did it <span class="question-mark">disappear?</span><span class="memory-hindi-title" lang="hi">फिर याद क्यों नहीं रहा?</span></h1>
             <p class="memory-lead">Long lectures can feel productive. The exam asks a colder question: how much stayed with you?</p>
+            <p class="memory-art-note">Memory does not count watched hours. It counts what returns when the screen is gone.<br><span lang="hi">याददाश्त घंटे नहीं, बिना स्क्रीन लौटे उत्तर गिनती है।</span></p>
             <a class="memory-prompt" href="#memory-problem">Find the missing part <span class="memory-prompt-arrow" aria-hidden="true">↓</span></a>
           </div>
         </div>
       </section>
 
-      <section class="memory-scene memory-problem" id="memory-problem" aria-label="Passive listening does not guarantee memory">
+      <section class="memory-scene memory-problem" id="memory-problem" aria-label="Passive listening does not guarantee memory" data-scroll-down="पहचानना आसान है। बिना hint उत्तर निकालना ही असली तैयारी है।" data-scroll-up="जो बात लौटकर नहीं आती, उसे एक और lecture नहीं—एक सक्रिय कोशिश चाहिए।">
         <img class="memory-scene-media" src="assets/landing-passive-listening.jpg" width="1600" height="900" loading="lazy" decoding="async" alt="Student surrounded by many online lectures while information fades away">
         <div class="memory-scene-inner">
           <div class="memory-copy memory-reveal">
-            <div class="memory-eyebrow">The quiet problem</div>
-            <h2 class="memory-statement">Watching is not the same as <strong>remembering.</strong></h2>
+            <div class="memory-eyebrow">The quiet problem · छुपी हुई समस्या</div>
+            <h2 class="memory-statement">Watching is not the same as <strong>remembering.</strong><span class="memory-hindi-title" lang="hi">सिर्फ देखना, याद रखना नहीं है।</span></h2>
             <p class="memory-small">Passive listening feels easy because your brain recognises the explanation. Recognition is not recall.</p>
+            <p class="memory-art-note">Recognition whispers “I know this.” Recall proves it.<br><span lang="hi">पहचान कहती है “यह देखा है।” स्मरण बताता है “यह आता है।”</span></p>
           </div>
         </div>
       </section>
 
-      <section class="memory-coaching" id="memory-coaching" aria-label="Keep your coaching and add the missing learning layer">
+      <section class="memory-coaching" id="memory-coaching" aria-label="Keep your coaching and add the missing learning layer" data-scroll-down="Teacher वही। मेहनत वही। बस सीखने का अगला कदम अधिक सक्रिय।" data-scroll-up="बदलना coaching को नहीं है—बदलना है lecture के बाद दिमाग क्या करता है।">
         <div class="memory-coaching-inner memory-reveal">
-          <div class="memory-eyebrow">Do not replace what already works</div>
-          <h2>PW, ALLEN, Motion or Aakash… <span>keep it.</span></h2>
+          <div class="memory-eyebrow">Do not replace what already works · जो अच्छा है, उसे बनाए रखिए</div>
+          <h2>PW, ALLEN, Motion or Aakash… <span>keep it.</span><span class="memory-hindi-title" lang="hi">अपनी coaching मत छोड़िए।</span></h2>
           <p>Keep your main coaching. Add one IdeaKDC course beside it, then notice what your memory does differently.</p>
           <div class="coaching-orbit" aria-label="Compatible with existing coaching choices">
             <div class="coaching-name"><span>PW</span></div>
@@ -903,16 +947,45 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
             <div class="coaching-name"><span>Aakash</span></div>
           </div>
           <div class="coaching-missing">Not another lecture. Something your memory notices.</div>
+          <p class="memory-art-note">Keep the teacher. Add the recall.<br><span lang="hi">शिक्षक वही रखिए। सीखने में स्मरण जोड़िए।</span></p>
         </div>
       </section>
 
-      <section class="memory-scene memory-curiosity" id="memory-curiosity" aria-label="A new layer for stronger memory">
+      <section class="memory-proof" id="memory-proof" aria-label="IdeaKDC learner community snapshot" data-scroll-down="हर region की बोली अलग है। भूलने की परेशानी एक जैसी—और सक्रिय अभ्यास का असर भी।" data-scroll-up="इन आवाज़ों में एक common बात सुनिए: lecture खत्म होने पर learning खत्म नहीं होती।">
+        <img class="memory-proof-media" src="assets/landing-learner-voices.jpg" width="1600" height="900" loading="lazy" decoding="async" alt="A diverse group of Indian teenage learners studying together">
+        <div class="memory-proof-inner">
+          <div class="memory-proof-copy memory-reveal">
+            <div class="memory-eyebrow">Learner community · सीखने वालों की आवाज़</div>
+            <h2>Different cities. One familiar struggle.<span class="memory-hindi-title" lang="hi">शहर अलग। भूलने की परेशानी एक।</span></h2>
+            <p class="memory-proof-note">The language changes across India. The moment is familiar: “Lecture समझ आया था… फिर answer क्यों नहीं निकला?”</p>
+            <div class="memory-stats" aria-label="IdeaKDC community milestones supplied by the organisation">
+              <div class="memory-stat"><strong>15K</strong><span>happy learner community<br><span lang="hi">सीखने वाले विद्यार्थी</span></span></div>
+              <div class="memory-stat"><strong>45% → 85%</strong><span>representative learner journey<br><span lang="hi">बदलाव की एक मिसाल</span></span></div>
+              <div class="memory-stat"><strong>57K</strong><span>learning victories counted<br><span lang="hi">सीखने की जीतें</span></span></div>
+            </div>
+            <p class="memory-claims-note">Community figures supplied by IdeaKDC; the voices below are clearly labelled composite learner experiences, not named individual endorsements.</p>
+            <div class="memory-voices" aria-label="Composite regional learner voices">
+              <article class="memory-voice"><blockquote>“Bhai, lecture समझ आ जाता था, paper में blank. अब screen बंद करके खुद को check करता हूँ।”</blockquote><footer>Composite learner voice · Delhi</footer></article>
+              <article class="memory-voice"><blockquote>“पहले video पूरा करना achievement लगता था। अब पता चलता है कि सच में कितना याद है।”</blockquote><footer>Composite learner voice · Uttar Pradesh</footer></article>
+              <article class="memory-voice"><blockquote>“हमरा लगा पढ़ाई मतलब बस घंटा लगाना। अब कम समय में दिमाग से जवाब निकालना सीख रहे हैं।”</blockquote><footer>Composite learner voice · Bihar</footer></article>
+              <article class="memory-voice"><blockquote>“Notes बहुत थे, recall कम था। अब chapter खोलने से पहले खुद से answer पूछता हूँ।”</blockquote><footer>Composite learner voice · Madhya Pradesh</footer></article>
+              <article class="memory-voice"><blockquote>“Earlier I was just finishing videos, yaar. Now I check whether I can explain it without the screen.”</blockquote><footer>Composite learner voice · Bengaluru</footer></article>
+              <article class="memory-voice"><blockquote>“Lecture संपला म्हणजे study complete वाटायचं. आता स्वतःला question विचारल्यावर खरी तयारी कळते.”</blockquote><footer>Composite learner voice · Maharashtra</footer></article>
+              <article class="memory-voice"><blockquote>“Age video dekhi ‘bujhigali’ laguthila. Ebe screen band kari nijaku bujhei dekhe—setebele confidence asuchi.”</blockquote><footer>Composite learner voice · Odisha</footer></article>
+            </div>
+            <span class="memory-composite-label">Teen learner perspectives are illustrative composites created to represent common study experiences.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="memory-scene memory-curiosity" id="memory-curiosity" aria-label="A new layer for stronger memory" data-scroll-down="अब curiosity को course तक ले जाइए। जवाब landing page पर नहीं, अनुभव के भीतर है।" data-scroll-up="पीछे लौटकर भी बात नई लगी? यही active attention की शुरुआत है।">
         <img class="memory-scene-media" src="assets/landing-curiosity-door.jpg" width="1600" height="900" loading="lazy" decoding="async" alt="Student following a study path toward a glowing unanswered question">
         <div class="memory-scene-inner">
           <div class="memory-copy memory-reveal">
-            <div class="memory-eyebrow">The missing layer is closer than you think</div>
-            <h2 class="memory-statement">What if the missing 10% changes the other 90%?</h2>
+            <div class="memory-eyebrow">The missing layer is closer than you think · उत्तर पास ही है</div>
+            <h2 class="memory-statement">What if the missing 10% changes the other 90%?<span class="memory-hindi-title" lang="hi">अगर एक छोटा बदलाव बाकी पढ़ाई बदल दे?</span></h2>
             <p class="memory-lead">We will not explain it here. Experience the difference inside a course.</p>
+            <p class="memory-art-note">Curiosity opens the door. Retrieval keeps it open.<br><span lang="hi">जिज्ञासा दरवाज़ा खोलती है। याद करके उत्तर देना उसे खुला रखता है।</span></p>
             <a class="memory-prompt" href="#courses">Open the next door <span class="memory-prompt-arrow" aria-hidden="true">↓</span></a>
           </div>
         </div>
@@ -2034,17 +2107,41 @@ function initMemoryLandingMotion() {
   if (!landing) return;
 
   const revealItems = [...landing.querySelectorAll('.memory-reveal')];
+  const narrativeSections = [...landing.querySelectorAll('[data-scroll-down][data-scroll-up]')];
+  const scrollWhisper = document.getElementById('memory-scroll-whisper');
+  let lastScrollY = window.scrollY;
+  let scrollDirection = 'down';
+  let whisperTimer = 0;
+  let scrollFrame = 0;
+
+  function showScrollWhisper() {
+    if (!scrollWhisper || prefersReducedMotion || !narrativeSections.length) return;
+    const readingLine = window.scrollY + (window.innerHeight * .48);
+    const currentSection = narrativeSections.reduce((current, section) => (
+      section.offsetTop <= readingLine ? section : current
+    ), narrativeSections[0]);
+    scrollWhisper.textContent = scrollDirection === 'up'
+      ? currentSection.dataset.scrollUp
+      : currentSection.dataset.scrollDown;
+    scrollWhisper.classList.add('is-visible');
+    window.clearTimeout(whisperTimer);
+    whisperTimer = window.setTimeout(() => scrollWhisper.classList.remove('is-visible'), 1650);
+  }
+
+  window.addEventListener('scroll', () => {
+    const nextY = window.scrollY;
+    if (Math.abs(nextY - lastScrollY) > 3) scrollDirection = nextY > lastScrollY ? 'down' : 'up';
+    lastScrollY = nextY;
+    if (scrollFrame) return;
+    scrollFrame = requestAnimationFrame(() => {
+      scrollFrame = 0;
+      showScrollWhisper();
+    });
+  }, { passive: true });
+
   if (prefersReducedMotion || !('IntersectionObserver' in window)) {
     revealItems.forEach(item => item.classList.add('is-visible'));
   } else {
-    let lastScrollY = window.scrollY;
-    let scrollDirection = 'down';
-    window.addEventListener('scroll', () => {
-      const nextY = window.scrollY;
-      if (Math.abs(nextY - lastScrollY) > 3) scrollDirection = nextY > lastScrollY ? 'down' : 'up';
-      lastScrollY = nextY;
-    }, { passive: true });
-
     const memoryObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -2083,7 +2180,7 @@ function initMemoryLandingMotion() {
     context.clearRect(0, 0, canvasWidth, canvasHeight);
     for (let index = scratches.length - 1; index >= 0; index--) {
       const scratch = scratches[index];
-      scratch.life -= .045;
+      scratch.life -= .028;
       if (scratch.life <= 0) {
         scratches.splice(index, 1);
         continue;
@@ -2096,11 +2193,11 @@ function initMemoryLandingMotion() {
         scratch.x2,
         scratch.y2
       );
-      context.strokeStyle = `rgba(255,255,255,${scratch.life * .82})`;
+      context.strokeStyle = `rgba(255,255,255,${scratch.life * .96})`;
       context.lineWidth = scratch.width;
       context.lineCap = 'round';
       context.shadowColor = 'rgba(255,255,255,.92)';
-      context.shadowBlur = 8;
+      context.shadowBlur = 12;
       context.stroke();
     }
     context.shadowBlur = 0;
@@ -2119,7 +2216,7 @@ function initMemoryLandingMotion() {
       y1: previous.y,
       x2: x,
       y2: y,
-      width: 1.3 + Math.random() * 2.4,
+      width: 1.8 + Math.random() * 3.2,
       wobble: (Math.random() - .5) * 12,
       life: 1
     });
