@@ -39,6 +39,18 @@ test('landing provides Devanagari headings and gentle two-way scroll narration',
   assert.match(source, /scrollWhisper\.textContent = scrollDirection === 'up'/);
 });
 
+test('immersive dark landing exposes kinetic text, progress, and chapter navigation', () => {
+  assert.match(source, /id="memory-progress-bar"/);
+  assert.match(source, /class="memory-chapter-nav"/);
+  assert.match(source, /class="memory-title-line"/);
+  assert.match(source, /class="memory-popline"/);
+  assert.match(source, /class="memory-contrast"/);
+  assert.match(source, /class="memory-coaching-bridge"/);
+  assert.match(source, /@keyframes memoryHeadlinePop/);
+  assert.match(source, /progressBar\.style\.transform = `scaleX\(\$\{progress\}\)`/);
+  assert.match(source, /section\.classList\.toggle\('is-active'/);
+});
+
 test('community figures and regional voices are presented transparently', () => {
   assert.match(source, />15K</);
   assert.match(source, />45% → 85%</);
