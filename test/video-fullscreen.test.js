@@ -37,10 +37,34 @@ test("landscape Separate Quiz can fullscreen the complete split workspace", () =
   assert.match(source, /button\.textContent = active \? '✕ Exit full page' : '⛶ Full page'/);
 });
 
-test("fullscreen quiz playback hides distracting exit controls", () => {
+test("fullscreen controls stay minimal and popup video keeps a compact exit", () => {
   assert.match(source, /\.lesson-player-stage:fullscreen \.player-fullscreen-btn[^}]*\{display:none!important\}/);
+  assert.match(source, /\.lesson-player-stage\.has-timed-quiz:fullscreen \.player-fullscreen-btn[^}]*\{display:grid!important;[^}]*width:36px;height:36px;[^}]*border-radius:50%/);
   assert.match(source, /\.separate-quiz-workspace:fullscreen \.separate-quiz-fullscreen-btn[^}]*\{display:none!important\}/);
   assert.match(source, /\.separate-quiz-workspace:fullscreen \.player-fullscreen-btn[^}]*\{display:none!important\}/);
+});
+
+test("rewinding re-arms timed questions without resetting awarded score", () => {
+  assert.match(source, /function rearmTimedPopupQuestionsAfterRewind\(quizState, currentTime, previousTime\)/);
+  assert.match(source, /currentTime \+ 0\.35 >= previousTime/);
+  assert.match(source, /quizState\.answeredThisSession\.delete\(String\(item\.questionId\)\)/);
+  assert.doesNotMatch(source, /rearmTimedPopupQuestionsAfterRewind[\s\S]{0,600}correctThisSession\.delete/);
+  assert.match(source, /rearmTimedPopupQuestionsAfterRewind\(activeLessonQuiz, time, previousTime\)/);
+
+  const functionStart = source.indexOf("function rearmTimedPopupQuestionsAfterRewind");
+  const functionEnd = source.indexOf("\n}\n\nfunction maybeShowTimedPopupQuiz", functionStart) + 2;
+  const resolver = new Function(`${source.slice(functionStart, functionEnd)}; return rearmTimedPopupQuestionsAfterRewind;`)();
+  const state = {
+    quizData: { popupQuiz: { timestamps: [
+      { questionId: "q1", timeSeconds: 20 },
+      { questionId: "q2", timeSeconds: 40 }
+    ] } },
+    answeredThisSession: new Set(["q1", "q2"]),
+    correctThisSession: new Set(["q1", "q2"])
+  };
+  assert.equal(resolver(state, 10, 55), true);
+  assert.deepEqual([...state.answeredThisSession], []);
+  assert.deepEqual([...state.correctThisSession], ["q1", "q2"]);
 });
 
 test("quiz confetti is mounted inside the active fullscreen tree", () => {

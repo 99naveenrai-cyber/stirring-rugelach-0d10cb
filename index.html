@@ -374,6 +374,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .lesson-player-stage:fullscreen,.lesson-player-stage:-webkit-full-screen{position:fixed;inset:0;width:100%;height:100%;margin:0;top:0;display:grid;place-items:center;background:#000;z-index:2147483647}
 .lesson-player-stage:fullscreen .video-wrap,.lesson-player-stage:-webkit-full-screen .video-wrap{width:100%;height:100%;min-height:0;aspect-ratio:auto;border-radius:0}
 .lesson-player-stage:fullscreen .player-fullscreen-btn,.lesson-player-stage:-webkit-full-screen .player-fullscreen-btn{display:none!important}
+.lesson-player-stage.has-timed-quiz:fullscreen .player-fullscreen-btn,.lesson-player-stage.has-timed-quiz:-webkit-full-screen .player-fullscreen-btn{display:grid!important;top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));width:36px;height:36px;border-radius:50%;border-color:rgba(151,218,255,.82);background:linear-gradient(145deg,rgba(8,27,61,.88),rgba(25,108,171,.8));box-shadow:0 0 18px rgba(79,190,255,.42),0 8px 24px rgba(0,0,0,.34);font-size:1.05rem}
 .video-wrap{background:#020713;border-radius:14px;overflow:hidden;aspect-ratio:16/9;min-height:180px;display:flex;align-items:center;justify-content:center;position:relative;contain:layout paint;transition:min-height .18s ease}
 .video-page .lesson-player-stage .video-wrap{min-height:calc(180px * var(--lesson-player-zoom))}
 .video-wrap.popup-quiz-active{overflow:visible;contain:layout;z-index:40}
@@ -4964,17 +4965,22 @@ async function configurePopupQuizForPlayer(course, lesson, idx) {
   }
 }
 
+function rearmTimedPopupQuestionsAfterRewind(quizState, currentTime, previousTime) {
+  if (!quizState || currentTime + 0.35 >= previousTime) return false;
+  let rearmed = false;
+  (quizState.quizData.popupQuiz?.timestamps || []).forEach(item => {
+    if (Number(item.timeSeconds) >= currentTime - 0.5) {
+      rearmed = quizState.answeredThisSession.delete(String(item.questionId)) || rearmed;
+    }
+  });
+  return rearmed;
+}
+
 function maybeShowTimedPopupQuiz(player) {
   if (!activeLessonQuiz || activeLessonQuiz.active || !player?.getCurrentTime) return;
   const time = player.getCurrentTime();
   const previousTime = Number(activeLessonQuiz.lastTime || 0);
-  if (time + 1.25 < previousTime) {
-    (activeLessonQuiz.quizData.popupQuiz?.timestamps || []).forEach(item => {
-      if (Number(item.timeSeconds) >= time - 0.5) {
-        activeLessonQuiz.answeredThisSession.delete(String(item.questionId));
-      }
-    });
-  }
+  rearmTimedPopupQuestionsAfterRewind(activeLessonQuiz, time, previousTime);
   activeLessonQuiz.lastTime = time;
   const triggerWindowSeconds = 0.75;
   const mapping = (activeLessonQuiz.quizData.popupQuiz?.timestamps || [])
