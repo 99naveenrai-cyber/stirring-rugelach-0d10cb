@@ -42,3 +42,20 @@ test("quiz confetti is mounted inside the active fullscreen tree", () => {
   assert.match(source, /const layerHost = fullscreenHost\?\.appendChild \? fullscreenHost : document\.body/);
   assert.match(source, /layerHost\.appendChild\(layer\)/);
 });
+
+test("user Play taps fullscreen the correct quiz workspace before loading video", () => {
+  assert.match(source, /function requestQuizPlaybackFullscreen\(lesson\)/);
+  assert.match(source, /if \(!separateQuiz && !popupQuiz\) return/);
+  assert.match(source, /const target = separateQuiz[\s\S]*separate-quiz-workspace[\s\S]*lesson-player-stage/);
+  assert.match(source, /window\.playLessonInFullscreen = \(idx, options = \{\}\) => \{[\s\S]*requestQuizPlaybackFullscreen\(lesson\);[\s\S]*window\.playFromPlaylist/);
+  assert.match(source, /onclick="playLessonInFullscreen\(\$\{idx\}\)">Play Video/);
+  assert.match(source, /onclick="\$\{canPlayLesson \? `playLessonInFullscreen\(\$\{i\}\)`/);
+});
+
+test("timed popup quiz enters and exits with controlled slow transitions", () => {
+  assert.match(source, /transition:opacity 820ms[\s\S]*transform 880ms[\s\S]*filter 760ms/);
+  assert.match(source, /\.popup-quiz-layer\.closing/);
+  assert.match(source, /if \(layer\.dataset\.dismissing === 'true'\) return/);
+  assert.match(source, /requestAnimationFrame\(\(\) => requestAnimationFrame\(\(\) => layer\.classList\.add\('show'\)\)\)/);
+  assert.match(source, /activeLessonQuiz\.active = false;[\s\S]*player\.playVideo\(\);[\s\S]*\}, 900\)/);
+});

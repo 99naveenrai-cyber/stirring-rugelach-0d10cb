@@ -431,9 +431,10 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .quiz-reset-layout{grid-column:1/-1;width:100%;min-height:38px;border-radius:999px;border:1px solid rgba(255,211,101,.4);background:rgba(2,9,28,.62);color:#ffe08a;font-weight:950}
 .quiz-panel .quiz-sound-toggle,.interactive-lesson-panel .quiz-sound-toggle{min-height:34px;border-color:rgba(255,211,101,.46);background:linear-gradient(145deg,#071943,#102b70);color:#ffe08a}
 .quiz-panel .quiz-sound-toggle{width:100%;margin:.05rem 0 .55rem}
-.popup-quiz-layer,.interactive-lesson-layer{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2.2vw,18px);pointer-events:none;opacity:0;transform:translateY(20px) scale(.982);transition:opacity 620ms cubic-bezier(.22,1,.36,1),transform 680ms cubic-bezier(.19,1,.22,1),filter 480ms ease}
+.popup-quiz-layer,.interactive-lesson-layer{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2.2vw,18px);pointer-events:none;opacity:0;transform:translateY(20px) scale(.982);transition:opacity 820ms cubic-bezier(.22,1,.36,1),transform 880ms cubic-bezier(.19,1,.22,1),filter 760ms ease}
 .popup-quiz-layer.show,.interactive-lesson-layer.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
 .popup-quiz-layer.dull,.interactive-lesson-layer.dull{filter:saturate(.7) brightness(.78);opacity:.16;transform:translateY(18px) scale(.99)}
+.popup-quiz-layer.closing,.interactive-lesson-layer.closing{pointer-events:none;opacity:0;filter:saturate(.72) brightness(.7);transform:translateY(24px) scale(.985)}
 .interactive-lesson-panel{position:relative;width:var(--quiz-width);max-height:min(86vh,620px);overflow:visible;padding:clamp(10px,2.1vw,18px);font-size:var(--quiz-font-scale);color:var(--quiz-primary-text);text-shadow:0 2px 10px rgba(0,4,16,.98),0 0 20px rgba(0,8,24,.86);background:radial-gradient(circle at 50% -18%,rgba(255,211,101,.24),rgba(14,46,104,.2) 30%,rgba(2,9,28,.98) 68%),linear-gradient(145deg,rgba(1,6,22,.99),rgba(4,18,60,.98) 46%,rgba(1,10,32,.98));border:1px solid rgba(255,211,101,.82);border-radius:22px;box-shadow:0 28px 90px rgba(0,5,22,.74),0 0 58px rgba(255,198,73,.26),0 0 78px rgba(51,132,255,.26),inset 0 1px 0 rgba(255,238,176,.3),inset 0 -28px 54px rgba(0,0,0,.28);backdrop-filter:none;-webkit-backdrop-filter:none}
 .interactive-lesson-panel::before{content:"";position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;background:linear-gradient(120deg,rgba(255,225,123,.9),rgba(255,225,123,0) 28%,rgba(77,171,255,.58) 52%,rgba(255,225,123,.82));opacity:.72;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);padding:2px;mask-composite:exclude;-webkit-mask-composite:xor}
 .interactive-lesson-panel::after{content:"";position:absolute;left:7%;right:7%;top:-10px;height:18px;border-radius:999px;background:radial-gradient(ellipse at center,rgba(255,226,126,.7),rgba(255,226,126,0) 72%);filter:blur(6px);pointer-events:none}
@@ -1200,6 +1201,36 @@ window.toggleSeparateQuizFullscreen = async () => {
   } catch (error) {
     console.warn('[IdeaKDC separate quiz fullscreen]', error?.name || error?.message || error);
   }
+};
+
+function requestQuizPlaybackFullscreen(lesson) {
+  if (!lesson || lessonFullscreenElement()) return;
+  const separateQuiz = hasSeparateQuiz(lesson);
+  const popupQuiz = hasPopupQuiz(lesson);
+  if (!separateQuiz && !popupQuiz) return;
+  const target = separateQuiz
+    ? document.getElementById('separate-quiz-workspace')
+    : document.getElementById('lesson-player-stage');
+  if (!target) return;
+  try {
+    let request;
+    if (typeof target.requestFullscreen === 'function') {
+      request = target.requestFullscreen({ navigationUI: 'hide' });
+    } else if (typeof target.webkitRequestFullscreen === 'function') {
+      request = target.webkitRequestFullscreen();
+    }
+    request?.catch?.((error) => {
+      console.warn('[IdeaKDC quiz fullscreen]', error?.name || error?.message || error);
+    });
+  } catch (error) {
+    console.warn('[IdeaKDC quiz fullscreen]', error?.name || error?.message || error);
+  }
+}
+
+window.playLessonInFullscreen = (idx, options = {}) => {
+  const lesson = (window._currentVideos || [])[idx];
+  requestQuizPlaybackFullscreen(lesson);
+  return window.playFromPlaylist?.(idx, options);
 };
 
 function syncLessonFullscreenControls() {
@@ -3602,9 +3633,9 @@ function renderStandaloneReadyState(course, lesson, idx) {
           eager: true
         })}
         <div class="lesson-action-row">
-          <button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx})">Play Video</button>
+          <button class="btn-enroll" type="button" onclick="playLessonInFullscreen(${idx})">Play Video</button>
           ${hasSeparateQuiz(lesson) ? `<button class="btn-enroll" type="button" onclick="startLessonQuiz(${idx}, 'separate')">Start Quiz</button>` : ''}
-          ${hasSeparateQuiz(lesson) ? `<button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
+          ${hasSeparateQuiz(lesson) ? `<button class="btn-enroll" type="button" onclick="playLessonInFullscreen(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
         </div>
       </div>`;
   }
@@ -4854,9 +4885,9 @@ function renderLessonActionControls(course, lesson, idx, hasVideo = true) {
   const popup = hasPopupQuiz(lesson);
   selectedInfo.innerHTML = `
     <div class="lesson-action-row">
-      ${hasVideo ? `<button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx}, { autoplay: true, mode: 'video' })">Play Video</button>` : ''}
+      ${hasVideo ? `<button class="btn-enroll" type="button" onclick="playLessonInFullscreen(${idx}, { autoplay: true, mode: 'video' })">Play Video</button>` : ''}
       ${separate ? `<button class="btn-enroll" type="button" onclick="startLessonQuiz(${idx}, 'separate')">Start Quiz</button>` : ''}
-      ${hasVideo && separate ? `<button class="btn-enroll" type="button" onclick="playFromPlaylist(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
+      ${hasVideo && separate ? `<button class="btn-enroll" type="button" onclick="playLessonInFullscreen(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
       ${popup ? `<button class="quiz-sound-toggle js-quiz-sound-toggle" type="button" onclick="toggleQuizSoundMute()">Sound: ${quizSoundMuted ? 'OFF' : 'ON'}</button>` : ''}
     </div>`;
 }
@@ -4968,18 +4999,18 @@ function showTimedPopupQuestion(question, popupConfig, player) {
   stage?.classList.add('interactive-lesson-active');
   wrap.classList.add('popup-quiz-active');
   const dismissPopup = (layer) => {
-    layer.classList.add('dull');
+    if (layer.dataset.dismissing === 'true') return;
+    layer.dataset.dismissing = 'true';
+    layer.classList.add('closing');
+    layer.classList.remove('show');
     window.setTimeout(() => {
-      layer.classList.remove('show');
-      window.setTimeout(() => {
-        layer.remove();
-        stage?.classList.remove('popup-quiz-active');
-        stage?.classList.remove('interactive-lesson-active');
-        wrap.classList.remove('popup-quiz-active');
-        activeLessonQuiz.active = false;
-        try { player.playVideo(); } catch (_) {}
-      }, 420);
-    }, 280);
+      layer.remove();
+      stage?.classList.remove('popup-quiz-active');
+      stage?.classList.remove('interactive-lesson-active');
+      wrap.classList.remove('popup-quiz-active');
+      activeLessonQuiz.active = false;
+      try { player.playVideo(); } catch (_) {}
+    }, 900);
   };
   const layer = document.createElement('div');
   layer.className = 'popup-quiz-layer interactive-lesson-layer';
@@ -4999,7 +5030,7 @@ function showTimedPopupQuestion(question, popupConfig, player) {
       <div class="quiz-save-status" aria-live="polite"></div>
     </div>`;
   overlayRoot.appendChild(layer);
-  requestAnimationFrame(() => layer.classList.add('show'));
+  requestAnimationFrame(() => requestAnimationFrame(() => layer.classList.add('show')));
   layer.querySelectorAll('.quiz-option').forEach(button => {
     bindFastQuizOption(button, async () => {
       const selectedOption = button.dataset.optionId;
@@ -5133,7 +5164,7 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
             const thumbSrc = getLessonThumbnail(v) || getLessonThumbnail(visibleLesson) || getCourseThumbnail(course);
             return `
               <button type="button" class="pl-item ${i===activeIdx?'playing':''} ${canPlayLesson?'':'locked'}"
-                onclick="${canPlayLesson ? `playFromPlaylist(${i})` : `showLockedLessonPrompt('${course.id}')`}" ${v.contentId || v.lessonId ? '' : 'disabled'}>
+                onclick="${canPlayLesson ? `playLessonInFullscreen(${i})` : `showLockedLessonPrompt('${course.id}')`}" ${v.contentId || v.lessonId ? '' : 'disabled'}>
                 ${renderThumbFrame({ src: thumbSrc, candidates: getLessonThumbnailCandidates(v, course), alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id, lessonId: v.contentId || v.lessonId || '', lessonIndex: i + 1 })}
                 <div class="pl-num">${i+1}</div>
                 <div class="pl-info">
