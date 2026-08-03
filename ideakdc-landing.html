@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IdeaKDC — Bhul bhul se gaye.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@300;400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf6ee; --bg-alt:#f1e9d6; --ink:#1d1b16; --dim:#6d6656;
+    --gold:#a2771f; --flame:#c9601f; --maroon:#7a2320; --line:#ddd2b4;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg); color:var(--ink); font-family:'Work Sans', sans-serif; overflow-x:hidden;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important;}}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 6vw;}
+  .eyebrow{font-family:'JetBrains Mono', monospace; font-size:0.75rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold);}
+  h1,h2{font-family:'Fraunces', serif; font-weight:600; line-height:1.1; letter-spacing:-0.01em;}
+  .hi{font-family:'Noto Sans Devanagari', 'Fraunces', serif; font-weight:600; line-height:1.35;}
+  .en{font-family:'Work Sans', sans-serif;}
+  .gloss{font-family:'JetBrains Mono', monospace; font-size:0.85rem; color:var(--dim); letter-spacing:0.01em; margin-top:0.9rem;}
+
+  /* gentle, restrained scroll reveal — both directions */
+  .reveal{opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease;}
+  .reveal.in{opacity:1; transform:translateY(0);}
+  .reveal.d1{transition-delay:.08s;}
+  .reveal.d2{transition-delay:.16s;}
+
+  .scene{display:flex; align-items:center; gap:clamp(2.5rem, 6vw, 5rem);}
+  .scene-text{flex:1 1 48%; min-width:260px;}
+  .scene-graphic{flex:1 1 44%; min-width:220px; display:flex; justify-content:center; align-items:center;}
+  .scene-graphic svg{width:100%; height:auto; max-width:280px;}
+  .scene.reverse{flex-direction:row-reverse;}
+  @media (max-width:760px){
+    .scene,.scene.reverse{flex-direction:column;}
+    .scene .scene-graphic{order:-1; margin-bottom:1rem;}
+    .scene-graphic svg{max-width:200px;}
+  }
+  .icon-frame{
+    width:100%; aspect-ratio:1/1; max-width:280px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--bg-alt);
+    border:1px solid var(--line);
+  }
+
+  .hero{min-height:100svh; display:flex; flex-direction:column; justify-content:center;}
+  .hero h1{font-size:clamp(2.4rem, 6.6vw, 4.2rem); margin-top:1rem;}
+  .hero .flicker{color:var(--flame);}
+  .hero-sub{color:var(--dim); font-size:1.05rem; margin-top:1.4rem; max-width:28ch;}
+  .meter{margin-top:2.4rem; display:flex; gap:2.2rem; flex-wrap:wrap;}
+  .meter .col{min-width:150px;}
+  .meter .label{font-family:'JetBrains Mono', monospace; font-size:0.72rem; color:var(--dim); text-transform:uppercase; letter-spacing:0.1em;}
+  .meter .num{font-family:'JetBrains Mono', monospace; font-size:2rem; color:var(--ink); margin-top:0.3rem;}
+  .meter .bar{margin-top:0.7rem; height:3px; width:100%; background:#e6dcc2; position:relative; overflow:hidden;}
+  .meter .bar.flat span{position:absolute; inset:0; width:4%; background:var(--maroon);}
+  .scrollcue{position:absolute; bottom:2rem; left:6vw; font-family:'JetBrains Mono', monospace; font-size:0.75rem; color:var(--dim); letter-spacing:0.1em; animation:pulse 2.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+  .pain{min-height:88svh; display:flex; align-items:center; border-top:1px solid var(--line);}
+  .pain:nth-child(even){background:var(--bg-alt);}
+  .pain .dot{width:8px; height:8px; border-radius:50%; background:var(--maroon); margin-bottom:1.4rem;}
+  .pain h2{font-size:clamp(1.9rem, 5.2vw, 3rem); max-width:16ch;}
+
+  .turn{min-height:96svh; display:flex; flex-direction:column; justify-content:center; border-top:1px solid var(--line); background:var(--bg-alt);}
+  .turn h2{font-size:clamp(2rem, 5.4vw, 3rem); max-width:14ch;}
+  .diyas{display:flex; gap:clamp(0.8rem, 3vw, 2rem); margin-top:1.8rem; flex-wrap:wrap;}
+  .diya{width:44px; height:68px; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:flex-end;}
+  .diya .bowl{width:44px; height:15px; background:linear-gradient(180deg,#4a3d24,#241d12); border-radius:0 0 22px 22px; border-top:1px solid #5a4a2a;}
+  .diya .flame{width:9px; height:20px; background:radial-gradient(circle at 50% 30%, #fff2c4, var(--flame) 55%, transparent 80%); border-radius:50% 50% 50% 50% / 65% 65% 35% 35%; margin-bottom:-2px; opacity:0; transform:scale(.4); transition:opacity .6s ease, transform .6s ease;}
+  .diya .glow{position:absolute; top:-26px; left:50%; transform:translateX(-50%); width:60px; height:60px; background:radial-gradient(circle, rgba(201,96,31,0.25), transparent 70%); opacity:0; transition:opacity .8s ease; pointer-events:none;}
+  .diya.lit .flame{opacity:1; transform:scale(1); animation:flicker 2.6s ease-in-out infinite;}
+  .diya.lit .glow{opacity:1;}
+  @keyframes flicker{0%,100%{transform:scale(1) rotate(0deg);} 30%{transform:scale(1.06,0.94) rotate(-2deg);} 55%{transform:scale(0.95,1.05) rotate(2deg);} 80%{transform:scale(1.03,0.97) rotate(-1deg);}}
+  .diya .tag{margin-top:0.5rem; font-family:'JetBrains Mono', monospace; font-size:0.6rem; color:var(--dim); text-align:center; letter-spacing:0.04em;}
+
+  .promise{min-height:70svh; display:flex; flex-direction:column; justify-content:center; border-top:1px solid var(--line);}
+  .promise h2{font-size:clamp(1.6rem, 4.2vw, 2.3rem); max-width:20ch; margin-bottom:0.5rem;}
+  .promise h2 + h2{color:var(--gold);}
+
+  .ecosystem{min-height:96svh; display:flex; flex-direction:column; justify-content:center; border-top:1px solid var(--line); background:var(--bg-alt); padding:4.5rem 0;}
+  .ecosystem h2{font-size:clamp(1.8rem, 4.6vw, 2.6rem);}
+  .hub{position:relative; width:min(84vw, 360px); aspect-ratio:1/1; margin:1rem auto 0;}
+  .hub-lines{position:absolute; inset:0; width:100%; height:100%;}
+  .hub-lines .spoke{stroke:#c9bd9a; stroke-width:1.2; stroke-dasharray:5 5; opacity:0; transition:opacity 1s ease;}
+  .hub.in .hub-lines .spoke{opacity:1;}
+  .node{position:absolute; transform:translate(-50%,-50%); font-family:'JetBrains Mono', monospace; font-size:0.7rem; letter-spacing:0.03em; text-align:center; white-space:nowrap;}
+  .node.center{top:50%; left:50%; width:86px; height:86px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--ink); border:1px solid var(--ink); color:#e8c874; font-weight:600; font-size:0.78rem;}
+  .node.satellite{padding:0.45rem 0.8rem; border:1px solid var(--line); border-radius:4px; color:var(--dim); background:var(--bg); opacity:0; transition:opacity .8s ease, color .8s ease, border-color .8s ease;}
+  .hub.in .node.satellite{opacity:1; color:var(--ink); border-color:#b9ab7e;}
+  .loop-row{display:flex; align-items:center; justify-content:center; gap:clamp(0.6rem, 2.4vw, 1.4rem); margin-top:2rem; flex-wrap:wrap;}
+  .loop-badge{font-family:'JetBrains Mono', monospace; font-size:0.76rem; color:var(--ink); border:1px solid var(--gold); border-radius:4px; padding:0.75rem 1.1rem; text-align:center; line-height:1.4; background:var(--bg);}
+  .loop-arrows{font-size:1.4rem; color:var(--gold);}
+
+  .cta{min-height:86svh; display:flex; flex-direction:column; justify-content:center; border-top:1px solid var(--line);}
+  .cta h2{font-size:clamp(2.1rem, 5.6vw, 3.4rem); max-width:12ch;}
+  .cta-buttons{margin-top:2rem; display:flex; gap:1rem; flex-wrap:wrap;}
+  .btn{font-family:'JetBrains Mono', monospace; font-size:0.88rem; letter-spacing:0.02em; padding:0.95rem 1.7rem; border-radius:2px; text-decoration:none; display:inline-block; transition:opacity .2s ease, transform .2s ease;}
+  .btn.primary{background:var(--gold); color:#fffaf0; font-weight:500;}
+  .btn.ghost{border:1px solid #b9ab7e; color:var(--ink);}
+  .btn:hover{transform:translateY(-1px); opacity:.9;}
+  footer{padding:2.2rem 6vw 3rem; font-family:'JetBrains Mono', monospace; font-size:0.72rem; color:var(--dim); letter-spacing:0.05em;}
+</style>
+</head>
+<body>
+
+<section class="hero wrap">
+  <div class="scene">
+    <div class="scene-text">
+      <div class="eyebrow">IdeaKDC</div>
+      <h1 class="hi reveal">घंटों देखा।<br><span class="flicker">भूल गए।</span></h1>
+      <p class="hero-sub reveal d1">Watching feels like learning. It isn't.</p>
+      <div class="meter reveal d2">
+        <div class="col">
+          <div class="label">Minutes watched</div>
+          <div class="num" id="ticker">04,812</div>
+          <div class="bar"><span style="position:absolute;inset:0;width:100%;background:#c9bd9a;"></span></div>
+        </div>
+        <div class="col">
+          <div class="label">Concept clear?</div>
+          <div class="num" style="color:var(--maroon);">???</div>
+          <div class="bar flat"><span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="scene-graphic">
+      <div class="icon-frame">
+        <svg viewBox="0 0 200 200" width="60%">
+          <circle cx="100" cy="100" r="42" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+          <polygon points="88,80 88,120 122,100" fill="var(--ink)"/>
+          <line x1="150" y1="70" x2="172" y2="52" stroke="var(--dim)" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+          <line x1="158" y1="100" x2="182" y2="100" stroke="var(--dim)" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+          <line x1="150" y1="130" x2="172" y2="148" stroke="var(--dim)" stroke-width="2.5" stroke-linecap="round" opacity="0.2"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pain wrap-outer">
+  <div class="wrap">
+    <div class="scene reverse">
+      <div class="scene-text">
+        <div class="dot"></div>
+        <h2 class="hi reveal">घंटों लेक्चर।<br>एग्ज़ाम में ब्लैंक।</h2>
+        <div class="gloss reveal d1">Confidence on YouTube. Blank in the exam.</div>
+      </div>
+      <div class="scene-graphic">
+        <div class="icon-frame">
+          <svg viewBox="0 0 200 200" width="55%">
+            <rect x="60" y="40" width="80" height="110" rx="4" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+            <line x1="76" y1="66" x2="124" y2="66" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="76" y1="82" x2="124" y2="82" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="76" y="102" width="48" height="34" rx="2" fill="none" stroke="var(--maroon)" stroke-width="2.5"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pain wrap-outer">
+  <div class="wrap">
+    <div class="scene">
+      <div class="scene-text">
+        <div class="dot"></div>
+        <h2 class="hi reveal">कितना समझा?<br>पता नहीं।</h2>
+        <div class="gloss reveal d1">No one's tracking what you learned.</div>
+      </div>
+      <div class="scene-graphic">
+        <div class="icon-frame">
+          <svg viewBox="0 0 200 200" width="40%">
+            <text x="100" y="130" font-size="120" text-anchor="middle" fill="none" stroke="var(--ink)" stroke-width="2.5" font-family="Fraunces, serif">?</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pain wrap-outer">
+  <div class="wrap">
+    <div class="scene reverse">
+      <div class="scene-text">
+        <div class="dot"></div>
+        <h2 class="hi reveal">वीडियो पूरा।<br>कॉन्सेप्ट अधूरा।</h2>
+        <div class="gloss reveal d1">Finishing a video ≠ finishing a concept.</div>
+      </div>
+      <div class="scene-graphic">
+        <div class="icon-frame">
+          <svg viewBox="0 0 200 200" width="60%">
+            <path d="M60,60 h32 v14 a10,10 0 0 1 0,20 v14 h-32 v-20 a8,8 0 0 0 0,-8 z" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+            <path d="M110,80 h32 v20 h14 v32 h-32 v-14 a10,10 0 0 0 -20,0 v14 h-14 v-32 h20 z" fill="none" stroke="var(--maroon)" stroke-width="2.5" opacity="0.7"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pain wrap-outer">
+  <div class="wrap">
+    <div class="scene">
+      <div class="scene-text">
+        <div class="dot"></div>
+        <h2 class="hi reveal">अच्छा लगा।<br>एग्ज़ाम में फेल।</h2>
+        <div class="gloss reveal d1">Confidence that cracks under a real paper.</div>
+      </div>
+      <div class="scene-graphic">
+        <div class="icon-frame">
+          <svg viewBox="0 0 200 200" width="50%">
+            <path d="M100,30 L140,46 L140,86 Q140,126 100,146 Q60,126 60,86 L60,46 Z" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+            <path d="M76,88 L96,100 L128,58" stroke="var(--maroon)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pain wrap-outer">
+  <div class="wrap">
+    <div class="scene reverse">
+      <div class="scene-text">
+        <div class="dot"></div>
+        <h2 class="hi reveal">बहुत शोर।<br>रास्ता नहीं।</h2>
+        <div class="gloss reveal d1">More content isn't the answer. Direction is.</div>
+      </div>
+      <div class="scene-graphic">
+        <div class="icon-frame">
+          <svg viewBox="0 0 200 200" width="55%">
+            <path d="M60,90 h20 l30,-26 v72 l-30,-26 h-20 z" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M130,80 Q142,100 130,120" stroke="var(--dim)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <path d="M140,68 Q160,100 140,132" stroke="var(--dim)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+            <line x1="150" y1="60" x2="170" y2="140" stroke="var(--maroon)" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="turn wrap-outer">
+  <div class="wrap">
+    <div class="scene">
+      <div class="scene-text">
+        <div class="eyebrow">IdeaKDC</div>
+        <h2 class="hi reveal">हर कॉन्सेप्ट<br>एक दीया है।</h2>
+        <div class="gloss reveal d1">Nothing moves forward until it's clear.</div>
+        <div class="diyas" id="diyas">
+          <div class="diya"><div class="glow"></div><div class="flame"></div><div class="bowl"></div><div class="tag">C1</div></div>
+          <div class="diya"><div class="glow"></div><div class="flame"></div><div class="bowl"></div><div class="tag">C2</div></div>
+          <div class="diya"><div class="glow"></div><div class="flame"></div><div class="bowl"></div><div class="tag">C3</div></div>
+          <div class="diya"><div class="glow"></div><div class="flame"></div><div class="bowl"></div><div class="tag">C4</div></div>
+          <div class="diya"><div class="glow"></div><div class="flame"></div><div class="bowl"></div><div class="tag">C5</div></div>
+        </div>
+      </div>
+      <div class="scene-graphic">
+        <div class="icon-frame" style="background:transparent; border:none;">
+          <svg viewBox="0 0 200 200" width="50%">
+            <ellipse cx="100" cy="150" rx="46" ry="10" fill="#241d12"/>
+            <path d="M60,150 Q100,168 140,150 L136,130 Q100,140 64,130 Z" fill="#4a3d24"/>
+            <ellipse cx="100" cy="112" rx="8" ry="20" fill="var(--flame)"/>
+            <ellipse cx="100" cy="106" rx="4.5" ry="11" fill="#fff2c4"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="promise wrap-outer">
+  <div class="wrap">
+    <div class="scene reverse">
+      <div class="scene-text">
+        <h2 class="hi reveal">सीमित सिलेबस।<br>पूरी तैयारी।</h2>
+        <h2 class="en reveal d1">We prepare everything. Perfectly.</h2>
+        <div class="gloss reveal d2">No gaps. No shortcuts.</div>
+      </div>
+      <div class="scene-graphic">
+        <div class="icon-frame">
+          <svg viewBox="0 0 200 200" width="55%">
+            <circle cx="100" cy="100" r="44" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+            <path d="M78,102 L94,118 L126,82" stroke="var(--gold)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ecosystem wrap-outer">
+  <div class="wrap">
+    <div class="scene">
+      <div class="scene-text">
+        <div class="eyebrow">Add-on, not replacement</div>
+        <h2 class="hi reveal">जहाँ पढ़ो —<br>वहीं जोड़ लो।</h2>
+        <div class="gloss hi reveal d1" style="font-weight:500;">IdeaKDC के साथ चलो।</div>
+        <div class="loop-row" style="justify-content:flex-start;">
+          <div class="loop-badge">Build concept</div>
+          <div class="loop-arrows">⟲</div>
+          <div class="loop-badge">Revise — no pen</div>
+        </div>
+      </div>
+      <div class="scene-graphic">
+        <div class="hub">
+          <svg class="hub-lines" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
+            <line class="spoke" x1="300" y1="300" x2="300" y2="70"></line>
+            <line class="spoke" x1="300" y1="300" x2="507" y2="185"></line>
+            <line class="spoke" x1="300" y1="300" x2="507" y2="415"></line>
+            <line class="spoke" x1="300" y1="300" x2="300" y2="530"></line>
+            <line class="spoke" x1="300" y1="300" x2="93" y2="415"></line>
+            <line class="spoke" x1="300" y1="300" x2="93" y2="185"></line>
+          </svg>
+          <div class="node center">IdeaKDC</div>
+          <div class="node satellite" style="top:6%; left:50%;">Next Topper</div>
+          <div class="node satellite" style="top:26%; left:84%;">PW</div>
+          <div class="node satellite" style="top:66%; left:84%;">Allen</div>
+          <div class="node satellite" style="top:86%; left:50%;">Your Institute</div>
+          <div class="node satellite" style="top:66%; left:16%;">Akash</div>
+          <div class="node satellite" style="top:26%; left:16%;">Any Institute</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta wrap-outer">
+  <div class="wrap">
+    <div class="scene reverse">
+      <div class="scene-text">
+        <h2 class="hi reveal">दीया जलाओ।<br>आज ही।</h2>
+        <div class="cta-buttons">
+          <a class="btn primary" href="https://betalaunch.ideakdc.in" target="_blank" rel="noopener">Start Free</a>
+          <a class="btn ghost" href="https://wa.me/message/B47UGTHPQPWSA1" target="_blank" rel="noopener">WhatsApp पर बात करें</a>
+        </div>
+      </div>
+      <div class="scene-graphic">
+        <div class="icon-frame">
+          <svg viewBox="0 0 200 200" width="55%">
+            <line x1="50" y1="150" x2="150" y2="150" stroke="var(--line)" stroke-width="2"/>
+            <path d="M50,140 L90,100 L115,120 L150,60" stroke="var(--gold)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <polygon points="150,60 138,64 146,76" fill="var(--gold)"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">IdeaKDC · betalaunch.ideakdc.in — <span class="hi" style="font-size:1em; font-weight:400;">हर कॉन्सेप्ट, हर जगह।</span></footer>
+
+<script>
+  const ticker = document.getElementById('ticker');
+  let mins = 4812;
+  setInterval(() => {
+    mins += Math.floor(Math.random()*7)+1;
+    ticker.textContent = String(mins).padStart(6,'0');
+  }, 220);
+
+  const revealEls = document.querySelectorAll('.reveal');
+  const revealObs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting) e.target.classList.add('in');
+      else e.target.classList.remove('in');
+    });
+  }, {threshold:0.25});
+  revealEls.forEach(el=>revealObs.observe(el));
+
+  const diyaWrap = document.getElementById('diyas');
+  const diyaObs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const diyas = e.target.querySelectorAll('.diya');
+        diyas.forEach((d,i)=> setTimeout(()=> d.classList.add('lit'), i*400));
+        diyaObs.unobserve(e.target);
+      }
+    });
+  }, {threshold:0.4});
+  diyaObs.observe(diyaWrap);
+
+  const hub = document.querySelector('.hub');
+  if(hub){
+    const hubObs = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); hubObs.unobserve(e.target); } });
+    }, {threshold:0.3});
+    hubObs.observe(hub);
+  }
+</script>
+
+</body>
+</html>

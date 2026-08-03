@@ -269,76 +269,10 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .footer-links{display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap}
 .footer-links a{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:.55rem .85rem;font-size:.78rem;font-weight:800}
 
-/* Curiosity-led memory landing */
-.memory-landing{position:relative;background:#07162f;color:#f4f8ff;overflow:hidden}
-.memory-scratch-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:90;pointer-events:none;mix-blend-mode:screen;filter:drop-shadow(0 0 5px rgba(255,255,255,.92))}
-.memory-scene{position:relative;min-height:min(82vh,760px);overflow:hidden;isolation:isolate}
-.memory-scene-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;filter:saturate(1.16) contrast(1.09) brightness(.82)}
-.memory-scene::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none}
-.memory-scene-inner{position:relative;z-index:2;width:min(1180px,100%);min-height:inherit;margin:0 auto;padding:clamp(1.3rem,4vw,3.8rem);display:flex;align-items:flex-end}
-.memory-copy{max-width:min(710px,92vw);padding-bottom:clamp(1rem,4vw,3.2rem);color:#f6f9ff;text-shadow:0 2px 24px rgba(0,0,0,.72)}
-.memory-hero::after{background:linear-gradient(90deg,rgba(3,17,47,.96) 0%,rgba(4,26,65,.83) 38%,rgba(4,26,65,.22) 70%,rgba(4,26,65,.04) 100%)}
-.memory-hero .memory-scene-media{object-position:center}
-.memory-eyebrow{display:inline-flex;align-items:center;gap:.5rem;margin-bottom:.8rem;color:#ffcb66;font-size:clamp(.72rem,1.5vw,.9rem);font-weight:900;text-transform:uppercase;letter-spacing:0}
-.memory-title{max-width:760px;margin:0;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-size:clamp(2.65rem,7.4vw,6.7rem);font-weight:900;line-height:.94;letter-spacing:0;overflow-wrap:anywhere}
-.memory-title .question-mark{display:inline-block;color:#73c7ff;animation:memoryQuestionBounce 2.8s ease-in-out infinite}
-.memory-hindi-title{display:block;margin-top:.45rem;color:#bfe7ff;font-size:.48em;line-height:1.12;font-weight:850}
-.memory-lead{max-width:610px;margin:1rem 0 1.25rem;font-size:clamp(1rem,2vw,1.26rem);line-height:1.55;color:#e1edff;font-weight:650}
-.memory-prompt{display:inline-flex;align-items:center;gap:.55rem;min-height:46px;padding:.72rem 1rem;border:1px solid rgba(126,204,255,.56);border-radius:8px;background:rgba(5,31,72,.76);color:#fff;font-size:.86rem;font-weight:900;box-shadow:0 12px 30px rgba(0,7,25,.3);backdrop-filter:blur(3px)}
-.memory-prompt-arrow{font-size:1.1rem;animation:memoryArrow 1.6s ease-in-out infinite}
-.memory-problem::after{background:linear-gradient(270deg,rgba(22,14,51,.96) 0%,rgba(25,22,67,.84) 38%,rgba(18,30,72,.18) 72%)}
-.memory-problem .memory-scene-inner{justify-content:flex-end;align-items:center}
-.memory-problem .memory-copy{max-width:560px;padding:0}
-.memory-statement{margin:0;font-size:clamp(2.25rem,6.4vw,5.6rem);font-weight:950;line-height:.96;letter-spacing:0}
-.memory-statement strong{color:#78d7ff}
-.memory-small{margin-top:1rem;color:#dceaff;font-size:clamp(.95rem,1.8vw,1.15rem);line-height:1.6;font-weight:650}
-.memory-art-note{max-width:680px;margin:1.2rem 0 0;padding-left:1rem;border-left:2px solid #ffcb66;color:#b9d9ff;font-size:clamp(.82rem,1.6vw,1rem);font-style:italic;line-height:1.55}
-.memory-coaching{padding:clamp(3rem,7vw,6.5rem) 1rem;background:linear-gradient(135deg,#091a3b,#102b58 58%,#17213e);text-align:center}
-.memory-coaching-inner{width:min(1180px,100%);margin:0 auto}
-.memory-coaching h2{margin:0 auto .9rem;max-width:980px;font-size:clamp(2.2rem,6vw,5.5rem);line-height:.98;letter-spacing:0}
-.memory-coaching h2 span{color:#73c7ff}
-.memory-coaching p{max-width:740px;margin:0 auto;color:#d4e6ff;font-size:clamp(1rem,2vw,1.2rem);line-height:1.65}
-.coaching-orbit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.6rem,2vw,1.1rem);margin:clamp(2rem,5vw,4rem) auto 0}
-.coaching-name{position:relative;min-height:150px;display:grid;place-items:center;border:1px solid rgba(127,204,255,.35);border-radius:8px;background:rgba(4,18,47,.54);color:#f5f9ff;font-size:clamp(1.35rem,3vw,2.2rem);font-weight:950;overflow:hidden}
-.coaching-name::after{content:'+';position:absolute;right:.65rem;top:.25rem;color:#d19a36;font-size:clamp(2.8rem,7vw,5.5rem);font-weight:300;line-height:1;opacity:.68}
-.coaching-name span{position:relative;z-index:1}
-.coaching-missing{margin:1rem auto 0;color:#ffcb66;font-size:clamp(1.15rem,2.6vw,1.8rem);font-weight:900}
-.memory-proof{position:relative;min-height:min(92vh,860px);overflow:hidden;isolation:isolate}
-.memory-proof-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;filter:saturate(1.08) contrast(1.08) brightness(.72)}
-.memory-proof::after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(3,16,45,.98) 0%,rgba(4,24,61,.91) 43%,rgba(5,29,67,.26) 77%);pointer-events:none}
-.memory-proof-inner{position:relative;z-index:2;width:min(1180px,100%);min-height:inherit;margin:0 auto;padding:clamp(2rem,5vw,4rem);display:flex;align-items:center}
-.memory-proof-copy{width:min(720px,100%)}
-.memory-proof h2{margin:0;max-width:700px;font-size:clamp(2.25rem,6vw,5.4rem);line-height:.96}
-.memory-proof-note{max-width:650px;margin:.9rem 0 1.4rem;color:#d8e8ff;line-height:1.6}
-.memory-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin:1.2rem 0}
-.memory-stat{min-width:0;padding:1rem;border:1px solid rgba(111,196,255,.34);border-radius:8px;background:rgba(4,21,53,.72)}
-.memory-stat strong{display:block;color:#ffcf68;font-size:clamp(1.8rem,4.4vw,3.35rem);line-height:1}
-.memory-stat span{display:block;margin-top:.4rem;color:#d8e9ff;font-size:.78rem;line-height:1.35}
-.memory-claims-note{margin:.6rem 0 1.2rem;color:#8fb2df;font-size:.72rem;line-height:1.45}
-.memory-voices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
-.memory-voice{padding:.82rem .9rem;border:1px solid rgba(119,198,255,.25);border-radius:8px;background:rgba(5,18,46,.78)}
-.memory-voice blockquote{margin:0;color:#f5f8ff;font-size:clamp(.78rem,1.5vw,.92rem);line-height:1.48}
-.memory-voice footer{margin-top:.5rem;color:#7fd2ff;font-size:.68rem;font-weight:800}
-.memory-composite-label{display:inline-flex;margin-top:1rem;color:#b6ccec;font-size:.7rem}
-.memory-curiosity{min-height:min(84vh,780px);color:#fff}
-.memory-curiosity::after{background:linear-gradient(90deg,rgba(3,13,34,.9) 0%,rgba(3,13,34,.66) 34%,rgba(3,13,34,.04) 72%)}
-.memory-curiosity .memory-copy{color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.55)}
-.memory-curiosity .memory-eyebrow{color:#ffd26a}
-.memory-curiosity .memory-lead{color:#e7efff}
-.memory-curiosity .memory-prompt{background:rgba(11,31,74,.72);border-color:rgba(126,190,255,.65);color:#fff;backdrop-filter:blur(4px)}
-.memory-reveal{--reveal-y:34px;opacity:0;transform:translate3d(0,var(--reveal-y),0) scale(.96);transition:opacity .55s ease,transform .72s cubic-bezier(.18,.86,.24,1.16)}
-.memory-reveal.from-above{--reveal-y:-34px}
-.memory-reveal.is-visible{opacity:1;transform:translate3d(0,0,0) scale(1)}
-.memory-reveal>*{opacity:0;transform:translateY(12px);transition:opacity .55s ease,transform .65s cubic-bezier(.2,.8,.2,1)}
-.memory-reveal.is-visible>*{opacity:1;transform:translateY(0)}
-.memory-reveal.is-visible>*:nth-child(2){transition-delay:70ms}
-.memory-reveal.is-visible>*:nth-child(3){transition-delay:130ms}
-.memory-reveal.is-visible>*:nth-child(4){transition-delay:190ms}
-.memory-reveal.is-visible>*:nth-child(n+5){transition-delay:240ms}
-.memory-scroll-whisper{position:fixed;right:clamp(.65rem,2vw,1.4rem);top:48%;z-index:75;width:min(290px,42vw);padding:.72rem .85rem;border:1px solid rgba(145,215,255,.45);border-radius:8px;background:rgba(4,22,54,.88);color:#e9f6ff;font-size:clamp(.7rem,1.2vw,.82rem);font-weight:750;line-height:1.45;pointer-events:none;opacity:0;transform:translate3d(16px,0,0);transition:opacity .35s ease,transform .45s ease;box-shadow:0 12px 32px rgba(0,7,25,.26)}
-.memory-scroll-whisper.is-visible{opacity:1;transform:translate3d(0,0,0)}
-@keyframes memoryQuestionBounce{0%,100%{transform:translateY(0) rotate(0)}48%{transform:translateY(-9px) rotate(3deg)}62%{transform:translateY(0) rotate(-2deg)}}
-@keyframes memoryArrow{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+/* User-supplied landing page host. Its design is isolated in Shadow DOM. */
+.uploaded-landing-host{display:block;min-height:100svh;background:#faf6ee;color:#1d1b16;contain:layout style paint}
+.uploaded-landing-loading,.uploaded-landing-error{min-height:70svh;display:grid;place-items:center;padding:2rem;text-align:center;font-size:.9rem;font-weight:700;color:#6d6656}
+.uploaded-landing-error{color:#7a2320}
 
 .hero-kicker,.hero-title,.hero-lead,.hero-actions,.hero-proof,.hero-showcase,.hero-art-frame{
   animation:homeHeroFadeUp 900ms cubic-bezier(.16,.84,.24,1) both;
@@ -385,12 +319,6 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
     transform:none;
     transition:none;
   }
-  .memory-reveal,.memory-reveal>*{
-    opacity:1;
-    transform:none;
-    transition:none;
-  }
-  .memory-scroll-whisper{display:none}
   .btn-nav:hover,.course-card:hover{
     transform:none;
   }
@@ -405,22 +333,6 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   .hero-proof{grid-template-columns:1fr}
   .courses-head{display:block}
   .footer-links{justify-content:flex-start}
-  .memory-scene{min-height:min(78vh,680px)}
-  .memory-hero::after{background:linear-gradient(0deg,rgba(3,17,47,.97) 0%,rgba(4,26,65,.84) 48%,rgba(4,26,65,.08) 84%)}
-  .memory-hero .memory-scene-media{object-position:62% center}
-  .memory-scene-inner{align-items:flex-end}
-  .memory-copy{max-width:100%;padding-bottom:1rem}
-  .memory-problem::after{background:linear-gradient(0deg,rgba(22,14,51,.97) 0%,rgba(25,22,67,.84) 48%,rgba(18,30,72,.06) 84%)}
-  .memory-problem .memory-scene-inner{justify-content:flex-start;align-items:flex-end}
-  .memory-problem .memory-copy{max-width:100%;padding-bottom:1rem}
-  .coaching-orbit{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .memory-proof{min-height:auto}
-  .memory-proof::after{background:linear-gradient(0deg,rgba(3,16,45,.99) 0%,rgba(4,24,61,.91) 65%,rgba(5,29,67,.18) 100%)}
-  .memory-proof-media{position:relative;height:auto;aspect-ratio:16/9;object-position:66% center}
-  .memory-proof-inner{min-height:0;margin-top:-1px;padding-top:2rem;background:#06183d}
-  .memory-proof-copy{width:100%}
-  .memory-curiosity::after{background:linear-gradient(0deg,rgba(3,13,34,.93) 0%,rgba(3,13,34,.54) 47%,rgba(3,13,34,.06) 80%)}
-  .memory-curiosity .memory-scene-media{object-position:62% center}
 }
 
 @media (max-width: 520px){
@@ -443,105 +355,6 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   .trust-item,.benefit-card,.method-card{border-radius:18px}
   .story-panel{border-radius:22px}
   .courses-grid{grid-template-columns:1fr}
-  .memory-scene{min-height:min(76vh,630px)}
-  .memory-scene-inner{padding:1rem}
-  .memory-copy{width:100%;min-width:0}
-  .memory-title{font-size:clamp(2.2rem,11.5vw,3.4rem);line-height:.96}
-  .memory-statement{font-size:clamp(2.25rem,12vw,3.65rem)}
-  .memory-lead{font-size:.96rem}
-  .coaching-name{min-height:108px;font-size:1.25rem}
-  .memory-coaching{padding:3.2rem .9rem}
-  .memory-coaching h2{font-size:clamp(2.15rem,12vw,3.5rem)}
-  .memory-stats{grid-template-columns:1fr}
-  .memory-voices{grid-template-columns:1fr}
-  .memory-scroll-whisper{top:auto;right:.75rem;bottom:calc(var(--bottom-nav-height,78px) + env(safe-area-inset-bottom) + .75rem);width:min(310px,calc(100vw - 1.5rem))}
-}
-
-/* Immersive academic landing v2 */
-.memory-landing{--memory-black:#030506;--memory-paper:#f6f8fb;--memory-cyan:#5bd8ff;--memory-lime:#b6f36b;--memory-amber:#ffc857;--memory-coral:#ff6f61;background:var(--memory-black);color:var(--memory-paper)}
-.memory-progress-track{position:fixed;left:0;right:0;top:var(--nav-h);height:3px;z-index:96;background:rgba(255,255,255,.08);pointer-events:none}
-.memory-progress-track span{display:block;width:100%;height:100%;transform:scaleX(0);transform-origin:left center;background:linear-gradient(90deg,var(--memory-cyan),var(--memory-lime),var(--memory-amber),var(--memory-coral));box-shadow:0 0 18px rgba(91,216,255,.72);will-change:transform}
-.memory-chapter-nav{position:fixed;z-index:70;left:clamp(.65rem,2vw,1.5rem);right:auto;top:50%;transform:translateY(-50%);display:grid;align-items:stretch;justify-content:start;gap:.4rem;width:132px;height:auto;min-height:0;padding:0;background:none;border:0;box-shadow:none;backdrop-filter:none;overflow:visible;pointer-events:none}
-.memory-chapter-nav a{display:flex;align-items:center;gap:.5rem;padding:.45rem 0;color:rgba(246,248,251,.45);font-size:.66rem;font-weight:800;text-decoration:none;transition:color .25s ease,transform .25s ease;pointer-events:auto}
-.memory-chapter-nav a span{display:grid;place-items:center;width:28px;height:28px;border:1px solid rgba(255,255,255,.2);border-radius:50%;color:inherit;font-size:.6rem;transition:border-color .25s ease,background .25s ease,box-shadow .25s ease}
-.memory-chapter-nav a.is-active{color:#fff;transform:translateX(5px)}
-.memory-chapter-nav a.is-active span{border-color:var(--memory-cyan);background:#102737;box-shadow:0 0 18px rgba(91,216,255,.38)}
-.memory-scene,.memory-proof{min-height:calc(100svh - var(--nav-h));border-bottom:1px solid rgba(255,255,255,.08)}
-.memory-scene::before,.memory-proof::before,.memory-coaching::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:64px 64px;mask-image:linear-gradient(to bottom,transparent,black 22%,black 78%,transparent)}
-.memory-scene-media,.memory-proof-media{filter:saturate(.92) contrast(1.18) brightness(.58);transform:scale(1.015);transition:transform 1.6s cubic-bezier(.2,.7,.2,1),filter 1.2s ease}
-.memory-scene.is-active .memory-scene-media,.memory-proof.is-active .memory-proof-media{filter:saturate(1.08) contrast(1.18) brightness(.66);transform:scale(1.045)}
-.memory-scene-inner,.memory-proof-inner{width:min(1280px,100%);padding:clamp(2rem,6vw,5rem) clamp(1.2rem,7vw,6.5rem)}
-.memory-copy{max-width:760px;padding-bottom:2rem;text-shadow:0 3px 28px rgba(0,0,0,.78)}
-.memory-hero::after{background:linear-gradient(90deg,rgba(3,5,6,.99) 0%,rgba(3,8,13,.88) 42%,rgba(3,8,13,.22) 78%,rgba(3,8,13,.08))}
-.memory-problem::after{background:linear-gradient(270deg,rgba(8,5,13,.98) 0%,rgba(15,8,24,.9) 43%,rgba(6,10,15,.18) 78%)}
-.memory-curiosity::after{background:linear-gradient(90deg,rgba(3,5,6,.98),rgba(4,16,21,.82) 48%,rgba(3,5,6,.08) 82%)}
-.memory-scene-number{display:inline-flex;margin:0 0 1.1rem;padding-bottom:.3rem;border-bottom:2px solid var(--memory-cyan);color:var(--memory-cyan);font:800 .72rem/1 Arial,sans-serif}
-.memory-eyebrow{margin-bottom:1rem;color:var(--memory-amber);font-size:.78rem;text-transform:none}
-.memory-title{font-size:6rem;line-height:.88;text-wrap:balance}
-.memory-title-line{display:block;opacity:0;transform:translate3d(0,70px,0) scale(.9);filter:blur(10px)}
-.memory-reveal.is-visible .memory-title-line{animation:memoryHeadlinePop .82s cubic-bezier(.16,.9,.25,1.22) forwards}
-.memory-reveal.is-visible .memory-title-line:nth-child(2){animation-delay:120ms}
-.memory-title .question-mark{color:var(--memory-cyan);text-shadow:0 0 30px rgba(91,216,255,.32)}
-.memory-hindi-title{margin-top:.6rem;color:#d8f3ff;font-size:.44em;line-height:1.08}
-.memory-lead,.memory-small,.memory-proof-note{color:#d5dce7;font-size:1.08rem}
-.memory-popline{display:flex;flex-wrap:wrap;gap:.45rem;margin:1.15rem 0}
-.memory-popline span{padding:.5rem .72rem;border:1px solid rgba(91,216,255,.45);border-radius:6px;background:#07151c;color:#c9f4ff;font-size:.72rem;font-weight:950;opacity:0;transform:scale(.55) rotate(-4deg);box-shadow:0 0 0 rgba(91,216,255,0)}
-.memory-reveal.is-visible .memory-popline span{animation:memoryTagPop .52s cubic-bezier(.2,1.25,.3,1) forwards}
-.memory-reveal.is-visible .memory-popline span:nth-child(2){animation-delay:220ms}
-.memory-reveal.is-visible .memory-popline span:nth-child(3){animation-delay:360ms}
-.memory-popline .is-warning{border-color:rgba(255,111,97,.62);background:#1d0c0b;color:#ffb4ad;box-shadow:0 0 22px rgba(255,111,97,.18)}
-.memory-art-note{border-left-color:var(--memory-amber);color:#b9c7d9}
-.memory-prompt{position:relative;isolation:isolate;overflow:hidden;border-color:rgba(182,243,107,.62);background:#111d10;color:#efffdc;box-shadow:0 0 0 1px rgba(182,243,107,.08),0 16px 42px rgba(0,0,0,.42)}
-.memory-prompt::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent,rgba(182,243,107,.18),transparent);transform:translateX(-110%);animation:memoryPromptSweep 3.2s ease-in-out infinite}
-.memory-statement{font-size:5rem;line-height:.94;text-wrap:balance}
-.memory-statement strong{color:var(--memory-cyan);text-shadow:0 0 28px rgba(91,216,255,.24)}
-.memory-contrast{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:.8rem;margin:1.4rem 0;max-width:620px}
-.memory-contrast>span{padding:.85rem;border-top:2px solid var(--memory-coral);background:rgba(20,7,9,.72)}
-.memory-contrast>span:last-child{border-top-color:var(--memory-lime);background:rgba(10,24,8,.72)}
-.memory-contrast b,.memory-contrast small{display:block}.memory-contrast b{font-size:1.05rem}.memory-contrast small{margin-top:.25rem;color:#aeb9c9}.memory-contrast i{color:var(--memory-amber);font-size:2rem;font-style:normal;font-weight:950}
-.memory-coaching{position:relative;isolation:isolate;min-height:calc(100svh - var(--nav-h));display:grid;align-items:center;padding:5rem 1.2rem;background:#080b0f;text-align:left;border-bottom:1px solid rgba(255,255,255,.08)}
-.memory-coaching-inner{width:min(1120px,100%)}
-.memory-coaching h2{margin:0 0 1rem;font-size:4.8rem;line-height:.94}.memory-coaching h2 span{color:var(--memory-cyan)}.memory-coaching p{margin:0;color:#cdd6e2}
-.coaching-orbit{grid-template-columns:repeat(4,minmax(0,1fr));margin:2.2rem 0 1rem}.coaching-name{min-height:132px;border-color:rgba(255,255,255,.16);background:#0d1218;color:#fff}.coaching-name:nth-child(1){border-top:3px solid var(--memory-cyan)}.coaching-name:nth-child(2){border-top:3px solid var(--memory-lime)}.coaching-name:nth-child(3){border-top:3px solid var(--memory-amber)}.coaching-name:nth-child(4){border-top:3px solid var(--memory-coral)}.coaching-name::after{color:rgba(255,255,255,.16)}
-.memory-coaching-bridge{display:flex;align-items:center;justify-content:center;gap:.75rem;flex-wrap:wrap;margin:1rem 0;padding:1rem;border-block:1px solid rgba(255,255,255,.12);color:#d9e1ec;font-size:.74rem;font-weight:900}.memory-coaching-bridge i,.memory-coaching-bridge b{color:var(--memory-amber);font-size:1.6rem;font-style:normal}.memory-coaching-bridge b{color:var(--memory-lime)}
-.coaching-missing{color:var(--memory-amber);text-align:center}.memory-coaching .memory-art-note{margin:1.2rem auto 0;text-align:center}
-.memory-proof{background:#05080d}.memory-proof::after{background:linear-gradient(90deg,rgba(3,5,8,.99) 0%,rgba(4,10,18,.92) 49%,rgba(4,10,18,.2) 78%)}.memory-proof-copy{width:min(760px,100%)}.memory-proof h2{font-size:4.8rem;line-height:.94}
-.memory-stats{gap:0;border-block:1px solid rgba(255,255,255,.14)}.memory-stat{border:0;border-right:1px solid rgba(255,255,255,.14);border-radius:0;background:transparent}.memory-stat:last-child{border-right:0}.memory-stat strong{color:var(--memory-amber)}
-.memory-voices{gap:.45rem}.memory-voice{border-color:rgba(255,255,255,.13);background:rgba(3,7,12,.86);transition:border-color .25s ease,transform .25s ease}.memory-voice:hover{border-color:rgba(91,216,255,.55);transform:translateY(-3px)}.memory-voice footer{color:var(--memory-cyan)}
-.memory-curiosity .memory-copy{max-width:820px}.memory-curiosity .memory-statement{font-size:5.2rem}
-.memory-scroll-whisper{border-color:rgba(255,200,87,.5);background:#0b0e12;color:#fff;box-shadow:8px 8px 0 rgba(255,200,87,.16);transform:translate3d(18px,0,0) scale(.92)}.memory-scroll-whisper.is-visible{transform:translate3d(0,0,0) scale(1)}
-.memory-reveal{--reveal-y:54px;filter:blur(8px);transition:opacity .5s ease,transform .78s cubic-bezier(.16,.9,.28,1.12),filter .65s ease}.memory-reveal.is-visible{filter:blur(0)}.memory-reveal>*{transform:translateY(20px) scale(.96);transition:opacity .42s ease,transform .58s cubic-bezier(.16,.9,.3,1.12)}.memory-reveal.is-visible>*{transform:translateY(0) scale(1)}
-@keyframes memoryHeadlinePop{0%{opacity:0;transform:translate3d(0,70px,0) scale(.9);filter:blur(10px)}65%{opacity:1;transform:translate3d(0,-5px,0) scale(1.025);filter:blur(0)}100%{opacity:1;transform:none;filter:blur(0)}}
-@keyframes memoryTagPop{0%{opacity:0;transform:scale(.55) rotate(-4deg)}70%{opacity:1;transform:scale(1.08) rotate(1deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
-@keyframes memoryPromptSweep{0%,55%{transform:translateX(-110%)}85%,100%{transform:translateX(110%)}}
-@media (max-width:1100px){
-  .memory-chapter-nav{display:none}
-  .memory-title{font-size:4.8rem}.memory-statement,.memory-coaching h2,.memory-proof h2,.memory-curiosity .memory-statement{font-size:4rem}
-}
-@media (max-width:860px){
-  .memory-scene,.memory-proof{min-height:calc(100svh - var(--nav-h))}
-  .memory-scene-inner,.memory-proof-inner{padding:2rem 1.15rem}
-  .memory-hero::after,.memory-problem::after,.memory-curiosity::after{background:linear-gradient(0deg,rgba(3,5,7,.99) 0%,rgba(4,9,15,.92) 58%,rgba(3,5,7,.12) 100%)}
-  .memory-title{font-size:4rem}.memory-statement,.memory-coaching h2,.memory-proof h2,.memory-curiosity .memory-statement{font-size:3.5rem}
-  .memory-proof-media{position:absolute;height:100%;aspect-ratio:auto}.memory-proof-inner{margin-top:0;background:transparent}
-  .memory-proof::after{background:linear-gradient(0deg,rgba(3,5,8,.99),rgba(4,10,18,.94) 72%,rgba(4,10,18,.28))}
-}
-@media (max-width:520px){
-  .memory-progress-track{top:var(--nav-h)}
-  .memory-scene-inner,.memory-proof-inner{padding:1.15rem 1rem 2rem}.memory-copy{padding-bottom:0}
-  .memory-title{font-size:3.2rem;line-height:.9}.memory-statement,.memory-coaching h2,.memory-proof h2,.memory-curiosity .memory-statement{font-size:2.8rem;line-height:.96}
-  .memory-hindi-title{font-size:.5em}.memory-lead,.memory-small,.memory-proof-note{font-size:.95rem}
-  .memory-popline{gap:.32rem}.memory-popline span{padding:.42rem .5rem;font-size:.64rem}
-  .memory-contrast{gap:.4rem}.memory-contrast>span{padding:.65rem .5rem}.memory-contrast b{font-size:.84rem}.memory-contrast small{font-size:.68rem}.memory-contrast i{font-size:1.3rem}
-  .memory-coaching{padding:3.3rem .9rem}.coaching-orbit{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}.coaching-name{min-height:92px;font-size:1.15rem}
-  .memory-coaching-bridge{gap:.45rem;font-size:.58rem}.memory-coaching-bridge i,.memory-coaching-bridge b{font-size:1.1rem}
-  .memory-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.memory-stat{padding:.7rem .5rem}.memory-stat strong{font-size:1.5rem}.memory-stat span{font-size:.6rem}
-  .memory-voices{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:.4rem}.memory-voice{min-width:86%;scroll-snap-align:start}
-  .memory-scroll-whisper{display:none}
-}
-@media (prefers-reduced-motion:reduce){
-  .memory-title-line,.memory-popline span{opacity:1;transform:none;filter:none;animation:none!important}
-  .memory-scene-media,.memory-proof-media{transform:none!important;transition:none}.memory-prompt::before{display:none}
 }
 
 /* ══════════════════════════════
@@ -993,113 +806,9 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 ════════════════════════════════════════ -->
 <div class="page active" id="page-home">
   <div class="home-shell">
-    <main class="memory-landing" id="memory-landing">
-      <canvas class="memory-scratch-canvas" id="memory-scratch-canvas" aria-hidden="true"></canvas>
-      <div class="memory-scroll-whisper" id="memory-scroll-whisper" aria-live="polite"></div>
-      <div class="memory-progress-track" aria-hidden="true"><span id="memory-progress-bar"></span></div>
-      <nav class="memory-chapter-nav" aria-label="Landing story chapters">
-        <a href="#memory-opening" data-memory-chapter="memory-opening"><span>01</span> Forgetting</a>
-        <a href="#memory-problem" data-memory-chapter="memory-problem"><span>02</span> The gap</a>
-        <a href="#memory-coaching" data-memory-chapter="memory-coaching"><span>03</span> Add, don't replace</a>
-        <a href="#memory-proof" data-memory-chapter="memory-proof"><span>04</span> Learner voices</a>
-        <a href="#memory-curiosity" data-memory-chapter="memory-curiosity"><span>05</span> The door</a>
-      </nav>
-
-      <section class="memory-scene memory-hero" id="memory-opening" aria-label="The problem of forgetting after online lectures" data-scroll-down="आगे बढ़िए... असली सवाल यह है कि बिना स्क्रीन कितना याद रहता है।" data-scroll-up="वापस आए? याद भी ऐसे ही लौटती है—जब दिमाग उसे दोबारा खोजता है।">
-        <img class="memory-scene-media" src="assets/landing-forgetting-hero.jpg" width="1600" height="900" fetchpriority="high" decoding="async" alt="Student watching an online lecture while remembered ideas fade like chalk dust">
-        <div class="memory-scene-inner">
-          <div class="memory-copy memory-reveal">
-            <div class="memory-scene-number" aria-hidden="true">01 / 05</div>
-            <div class="memory-eyebrow">You studied it. You understood it. · पढ़ा भी। समझा भी।</div>
-            <h1 class="memory-title"><span class="memory-title-line">Then why</span><span class="memory-title-line">did it <span class="question-mark">disappear?</span></span><span class="memory-hindi-title" lang="hi">फिर याद क्यों नहीं रहा?</span></h1>
-            <p class="memory-lead">Long lectures can feel productive. The exam asks a colder question: how much stayed with you?</p>
-            <div class="memory-popline" aria-label="The passive learning cycle">
-              <span>WATCHED</span><span>UNDERSTOOD</span><span class="is-warning">FORGOT?</span>
-            </div>
-            <p class="memory-art-note">Memory does not count watched hours. It counts what returns when the screen is gone.<br><span lang="hi">याददाश्त घंटे नहीं, बिना स्क्रीन लौटे उत्तर गिनती है।</span></p>
-            <a class="memory-prompt" href="#memory-problem">Find the missing part <span class="memory-prompt-arrow" aria-hidden="true">↓</span></a>
-          </div>
-        </div>
-      </section>
-
-      <section class="memory-scene memory-problem" id="memory-problem" aria-label="Passive listening does not guarantee memory" data-scroll-down="पहचानना आसान है। बिना hint उत्तर निकालना ही असली तैयारी है।" data-scroll-up="जो बात लौटकर नहीं आती, उसे एक और lecture नहीं—एक सक्रिय कोशिश चाहिए।">
-        <img class="memory-scene-media" src="assets/landing-passive-listening.jpg" width="1600" height="900" loading="lazy" decoding="async" alt="Student surrounded by many online lectures while information fades away">
-        <div class="memory-scene-inner">
-          <div class="memory-copy memory-reveal">
-            <div class="memory-scene-number" aria-hidden="true">02 / 05</div>
-            <div class="memory-eyebrow">The quiet problem · छुपी हुई समस्या</div>
-            <h2 class="memory-statement">Watching is not the same as <strong>remembering.</strong><span class="memory-hindi-title" lang="hi">सिर्फ देखना, याद रखना नहीं है।</span></h2>
-            <p class="memory-small">Passive listening feels easy because your brain recognises the explanation. Recognition is not recall.</p>
-            <div class="memory-contrast" aria-label="Recognition compared with recall">
-              <span><b>Recognition</b><small>“I have seen this.”</small></span>
-              <i aria-hidden="true">≠</i>
-              <span><b>Recall</b><small>“I can answer this.”</small></span>
-            </div>
-            <p class="memory-art-note">Recognition whispers “I know this.” Recall proves it.<br><span lang="hi">पहचान कहती है “यह देखा है।” स्मरण बताता है “यह आता है।”</span></p>
-          </div>
-        </div>
-      </section>
-
-      <section class="memory-coaching" id="memory-coaching" aria-label="Keep your coaching and add the missing learning layer" data-scroll-down="Teacher वही। मेहनत वही। बस सीखने का अगला कदम अधिक सक्रिय।" data-scroll-up="बदलना coaching को नहीं है—बदलना है lecture के बाद दिमाग क्या करता है।">
-        <div class="memory-coaching-inner memory-reveal">
-          <div class="memory-scene-number" aria-hidden="true">03 / 05</div>
-          <div class="memory-eyebrow">Do not replace what already works · जो अच्छा है, उसे बनाए रखिए</div>
-          <h2>PW, ALLEN, Motion or Aakash… <span>keep it.</span><span class="memory-hindi-title" lang="hi">अपनी coaching मत छोड़िए।</span></h2>
-          <p>Keep your main coaching. Add one IdeaKDC course beside it, then notice what your memory does differently.</p>
-          <div class="coaching-orbit" aria-label="Compatible with existing coaching choices">
-            <div class="coaching-name"><span>PW</span></div>
-            <div class="coaching-name"><span>ALLEN</span></div>
-            <div class="coaching-name"><span>Motion</span></div>
-            <div class="coaching-name"><span>Aakash</span></div>
-          </div>
-          <div class="memory-coaching-bridge" aria-hidden="true"><span>YOUR COACHING</span><i>+</i><span>ACTIVE RECALL</span><b>=</b><span>DEEPER MEMORY</span></div>
-          <div class="coaching-missing">Not another lecture. Something your memory notices.</div>
-          <p class="memory-art-note">Keep the teacher. Add the recall.<br><span lang="hi">शिक्षक वही रखिए। सीखने में स्मरण जोड़िए।</span></p>
-        </div>
-      </section>
-
-      <section class="memory-proof" id="memory-proof" aria-label="IdeaKDC learner community snapshot" data-scroll-down="हर region की बोली अलग है। भूलने की परेशानी एक जैसी—और सक्रिय अभ्यास का असर भी।" data-scroll-up="इन आवाज़ों में एक common बात सुनिए: lecture खत्म होने पर learning खत्म नहीं होती।">
-        <img class="memory-proof-media" src="assets/landing-learner-voices.jpg" width="1600" height="900" loading="lazy" decoding="async" alt="A diverse group of Indian teenage learners studying together">
-        <div class="memory-proof-inner">
-          <div class="memory-proof-copy memory-reveal">
-            <div class="memory-scene-number" aria-hidden="true">04 / 05</div>
-            <div class="memory-eyebrow">Learner community · सीखने वालों की आवाज़</div>
-            <h2>Different cities. One familiar struggle.<span class="memory-hindi-title" lang="hi">शहर अलग। भूलने की परेशानी एक।</span></h2>
-            <p class="memory-proof-note">The language changes across India. The moment is familiar: “Lecture समझ आया था… फिर answer क्यों नहीं निकला?”</p>
-            <div class="memory-stats" aria-label="IdeaKDC community milestones supplied by the organisation">
-              <div class="memory-stat"><strong>15K</strong><span>happy learner community<br><span lang="hi">सीखने वाले विद्यार्थी</span></span></div>
-              <div class="memory-stat"><strong>45% → 85%</strong><span>representative learner journey<br><span lang="hi">बदलाव की एक मिसाल</span></span></div>
-              <div class="memory-stat"><strong>57K</strong><span>learning victories counted<br><span lang="hi">सीखने की जीतें</span></span></div>
-            </div>
-            <p class="memory-claims-note">Community figures supplied by IdeaKDC; the voices below are clearly labelled composite learner experiences, not named individual endorsements.</p>
-            <div class="memory-voices" aria-label="Composite regional learner voices">
-              <article class="memory-voice"><blockquote>“Bhai, lecture समझ आ जाता था, paper में blank. अब screen बंद करके खुद को check करता हूँ।”</blockquote><footer>Composite learner voice · Delhi</footer></article>
-              <article class="memory-voice"><blockquote>“पहले video पूरा करना achievement लगता था। अब पता चलता है कि सच में कितना याद है।”</blockquote><footer>Composite learner voice · Uttar Pradesh</footer></article>
-              <article class="memory-voice"><blockquote>“हमरा लगा पढ़ाई मतलब बस घंटा लगाना। अब कम समय में दिमाग से जवाब निकालना सीख रहे हैं।”</blockquote><footer>Composite learner voice · Bihar</footer></article>
-              <article class="memory-voice"><blockquote>“Notes बहुत थे, recall कम था। अब chapter खोलने से पहले खुद से answer पूछता हूँ।”</blockquote><footer>Composite learner voice · Madhya Pradesh</footer></article>
-              <article class="memory-voice"><blockquote>“Earlier I was just finishing videos, yaar. Now I check whether I can explain it without the screen.”</blockquote><footer>Composite learner voice · Bengaluru</footer></article>
-              <article class="memory-voice"><blockquote>“Lecture संपला म्हणजे study complete वाटायचं. आता स्वतःला question विचारल्यावर खरी तयारी कळते.”</blockquote><footer>Composite learner voice · Maharashtra</footer></article>
-              <article class="memory-voice"><blockquote>“Age video dekhi ‘bujhigali’ laguthila. Ebe screen band kari nijaku bujhei dekhe—setebele confidence asuchi.”</blockquote><footer>Composite learner voice · Odisha</footer></article>
-            </div>
-            <span class="memory-composite-label">Teen learner perspectives are illustrative composites created to represent common study experiences.</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="memory-scene memory-curiosity" id="memory-curiosity" aria-label="A new layer for stronger memory" data-scroll-down="अब curiosity को course तक ले जाइए। जवाब landing page पर नहीं, अनुभव के भीतर है।" data-scroll-up="पीछे लौटकर भी बात नई लगी? यही active attention की शुरुआत है।">
-        <img class="memory-scene-media" src="assets/landing-curiosity-door.jpg" width="1600" height="900" loading="lazy" decoding="async" alt="Student following a study path toward a glowing unanswered question">
-        <div class="memory-scene-inner">
-          <div class="memory-copy memory-reveal">
-            <div class="memory-scene-number" aria-hidden="true">05 / 05</div>
-            <div class="memory-eyebrow">The missing layer is closer than you think · उत्तर पास ही है</div>
-            <h2 class="memory-statement">What if the missing 10% changes the other 90%?<span class="memory-hindi-title" lang="hi">अगर एक छोटा बदलाव बाकी पढ़ाई बदल दे?</span></h2>
-            <p class="memory-lead">We will not explain it here. Experience the difference inside a course.</p>
-            <p class="memory-art-note">Curiosity opens the door. Retrieval keeps it open.<br><span lang="hi">जिज्ञासा दरवाज़ा खोलती है। याद करके उत्तर देना उसे खुला रखता है।</span></p>
-            <a class="memory-prompt" href="#courses">Open the next door <span class="memory-prompt-arrow" aria-hidden="true">↓</span></a>
-          </div>
-        </div>
-      </section>
-    </main>
+    <section class="uploaded-landing-host" id="uploaded-landing-host" aria-label="IdeaKDC learning experience">
+      <div class="uploaded-landing-loading" role="status">IdeaKDC experience loading...</div>
+    </section>
 
     <section class="cinematic-hero" aria-label="IdeaKDC cinematic transformation hero" hidden>
       <section class="cinema-panel cinema-launch" data-stage="launch">
@@ -1645,6 +1354,107 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   } else {
     window.__ideakdcCinematicStarted = true;
     runFallbackHero();
+  }
+})();
+</script>
+<script>
+(async function initUploadedLandingPage(){
+  const host = document.getElementById('uploaded-landing-host');
+  if (!host || host.dataset.initialized === 'true') return;
+  host.dataset.initialized = 'true';
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  try {
+    const response = await fetch('ideakdc-landing.html', { cache: 'no-cache' });
+    if (!response.ok) throw new Error(`Landing page request failed (${response.status})`);
+    const parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
+    const sourceStyle = parsed.querySelector('style');
+    if (!sourceStyle || !parsed.body) throw new Error('Landing page structure is incomplete');
+
+    parsed.head.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+      if (!document.head.querySelector(`link[href="${link.href}"]`)) document.head.append(link.cloneNode(true));
+    });
+
+    const shadow = host.attachShadow({ mode: 'open' });
+    const style = document.createElement('style');
+    style.textContent = sourceStyle.textContent
+      .replace(/:root\s*\{/g, ':host{')
+      .replace(/\bhtml\s*\{/g, ':host{')
+      .replace(/\bbody\s*\{/g, '.landing-root{')
+      + `
+        :host{display:block;background:#faf6ee;color:#1d1b16}
+        .landing-root{position:relative;min-height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
+        .hero{position:relative}
+        .courses-jump{cursor:pointer}
+      `;
+
+    const root = document.createElement('div');
+    root.className = 'landing-root';
+    [...parsed.body.childNodes].forEach(node => {
+      if (node.nodeName !== 'SCRIPT') root.append(node.cloneNode(true));
+    });
+    shadow.replaceChildren(style, root);
+
+    const courseButton = root.querySelector('.btn.primary');
+    if (courseButton) {
+      courseButton.classList.add('courses-jump');
+      courseButton.href = '#courses';
+      courseButton.removeAttribute('target');
+      courseButton.removeAttribute('rel');
+      courseButton.addEventListener('click', event => {
+        event.preventDefault();
+        document.getElementById('courses')?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      });
+    }
+
+    const ticker = root.querySelector('#ticker');
+    if (ticker) {
+      let mins = 4812;
+      window.setInterval(() => {
+        if (!document.getElementById('page-home')?.classList.contains('active')) return;
+        mins += Math.floor(Math.random() * 7) + 1;
+        ticker.textContent = String(mins).padStart(6, '0');
+      }, 220);
+    }
+
+    const revealEls = [...root.querySelectorAll('.reveal')];
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+      revealEls.forEach(element => element.classList.add('in'));
+    } else {
+      const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => entry.target.classList.toggle('in', entry.isIntersecting));
+      }, { threshold: .25 });
+      revealEls.forEach(element => revealObserver.observe(element));
+    }
+
+    const diyaWrap = root.querySelector('#diyas');
+    if (diyaWrap && 'IntersectionObserver' in window) {
+      const diyaObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          entry.target.querySelectorAll('.diya').forEach((diya, index) => {
+            window.setTimeout(() => diya.classList.add('lit'), index * 400);
+          });
+          diyaObserver.unobserve(entry.target);
+        });
+      }, { threshold: .4 });
+      diyaObserver.observe(diyaWrap);
+    }
+
+    const hub = root.querySelector('.hub');
+    if (hub && 'IntersectionObserver' in window) {
+      const hubObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('in');
+          hubObserver.unobserve(entry.target);
+        });
+      }, { threshold: .3 });
+      hubObserver.observe(hub);
+    }
+  } catch (error) {
+    console.warn('IdeaKDC landing page could not load:', error.message);
+    host.innerHTML = '<div class="uploaded-landing-error">Landing experience unavailable. Courses remain available below.</div>';
   }
 })();
 </script>
@@ -2210,165 +2020,6 @@ function initHomepageMotion() {
   observeRevealTargets(document);
 }
 initHomepageMotion();
-
-function initMemoryLandingMotion() {
-  const landing = document.getElementById('memory-landing');
-  if (!landing) return;
-
-  const revealItems = [...landing.querySelectorAll('.memory-reveal')];
-  const narrativeSections = [...landing.querySelectorAll('[data-scroll-down][data-scroll-up]')];
-  const scrollWhisper = document.getElementById('memory-scroll-whisper');
-  const progressBar = document.getElementById('memory-progress-bar');
-  const chapterLinks = [...landing.querySelectorAll('[data-memory-chapter]')];
-  let lastScrollY = window.scrollY;
-  let scrollDirection = 'down';
-  let whisperTimer = 0;
-  let scrollFrame = 0;
-
-  function showScrollWhisper() {
-    if (!scrollWhisper || prefersReducedMotion || !narrativeSections.length) return;
-    const readingLine = window.scrollY + (window.innerHeight * .48);
-    const currentSection = narrativeSections.reduce((current, section) => (
-      section.offsetTop <= readingLine ? section : current
-    ), narrativeSections[0]);
-    scrollWhisper.textContent = scrollDirection === 'up'
-      ? currentSection.dataset.scrollUp
-      : currentSection.dataset.scrollDown;
-    scrollWhisper.classList.add('is-visible');
-    window.clearTimeout(whisperTimer);
-    whisperTimer = window.setTimeout(() => scrollWhisper.classList.remove('is-visible'), 1650);
-  }
-
-  function updateLandingChrome() {
-    if (progressBar) {
-      const landingTop = landing.getBoundingClientRect().top + window.scrollY;
-      const travel = Math.max(1, landing.scrollHeight - window.innerHeight);
-      const progress = Math.min(1, Math.max(0, (window.scrollY - landingTop) / travel));
-      progressBar.style.transform = `scaleX(${progress})`;
-    }
-    const readingLine = window.scrollY + (window.innerHeight * .48);
-    const activeSection = narrativeSections.reduce((current, section) => (
-      section.getBoundingClientRect().top + window.scrollY <= readingLine ? section : current
-    ), narrativeSections[0]);
-    narrativeSections.forEach(section => section.classList.toggle('is-active', section === activeSection));
-    chapterLinks.forEach(link => link.classList.toggle('is-active', link.dataset.memoryChapter === activeSection?.id));
-  }
-
-  window.addEventListener('scroll', () => {
-    const nextY = window.scrollY;
-    if (Math.abs(nextY - lastScrollY) > 3) scrollDirection = nextY > lastScrollY ? 'down' : 'up';
-    lastScrollY = nextY;
-    if (scrollFrame) return;
-    scrollFrame = requestAnimationFrame(() => {
-      scrollFrame = 0;
-      updateLandingChrome();
-      showScrollWhisper();
-    });
-  }, { passive: true });
-  window.addEventListener('resize', updateLandingChrome, { passive: true });
-  updateLandingChrome();
-
-  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
-    revealItems.forEach(item => item.classList.add('is-visible'));
-  } else {
-    const memoryObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.toggle('from-above', scrollDirection === 'up');
-          requestAnimationFrame(() => entry.target.classList.add('is-visible'));
-        } else {
-          entry.target.classList.remove('is-visible');
-        }
-      });
-    }, { threshold: .2, rootMargin: '-4% 0px -7% 0px' });
-    revealItems.forEach(item => memoryObserver.observe(item));
-  }
-
-  const canvas = document.getElementById('memory-scratch-canvas');
-  const context = canvas?.getContext?.('2d');
-  if (!canvas || !context || prefersReducedMotion) return;
-  const scratches = [];
-  const pointerPoints = new Map();
-  let scratchFrame = 0;
-  let canvasWidth = 0;
-  let canvasHeight = 0;
-
-  function resizeScratchCanvas() {
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    canvasWidth = window.innerWidth;
-    canvasHeight = window.innerHeight;
-    canvas.width = Math.round(canvasWidth * ratio);
-    canvas.height = Math.round(canvasHeight * ratio);
-    canvas.style.width = `${canvasWidth}px`;
-    canvas.style.height = `${canvasHeight}px`;
-    context.setTransform(ratio, 0, 0, ratio, 0, 0);
-  }
-
-  function drawScratches() {
-    scratchFrame = 0;
-    context.clearRect(0, 0, canvasWidth, canvasHeight);
-    for (let index = scratches.length - 1; index >= 0; index--) {
-      const scratch = scratches[index];
-      scratch.life -= .028;
-      if (scratch.life <= 0) {
-        scratches.splice(index, 1);
-        continue;
-      }
-      context.beginPath();
-      context.moveTo(scratch.x1, scratch.y1);
-      context.quadraticCurveTo(
-        (scratch.x1 + scratch.x2) / 2 + scratch.wobble,
-        (scratch.y1 + scratch.y2) / 2 - scratch.wobble,
-        scratch.x2,
-        scratch.y2
-      );
-      context.strokeStyle = `rgba(255,255,255,${scratch.life * .96})`;
-      context.lineWidth = scratch.width;
-      context.lineCap = 'round';
-      context.shadowColor = 'rgba(255,255,255,.92)';
-      context.shadowBlur = 12;
-      context.stroke();
-    }
-    context.shadowBlur = 0;
-    if (scratches.length) scratchFrame = requestAnimationFrame(drawScratches);
-  }
-
-  function addScratch(pointerId, x, y) {
-    if (!document.getElementById('page-home')?.classList.contains('active')) return;
-    const previous = pointerPoints.get(pointerId);
-    pointerPoints.set(pointerId, { x, y });
-    if (!previous) return;
-    const distance = Math.hypot(x - previous.x, y - previous.y);
-    if (distance < 3 || distance > 90) return;
-    scratches.push({
-      x1: previous.x,
-      y1: previous.y,
-      x2: x,
-      y2: y,
-      width: 1.8 + Math.random() * 3.2,
-      wobble: (Math.random() - .5) * 12,
-      life: 1
-    });
-    if (scratches.length > 110) scratches.splice(0, scratches.length - 110);
-    if (!scratchFrame) scratchFrame = requestAnimationFrame(drawScratches);
-  }
-
-  window.addEventListener('pointermove', event => addScratch(event.pointerId, event.clientX, event.clientY), { passive: true });
-  window.addEventListener('pointerup', event => pointerPoints.delete(event.pointerId), { passive: true });
-  window.addEventListener('pointercancel', event => pointerPoints.delete(event.pointerId), { passive: true });
-  landing.addEventListener('touchmove', event => {
-    [...event.changedTouches].forEach(touch => addScratch(`touch-${touch.identifier}`, touch.clientX, touch.clientY));
-  }, { passive: true });
-  landing.addEventListener('touchend', event => {
-    [...event.changedTouches].forEach(touch => pointerPoints.delete(`touch-${touch.identifier}`));
-  }, { passive: true });
-  landing.addEventListener('touchcancel', event => {
-    [...event.changedTouches].forEach(touch => pointerPoints.delete(`touch-${touch.identifier}`));
-  }, { passive: true });
-  window.addEventListener('resize', resizeScratchCanvas, { passive: true });
-  resizeScratchCanvas();
-}
-initMemoryLandingMotion();
 
 function initCinematicHero() {
   const hero = document.querySelector('.cinematic-hero:not([hidden])');
