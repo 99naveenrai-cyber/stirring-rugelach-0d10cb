@@ -65,130 +65,14 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .toast.success{background:var(--green)}
 .toast.error{background:var(--red)}
 
-/* ══════════════════════════════
-   CINEMATIC GSAP LANDING HERO
-══════════════════════════════ */
-.cinematic-hero{position:relative;background:#fff;color:var(--deep);isolation:isolate}
-.cinema-panel{position:relative;min-height:100vh;display:grid;place-items:center;padding:clamp(1rem,3vw,2.5rem);overflow:hidden;background:#fff}
-.cinema-panel::before,.cinema-panel::after{content:'';position:absolute;border-radius:50%;pointer-events:none;filter:blur(10px);opacity:.26;z-index:0;will-change:transform}
-.cinema-panel::before{width:46vw;height:46vw;left:-18vw;top:-18vw;background:radial-gradient(circle,#7ab7ff 0%,rgba(122,183,255,0) 68%);animation:cinemaGlowDrift 16s ease-in-out infinite}
-.cinema-panel::after{width:50vw;height:50vw;right:-18vw;bottom:-20vw;background:radial-gradient(circle,#2458ff 0%,rgba(36,88,255,0) 70%);animation:cinemaGlowDrift 22s ease-in-out infinite reverse}
-.cinema-layout{position:relative;z-index:2;width:min(1180px,94vw);min-height:78vh;display:grid;align-items:center;gap:clamp(1rem,4vw,3rem)}
-.cinema-layout.two-col{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-.book-scene{position:relative;width:min(90vw,1040px);height:min(82vh,720px);display:grid;place-items:center;z-index:2}
-.cinema-book{position:relative;width:min(90vw,1030px);height:min(62vmin,640px);filter:drop-shadow(0 34px 78px rgba(20,65,180,.24));will-change:transform,opacity}
-.book-left,.book-right{position:absolute;bottom:8%;width:49%;height:76%;background:linear-gradient(135deg,#fff,#f5faff 48%,#dcecff);border:1px solid rgba(35,71,183,.18);box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),0 24px 55px rgba(16,24,47,.1)}
-.book-left{left:1.5%;border-radius:36px 12px 26px 48px;transform:skewY(-5deg)}
-.book-right{right:1.5%;border-radius:12px 36px 48px 26px;transform:skewY(5deg)}
-.book-line{position:absolute;left:12%;right:12%;height:2px;border-radius:999px;background:rgba(35,71,183,.13)}
-.book-left .book-line:nth-child(1),.book-right .book-line:nth-child(1){top:20%}.book-left .book-line:nth-child(2),.book-right .book-line:nth-child(2){top:32%}.book-left .book-line:nth-child(3),.book-right .book-line:nth-child(3){top:44%}.book-left .book-line:nth-child(4),.book-right .book-line:nth-child(4){top:56%}.book-left .book-line:nth-child(5),.book-right .book-line:nth-child(5){top:68%}
-.book-glow{position:absolute;left:50%;bottom:10%;width:18%;height:12%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,#0b65ff 0%,rgba(11,101,255,0) 70%);filter:blur(14px);opacity:.78}
-.portal-page{position:absolute;left:50%;bottom:34%;width:min(34vmin,340px);height:min(46vmin,430px);transform:translateX(-50%) scaleY(.02);transform-origin:bottom center;border-radius:28px;background:linear-gradient(180deg,#fff,#eaf3ff);border:1px solid rgba(35,71,183,.22);box-shadow:0 0 70px rgba(36,88,255,.28);opacity:0;will-change:transform,opacity}
-.portal-page::before{content:'';position:absolute;inset:10%;border-radius:22px;background:radial-gradient(circle,#8ec5ff 0%,rgba(142,197,255,0) 68%);opacity:.7}
-.floating-object{position:absolute;display:grid;place-items:center;width:clamp(78px,12vw,142px);aspect-ratio:1;border-radius:26px;background:rgba(255,255,255,.9);border:1px solid rgba(35,71,183,.16);box-shadow:0 24px 60px rgba(16,55,160,.16),0 0 28px rgba(80,155,255,.16);backdrop-filter:blur(12px);font-size:clamp(1.6rem,3.8vw,3rem);font-weight:900;color:#2458ff;will-change:transform,opacity;z-index:4}
-.object-phone{left:6%;top:17%}.object-youtube{right:8%;top:16%;color:#ff2c55}.object-notes{left:9%;bottom:15%;color:#1db97a}.object-teacher{right:10%;bottom:17%;color:#7c3aed}.object-papers{right:25%;bottom:7%;color:#c98540}
-.teacher-character{position:relative;width:min(34vmin,330px);height:min(48vmin,460px);margin:auto;opacity:0;will-change:transform,opacity;z-index:3}
-.teacher-head{position:absolute;left:50%;top:0;width:27%;aspect-ratio:1;border-radius:50%;transform:translateX(-50%);background:#f4c9a5;box-shadow:0 0 0 10px #122456}
-.teacher-body{position:absolute;left:50%;top:28%;width:58%;height:46%;transform:translateX(-50%);border-radius:42px 42px 20px 20px;background:linear-gradient(135deg,#2458ff,#10182f)}
-.teacher-board{position:absolute;left:6%;right:6%;bottom:0;height:33%;border-radius:18px;background:#fff;border:1px solid rgba(35,71,183,.22);box-shadow:0 14px 40px rgba(16,24,47,.12)}
-.teacher-board::before,.teacher-board::after{content:'';position:absolute;left:14%;right:14%;height:8px;border-radius:999px;background:rgba(35,71,183,.18)}.teacher-board::before{top:30%}.teacher-board::after{top:55%;right:34%}
-.cinema-word-line{display:flex;justify-content:center;align-items:center;gap:.34em;flex-wrap:wrap;text-align:center;max-width:980px;margin:auto;position:relative;z-index:3}
-.cinema-word{display:inline-block;font-size:clamp(3rem,9vw,8rem);font-weight:950;line-height:.98;letter-spacing:-.045em;color:#10182f;opacity:0;transform:translate3d(0,28px,0) scale(.96);will-change:transform,opacity}.cinema-word.blue{color:#075ef4}
-.teacher-copy{align-self:center;max-width:720px;z-index:4}.teacher-copy p{font-size:clamp(1.15rem,2.5vw,2rem);font-weight:850;line-height:1.34;margin:.42rem 0;color:#10182f;opacity:0;transform:translate3d(0,20px,0);will-change:transform,opacity}.teacher-copy strong{color:#075ef4}
-.next-panel{width:min(1100px,94vw);display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(1rem,4vw,3rem);align-items:center;position:relative;z-index:3;background:#fff;border:1px solid rgba(35,71,183,.14);border-radius:34px;padding:clamp(1.2rem,4vw,2.5rem);box-shadow:0 30px 80px rgba(16,55,160,.12);opacity:0;transform:translate3d(0,46px,0) scale(.97)}
-.next-graphic{height:clamp(250px,36vw,440px);border-radius:28px;background:linear-gradient(135deg,#eef6ff,#fff);position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(35,71,183,.1)}
-.next-graphic::before{content:'IdeaKDC';position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font-size:clamp(2.4rem,6vw,5rem);font-weight:950;color:#075ef4;text-shadow:0 18px 34px rgba(36,88,255,.2)}
-.next-graphic::after{content:'';position:absolute;left:18%;right:18%;bottom:22%;height:18%;border-radius:999px;background:radial-gradient(circle,#7ab7ff 0%,rgba(122,183,255,0) 68%);filter:blur(14px)}
-.next-copy h2{font-size:clamp(2rem,5vw,4rem);line-height:1.05;letter-spacing:-.035em;margin-bottom:.8rem;color:#10182f}.next-copy p{font-size:clamp(1rem,1.8vw,1.2rem);line-height:1.75;color:#4f4b55}
-@keyframes cinemaGlowDrift{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(34px,-24px,0) scale(1.08)}}
-.cinematic-hero.no-gsap .cinema-book{opacity:0;transform:translate3d(0,24px,0) scale(.82);transition:opacity .3s ease,transform .3s ease}
-.cinematic-hero.no-gsap.is-loaded .cinema-launch .cinema-book{opacity:1;transform:translate3d(0,0,0) scale(1)}
-.cinematic-hero.no-gsap .floating-object{opacity:0;transform:translate3d(var(--fly-x,0),var(--fly-y,120px),0) scale(.72);transition:opacity .3s ease,transform .3s cubic-bezier(.2,.85,.25,1.2);transition-delay:var(--fly-delay,0ms)}
-.cinematic-hero.no-gsap.is-loaded .cinema-launch.is-active .floating-object{opacity:1;transform:translate3d(0,0,0) scale(1)}
-.cinematic-hero.no-gsap .portal-page,.cinematic-hero.no-gsap .teacher-character,.cinematic-hero.no-gsap .cinema-word,.cinematic-hero.no-gsap .teacher-copy p,.cinematic-hero.no-gsap .next-panel{transition:opacity .32s ease,transform .32s cubic-bezier(.2,.85,.25,1.12);transition-delay:var(--stage-delay,0ms)}
-.cinematic-hero.no-gsap .cinema-panel.is-active .portal-page{opacity:1;transform:translateX(-50%) translateY(-12px) scaleY(1)}
-.cinematic-hero.no-gsap .cinema-panel.is-active .cinema-word,.cinematic-hero.no-gsap .cinema-panel.is-active .teacher-copy p,.cinematic-hero.no-gsap .cinema-panel.is-active .teacher-character{opacity:1;transform:translate3d(0,0,0) scale(1)}
-.cinematic-hero.no-gsap .cinema-panel.is-active .next-panel{opacity:1;transform:translate3d(0,0,0) scale(1)}
-@media (max-width:760px){.cinema-layout.two-col,.next-panel{grid-template-columns:1fr}.book-scene{height:58vh}.cinema-book{height:min(56vmin,420px)}.floating-object{width:68px;border-radius:18px}.object-phone{left:1%;top:17%}.object-youtube{right:1%;top:16%}.object-notes{left:3%;bottom:18%}.object-teacher{right:3%;bottom:18%}.object-papers{right:33%;bottom:5%}.teacher-copy{text-align:center}.teacher-copy p{font-size:clamp(1rem,5vw,1.45rem)}.teacher-character{width:min(48vmin,260px);height:min(66vmin,360px)}.cinema-word{font-size:clamp(2.7rem,17vw,5rem)}}
-@media (prefers-reduced-motion:reduce){.cinema-panel::before,.cinema-panel::after{animation:none}.floating-object,.teacher-character,.portal-page,.cinema-word,.teacher-copy p,.next-panel{will-change:auto}}
-
-/* ══════════════════════════════
-   HOME / HERO
-══════════════════════════════ */
-.home-shell{overflow:hidden;position:relative;isolation:isolate}
-.home-shell::before,.home-shell::after{content:'';position:absolute;border-radius:50%;filter:blur(8px);opacity:.22;pointer-events:none;z-index:-1;will-change:transform}
-.home-shell::before{width:420px;height:420px;background:radial-gradient(circle,#c98540 0%,rgba(201,133,64,0) 68%);left:-150px;top:260px;animation:premiumBlobFloat 18s ease-in-out infinite}
-.home-shell::after{width:520px;height:520px;background:radial-gradient(circle,#2347b7 0%,rgba(35,71,183,0) 70%);right:-210px;top:760px;animation:premiumBlobFloat 22s ease-in-out infinite reverse}
-.home-hero{max-width:1180px;margin:0 auto;padding:clamp(1.5rem,4vw,4.5rem) clamp(1rem,4vw,2rem) 1.5rem;display:grid;grid-template-columns:minmax(0,1.03fr) minmax(320px,.97fr);gap:clamp(1.2rem,4vw,3rem);align-items:center;position:relative}
-.home-hero::before{content:'';position:absolute;inset:1rem auto auto -8rem;width:260px;height:260px;border-radius:50%;background:rgba(201,133,64,.14);filter:blur(6px);pointer-events:none;animation:premiumGlowFloat 16s ease-in-out infinite;will-change:transform}
-.hero-copy{position:relative;z-index:1;min-width:0}
-.hero-kicker{display:inline-flex;align-items:center;gap:.45rem;background:#fff;border:1px solid var(--border);border-radius:999px;padding:.5rem .8rem;font-size:.72rem;font-weight:800;color:var(--accent-warm);text-transform:uppercase;letter-spacing:.04em;box-shadow:0 10px 25px rgba(27,22,35,.06);margin-bottom:1rem}
-.hero-title{font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:800;font-size:clamp(2rem,5.4vw,4.35rem);line-height:1.02;letter-spacing:0;color:var(--deep);max-width:680px;margin-bottom:1rem;overflow-wrap:anywhere}
-.hero-title span{color:var(--accent)}
-.hero-lead{font-size:clamp(.98rem,2vw,1.12rem);line-height:1.78;color:#4f4b55;max-width:630px;margin-bottom:1.35rem;overflow-wrap:anywhere}
-.hero-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.35rem}
-.hero-cta{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:.78rem 1.15rem;border-radius:999px;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:700;font-size:.92rem;line-height:1.1;letter-spacing:0;text-decoration:none;border:1.5px solid transparent;cursor:pointer;transition:transform .15s,box-shadow .15s,background .15s}
-.hero-cta.primary{background:var(--deep);color:#fff;box-shadow:0 18px 34px rgba(16,24,47,.22)}
-.hero-cta.secondary{background:#fff;color:var(--deep);border-color:var(--border)}
-.hero-cta:active{transform:scale(.98)}
-.hero-proof{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;max-width:620px}
-.proof-pill{background:rgba(255,255,255,.76);border:1px solid var(--border);border-radius:16px;padding:.75rem;box-shadow:0 10px 28px rgba(27,22,35,.06)}
-.proof-num{font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:800;color:var(--deep);font-size:1rem;letter-spacing:0}
-.proof-text{font-size:.74rem;color:var(--muted);line-height:1.5;margin-top:.15rem}
-.hero-showcase{position:relative;z-index:1;background:#fff;border:1px solid var(--border);border-radius:30px;padding:.75rem;box-shadow:0 28px 70px rgba(16,24,47,.16);min-width:0}
-.hero-showcase::after{content:'IdeaKDC Coaching Method';position:absolute;right:1.2rem;top:-.85rem;background:var(--accent-warm);color:#fff;border-radius:999px;padding:.45rem .75rem;font-size:.68rem;font-weight:800;letter-spacing:0;box-shadow:0 12px 24px rgba(201,133,64,.28)}
-.hero-art-frame{border-radius:24px;overflow:hidden;background:linear-gradient(135deg,#fff8ec,#e8eefc);margin-bottom:.75rem;border:1px solid rgba(234,223,206,.9);transform:translateZ(0)}
-.hero-art{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
-.hero-carousel{display:flex;overflow-x:scroll;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:24px;background:#fff}
-.hero-carousel::-webkit-scrollbar{display:none}
-.hero-slide{min-width:100%;padding:clamp(2rem,5vw,3.6rem) 1.4rem 2.6rem;text-align:center;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:390px}
-.slide-1{background:linear-gradient(150deg,#fff7ea,#f7e4d8 55%,#e8eefc)}
-.slide-2{background:linear-gradient(150deg,#eef7f1,#fffaf3 48%,#e8eefc)}
-.slide-3{background:linear-gradient(150deg,#f9eadb,#fff8ec 45%,#dce6ff)}
-.slide-emoji{font-size:3rem;margin-bottom:.7rem;animation:bounce 2s infinite}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.slide-heading{font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-size:clamp(1.75rem,4vw,2.55rem);font-weight:800;line-height:1.08;letter-spacing:0;color:var(--deep);margin-bottom:.75rem;overflow-wrap:anywhere}
-.slide-heading span{color:var(--accent)}
-.slide-sub{font-size:1rem;color:#4f4b55;line-height:1.75;margin-bottom:.9rem;max-width:420px}
-.slide-points{display:flex;flex-direction:column;gap:.6rem;margin:.4rem 0 .7rem;text-align:left}
-.slide-point{background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.8);border-radius:14px;padding:.75rem 1rem;font-size:.9rem;font-weight:800;color:var(--deep);box-shadow:0 10px 24px rgba(16,24,47,.08)}
-.slide-badge{background:var(--deep);color:#fff;padding:11px 20px;border-radius:999px;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:700;font-size:.9rem;letter-spacing:0;box-shadow:0 14px 28px rgba(16,24,47,.2)}
-.slide-badge span{color:#ffcc80}
-.carousel-dots{display:flex;justify-content:center;gap:8px;padding:1rem 0 .25rem}
-.dot{width:8px;height:8px;border-radius:99px;background:#d8cbb9;cursor:pointer;transition:all .3s}
-.dot.active{background:var(--accent);width:26px}
+.home-shell{overflow:hidden;position:relative}
 
 /* ══════════════════════════════
    HOME SECTIONS / COURSES
 ══════════════════════════════ */
-.trust-strip{max-width:1120px;margin:0 auto;padding:1.1rem clamp(1rem,4vw,2rem) 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem}
-.trust-item{background:rgba(255,255,255,.82);border:1px solid var(--border);border-radius:18px;padding:1rem;box-shadow:0 12px 32px rgba(27,22,35,.06)}
-.trust-item strong{display:block;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:800;font-size:1.05rem;color:var(--deep);margin-bottom:.2rem;letter-spacing:0}
-.trust-item span{font-size:.78rem;color:var(--muted);line-height:1.45}
-.benefit-section,.method-section,.story-section{max-width:1120px;margin:0 auto;padding:clamp(2rem,5vw,4rem) clamp(1rem,4vw,2rem) 0}
 .section-eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-warm);margin-bottom:.45rem}
 .section-title{font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-size:clamp(1.5rem,4vw,2.45rem);font-weight:800;line-height:1.12;letter-spacing:0;color:var(--deep);margin-bottom:1rem;overflow-wrap:anywhere}
 .section-intro{max-width:720px;color:#55505b;line-height:1.75;font-size:.96rem;margin-bottom:1.25rem}
-.benefit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
-.benefit-card,.method-card{background:#fff;border:1px solid var(--border);border-radius:22px;padding:1.25rem;box-shadow:var(--shadow);transition:transform 420ms cubic-bezier(.22,.72,.22,1),box-shadow 420ms cubic-bezier(.22,.72,.22,1),border-color 420ms ease}
-.benefit-card:hover,.method-card:hover,.course-card:hover{transform:translateY(-6px) scale(1.012);box-shadow:0 28px 70px rgba(16,24,47,.14);border-color:rgba(35,71,183,.38)}
-.benefit-card:active,.method-card:active,.course-card:active{transform:translateY(-2px) scale(.995)}
-.benefit-graphic{border-radius:18px;overflow:hidden;margin:-.25rem -.25rem 1rem;background:#f8fbff;border:1px solid rgba(35,71,183,.12);box-shadow:0 16px 36px rgba(16,24,47,.1)}
-.benefit-graphic img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
-.benefit-card h3{font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:800;color:var(--deep);font-size:1.03rem;margin-bottom:.45rem;letter-spacing:0}
-.benefit-card p{color:var(--muted);font-size:.86rem;line-height:1.65}
-.method-layout{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:1.2rem;align-items:center}
-.method-visual{border-radius:28px;overflow:hidden;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow)}
-.method-visual img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
-.method-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem}
-.method-card h3{font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:800;color:var(--deep);font-size:1rem;margin-bottom:.45rem}
-.method-card p{color:var(--muted);font-size:.84rem;line-height:1.65}
-.story-panel{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:1.2rem;align-items:stretch;background:var(--deep);color:#fff;border-radius:28px;padding:clamp(1.25rem,4vw,2.4rem);box-shadow:0 26px 70px rgba(16,24,47,.2)}
-.story-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:1rem}
-.story-badge strong{display:block;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:800;font-size:1.45rem;margin-bottom:.25rem;color:#fff8ec;letter-spacing:0}
-.story-badge span{font-size:.82rem;line-height:1.65;color:#ded8d0}
-.story-copy h2{font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:800;font-size:clamp(1.3rem,3vw,1.95rem);line-height:1.16;letter-spacing:0;margin-bottom:.75rem;color:#fff}
-.story-copy p{font-size:.93rem;line-height:1.75;color:#eee5dc}
 .courses-section{max-width:1120px;margin:0 auto;padding:clamp(2rem,5vw,4rem) clamp(1rem,4vw,2rem)}
 .courses-head{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin-bottom:1rem}
 .courses-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
@@ -232,6 +116,8 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .dashboard-actions{display:flex;gap:.55rem;flex-wrap:wrap;margin:.85rem 0 1rem}
 
 .course-card{background:#fff;border:1px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:var(--shadow);transition:transform 420ms cubic-bezier(.22,.72,.22,1),box-shadow 420ms cubic-bezier(.22,.72,.22,1),border-color 420ms ease}
+.course-card:hover{transform:translateY(-6px) scale(1.012);box-shadow:0 28px 70px rgba(16,24,47,.14);border-color:rgba(35,71,183,.38)}
+.course-card:active{transform:translateY(-2px) scale(.995)}
 .course-thumb{height:auto;display:grid;place-items:center;font-size:3.2rem;position:relative}
 .course-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(16,24,47,.1));pointer-events:none}
 .course-body{padding:1.25rem}
@@ -262,41 +148,12 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .btn-enroll{width:100%;background:var(--deep);color:#fff;border:none;padding:13px 16px;border-radius:999px;font-size:.94rem;font-weight:700;cursor:pointer;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;letter-spacing:0;transition:all .15s;display:block;box-shadow:0 14px 26px rgba(16,24,47,.2)}
 .btn-enroll:active{transform:scale(.98);background:#2347b7}
 
-.home-footer{background:#100f18;color:#f7efe6;padding:2rem clamp(1rem,4vw,2rem);margin-top:1rem}
-.home-footer-inner{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:1.2rem;align-items:center}
-.home-footer .footer-brand{font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-size:1.55rem;margin-bottom:.35rem}
-.home-footer p{color:#d8d0c7;font-size:.86rem;line-height:1.7;max-width:620px}
-.footer-links{display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap}
-.footer-links a{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:.55rem .85rem;font-size:.78rem;font-weight:800}
 
 /* User-supplied landing page host. Its design is isolated in Shadow DOM. */
 .uploaded-landing-host{display:block;min-height:100svh;background:#faf6ee;color:#1d1b16;contain:layout style paint}
 .uploaded-landing-loading,.uploaded-landing-error{min-height:70svh;display:grid;place-items:center;padding:2rem;text-align:center;font-size:.9rem;font-weight:700;color:#6d6656}
 .uploaded-landing-error{color:#7a2320}
 
-.hero-kicker,.hero-title,.hero-lead,.hero-actions,.hero-proof,.hero-showcase,.hero-art-frame{
-  animation:homeHeroFadeUp 900ms cubic-bezier(.16,.84,.24,1) both;
-  will-change:transform,opacity;
-}
-.hero-kicker{animation-delay:80ms}
-.hero-title{animation-delay:180ms}
-.hero-lead{animation-delay:300ms}
-.hero-actions{animation-delay:420ms}
-.hero-proof{animation-delay:540ms}
-.hero-showcase{animation-delay:320ms}
-.hero-art-frame{animation-delay:420ms}
-@keyframes homeHeroFadeUp{
-  from{opacity:0;transform:translate3d(0,24px,0) scale(.985)}
-  to{opacity:1;transform:translate3d(0,0,0) scale(1)}
-}
-@keyframes premiumGlowFloat{
-  0%,100%{transform:translate3d(0,0,0) scale(1)}
-  50%{transform:translate3d(34px,22px,0) scale(1.08)}
-}
-@keyframes premiumBlobFloat{
-  0%,100%{transform:translate3d(0,0,0) scale(1)}
-  50%{transform:translate3d(42px,-36px,0) scale(1.12)}
-}
 .reveal-ready{
   opacity:0;
   transform:translate3d(0,28px,0) scale(.985);
@@ -311,9 +168,6 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto}
-  .home-shell::before,.home-shell::after,.home-hero::before,.hero-kicker,.hero-title,.hero-lead,.hero-actions,.hero-proof,.hero-showcase,.hero-art-frame{
-    animation:none;
-  }
   .reveal-ready{
     opacity:1;
     transform:none;
@@ -325,14 +179,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 }
 
 @media (max-width: 860px){
-  .home-hero{grid-template-columns:1fr;padding-top:1.2rem}
-  .hero-title{font-size:clamp(1.9rem,8.4vw,3rem);line-height:1.08}
-  .hero-showcase{border-radius:24px}
-  .hero-slide{min-height:330px}
-  .trust-strip,.benefit-grid,.method-layout,.method-grid,.story-panel,.home-footer-inner{grid-template-columns:1fr}
-  .hero-proof{grid-template-columns:1fr}
   .courses-head{display:block}
-  .footer-links{justify-content:flex-start}
 }
 
 @media (max-width: 520px){
@@ -341,19 +188,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   .logo-slogan{margin-top:4px;font-size:.5rem}
   .nav-right{gap:.18rem;min-width:0}
   .btn-nav{font-size:.58rem;padding:6px 6px}
-  .home-hero{padding-left:.9rem;padding-right:.9rem}
-  .hero-actions{flex-direction:column}
-  .hero-cta{width:100%}
-  .hero-copy{text-align:left}
-  .hero-kicker{font-size:.62rem;letter-spacing:.02em;max-width:100%;white-space:normal}
-  .hero-title{font-size:clamp(1.82rem,8vw,2.55rem)}
-  .hero-lead{font-size:.96rem;line-height:1.7}
-  .slide-heading{font-size:clamp(1.55rem,7vw,2.05rem)}
-  .slide-badge{border-radius:18px;line-height:1.4}
-  .hero-proof{gap:.5rem}
-  .trust-strip,.benefit-section,.method-section,.story-section,.courses-section{padding-left:.9rem;padding-right:.9rem}
-  .trust-item,.benefit-card,.method-card{border-radius:18px}
-  .story-panel{border-radius:22px}
+  .courses-section{padding-left:.9rem;padding-right:.9rem}
   .courses-grid{grid-template-columns:1fr}
 }
 
@@ -810,223 +645,6 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
       <div class="uploaded-landing-loading" role="status">IdeaKDC experience loading...</div>
     </section>
 
-    <section class="cinematic-hero" aria-label="IdeaKDC cinematic transformation hero" hidden>
-      <section class="cinema-panel cinema-launch" data-stage="launch">
-        <div class="book-scene">
-          <div class="cinema-book" aria-hidden="true">
-            <div class="book-left">
-              <span class="book-line"></span><span class="book-line"></span><span class="book-line"></span><span class="book-line"></span><span class="book-line"></span>
-            </div>
-            <div class="book-right">
-              <span class="book-line"></span><span class="book-line"></span><span class="book-line"></span><span class="book-line"></span><span class="book-line"></span>
-            </div>
-            <div class="book-glow"></div>
-          </div>
-          <div class="floating-object object-phone" data-fly="left" aria-label="Smartphone study app">📱</div>
-          <div class="floating-object object-youtube" data-fly="right" aria-label="YouTube lecture screen">▶</div>
-          <div class="floating-object object-notes" data-fly="bottom" aria-label="Notes pages">📝</div>
-          <div class="floating-object object-teacher" data-fly="right-bottom" aria-label="Online teacher">👩‍🏫</div>
-          <div class="floating-object object-papers" data-fly="top" aria-label="Question papers">📄</div>
-        </div>
-      </section>
-
-      <section class="cinema-panel cinema-portal" data-stage="portal">
-        <div class="book-scene">
-          <div class="cinema-book" aria-hidden="true">
-            <div class="book-left">
-              <span class="book-line"></span><span class="book-line"></span><span class="book-line"></span><span class="book-line"></span><span class="book-line"></span>
-            </div>
-            <div class="book-right">
-              <span class="book-line"></span><span class="book-line"></span><span class="book-line"></span><span class="book-line"></span><span class="book-line"></span>
-            </div>
-            <div class="book-glow"></div>
-          </div>
-          <div class="portal-page" aria-hidden="true"></div>
-        </div>
-      </section>
-
-      <section class="cinema-panel cinema-question-panel" data-stage="question">
-        <div class="cinema-word-line" aria-label="Are you worried about exams?">
-          <span class="cinema-word">Are</span>
-          <span class="cinema-word">you</span>
-          <span class="cinema-word blue">worried</span>
-          <span class="cinema-word">about</span>
-          <span class="cinema-word blue">exams?</span>
-        </div>
-      </section>
-
-      <section class="cinema-panel cinema-forget-panel" data-stage="forget">
-        <div class="cinema-word-line" aria-label="You study and forget">
-          <span class="cinema-word">You</span>
-          <span class="cinema-word blue">study…</span>
-          <span class="cinema-word">and</span>
-          <span class="cinema-word blue">forget.</span>
-        </div>
-      </section>
-
-      <section class="cinema-panel cinema-teacher-panel" data-stage="teacher">
-        <div class="cinema-layout two-col">
-          <div class="teacher-copy">
-            <p>We use <strong>advanced technology-based</strong> teaching</p>
-            <p>To help you <strong>remember</strong> better</p>
-            <p>To make you feel <strong>confident</strong></p>
-            <p>To help you crack <strong>Board Exams, JEE, NEET</strong> and more.</p>
-          </div>
-          <div class="teacher-character" aria-label="Teacher character">
-            <div class="teacher-head"></div>
-            <div class="teacher-body"></div>
-            <div class="teacher-board"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="cinema-panel cinema-next-panel" data-stage="next">
-        <div class="next-panel">
-          <div class="next-graphic"></div>
-          <div class="next-copy">
-            <div class="section-eyebrow">Next Section</div>
-            <h2>A smarter academic path starts here.</h2>
-            <p>Concept clarity, guided practice, and structured revision come together so students can move from confusion to confidence.</p>
-          </div>
-        </div>
-      </section>
-    </section>
-
-    <section class="home-hero" hidden>
-      <div class="hero-copy">
-        <div class="hero-kicker">Academic coaching for clear thinking</div>
-        <h1 class="hero-title">Learn with clarity, practice, and <span>confidence.</span></h1>
-        <p class="hero-lead">IdeaKDC helps students move beyond passive video watching with concept-first teaching, daily practice, guided revision, doubt support, and a clear exam-oriented learning path.</p>
-        <div class="hero-actions">
-          <a class="hero-cta primary" href="#courses">Explore Courses</a>
-          <button class="hero-cta secondary" onclick="startConvoReg(null)">New Student</button>
-        </div>
-        <div class="hero-proof">
-          <div class="proof-pill">
-            <div class="proof-num">Practice-led</div>
-            <div class="proof-text">Students apply concepts immediately so learning stays active.</div>
-          </div>
-          <div class="proof-pill">
-            <div class="proof-num">Revision Ready</div>
-            <div class="proof-text">Clear checkpoints help students revisit weak topics before exams.</div>
-          </div>
-          <div class="proof-pill">
-            <div class="proof-num">Progress Focus</div>
-            <div class="proof-text">A structured path keeps students moving lesson by lesson.</div>
-          </div>
-        </div>
-      </div>
-      <div class="hero-showcase">
-        <div class="hero-art-frame">
-          <img class="hero-art" src="assets/ideakdc-education-visual.svg" width="3840" height="2160" loading="lazy" decoding="async" alt="IdeaKDC guided learning dashboard illustration">
-        </div>
-        <div class="hero-carousel" id="hero-carousel">
-          <div class="hero-slide slide-1">
-            <div class="slide-emoji">😴</div>
-            <h2 class="slide-heading">YouTube से सिर्फ<br>lecture देख कर<br><span>क्या फ़ायदा?</span></h2>
-            <p class="slide-sub">अगर भूल गए तो सब बेकार।<br>यहाँ से पढ़ो — <strong>इस तरीके से।</strong></p>
-          </div>
-          <div class="hero-slide slide-2">
-            <div class="slide-emoji">🧠</div>
-            <h2 class="slide-heading">समझ तो<br><span>आएगा ही</span></h2>
-            <div class="slide-points">
-              <div class="slide-point">✅ याद भी रहेगा</div>
-              <div class="slide-point">⚡ Lesson के बीच में ही Practice होगी</div>
-            </div>
-          </div>
-          <div class="hero-slide slide-3">
-            <div class="slide-emoji">🚀</div>
-            <h2 class="slide-heading">सिर्फ YouTube<br>lecture नहीं है…</h2>
-            <p class="slide-sub">यह <strong>अलग ही चीज़ है।</strong></p>
-            <div class="slide-badge">💡 आपकी <span>'Thinking Skills'</span> बढ़ाएगा</div>
-          </div>
-        </div>
-        <div class="carousel-dots">
-          <span class="dot active" onclick="goToSlide(0)"></span>
-          <span class="dot" onclick="goToSlide(1)"></span>
-          <span class="dot" onclick="goToSlide(2)"></span>
-        </div>
-      </div>
-    </section>
-
-    <section class="trust-strip" aria-label="IdeaKDC trust points" hidden>
-      <div class="trust-item"><strong>Guided Study</strong><span>Every course is arranged as a clear path from concept building to exam practice.</span></div>
-      <div class="trust-item"><strong>Practice Focus</strong><span>Students learn, revise, and solve questions so concepts stay longer in memory.</span></div>
-      <div class="trust-item"><strong>Doubt Support</strong><span>Support is available for course access, login, payments, and learning roadblocks.</span></div>
-      <div class="trust-item"><strong>Progress Mindset</strong><span>The experience encourages daily consistency, revision discipline, and confident preparation.</span></div>
-    </section>
-
-    <section class="benefit-section" hidden>
-      <div class="section-eyebrow">Why students choose IdeaKDC</div>
-      <h2 class="section-title">A calm, focused way to understand, practice, revise, and remember.</h2>
-      <p class="section-intro">IdeaKDC is designed for students who want more than lectures. The learning flow explains concepts clearly, gives practice at the right time, supports revision, and keeps preparation aligned with exams.</p>
-      <div class="benefit-grid">
-        <div class="benefit-card">
-          <div class="benefit-graphic">
-            <img src="assets/benefit-concept-clarity.png" width="1536" height="1024" loading="lazy" decoding="async" alt="Concept Clarity learning graphic">
-          </div>
-          <h3>Concept Clarity</h3>
-          <p>Topics are taught step by step so students understand the reason behind each idea instead of only memorising answers.</p>
-        </div>
-        <div class="benefit-card">
-          <div class="benefit-graphic">
-            <img src="assets/benefit-daily-practice.png" width="1536" height="1024" loading="lazy" decoding="async" alt="Daily Practice learning graphic">
-          </div>
-          <h3>Daily Practice</h3>
-          <p>Practice-first learning helps students check understanding immediately and build confidence through repeated application.</p>
-        </div>
-        <div class="benefit-card">
-          <div class="benefit-graphic">
-            <img src="assets/benefit-guided-revision.png" width="1536" height="1024" loading="lazy" decoding="async" alt="Guided Revision learning graphic">
-          </div>
-          <h3>Guided Revision</h3>
-          <p>Revision points and course structure make it easier to return to weak chapters before tests and final exams.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="method-section" hidden>
-      <div class="section-eyebrow">The IdeaKDC method</div>
-      <h2 class="section-title">A complete learning path from first explanation to exam readiness.</h2>
-      <p class="section-intro">Students remember concepts longer when learning is connected: explanation, practice, correction, revision, doubt solving, and progress tracking all work together.</p>
-      <div class="method-layout">
-        <div class="method-visual">
-          <img src="assets/ideakdc-education-visual.svg" width="3840" height="2160" loading="lazy" decoding="async" alt="IdeaKDC practice and revision learning system">
-        </div>
-        <div class="method-grid">
-          <div class="method-card">
-            <h3>Teach the concept</h3>
-            <p>Each topic starts with clear explanation so students know what they are learning and why it matters.</p>
-          </div>
-          <div class="method-card">
-            <h3>Practice immediately</h3>
-            <p>Students solve questions while the concept is fresh, turning passive watching into active learning.</p>
-          </div>
-          <div class="method-card">
-            <h3>Revise with purpose</h3>
-            <p>Guided revision helps students revisit important points and strengthen weak areas before exams.</p>
-          </div>
-          <div class="method-card">
-            <h3>Track the journey</h3>
-            <p>A clear course path helps students and parents see what has been covered and what comes next.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="story-section" hidden>
-      <div class="story-panel">
-        <div class="story-badge">
-          <strong>Creating Thoughtful Minds</strong>
-          <span>IdeaKDC keeps the focus on quality education, timely support, and a guided learning experience that helps students think clearly.</span>
-        </div>
-        <div class="story-copy">
-          <h2>From watching lectures to actually remembering lessons.</h2>
-          <p>Students need more than content. They need a method, a clear next step, regular practice, exam-oriented preparation, and confidence that doubts can be solved before they become fear.</p>
-        </div>
-      </div>
-    </section>
-
     <div class="courses-section" id="courses">
       <div class="courses-head">
         <div>
@@ -1038,20 +656,6 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
       <div class="courses-grid" id="courses-grid"></div>
     </div>
 
-    <footer class="home-footer">
-      <div class="home-footer-inner">
-        <div>
-          <div class="footer-brand logo-word" aria-label="ideaKDC">
-            <span class="logo-idea">idea</span><span class="logo-kdc">KDC</span>
-          </div>
-          <p>Quality education, thoughtful learning, and student support for course enrollment, fee payment, login issues, and course access.</p>
-        </div>
-        <div class="footer-links">
-          <a href="contact.html">Contact Us</a>
-          <a href="terms.html">Terms</a>
-        </div>
-      </div>
-    </footer>
   </div>
 </div>
 
@@ -1216,147 +820,6 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 <!-- ════════════════
      FIREBASE
 ════════════════ -->
-<script>
-(function initCinematicHeroEarly(){
-  const hero = document.querySelector('.cinematic-hero:not([hidden])');
-  if (!hero || window.__ideakdcCinematicStarted) return;
-
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const gsapLib = window.gsap;
-  const scrollTrigger = window.ScrollTrigger;
-  const flyFrom = {
-    left: { x: -220, y: 30 },
-    right: { x: 220, y: 20 },
-    top: { x: 0, y: -180 },
-    bottom: { x: 0, y: 180 },
-    'right-bottom': { x: 220, y: 160 }
-  };
-
-  function showReducedMotionState() {
-    hero.querySelectorAll('.floating-object,.portal-page,.teacher-character,.cinema-word,.teacher-copy p,.next-panel')
-      .forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
-  }
-
-  function runFallbackHero() {
-    hero.classList.add('no-gsap');
-    const launchObjects = [...hero.querySelectorAll('.cinema-launch .floating-object')];
-    launchObjects.forEach((object, index) => {
-      const point = flyFrom[object.dataset.fly] || { x: 0, y: 140 };
-      object.style.setProperty('--fly-x', `${point.x}px`);
-      object.style.setProperty('--fly-y', `${point.y}px`);
-      object.style.setProperty('--fly-delay', `${300 + index * 160}ms`);
-    });
-    hero.querySelectorAll('.cinema-word,.teacher-copy p').forEach((el, index) => {
-      el.style.setProperty('--stage-delay', `${(index % 5) * 130}ms`);
-    });
-
-    requestAnimationFrame(() => hero.classList.add('is-loaded'));
-    if (!('IntersectionObserver' in window)) {
-      hero.querySelectorAll('.cinema-panel').forEach(panel => panel.classList.add('is-active'));
-      return;
-    }
-
-    const fallbackObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => entry.target.classList.toggle('is-active', entry.isIntersecting));
-    }, { threshold: .58 });
-    hero.querySelectorAll('.cinema-panel').forEach(panel => fallbackObserver.observe(panel));
-  }
-
-  function runGsapHero() {
-    window.__ideakdcCinematicStarted = true;
-    gsapLib.registerPlugin(scrollTrigger);
-    const launchPanel = hero.querySelector('.cinema-launch');
-    const launchObjects = gsapLib.utils.toArray('.cinema-launch .floating-object');
-    const launchBook = hero.querySelector('.cinema-launch .cinema-book');
-
-    // GSAP animation stage 0: the oversized book lands first in 0.3 seconds.
-    gsapLib.fromTo(launchBook, { autoAlpha: 0, scale: .82, y: 24 }, {
-      autoAlpha: 1,
-      scale: 1,
-      y: 0,
-      duration: .3,
-      ease: 'power2.out'
-    });
-
-    // GSAP animation stage 1: learning objects fly around the book one by one.
-    const loadTl = gsapLib.timeline({ defaults: { duration: .3, ease: 'back.out(1.15)' }, delay: .3 });
-    gsapLib.set(launchObjects, { autoAlpha: 0, scale: .72 });
-    launchObjects.forEach((object, index) => {
-      loadTl.fromTo(object, flyFrom[object.dataset.fly] || { x: 0, y: 140 }, {
-        x: 0,
-        y: 0,
-        autoAlpha: 1,
-        scale: 1,
-        filter: 'drop-shadow(0 0 18px rgba(36,88,255,.28))'
-      }, index * .16);
-    });
-
-    // GSAP animation stage 2: first scroll returns every floating item into the book.
-    gsapLib.timeline({
-      defaults: { duration: .3, ease: 'power2.inOut' },
-      scrollTrigger: { trigger: launchPanel, start: 'top top', end: '+=100%', pin: true, scrub: .35, anticipatePin: 1 }
-    }).to(launchObjects, {
-      autoAlpha: 0,
-      scale: .18,
-      x: (i, el) => el.classList.contains('object-youtube') || el.classList.contains('object-teacher') ? -260 : 260,
-      y: (i, el) => el.classList.contains('object-papers') ? 300 : 120,
-      stagger: .025
-    });
-
-    // GSAP animation stage 3: the book page opens upward as a portal, with no text.
-    gsapLib.timeline({
-      defaults: { duration: .3, ease: 'power2.out' },
-      scrollTrigger: { trigger: '.cinema-portal', start: 'top top', end: '+=100%', pin: true, scrub: .3, anticipatePin: 1 }
-    }).fromTo('.cinema-portal .portal-page', { autoAlpha: 0, scaleY: .02, y: 40 }, {
-      autoAlpha: 1,
-      scaleY: 1,
-      y: -12
-    });
-
-    // GSAP animation stage 4: exam anxiety text appears word by word.
-    gsapLib.timeline({
-      defaults: { duration: .22, ease: 'power2.out' },
-      scrollTrigger: { trigger: '.cinema-question-panel', start: 'top top', end: '+=100%', pin: true, scrub: .35, anticipatePin: 1 }
-    }).to('.cinema-question-panel .cinema-word', { autoAlpha: 1, y: 0, scale: 1, stagger: .12 });
-
-    // GSAP animation stage 5: forgetfulness text appears word by word.
-    gsapLib.timeline({
-      defaults: { duration: .22, ease: 'power2.out' },
-      scrollTrigger: { trigger: '.cinema-forget-panel', start: 'top top', end: '+=100%', pin: true, scrub: .35, anticipatePin: 1 }
-    }).to('.cinema-forget-panel .cinema-word', { autoAlpha: 1, y: 0, scale: 1, stagger: .13 });
-
-    // GSAP animation stage 6: teacher and teaching lines appear in separate columns.
-    gsapLib.timeline({
-      defaults: { duration: .28, ease: 'power2.out' },
-      scrollTrigger: { trigger: '.cinema-teacher-panel', start: 'top top', end: '+=100%', pin: true, scrub: .35, anticipatePin: 1 }
-    }).to('.cinema-teacher-panel .teacher-character', { autoAlpha: 1, y: 0, scale: 1 })
-      .to('.cinema-teacher-panel .teacher-copy p', { autoAlpha: 1, y: 0, stagger: .13 }, .12);
-
-    // GSAP animation stage 7: the next section pops in with graphic first, then copy.
-    gsapLib.timeline({
-      defaults: { duration: .32, ease: 'back.out(1.25)' },
-      scrollTrigger: { trigger: '.cinema-next-panel', start: 'top top', end: '+=100%', pin: true, scrub: .35, anticipatePin: 1 }
-    }).to('.cinema-next-panel .next-panel', { autoAlpha: 1, y: 0, scale: 1 })
-      .fromTo('.cinema-next-panel .next-graphic', { y: 30, scale: .9 }, { y: 0, scale: 1 }, 0)
-      .fromTo('.cinema-next-panel .next-copy', { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0 }, .18);
-
-    scrollTrigger.refresh();
-  }
-
-  if (reduceMotion) {
-    window.__ideakdcCinematicStarted = true;
-    showReducedMotionState();
-    return;
-  }
-
-  if (gsapLib && scrollTrigger) {
-    runGsapHero();
-  } else {
-    window.__ideakdcCinematicStarted = true;
-    runFallbackHero();
-  }
-})();
-</script>
 <script>
 (async function initUploadedLandingPage(){
   const host = document.getElementById('uploaded-landing-host');
@@ -1995,7 +1458,7 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 let revealObserver = null;
 
 function observeRevealTargets(root = document) {
-  const targets = root.querySelectorAll('.trust-item,.benefit-card,.method-visual,.method-card,.story-panel,.course-card,.home-footer');
+  const targets = root.querySelectorAll('.course-card');
   targets.forEach((el, index) => {
     if (el.dataset.revealBound) return;
     el.dataset.revealBound = 'true';
@@ -2021,150 +1484,6 @@ function initHomepageMotion() {
 }
 initHomepageMotion();
 
-function initCinematicHero() {
-  const hero = document.querySelector('.cinematic-hero:not([hidden])');
-  if (!hero) return;
-  if (window.__ideakdcCinematicStarted) return;
-
-  const gsapLib = window.gsap;
-  const scrollTrigger = window.ScrollTrigger;
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  if (!gsapLib || !scrollTrigger || reduceMotion) {
-    hero.querySelectorAll('.floating-object,.portal-page,.teacher-character,.cinema-word,.teacher-copy p,.next-panel')
-      .forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
-    return;
-  }
-
-  gsapLib.registerPlugin(scrollTrigger);
-
-  const launchPanel = hero.querySelector('.cinema-launch');
-  const launchObjects = gsapLib.utils.toArray('.cinema-launch .floating-object');
-  const launchBook = hero.querySelector('.cinema-launch .cinema-book');
-  const flyFrom = {
-    left: { x: -220, y: 30 },
-    right: { x: 220, y: 20 },
-    top: { x: 0, y: -180 },
-    bottom: { x: 0, y: 180 },
-    'right-bottom': { x: 220, y: 160 }
-  };
-
-  // Stage 0: initial page load. The large book appears first in 0.3s.
-  gsapLib.fromTo(launchBook, { autoAlpha: 0, scale: .82, y: 24 }, {
-    autoAlpha: 1,
-    scale: 1,
-    y: 0,
-    duration: .3,
-    ease: 'power2.out'
-  });
-
-  // Stage 1: smartphone, YouTube, notes, teacher video, and papers fly in one by one.
-  const loadTl = gsapLib.timeline({ defaults: { duration: .3, ease: 'back.out(1.15)' }, delay: .3 });
-  gsapLib.set(launchObjects, { autoAlpha: 0, scale: .72 });
-  launchObjects.forEach((object, index) => {
-    loadTl.fromTo(object, flyFrom[object.dataset.fly] || { x: 0, y: 140 }, {
-      x: 0,
-      y: 0,
-      autoAlpha: 1,
-      scale: 1,
-      filter: 'drop-shadow(0 0 18px rgba(36,88,255,.28))'
-    }, index * .16);
-  });
-
-  // Stage 2 / Scroll 1: all flying items return into the book in 0.3s.
-  gsapLib.timeline({
-    defaults: { duration: .3, ease: 'power2.inOut' },
-    scrollTrigger: {
-      trigger: launchPanel,
-      start: 'top top',
-      end: '+=100%',
-      pin: true,
-      scrub: .35,
-      anticipatePin: 1
-    }
-  }).to(launchObjects, {
-    autoAlpha: 0,
-    scale: .18,
-    x: (i, el) => el.classList.contains('object-youtube') || el.classList.contains('object-teacher') ? -260 : 260,
-    y: (i, el) => el.classList.contains('object-papers') ? 300 : 120,
-    stagger: .025
-  });
-
-  // Stage 3 / Scroll 2: book page opens upward as a bright portal. No text in this section.
-  gsapLib.timeline({
-    defaults: { duration: .3, ease: 'power2.out' },
-    scrollTrigger: {
-      trigger: '.cinema-portal',
-      start: 'top top',
-      end: '+=100%',
-      pin: true,
-      scrub: .3,
-      anticipatePin: 1
-    }
-  }).fromTo('.cinema-portal .portal-page', { autoAlpha: 0, scaleY: .02, y: 40 }, {
-    autoAlpha: 1,
-    scaleY: 1,
-    y: -12
-  });
-
-  // Stage 4 / Scroll 3: exam anxiety text appears word by word.
-  gsapLib.timeline({
-    defaults: { duration: .22, ease: 'power2.out' },
-    scrollTrigger: {
-      trigger: '.cinema-question-panel',
-      start: 'top top',
-      end: '+=100%',
-      pin: true,
-      scrub: .35,
-      anticipatePin: 1
-    }
-  }).to('.cinema-question-panel .cinema-word', { autoAlpha: 1, y: 0, scale: 1, stagger: .12 });
-
-  // Stage 5 / Scroll 4: forgetfulness text appears word by word with stronger emotional typography.
-  gsapLib.timeline({
-    defaults: { duration: .22, ease: 'power2.out' },
-    scrollTrigger: {
-      trigger: '.cinema-forget-panel',
-      start: 'top top',
-      end: '+=100%',
-      pin: true,
-      scrub: .35,
-      anticipatePin: 1
-    }
-  }).to('.cinema-forget-panel .cinema-word', { autoAlpha: 1, y: 0, scale: 1, stagger: .13 });
-
-  // Stage 6 / Scroll 5: teacher appears separately from the copy; text comes line by line.
-  gsapLib.timeline({
-    defaults: { duration: .28, ease: 'power2.out' },
-    scrollTrigger: {
-      trigger: '.cinema-teacher-panel',
-      start: 'top top',
-      end: '+=100%',
-      pin: true,
-      scrub: .35,
-      anticipatePin: 1
-    }
-  }).to('.cinema-teacher-panel .teacher-character', { autoAlpha: 1, y: 0, scale: 1 })
-    .to('.cinema-teacher-panel .teacher-copy p', { autoAlpha: 1, y: 0, stagger: .13 }, .12);
-
-  // Stage 7 / Scroll 6: previous story drops down; next section pops in with a jumpy smooth effect.
-  gsapLib.timeline({
-    defaults: { duration: .32, ease: 'back.out(1.25)' },
-    scrollTrigger: {
-      trigger: '.cinema-next-panel',
-      start: 'top top',
-      end: '+=100%',
-      pin: true,
-      scrub: .35,
-      anticipatePin: 1
-    }
-  }).to('.cinema-next-panel .next-panel', { autoAlpha: 1, y: 0, scale: 1 })
-    .fromTo('.cinema-next-panel .next-graphic', { y: 30, scale: .9 }, { y: 0, scale: 1 }, 0)
-    .fromTo('.cinema-next-panel .next-copy', { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0 }, .18);
-
-  scrollTrigger.refresh();
-}
-initCinematicHero();
 
 // ════════════════════════════════════════
 // LOAD COURSES — reads from 'content' collection
@@ -5989,27 +5308,6 @@ window.searchOpen = async (courseId, idx) => {
   const course = resolveCourseById(courseId);
   await window.openCourse(courseId, { lessonId: course?.videos?.[idx]?.contentId || '' });
 };
-
-// ════════════════════════════════════════
-// CAROUSEL
-// ════════════════════════════════════════
-let currentSlide = 0;
-window.goToSlide = (n) => {
-  const c = document.getElementById('hero-carousel');
-  if (!c) return;
-  currentSlide = n;
-  c.scrollTo({ left: n * c.clientWidth, behavior:'smooth' });
-  document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===n));
-};
-setInterval(() => { currentSlide = (currentSlide+1)%3; window.goToSlide(currentSlide); }, 3500);
-setTimeout(() => {
-  const c = document.getElementById('hero-carousel');
-  if (c) c.addEventListener('scroll', () => {
-    const idx = Math.round(c.scrollLeft / c.clientWidth);
-    document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===idx));
-    currentSlide = idx;
-  });
-}, 800);
 
 // ════════════════════════════════════════
 // HELPERS

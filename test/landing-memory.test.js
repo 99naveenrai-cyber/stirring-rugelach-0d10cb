@@ -35,12 +35,10 @@ test('uploaded landing animations are scoped to the isolated content', () => {
   assert.match(indexSource, /page-home.*classList\.contains\('active'\)/);
 });
 
-test('existing legacy cinematic sections remain disabled', () => {
-  assert.match(indexSource, /class="cinematic-hero"[^>]* hidden/);
-  assert.match(indexSource, /class="home-hero"[^>]* hidden/);
-  assert.match(indexSource, /class="trust-strip"[^>]* hidden/);
-  assert.match(indexSource, /class="benefit-section"[^>]* hidden/);
-  assert.match(indexSource, /class="method-section"[^>]* hidden/);
-  assert.match(indexSource, /class="story-section"[^>]* hidden/);
-  assert.doesNotMatch(indexSource, /cdn\.jsdelivr\.net\/npm\/gsap/);
+test('homepage contains only the supplied landing and course list', () => {
+  const homePage = indexSource.match(/<div class="page active" id="page-home">([\s\S]*?)<!--[^]*?PAGE: ALL COURSES CATALOGUE/)?.[1] || '';
+  assert.match(homePage, /id="uploaded-landing-host"[\s\S]*?id="courses"/);
+  assert.doesNotMatch(homePage, /cinematic-hero|home-hero|trust-strip|benefit-section|method-section|story-section|home-footer/);
+  assert.doesNotMatch(indexSource, /initCinematicHero|goToSlide|hero-carousel/);
+  assert.doesNotMatch(indexSource, /assets\/(?:ideakdc-education-visual|benefit-concept-clarity|benefit-daily-practice|benefit-guided-revision)/);
 });
