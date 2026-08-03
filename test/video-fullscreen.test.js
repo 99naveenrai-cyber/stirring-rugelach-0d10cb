@@ -37,6 +37,12 @@ test("landscape Separate Quiz can fullscreen the complete split workspace", () =
   assert.match(source, /button\.textContent = active \? '✕ Exit full page' : '⛶ Full page'/);
 });
 
+test("fullscreen quiz playback hides distracting exit controls", () => {
+  assert.match(source, /\.lesson-player-stage:fullscreen \.player-fullscreen-btn[^}]*\{display:none!important\}/);
+  assert.match(source, /\.separate-quiz-workspace:fullscreen \.separate-quiz-fullscreen-btn[^}]*\{display:none!important\}/);
+  assert.match(source, /\.separate-quiz-workspace:fullscreen \.player-fullscreen-btn[^}]*\{display:none!important\}/);
+});
+
 test("quiz confetti is mounted inside the active fullscreen tree", () => {
   assert.match(source, /const fullscreenHost = lessonFullscreenElement\(\)/);
   assert.match(source, /const layerHost = fullscreenHost\?\.appendChild \? fullscreenHost : document\.body/);
