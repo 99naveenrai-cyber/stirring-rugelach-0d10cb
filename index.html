@@ -604,14 +604,14 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .auth-toggle a{color:var(--accent);cursor:pointer;font-weight:600}
 /* Student Finance Support */
 .referral-page{width:min(100%,980px);margin:0 auto;padding:clamp(1rem,3vw,2rem) 1rem calc(var(--bottom-nav-height) + 28px)}
-.referral-hero{padding:clamp(1rem,3vw,1.7rem) 0;border-bottom:1px solid var(--border);margin-bottom:1rem}
-.referral-hero h1{font-size:clamp(1.45rem,5vw,2.2rem);color:var(--deep);margin:.2rem 0 .45rem}
-.referral-hero p{color:var(--muted);max-width:68ch;line-height:1.55}
 .referral-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.72fr);gap:1rem;align-items:start}
 .referral-panel{background:#fff;border:1px solid var(--border);border-radius:8px;padding:clamp(.9rem,3vw,1.25rem);box-shadow:0 8px 24px rgba(16,24,47,.06)}
 .referral-panel h2{font-size:1.08rem;color:var(--deep);margin-bottom:.75rem}
 .referral-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.72rem}
-.referral-form-grid .form-group{margin:0}.referral-form-grid .wide{grid-column:1/-1}.referral-form-grid input{width:100%}
+.referral-form-grid .form-group{margin:0}.referral-form-grid .wide{grid-column:1/-1}.referral-form-grid input,.referral-form-grid select{width:100%}
+.referral-form-grid select{padding:12px 38px 12px 13px;border:1.5px solid var(--border);border-radius:7px;background:#fff;color:var(--text);font:inherit;min-height:46px;cursor:pointer}
+.referral-form-grid select:focus{outline:none;border-color:var(--accent)}
+.referral-location-other[hidden]{display:none}
 .referral-submit{width:100%;min-height:46px;border:0;border-radius:7px;background:#0a5fb8;color:#fff;font-weight:800;cursor:pointer;margin-top:.85rem}
 .referral-submit:disabled{opacity:.58;cursor:wait}
 .referral-note{font-size:.78rem;color:var(--muted);line-height:1.45;margin-top:.65rem}
@@ -828,12 +828,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
      PAGE: STUDENT FINANCE SUPPORT
 ════════════════════════════════════════ -->
 <div class="page" id="page-referral">
-  <main class="referral-page" aria-labelledby="referral-title">
-    <section class="referral-hero">
-      <div class="section-eyebrow">IdeaKDC student opportunity</div>
-      <h1 id="referral-title">Student Partner Program</h1>
-      <p>Share your IdeaKDC referral link. Verified paid purchases can earn Financial Assistance according to the active programme rules.</p>
-    </section>
+  <main class="referral-page">
     <div id="referral-content" aria-live="polite">
       <div class="catalogue-empty">Student Partner Program loading...</div>
     </div>
@@ -3318,35 +3313,83 @@ const REFERRAL_CITIES_BY_STATE = {
   'West Bengal':['Kolkata','Howrah','Durgapur','Siliguri','Asansol']
 };
 
-function referralLocationField(label, id, listId, value='') {
-  const group = referralField(label, id, 'text', value);
-  group.classList.add('wide');
-  const input = group.querySelector('input');
-  input.setAttribute('list', listId);
-  input.placeholder = `Select or type ${label.toLowerCase()}`;
-  const list = document.createElement('datalist');
-  list.id = listId;
-  group.appendChild(list);
+const REFERRAL_OTHER_LOCATION = '__other__';
+
+function setReferralLocationOptions(id, values, currentValue='') {
+  const select = document.getElementById(id);
+  const manual = document.getElementById(`${id}-other`);
+  if (!select || !manual) return;
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = `Select ${id === 'ref-state' ? 'state' : 'city'}`;
+  placeholder.disabled = true;
+  const options = values.map((value) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    return option;
+  });
+  const other = document.createElement('option');
+  other.value = REFERRAL_OTHER_LOCATION;
+  other.textContent = `Other ${id === 'ref-state' ? 'state' : 'city'} (write manually)`;
+  select.replaceChildren(placeholder, ...options, other);
+  const exact = values.find((value) => value.toLowerCase() === String(currentValue).trim().toLowerCase());
+  if (exact) {
+    select.value = exact;
+    manual.value = '';
+  } else if (String(currentValue).trim()) {
+    select.value = REFERRAL_OTHER_LOCATION;
+    manual.value = String(currentValue).trim();
+  } else {
+    select.value = '';
+    manual.value = '';
+  }
+  syncReferralManualLocation(id);
+}
+
+function syncReferralManualLocation(id) {
+  const select = document.getElementById(id);
+  const manual = document.getElementById(`${id}-other`);
+  if (!select || !manual) return;
+  const isOther = select.value === REFERRAL_OTHER_LOCATION;
+  manual.hidden = !isOther;
+  manual.required = isOther;
+  if (!isOther) manual.value = '';
+}
+
+function referralLocationSelect(label, id, values, currentValue='') {
+  const group = document.createElement('div');
+  group.className = 'form-group wide';
+  const labelEl = document.createElement('label');
+  labelEl.htmlFor = id;
+  labelEl.textContent = label;
+  const select = document.createElement('select');
+  select.id = id;
+  select.required = true;
+  const manual = document.createElement('input');
+  manual.id = `${id}-other`;
+  manual.className = 'referral-location-other';
+  manual.type = 'text';
+  manual.placeholder = `Write your ${label.toLowerCase()}`;
+  manual.hidden = true;
+  select.addEventListener('change', () => syncReferralManualLocation(id));
+  group.append(labelEl, select, manual);
+  queueMicrotask(() => setReferralLocationOptions(id, values, currentValue));
   return group;
 }
 
-function fillReferralLocationOptions(listId, values) {
-  const list = document.getElementById(listId);
-  if (!list) return;
-  list.replaceChildren(...values.map((value) => {
-    const option = document.createElement('option');
-    option.value = value;
-    return option;
-  }));
+function getReferralLocationValue(id) {
+  const select = document.getElementById(id);
+  if (!select) return '';
+  return select.value === REFERRAL_OTHER_LOCATION
+    ? document.getElementById(`${id}-other`)?.value.trim() || ''
+    : select.value.trim();
 }
 
 function refreshReferralCityOptions() {
-  const state = document.getElementById('ref-state')?.value.trim() || '';
+  const state = getReferralLocationValue('ref-state');
   const exactState = Object.keys(REFERRAL_CITIES_BY_STATE).find((name) => name.toLowerCase() === state.toLowerCase());
-  const cities = exactState
-    ? REFERRAL_CITIES_BY_STATE[exactState]
-    : [...new Set(Object.values(REFERRAL_CITIES_BY_STATE).flat())].sort();
-  fillReferralLocationOptions('ref-city-options', cities);
+  setReferralLocationOptions('ref-city', exactState ? REFERRAL_CITIES_BY_STATE[exactState] : [], '');
 }
 
 function renderReferralJoinForm(container) {
@@ -3361,8 +3404,8 @@ function renderReferralJoinForm(container) {
   grid.append(
     referralField('Full name', 'ref-name', 'text', currentUserData?.name || currentUser?.displayName || ''),
     referralField('UPI ID', 'ref-upi'),
-    referralLocationField('State', 'ref-state', 'ref-state-options', currentUserData?.state || ''),
-    referralLocationField('City', 'ref-city', 'ref-city-options'),
+    referralLocationSelect('State', 'ref-state', Object.keys(REFERRAL_CITIES_BY_STATE), currentUserData?.state || ''),
+    referralLocationSelect('City', 'ref-city', []),
     referralField('Email', 'ref-email', 'email', currentUser?.email || ''),
     referralField('WhatsApp number', 'ref-whatsapp', 'tel', currentUserData?.mobile || currentUserData?.phone || '')
   );
@@ -3378,9 +3421,10 @@ function renderReferralJoinForm(container) {
   form.addEventListener('submit', submitReferralMembership);
   panel.append(title, form);
   container.replaceChildren(panel);
-  fillReferralLocationOptions('ref-state-options', Object.keys(REFERRAL_CITIES_BY_STATE));
-  refreshReferralCityOptions();
-  document.getElementById('ref-state').addEventListener('input', refreshReferralCityOptions);
+  queueMicrotask(() => {
+    refreshReferralCityOptions();
+    document.getElementById('ref-state').addEventListener('change', refreshReferralCityOptions);
+  });
 }
 
 async function submitReferralMembership(event) {
@@ -3390,8 +3434,8 @@ async function submitReferralMembership(event) {
   const payload = {
     name: document.getElementById('ref-name').value,
     upiId: document.getElementById('ref-upi').value,
-    state: document.getElementById('ref-state').value,
-    city: document.getElementById('ref-city').value,
+    state: getReferralLocationValue('ref-state'),
+    city: getReferralLocationValue('ref-city'),
     email: document.getElementById('ref-email').value,
     whatsapp: document.getElementById('ref-whatsapp').value
   };
