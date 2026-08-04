@@ -660,7 +660,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
     <span class="bn-icon">📚</span>मेरे Courses
   </button>
   <button class="bn-item" id="bn-referral" onclick="showReferralSupport();setNav('bn-referral')">
-    <span class="bn-icon">₹</span>Finance Support
+    <span class="bn-icon">₹</span>Student Partner Program
   </button>
   <button class="bn-item logout-item" id="bn-logout" onclick="doLogout()">
     <span class="bn-icon">🚪</span>Logout
@@ -831,11 +831,11 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   <main class="referral-page" aria-labelledby="referral-title">
     <section class="referral-hero">
       <div class="section-eyebrow">IdeaKDC student opportunity</div>
-      <h1 id="referral-title">Student Finance Support</h1>
-      <p>Share your IdeaKDC referral link. Verified paid purchases can earn commission according to the active programme rules.</p>
+      <h1 id="referral-title">Student Partner Program</h1>
+      <p>Share your IdeaKDC referral link. Verified paid purchases can earn Financial Assistance according to the active programme rules.</p>
     </section>
     <div id="referral-content" aria-live="polite">
-      <div class="catalogue-empty">Finance Support loading...</div>
+      <div class="catalogue-empty">Student Partner Program loading...</div>
     </div>
   </main>
 </div>
@@ -3279,11 +3279,80 @@ function referralField(label, id, type='text', value='') {
   return group;
 }
 
+const REFERRAL_CITIES_BY_STATE = {
+  'Andaman and Nicobar Islands':['Port Blair'],
+  'Andhra Pradesh':['Visakhapatnam','Vijayawada','Guntur','Tirupati','Nellore','Kurnool'],
+  'Arunachal Pradesh':['Itanagar','Naharlagun','Pasighat'],
+  'Assam':['Guwahati','Dibrugarh','Silchar','Jorhat','Tezpur'],
+  'Bihar':['Patna','Gaya','Muzaffarpur','Bhagalpur','Darbhanga','Purnia'],
+  'Chandigarh':['Chandigarh'],
+  'Chhattisgarh':['Raipur','Bhilai','Bilaspur','Korba','Durg'],
+  'Dadra and Nagar Haveli and Daman and Diu':['Daman','Diu','Silvassa'],
+  'Delhi':['New Delhi','Delhi'],
+  'Goa':['Panaji','Margao','Vasco da Gama','Mapusa'],
+  'Gujarat':['Ahmedabad','Surat','Vadodara','Rajkot','Gandhinagar','Bhavnagar'],
+  'Haryana':['Gurugram','Faridabad','Panipat','Ambala','Hisar','Rohtak'],
+  'Himachal Pradesh':['Shimla','Dharamshala','Solan','Mandi','Kullu'],
+  'Jammu and Kashmir':['Srinagar','Jammu','Anantnag','Baramulla'],
+  'Jharkhand':['Ranchi','Jamshedpur','Dhanbad','Bokaro','Deoghar'],
+  'Karnataka':['Bengaluru','Mysuru','Mangaluru','Hubballi','Belagavi','Shivamogga'],
+  'Kerala':['Thiruvananthapuram','Kochi','Kozhikode','Thrissur','Kollam','Kannur'],
+  'Ladakh':['Leh','Kargil'],
+  'Lakshadweep':['Kavaratti'],
+  'Madhya Pradesh':['Bhopal','Indore','Jabalpur','Gwalior','Ujjain','Sagar'],
+  'Maharashtra':['Mumbai','Pune','Nagpur','Nashik','Thane','Aurangabad','Kolhapur'],
+  'Manipur':['Imphal'],
+  'Meghalaya':['Shillong','Tura'],
+  'Mizoram':['Aizawl','Lunglei'],
+  'Nagaland':['Kohima','Dimapur'],
+  'Odisha':['Bhubaneswar','Cuttack','Rourkela','Berhampur','Sambalpur','Puri'],
+  'Puducherry':['Puducherry','Karaikal'],
+  'Punjab':['Ludhiana','Amritsar','Jalandhar','Patiala','Mohali','Bathinda'],
+  'Rajasthan':['Jaipur','Jodhpur','Udaipur','Kota','Ajmer','Bikaner'],
+  'Sikkim':['Gangtok','Namchi'],
+  'Tamil Nadu':['Chennai','Coimbatore','Madurai','Tiruchirappalli','Salem','Tiruppur'],
+  'Telangana':['Hyderabad','Warangal','Nizamabad','Karimnagar','Khammam'],
+  'Tripura':['Agartala'],
+  'Uttar Pradesh':['Lucknow','Kanpur','Varanasi','Prayagraj','Agra','Noida','Ghaziabad','Gorakhpur','Meerut'],
+  'Uttarakhand':['Dehradun','Haridwar','Haldwani','Roorkee','Rishikesh'],
+  'West Bengal':['Kolkata','Howrah','Durgapur','Siliguri','Asansol']
+};
+
+function referralLocationField(label, id, listId, value='') {
+  const group = referralField(label, id, 'text', value);
+  const input = group.querySelector('input');
+  input.setAttribute('list', listId);
+  input.placeholder = `Select or type ${label.toLowerCase()}`;
+  const list = document.createElement('datalist');
+  list.id = listId;
+  group.appendChild(list);
+  return group;
+}
+
+function fillReferralLocationOptions(listId, values) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  list.replaceChildren(...values.map((value) => {
+    const option = document.createElement('option');
+    option.value = value;
+    return option;
+  }));
+}
+
+function refreshReferralCityOptions() {
+  const state = document.getElementById('ref-state')?.value.trim() || '';
+  const exactState = Object.keys(REFERRAL_CITIES_BY_STATE).find((name) => name.toLowerCase() === state.toLowerCase());
+  const cities = exactState
+    ? REFERRAL_CITIES_BY_STATE[exactState]
+    : [...new Set(Object.values(REFERRAL_CITIES_BY_STATE).flat())].sort();
+  fillReferralLocationOptions('ref-city-options', cities);
+}
+
 function renderReferralJoinForm(container) {
   const panel = document.createElement('section');
   panel.className = 'referral-panel';
   const title = document.createElement('h2');
-  title.textContent = 'Join Student Finance Support';
+  title.textContent = 'Join Student Partner Program';
   const form = document.createElement('form');
   form.id = 'referral-join-form';
   const grid = document.createElement('div');
@@ -3291,26 +3360,29 @@ function renderReferralJoinForm(container) {
   grid.append(
     referralField('Full name', 'ref-name', 'text', currentUserData?.name || currentUser?.displayName || ''),
     referralField('UPI ID', 'ref-upi'),
-    referralField('State', 'ref-state', 'text', currentUserData?.state || ''),
-    referralField('City', 'ref-city'),
+    referralLocationField('State', 'ref-state', 'ref-state-options', currentUserData?.state || ''),
+    referralLocationField('City', 'ref-city', 'ref-city-options'),
     referralField('Email', 'ref-email', 'email', currentUser?.email || ''),
     referralField('WhatsApp number', 'ref-whatsapp', 'tel', currentUserData?.mobile || currentUserData?.phone || '')
   );
   const button = document.createElement('button');
   button.type = 'submit';
   button.className = 'referral-submit';
-  button.textContent = 'Join Student Finance Support';
+  button.textContent = 'Join Student Partner Program';
   const status = document.createElement('div');
   status.id = 'referral-join-status';
   status.className = 'referral-status';
   status.setAttribute('aria-live', 'polite');
   const note = document.createElement('p');
   note.className = 'referral-note';
-  note.textContent = 'Your UPI and contact details remain private. Commission is created only after a verified paid purchase.';
+  note.textContent = 'Your UPI and contact details remain private. Financial Assistance is created only after a verified paid purchase.';
   form.append(grid, button, status, note);
   form.addEventListener('submit', submitReferralMembership);
   panel.append(title, form);
   container.replaceChildren(panel);
+  fillReferralLocationOptions('ref-state-options', Object.keys(REFERRAL_CITIES_BY_STATE));
+  refreshReferralCityOptions();
+  document.getElementById('ref-state').addEventListener('input', refreshReferralCityOptions);
 }
 
 async function submitReferralMembership(event) {
@@ -3331,7 +3403,7 @@ async function submitReferralMembership(event) {
   try {
     await joinReferralProgramFn(payload);
     status.className = 'referral-status success';
-    status.textContent = 'Student Finance Support membership ready.';
+    status.textContent = 'Student Partner Program membership ready.';
     await renderReferralSupport();
   } catch (error) {
     status.className = 'referral-status error';
@@ -3368,7 +3440,7 @@ function renderReferralDashboard(container, dashboard) {
   identity.className = 'referral-identity';
   const identityText = document.createElement('div');
   const name = document.createElement('h2');
-  name.textContent = dashboard.name || 'Finance Support Member';
+  name.textContent = dashboard.name || 'Student Partner';
   const upi = document.createElement('div');
   upi.className = 'referral-note';
   upi.textContent = `UPI: ${dashboard.maskedUpiId || '—'}`;
@@ -3385,10 +3457,10 @@ function renderReferralDashboard(container, dashboard) {
   stats.append(
     referralStat('People referred', dashboard.referralCount || 0),
     referralStat('Unique buyers', dashboard.successfulBuyerCount || 0),
-    referralStat('Pending commission', referralCurrency(dashboard.pendingPaise)),
-    referralStat('Approved commission', referralCurrency(dashboard.approvedPaise)),
+    referralStat('Pending Financial Assistance', referralCurrency(dashboard.pendingPaise)),
+    referralStat('Approved Financial Assistance', referralCurrency(dashboard.approvedPaise)),
     referralStat('Paid amount', referralCurrency(dashboard.paidPaise)),
-    referralStat('Reversed commission', referralCurrency(dashboard.reversedPaise))
+    referralStat('Reversed Financial Assistance', referralCurrency(dashboard.reversedPaise))
   );
   const referralLink = `${window.location.origin}/?ref=${encodeURIComponent(dashboard.referralCode || '')}`;
   const share = document.createElement('div');
@@ -3458,7 +3530,7 @@ function renderReferralDashboard(container, dashboard) {
 async function renderReferralSupport() {
   const container = document.getElementById('referral-content');
   if (!container || !currentUser) return;
-  container.innerHTML = '<div class="catalogue-empty">Finance Support loading...</div>';
+  container.innerHTML = '<div class="catalogue-empty">Student Partner Program loading...</div>';
   try {
     const result = await getMyReferralDashboardFn({});
     const dashboard = result.data || {};
@@ -3467,7 +3539,7 @@ async function renderReferralSupport() {
   } catch (error) {
     const message = document.createElement('div');
     message.className = 'referral-status error';
-    message.textContent = error?.message || 'Finance Support dashboard load नहीं हो सका।';
+    message.textContent = error?.message || 'Student Partner Program dashboard load नहीं हो सका।';
     container.replaceChildren(message);
   }
 }
