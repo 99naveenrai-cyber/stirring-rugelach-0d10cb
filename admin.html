@@ -288,7 +288,7 @@ body{padding-bottom:65px}
     </div>
     <div class="form-card">
       <div class="form-card-title">Student Finance Support</div>
-      <div class="mode-help" style="margin-bottom:.7rem">Manage finance executives, verified commissions and recorded manual payouts.</div>
+      <div class="mode-help" style="margin-bottom:.7rem">Manage finance executives, verified Financial Assistance and recorded manual payouts.</div>
       <button class="btn-submit" type="button" onclick="openFinanceExecutives()">See Student Finance Executives</button>
     </div>
   </div>
@@ -571,7 +571,7 @@ body{padding-bottom:65px}
       <form id="finance-settings-form" onsubmit="saveReferralSettings(event)">
         <div class="finance-settings-grid">
           <div class="form-group"><label for="finance-enabled">New referrals</label><select id="finance-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
-          <div class="form-group"><label for="finance-type">Commission type</label><select id="finance-type"><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select></div>
+          <div class="form-group"><label for="finance-type">Financial Assistance type</label><select id="finance-type"><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select></div>
           <div class="form-group"><label for="finance-percentage">Percentage</label><input id="finance-percentage" type="number" min="1" max="50" step="0.01"></div>
           <div class="form-group"><label for="finance-fixed">Fixed amount (INR)</label><input id="finance-fixed" type="number" min="1" step="0.01"></div>
           <div class="form-group"><label for="finance-minimum">Minimum payable balance (INR)</label><input id="finance-minimum" type="number" min="0" step="0.01"></div>
@@ -3105,7 +3105,7 @@ function renderCommissionTable(commissions) {
   const table = financeEl('table', 'finance-table');
   const head = document.createElement('thead');
   const headRow = document.createElement('tr');
-  ['Course','Amount','Commission','Status','Created','Action'].forEach((label) => headRow.appendChild(financeEl('th', '', label)));
+  ['Course','Amount','Financial Assistance','Status','Created','Action'].forEach((label) => headRow.appendChild(financeEl('th', '', label)));
   head.appendChild(headRow);
   const body = document.createElement('tbody');
   [...commissions].sort((a,b) => (b.createdAt?._seconds || 0) - (a.createdAt?._seconds || 0)).forEach((commission) => {
@@ -3192,7 +3192,7 @@ function renderFinanceMemberDetail() {
   whatsapp.target = '_blank';
   whatsapp.rel = 'noopener';
   actions.append(email, whatsapp);
-  card.append(privateGrid, summary, actions, financeEl('h3', '', 'Commission history'), renderCommissionTable(data.commissions || []), financeEl('h3', '', 'Payout history'), renderPayoutTable(data.payouts || []));
+  card.append(privateGrid, summary, actions, financeEl('h3', '', 'Financial Assistance history'), renderCommissionTable(data.commissions || []), financeEl('h3', '', 'Payout history'), renderPayoutTable(data.payouts || []));
   host.appendChild(card);
 }
 
@@ -3223,15 +3223,15 @@ async function setFinanceCommissionStatus(commissionId, status) {
   if (status === 'rejected' && !reason) return;
   try {
     await adminSetReferralCommissionStatusFn({ commissionId, status, reason });
-    showToast(`Commission ${status}.`, 'success');
+    showToast(`Financial Assistance ${status}.`, 'success');
     await loadFinanceMemberDetail(selectedReferralMember.member.uid);
-  } catch (error) { showToast(error?.message || 'Commission update failed.', 'error'); }
+  } catch (error) { showToast(error?.message || 'Financial Assistance update failed.', 'error'); }
 }
 
 async function recordFinancePayout() {
   const member = selectedReferralMember?.member;
   const approved = (selectedReferralMember?.commissions || []).filter((item) => item.status === 'approved');
-  if (!member || !approved.length) return showToast('No approved commissions are ready for payout.', 'error');
+  if (!member || !approved.length) return showToast('No approved Financial Assistance is ready for payout.', 'error');
   const reference = prompt(`Record ${financeMoney(approved.reduce((sum,item)=>sum+Number(item.commissionAmountPaise||0),0))} as manually paid. Enter transaction reference:`, '') || '';
   if (!reference) return;
   try {
@@ -3244,7 +3244,7 @@ async function recordFinancePayout() {
 function exportFinanceStatement() {
   const data = selectedReferralMember || {};
   const member = data.member || {};
-  const rows = [['courseId','paymentAmountINR','commissionINR','status','orderReference']];
+  const rows = [['courseId','paymentAmountINR','financialAssistanceINR','status','orderReference']];
   (data.commissions || []).forEach((item) => rows.push([
     item.courseId || '',
     (Number(item.paymentAmountPaise || 0) / 100).toFixed(2),
