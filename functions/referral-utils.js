@@ -23,6 +23,10 @@ function normalizeUpiId(value) {
   return normalizeSpaces(value).toLowerCase();
 }
 
+function upiFingerprint(value) {
+  return crypto.createHash("sha256").update(normalizeUpiId(value)).digest("hex");
+}
+
 function normalizeReferralCode(value) {
   return String(value || "").trim().toUpperCase();
 }
@@ -78,5 +82,6 @@ module.exports = {
   normalizePhone,
   normalizeReferralCode,
   normalizeSpaces,
-  normalizeUpiId
+  normalizeUpiId,
+  upiFingerprint
 };

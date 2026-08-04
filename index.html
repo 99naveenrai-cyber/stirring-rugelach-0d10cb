@@ -617,6 +617,9 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .referral-note{font-size:.78rem;color:var(--muted);line-height:1.45;margin-top:.65rem}
 .referral-status{min-height:1.3em;margin-top:.65rem;font-size:.82rem;font-weight:700;color:var(--muted)}
 .referral-status.error{color:#b42318}.referral-status.success{color:#087443}
+.referral-upi-verify{grid-column:1/-1;border:1px solid #dbe5f0;border-radius:7px;padding:.7rem;background:#f8fbff}
+.referral-upi-consent{display:flex;align-items:flex-start;gap:.55rem;font-size:.78rem;color:var(--muted);line-height:1.4}.referral-upi-consent input{width:auto;margin-top:2px}
+.referral-verify-btn{min-height:42px;margin-top:.6rem;border:1px solid #8eb8e3;border-radius:7px;background:#fff;color:#0a4f91;padding:.55rem .8rem;font-weight:800;cursor:pointer}.referral-verify-btn:disabled{opacity:.55;cursor:wait}
 .referral-identity{display:flex;justify-content:space-between;gap:.8rem;align-items:flex-start;margin-bottom:1rem}
 .referral-code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:900;color:#0a5fb8;font-size:1.05rem}
 .referral-badge{font-size:.72rem;font-weight:800;padding:4px 8px;border-radius:99px;background:#e9f8ef;color:#087443}
@@ -996,6 +999,7 @@ const getAuthorizedLessonVideoFn = httpsCallable(functions, 'getAuthorizedLesson
 const getAuthorizedLessonQuizFn = httpsCallable(functions, 'getAuthorizedLessonQuiz');
 const submitLessonQuizAnswerFn = httpsCallable(functions, 'submitLessonQuizAnswer');
 const joinReferralProgramFn = httpsCallable(functions, 'joinReferralProgram');
+const verifyReferralUpiFn = httpsCallable(functions, 'verifyReferralUpi');
 const claimReferralAttributionFn = httpsCallable(functions, 'claimReferralAttribution');
 const getMyReferralDashboardFn = httpsCallable(functions, 'getMyReferralDashboard');
 const gProvider = new GoogleAuthProvider();
@@ -3401,14 +3405,38 @@ function renderReferralJoinForm(container) {
   form.id = 'referral-join-form';
   const grid = document.createElement('div');
   grid.className = 'referral-form-grid';
+  const nameField = referralField('Full name', 'ref-name', 'text', currentUserData?.name || currentUser?.displayName || '');
+  const upiField = referralField('UPI ID', 'ref-upi');
   grid.append(
-    referralField('Full name', 'ref-name', 'text', currentUserData?.name || currentUser?.displayName || ''),
-    referralField('UPI ID', 'ref-upi'),
+    nameField,
+    upiField,
     referralLocationSelect('State', 'ref-state', Object.keys(REFERRAL_CITIES_BY_STATE), currentUserData?.state || ''),
     referralLocationSelect('City', 'ref-city', []),
     referralField('Email', 'ref-email', 'email', currentUser?.email || ''),
     referralField('WhatsApp number', 'ref-whatsapp', 'tel', currentUserData?.mobile || currentUserData?.phone || '')
   );
+  const verification = document.createElement('div');
+  verification.className = 'referral-upi-verify';
+  const consentLabel = document.createElement('label');
+  consentLabel.className = 'referral-upi-consent';
+  const consent = document.createElement('input');
+  consent.id = 'ref-upi-consent';
+  consent.type = 'checkbox';
+  const consentText = document.createElement('span');
+  consentText.textContent = 'I consent to Cashfree verifying this UPI ID and its account-holder name.';
+  consentLabel.append(consent, consentText);
+  const verifyButton = document.createElement('button');
+  verifyButton.id = 'ref-upi-verify-btn';
+  verifyButton.className = 'referral-verify-btn';
+  verifyButton.type = 'button';
+  verifyButton.textContent = 'Verify UPI ID';
+  verifyButton.addEventListener('click', verifyReferralUpiFromForm);
+  const verifyStatus = document.createElement('div');
+  verifyStatus.id = 'ref-upi-verify-status';
+  verifyStatus.className = 'referral-status';
+  verifyStatus.setAttribute('aria-live', 'polite');
+  verification.append(consentLabel, verifyButton, verifyStatus);
+  grid.appendChild(verification);
   const button = document.createElement('button');
   button.type = 'submit';
   button.className = 'referral-submit';
@@ -3425,6 +3453,34 @@ function renderReferralJoinForm(container) {
     refreshReferralCityOptions();
     document.getElementById('ref-state').addEventListener('change', refreshReferralCityOptions);
   });
+}
+
+async function verifyReferralUpiFromForm() {
+  const button = document.getElementById('ref-upi-verify-btn');
+  const status = document.getElementById('ref-upi-verify-status');
+  const consent = document.getElementById('ref-upi-consent');
+  if (!consent?.checked) {
+    status.className = 'referral-status error';
+    status.textContent = 'Please give consent before UPI verification.';
+    return;
+  }
+  button.disabled = true;
+  status.className = 'referral-status';
+  status.textContent = 'Verifying UPI ID...';
+  try {
+    const result = await verifyReferralUpiFn({
+      upiId: document.getElementById('ref-upi').value,
+      name: document.getElementById('ref-name').value,
+      userConsent: true
+    });
+    status.className = 'referral-status success';
+    status.textContent = `Verified account name: ${result.data?.verifiedName || 'Confirmed'}`;
+  } catch (error) {
+    status.className = 'referral-status error';
+    status.textContent = error?.message || 'UPI verification failed.';
+  } finally {
+    button.disabled = false;
+  }
 }
 
 async function submitReferralMembership(event) {
@@ -3485,7 +3541,8 @@ function renderReferralDashboard(container, dashboard) {
   name.textContent = dashboard.name || 'Student Partner';
   const upi = document.createElement('div');
   upi.className = 'referral-note';
-  upi.textContent = `UPI: ${dashboard.maskedUpiId || '—'}`;
+  const upiVerified = dashboard.upiVerificationStatus === 'verified';
+  upi.textContent = `UPI: ${dashboard.maskedUpiId || '—'} · ${upiVerified ? 'VERIFIED' : 'VERIFICATION PENDING'}`;
   const code = document.createElement('div');
   code.className = 'referral-code';
   code.textContent = dashboard.referralCode || '—';
@@ -3524,6 +3581,19 @@ function renderReferralDashboard(container, dashboard) {
   email.textContent = 'Share by Email';
   share.append(copyButton, whatsapp, email);
   main.append(identity, stats, share);
+  if (!upiVerified) {
+    const verifyButton = document.createElement('button');
+    verifyButton.type = 'button';
+    verifyButton.className = 'referral-verify-btn';
+    verifyButton.textContent = 'Verify my UPI ID';
+    verifyButton.addEventListener('click', verifyExistingReferralUpi);
+    main.appendChild(verifyButton);
+  } else if (dashboard.verifiedName) {
+    const verifiedName = document.createElement('p');
+    verifiedName.className = 'referral-note';
+    verifiedName.textContent = `Verified account name: ${dashboard.verifiedName}`;
+    main.appendChild(verifiedName);
+  }
 
   const activityPanel = document.createElement('section');
   activityPanel.className = 'referral-panel';
@@ -3567,6 +3637,21 @@ function renderReferralDashboard(container, dashboard) {
   activityPanel.append(activityTitle, list, payoutTitle, payoutList);
   grid.append(main, activityPanel);
   container.replaceChildren(grid);
+}
+
+async function verifyExistingReferralUpi(event) {
+  if (!confirm('I consent to Cashfree verifying my saved UPI ID and account-holder name.')) return;
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    const result = await verifyReferralUpiFn({ userConsent: true });
+    showToast(`UPI verified: ${result.data?.verifiedName || 'Confirmed'}`, 'success');
+    await renderReferralSupport();
+  } catch (error) {
+    showToast(error?.message || 'UPI verification failed.', 'error');
+  } finally {
+    button.disabled = false;
+  }
 }
 
 async function renderReferralSupport() {

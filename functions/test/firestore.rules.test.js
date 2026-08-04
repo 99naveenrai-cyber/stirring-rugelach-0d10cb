@@ -258,6 +258,10 @@ test("students cannot forge referral attribution, commissions, payouts or settin
     enabled: true,
     percentageBps: 5000
   }, studentToken));
+  await expectDenied(writeDocument(`referralUpiVerifications/${studentUid}`, {
+    status: "verified",
+    upiFingerprint: "forged"
+  }, studentToken));
 });
 
 test("referral financial records are not readable by students", async () => {
@@ -271,8 +275,14 @@ test("referral financial records are not readable by students", async () => {
     amountPaise: 2500,
     status: "paid"
   });
+  await seed(`referralUpiVerifications/${studentUid}`, {
+    status: "verified",
+    upiFingerprint: "private-fingerprint"
+  });
   await expectDenied(readDocument("referralCommissions/commission-1", studentToken));
   await expectDenied(readDocument("referralPayouts/payout-1", studentToken));
   await expectAllowed(readDocument("referralCommissions/commission-1", adminToken));
   await expectAllowed(readDocument("referralPayouts/payout-1", adminToken));
+  await expectDenied(readDocument(`referralUpiVerifications/${studentUid}`, studentToken));
+  await expectDenied(readDocument(`referralUpiVerifications/${studentUid}`, adminToken));
 });

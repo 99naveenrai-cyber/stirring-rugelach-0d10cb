@@ -3164,6 +3164,8 @@ function renderFinanceMemberDetail() {
   card.appendChild(financeEl('div', 'form-card-title', member.name || 'Finance Executive'));
   const privateGrid = financeEl('div', 'finance-private-grid');
   addFinanceValue(privateGrid, 'UPI ID', member.upiId || '—');
+  addFinanceValue(privateGrid, 'UPI verification', member.upiVerificationStatus || 'pending');
+  addFinanceValue(privateGrid, 'Verified account name', member.upiVerifiedName || '—');
   addFinanceValue(privateGrid, 'Email', member.email || '—');
   addFinanceValue(privateGrid, 'WhatsApp', member.whatsapp || '—');
   addFinanceValue(privateGrid, 'Location', `${member.city || '—'}, ${member.state || '—'}`);
@@ -3179,10 +3181,15 @@ function renderFinanceMemberDetail() {
   const actions = financeEl('div', 'finance-actions');
   if (member.status === 'active') actions.appendChild(financeAction('Ban', () => setFinanceMemberStatus('banned')));
   else actions.appendChild(financeAction('Unban', () => setFinanceMemberStatus('active')));
+  const payoutAction = financeAction(
+    member.upiVerificationStatus === 'verified' ? 'Record approved payout' : 'Verify UPI before payout',
+    recordFinancePayout
+  );
+  payoutAction.disabled = member.upiVerificationStatus !== 'verified';
   actions.append(
     financeAction('Revoke referral code', revokeFinanceCode),
     financeAction('Close membership', () => setFinanceMemberStatus('closed')),
-    financeAction('Record approved payout', recordFinancePayout),
+    payoutAction,
     financeAction('Export statement', exportFinanceStatement)
   );
   const email = financeEl('a', '', 'Send email');

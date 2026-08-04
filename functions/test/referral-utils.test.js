@@ -15,7 +15,8 @@ const {
   normalizePhone,
   normalizeReferralCode,
   normalizeSpaces,
-  normalizeUpiId
+  normalizeUpiId,
+  upiFingerprint
 } = require("../referral-utils");
 
 test("referral identity fields normalize without damaging Hindi names", () => {
@@ -38,6 +39,12 @@ test("random referral codes use the safe non-sequential alphabet", () => {
 test("UPI masking preserves provider but not the full handle", () => {
   assert.equal(maskUpiId("student.name@oksbi"), "st********@oksbi");
   assert.equal(maskUpiId("a@upi"), "a***@upi");
+});
+
+test("UPI fingerprint binds verification to the normalized UPI ID", () => {
+  assert.equal(upiFingerprint(" Student.Name@OKSBI "), upiFingerprint("student.name@oksbi"));
+  assert.notEqual(upiFingerprint("student.name@oksbi"), upiFingerprint("other@oksbi"));
+  assert.match(upiFingerprint("student.name@oksbi"), /^[a-f0-9]{64}$/);
 });
 
 test("percentage commission uses integer paise and safe rounding", () => {

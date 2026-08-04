@@ -33,7 +33,8 @@ const {
   normalizePhone,
   normalizeReferralCode,
   normalizeSpaces,
-  normalizeUpiId
+  normalizeUpiId,
+  upiFingerprint
 } = require("./referral-utils");
 
 admin.initializeApp();
@@ -48,6 +49,8 @@ const CASHFREE_APP_ID = defineSecret("CASHFREE_APP_ID");
 const CASHFREE_SECRET_KEY = defineSecret("CASHFREE_SECRET_KEY");
 const CASHFREE_API_VERSION = "2025-01-01";
 const CASHFREE_TEST_BASE_URL = "https://sandbox.cashfree.com/pg";
+const CASHFREE_TEST_VERIFICATION_BASE_URL = "https://sandbox.cashfree.com/verification";
+const CASHFREE_VERIFICATION_API_VERSION = "2024-12-01";
 const PAYMENT_ORDER_CREATION_LOCK_MS = 90 * 1000;
 const PAYMENT_ORDER_DEFAULT_EXPIRY_MS = 15 * 60 * 1000;
 const CASHFREE_WEBHOOK_MAX_AGE_MS = 5 * 60 * 1000;
@@ -1844,6 +1847,8 @@ function referralMemberResponse(member = {}) {
     joined: true,
     name: String(member.name || ""),
     maskedUpiId: maskUpiId(member.upiId),
+    upiVerificationStatus: String(member.upiVerificationStatus || "pending"),
+    verifiedName: String(member.upiVerifiedName || ""),
     referralCode: String(member.referralCode || ""),
     referralCodeStatus: String(member.referralCodeStatus || "active"),
     status: String(member.status || "active"),
@@ -1857,6 +1862,144 @@ function referralMemberResponse(member = {}) {
     recentPayouts: safeRecentItems(member.recentPayouts)
   };
 }
+
+function buildUpiVerificationId(uid) {
+  const subject = crypto.createHash("sha256").update(String(uid)).digest("hex").slice(0, 12);
+  return `IKDC_UPI_${subject}_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`;
+}
+
+async function verifyUpiWithCashfree({ uid, upiId, name }) {
+  assertCashfreeEnvironmentConfigured();
+  const verificationId = buildUpiVerificationId(uid);
+  const response = await fetch(`${CASHFREE_TEST_VERIFICATION_BASE_URL}/upi/penny-drop`, {
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "x-api-version": CASHFREE_VERIFICATION_API_VERSION,
+      "x-client-id": CASHFREE_APP_ID.value(),
+      "x-client-secret": CASHFREE_SECRET_KEY.value()
+    },
+    body: JSON.stringify({
+      verification_id: verificationId,
+      vpa: upiId,
+      name,
+      user_consent: {
+        obtained: true,
+        type: "EXPLICIT",
+        timestamp: new Date().toISOString(),
+        purpose: "Verify UPI ID for IdeaKDC Student Partner Program payout"
+      }
+    })
+  });
+  const payload = await readJsonResponse(response, "verify-referral-upi");
+  const status = String(payload.status || "").toUpperCase();
+  if (!response.ok || status !== "SUCCESS") {
+    logger.warn("Cashfree UPI verification was not successful", {
+      uid: maskIdentifier(uid, "uid"),
+      status: response.status,
+      providerStatus: status.slice(0, 24)
+    });
+    throw new HttpsError(
+      "failed-precondition",
+      CASHFREE_ENV === "TEST"
+        ? "UPI verification failed in Cashfree TEST mode. Use a supported sandbox UPI ID."
+        : "UPI ID could not be verified. Check it and try again."
+    );
+  }
+  const verifiedUpi = normalizeUpiId(payload.vpa || "");
+  const nameAtBank = normalizeSpaces(payload.name_at_bank || "");
+  if (verifiedUpi !== upiId || !nameAtBank) {
+    throw new HttpsError("failed-precondition", "Cashfree did not return matching verified UPI details.");
+  }
+  return {
+    verificationId,
+    referenceId: String(payload.reference_id || "").slice(0, 80),
+    nameAtBank: nameAtBank.slice(0, 160),
+    nameMatchResult: String(payload.name_match_result || "").slice(0, 40),
+    nameMatchScore: String(payload.name_match_score || "").slice(0, 12)
+  };
+}
+
+exports.verifyReferralUpi = onCall(callableOptions({
+  region: "asia-south1",
+  secrets: [CASHFREE_APP_ID, CASHFREE_SECRET_KEY]
+}), async (request) => {
+  const auth = requireReferralAuth(request);
+  enforceCallableRateLimit(request, "referral-upi-verification", 5, 10 * 60 * 1000);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["upiId", "name", "userConsent"],
+    requiredKeys: ["userConsent"],
+    maxBytes: 2048
+  });
+  if (data.userConsent !== true) {
+    throw new HttpsError("invalid-argument", "Explicit consent is required to verify the UPI ID.");
+  }
+  const memberRef = db.collection("referralMembers").doc(auth.uid);
+  const memberSnap = await memberRef.get();
+  const member = memberSnap.exists ? memberSnap.data() || {} : null;
+  const upiId = member
+    ? normalizeUpiId(member.upiId)
+    : normalizeUpiId(validatedText(data.upiId, "upiId", {
+      required: true,
+      maxLength: 193,
+      pattern: UPI_ID_PATTERN
+    }));
+  const name = member
+    ? normalizeSpaces(member.name)
+    : normalizeSpaces(validatedText(data.name, "name", { required: true, maxLength: 120 }));
+  if (!UPI_ID_PATTERN.test(upiId) || !name) {
+    throw new HttpsError("invalid-argument", "A valid name and UPI ID are required.");
+  }
+  const fingerprint = upiFingerprint(upiId);
+  const verificationRef = db.collection("referralUpiVerifications").doc(auth.uid);
+  const cachedVerificationSnap = await verificationRef.get();
+  const cachedVerification = cachedVerificationSnap.exists ? cachedVerificationSnap.data() || {} : {};
+  if (cachedVerification.status === "verified" && cachedVerification.upiFingerprint === fingerprint) {
+    return {
+      verified: true,
+      status: "verified",
+      verifiedName: String(cachedVerification.verifiedName || ""),
+      maskedUpiId: maskUpiId(upiId),
+      environment: String(cachedVerification.environment || CASHFREE_ENV),
+      cached: true
+    };
+  }
+  const verified = await verifyUpiWithCashfree({ uid: auth.uid, upiId, name });
+  const verificationRecord = {
+    uid: auth.uid,
+    status: "verified",
+    upiFingerprint: fingerprint,
+    verifiedName: verified.nameAtBank,
+    providerReference: verified.referenceId,
+    providerVerificationId: verified.verificationId,
+    nameMatchResult: verified.nameMatchResult,
+    nameMatchScore: verified.nameMatchScore,
+    environment: CASHFREE_ENV,
+    verifiedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp()
+  };
+  const batch = db.batch();
+  batch.set(verificationRef, verificationRecord, { merge: true });
+  if (member) {
+    batch.update(memberRef, {
+      upiVerificationStatus: "verified",
+      upiFingerprint: fingerprint,
+      upiVerifiedName: verified.nameAtBank,
+      upiVerificationReference: verified.referenceId,
+      upiVerifiedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
+    });
+  }
+  await batch.commit();
+  return {
+    verified: true,
+    status: "verified",
+    verifiedName: verified.nameAtBank,
+    maskedUpiId: maskUpiId(upiId),
+    environment: CASHFREE_ENV
+  };
+});
 
 async function referralSettings() {
   const snap = await db.collection("systemConfig").doc("referrals").get();
@@ -1900,24 +2043,34 @@ exports.joinReferralProgram = onCall(callableOptions({ region: "asia-south1" }),
   }
 
   const memberRef = db.collection("referralMembers").doc(auth.uid);
+  const verificationRef = db.collection("referralUpiVerifications").doc(auth.uid);
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const referralCode = generateReferralCode();
     const codeRef = db.collection("referralCodes").doc(referralCode);
     try {
       const member = await db.runTransaction(async (transaction) => {
-        const [memberSnap, codeSnap] = await Promise.all([
+        const [memberSnap, codeSnap, verificationSnap] = await Promise.all([
           transaction.get(memberRef),
-          transaction.get(codeRef)
+          transaction.get(codeRef),
+          transaction.get(verificationRef)
         ]);
         if (memberSnap.exists) {
           throw new HttpsError("already-exists", "You are already a Student Finance Support member.");
         }
         if (codeSnap.exists) throw new Error("referral-code-collision");
         const now = FieldValue.serverTimestamp();
+        const verification = verificationSnap.exists ? verificationSnap.data() || {} : {};
+        const verificationMatches = verification.status === "verified" &&
+          verification.upiFingerprint === upiFingerprint(upiId);
         const record = {
           uid: auth.uid,
           name,
           upiId,
+          upiVerificationStatus: verificationMatches ? "verified" : "pending",
+          upiFingerprint: verificationMatches ? verification.upiFingerprint : "",
+          upiVerifiedName: verificationMatches ? String(verification.verifiedName || "") : "",
+          upiVerificationReference: verificationMatches ? String(verification.providerReference || "") : "",
+          upiVerifiedAt: verificationMatches ? verification.verifiedAt || now : null,
           email,
           whatsapp,
           state,
@@ -2325,6 +2478,11 @@ exports.adminRecordReferralPayout = onCall(callableOptions({ region: "asia-south
       transaction.get(settingsRef)
     ]);
     if (!memberSnap.exists) throw new HttpsError("not-found", "Referral member was not found.");
+    const member = memberSnap.data() || {};
+    if (member.upiVerificationStatus !== "verified" ||
+        member.upiFingerprint !== upiFingerprint(member.upiId)) {
+      throw new HttpsError("failed-precondition", "Verify this member's current UPI ID before recording a payout.");
+    }
     const commissionRefs = commissionIds.map((id) => db.collection("referralCommissions").doc(id));
     const commissionSnaps = [];
     for (const ref of commissionRefs) commissionSnaps.push(await transaction.get(ref));
@@ -2371,7 +2529,7 @@ exports.adminRecordReferralPayout = onCall(callableOptions({ region: "asia-south
     transaction.update(memberRef, {
       approvedPaise: FieldValue.increment(-payoutAmountPaise),
       paidPaise: FieldValue.increment(payoutAmountPaise),
-      recentPayouts: prependRecentItem(memberSnap.data()?.recentPayouts, payoutSummary),
+      recentPayouts: prependRecentItem(member.recentPayouts, payoutSummary),
       updatedAt: now
     });
   });

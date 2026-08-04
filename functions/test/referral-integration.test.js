@@ -43,3 +43,16 @@ test("admin UI labels payouts as manual and uses privileged callables", () => {
   assert.match(adminSource, /payoutMethod: "manual-record"|Record approved payout/);
   assert.match(adminSource, /See Student Finance Executives/);
 });
+
+test("UPI verification is server-side, consent-bound and payout is verification-gated", () => {
+  const verificationBlock = functionBlock("exports.verifyReferralUpi", "async function referralSettings");
+  const payoutBlock = functionBlock("exports.adminRecordReferralPayout", "function purchaseDocId");
+  assert.match(verificationBlock, /userConsent/);
+  assert.match(verificationBlock, /verifyUpiWithCashfree/);
+  assert.match(verificationBlock, /upiFingerprint/);
+  assert.match(verificationBlock, /cachedVerification\.upiFingerprint === fingerprint/);
+  assert.doesNotMatch(verificationBlock, /bank_account|\butr\b|\bifsc\b/i);
+  assert.match(payoutBlock, /upiVerificationStatus !== "verified"/);
+  assert.match(payoutBlock, /upiFingerprint\(member\.upiId\)/);
+  assert.match(studentSource, /httpsCallable\(functions, 'verifyReferralUpi'\)/);
+});
