@@ -206,5 +206,52 @@ service cloud.firestore {
     match /courses/{courseId} {
       allow read, write: if isAdmin();
     }
+
+    match /referralMembers/{userId} {
+      allow get: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    match /referralAttributions/{userId} {
+      allow get: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    match /referralCodes/{code} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /referralCommissions/{commissionId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /referralPayouts/{payoutId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /referralBuyerStates/{stateId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /referralPurchaseEvents/{eventId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /referralAuditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /systemConfig/{configId} {
+      allow read: if isAdmin() && configId == 'referrals';
+      allow write: if false;
+    }
   }
 }

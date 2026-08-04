@@ -208,6 +208,14 @@ body{padding-bottom:65px}
 .modal-meta-val{font-weight:600;word-break:break-all}
 .modal-actions{display:flex;gap:.5rem}
 .modal-actions button{flex:1;padding:11px;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;border:none}
+/* Student Finance Support admin */
+.finance-toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:end;margin-bottom:.8rem}.finance-toolbar .form-group{flex:1 1 180px;margin:0}
+.finance-list{display:grid;gap:.55rem}.finance-member{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(4,minmax(85px,.65fr));gap:.65rem;align-items:center;background:#fff;border:1px solid var(--border);border-radius:8px;padding:.75rem;cursor:pointer}
+.finance-member:hover{border-color:#9bbce1}.finance-member strong{color:var(--text)}.finance-member small{display:block;color:var(--muted);margin-top:2px}.finance-metric{font-size:.76rem;color:var(--muted)}.finance-metric b{display:block;color:var(--text);font-size:.86rem}
+.finance-detail{margin-top:1rem}.finance-private-grid,.finance-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}.finance-private-grid>div,.finance-summary-grid>div{background:#f7f9fc;border:1px solid var(--border);border-radius:7px;padding:.65rem}.finance-private-grid small,.finance-summary-grid small{display:block;color:var(--muted);font-size:.68rem}.finance-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin:.75rem 0}.finance-actions button,.finance-actions a{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:7px;padding:.55rem .7rem;min-height:40px;font-weight:700;text-decoration:none;cursor:pointer}
+.finance-table-wrap{overflow:auto;margin-top:.7rem}.finance-table{width:100%;border-collapse:collapse;font-size:.75rem}.finance-table th,.finance-table td{text-align:left;padding:.55rem;border-bottom:1px solid var(--border);white-space:nowrap}.finance-table th{color:var(--muted)}
+.finance-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}.finance-settings-grid .form-group{margin:0}.finance-settings-grid .wide{grid-column:1/-1}
+@media(max-width:760px){.finance-member{grid-template-columns:1fr 1fr}.finance-member>div:first-child{grid-column:1/-1}.finance-private-grid,.finance-summary-grid,.finance-settings-grid{grid-template-columns:1fr}.finance-settings-grid .wide{grid-column:auto}.bottom-tabs .btab{font-size:.56rem}}
 </style>
 </head>
 <body>
@@ -277,6 +285,11 @@ body{padding-bottom:65px}
     <div class="form-card">
       <div class="form-card-title">⏳ Recent Pending</div>
       <div id="recent-pending"></div>
+    </div>
+    <div class="form-card">
+      <div class="form-card-title">Student Finance Support</div>
+      <div class="mode-help" style="margin-bottom:.7rem">Manage finance executives, verified commissions and recorded manual payouts.</div>
+      <button class="btn-submit" type="button" onclick="openFinanceExecutives()">See Student Finance Executives</button>
     </div>
   </div>
 
@@ -550,6 +563,35 @@ body{padding-bottom:65px}
     <div id="enrollment-list"></div>
   </div>
 
+  <!-- ══ PANEL: STUDENT FINANCE SUPPORT ══ -->
+  <div class="panel" id="panel-finance">
+    <div class="panel-title">Student Finance Support</div>
+    <div class="form-card">
+      <div class="form-card-title">Referral Settings</div>
+      <form id="finance-settings-form" onsubmit="saveReferralSettings(event)">
+        <div class="finance-settings-grid">
+          <div class="form-group"><label for="finance-enabled">New referrals</label><select id="finance-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+          <div class="form-group"><label for="finance-type">Commission type</label><select id="finance-type"><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select></div>
+          <div class="form-group"><label for="finance-percentage">Percentage</label><input id="finance-percentage" type="number" min="1" max="50" step="0.01"></div>
+          <div class="form-group"><label for="finance-fixed">Fixed amount (INR)</label><input id="finance-fixed" type="number" min="1" step="0.01"></div>
+          <div class="form-group"><label for="finance-minimum">Minimum payable balance (INR)</label><input id="finance-minimum" type="number" min="0" step="0.01"></div>
+          <div class="form-group"><label for="finance-effective">Effective date</label><input id="finance-effective" type="datetime-local"></div>
+        </div>
+        <button class="btn-submit" id="finance-settings-save" type="submit" style="margin-top:.8rem">Save Referral Settings</button>
+      </form>
+    </div>
+    <div class="form-card">
+      <div class="form-card-title">Student Finance Executives</div>
+      <div class="finance-toolbar">
+        <div class="form-group"><label for="finance-search">Search</label><input id="finance-search" type="search" placeholder="Name, code, state or city" oninput="renderFinanceMembers()"></div>
+        <div class="form-group"><label for="finance-status-filter">Status</label><select id="finance-status-filter" onchange="renderFinanceMembers()"><option value="">All</option><option value="active">Active</option><option value="banned">Banned</option><option value="closed">Closed</option></select></div>
+        <button class="btn-submit" type="button" style="width:auto" onclick="loadFinanceMembers()">Refresh</button>
+      </div>
+      <div id="finance-member-list" class="finance-list"></div>
+    </div>
+    <div id="finance-member-detail" class="finance-detail"></div>
+  </div>
+
   <!-- ══ PANEL: COUPONS ══ -->
   <div class="panel" id="panel-coupons">
     <div class="panel-title">🎟️ Coupons</div>
@@ -584,6 +626,9 @@ body{padding-bottom:65px}
     <button class="btab" id="btab-enrollments" onclick="switchPanel('enrollments',this)">
       <span class="btab-icon">📋</span>Enrollments
       <span id="pending-dot" style="display:none;width:7px;height:7px;background:var(--red);border-radius:50%;margin-top:1px"></span>
+    </button>
+    <button class="btab" id="btab-finance" onclick="switchPanel('finance',this)">
+      <span class="btab-icon">₹</span>Finance
     </button>
     <button class="btab" id="btab-coupons" onclick="switchPanel('coupons',this)">
       <span class="btab-icon">🎟️</span>Coupons
@@ -631,6 +676,14 @@ const functions = getFunctions(app, 'asia-south1');
 const adminUploadPreflightFn = httpsCallable(functions, 'adminUploadPreflight');
 const repairProtectedCourseThumbnailsFn = httpsCallable(functions, 'repairProtectedCourseThumbnails');
 const diagnoseCourseThumbnailsFn = httpsCallable(functions, 'diagnoseCourseThumbnails');
+const adminListReferralMembersFn = httpsCallable(functions, 'adminListReferralMembers');
+const adminGetReferralMemberFn = httpsCallable(functions, 'adminGetReferralMember');
+const adminGetReferralSettingsFn = httpsCallable(functions, 'adminGetReferralSettings');
+const adminSaveReferralSettingsFn = httpsCallable(functions, 'adminSaveReferralSettings');
+const adminSetReferralMemberStatusFn = httpsCallable(functions, 'adminSetReferralMemberStatus');
+const adminRevokeReferralCodeFn = httpsCallable(functions, 'adminRevokeReferralCode');
+const adminSetReferralCommissionStatusFn = httpsCallable(functions, 'adminSetReferralCommissionStatus');
+const adminRecordReferralPayoutFn = httpsCallable(functions, 'adminRecordReferralPayout');
 const gProvider = new GoogleAuthProvider();
 
 // ── STATE ──
@@ -648,6 +701,8 @@ let allEnrollments = [];
 let allCoupons = [];
 let enrollTab   = 'pending';
 let classFilter = 'all';
+let allReferralMembers = [];
+let selectedReferralMember = null;
 
 // ════════════════════════════════════════
 // AUTH
@@ -2913,6 +2968,299 @@ window.closeModal = () => document.getElementById('ss-modal').classList.remove('
 document.getElementById('ss-modal').addEventListener('click', e => { if(e.target.id==='ss-modal') closeModal(); });
 
 // ════════════════════════════════════════
+// STUDENT FINANCE SUPPORT
+// ════════════════════════════════════════
+function financeEl(tag, className='', text='') {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== '') element.textContent = text;
+  return element;
+}
+
+function financeMoney(paise) {
+  return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:2 })
+    .format(Number(paise || 0) / 100);
+}
+
+function financeDate(value) {
+  const millis = value?.toMillis?.() || value?._seconds * 1000 || Number(value || 0);
+  return millis ? new Date(millis).toLocaleString('en-IN') : '—';
+}
+
+window.openFinanceExecutives = async () => {
+  const tab = document.getElementById('btab-finance');
+  switchPanel('finance', tab);
+  await Promise.all([loadReferralSettings(), loadFinanceMembers()]);
+};
+
+async function loadReferralSettings() {
+  try {
+    const result = await adminGetReferralSettingsFn({});
+    const settings = result.data || {};
+    document.getElementById('finance-enabled').value = settings.enabled ? 'true' : 'false';
+    document.getElementById('finance-type').value = settings.commissionType || 'percentage';
+    document.getElementById('finance-percentage').value = settings.percentage || 10;
+    document.getElementById('finance-fixed').value = settings.fixedAmountInr || 0;
+    document.getElementById('finance-minimum').value = settings.minimumPayoutInr || 0;
+    const date = new Date(settings.effectiveAt || Date.now());
+    document.getElementById('finance-effective').value = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+  } catch (error) {
+    showToast(error?.message || 'Referral settings load नहीं हुईं।', 'error');
+  }
+}
+
+window.saveReferralSettings = async (event) => {
+  event.preventDefault();
+  const button = document.getElementById('finance-settings-save');
+  button.disabled = true;
+  try {
+    await adminSaveReferralSettingsFn({
+      enabled: document.getElementById('finance-enabled').value === 'true',
+      commissionType: document.getElementById('finance-type').value,
+      percentage: Number(document.getElementById('finance-percentage').value || 0),
+      fixedAmountInr: Number(document.getElementById('finance-fixed').value || 0),
+      minimumPayoutInr: Number(document.getElementById('finance-minimum').value || 0),
+      effectiveAt: document.getElementById('finance-effective').value || new Date().toISOString()
+    });
+    showToast('Referral settings saved.', 'success');
+  } catch (error) {
+    showToast(error?.message || 'Referral settings save नहीं हुईं।', 'error');
+  } finally {
+    button.disabled = false;
+  }
+};
+
+window.loadFinanceMembers = async () => {
+  const list = document.getElementById('finance-member-list');
+  list.replaceChildren(financeEl('div', 'empty-state', 'Finance executives loading...'));
+  try {
+    const result = await adminListReferralMembersFn({ search:'', status:'' });
+    allReferralMembers = result.data?.members || [];
+    renderFinanceMembers();
+  } catch (error) {
+    list.replaceChildren(financeEl('div', 'empty-state', error?.message || 'Finance executives load नहीं हुए।'));
+  }
+};
+
+window.renderFinanceMembers = () => {
+  const list = document.getElementById('finance-member-list');
+  if (!list) return;
+  const search = String(document.getElementById('finance-search')?.value || '').trim().toLowerCase();
+  const status = document.getElementById('finance-status-filter')?.value || '';
+  const filtered = allReferralMembers.filter((member) => {
+    if (status && member.status !== status) return false;
+    return !search || `${member.name} ${member.referralCode} ${member.state} ${member.city}`.toLowerCase().includes(search);
+  });
+  list.replaceChildren();
+  if (!filtered.length) {
+    list.appendChild(financeEl('div', 'empty-state', 'No Student Finance Executives found.'));
+    return;
+  }
+  filtered.forEach((member) => {
+    const row = financeEl('button', 'finance-member');
+    row.type = 'button';
+    row.addEventListener('click', () => loadFinanceMemberDetail(member.uid));
+    const identity = financeEl('div');
+    identity.append(financeEl('strong', '', member.name || '—'), financeEl('small', '', `${member.referralCode || '—'} · ${member.city || '—'}, ${member.state || '—'} · ${member.status || 'active'}`));
+    const referred = financeEl('div', 'finance-metric');
+    referred.append(financeEl('b', '', String(member.referralCount || 0)), document.createTextNode('Referred'));
+    const buyers = financeEl('div', 'finance-metric');
+    buyers.append(financeEl('b', '', String(member.successfulBuyerCount || 0)), document.createTextNode('Bought'));
+    const pending = financeEl('div', 'finance-metric');
+    pending.append(financeEl('b', '', financeMoney(member.pendingPaise)), document.createTextNode('Pending'));
+    const paid = financeEl('div', 'finance-metric');
+    paid.append(financeEl('b', '', financeMoney(member.paidPaise)), document.createTextNode('Paid'));
+    row.append(identity, referred, buyers, pending, paid);
+    list.appendChild(row);
+  });
+};
+
+window.loadFinanceMemberDetail = async (uid) => {
+  const host = document.getElementById('finance-member-detail');
+  host.replaceChildren(financeEl('div', 'empty-state', 'Member details loading...'));
+  try {
+    const result = await adminGetReferralMemberFn({ uid });
+    selectedReferralMember = result.data;
+    renderFinanceMemberDetail();
+  } catch (error) {
+    host.replaceChildren(financeEl('div', 'empty-state', error?.message || 'Member details load नहीं हुईं।'));
+  }
+};
+
+function addFinanceValue(grid, label, value) {
+  const item = financeEl('div');
+  item.append(financeEl('small', '', label), financeEl('strong', '', String(value ?? '—')));
+  grid.appendChild(item);
+}
+
+function financeAction(label, handler) {
+  const button = financeEl('button', '', label);
+  button.type = 'button';
+  button.addEventListener('click', handler);
+  return button;
+}
+
+function renderCommissionTable(commissions) {
+  const wrap = financeEl('div', 'finance-table-wrap');
+  const table = financeEl('table', 'finance-table');
+  const head = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  ['Course','Amount','Commission','Status','Created','Action'].forEach((label) => headRow.appendChild(financeEl('th', '', label)));
+  head.appendChild(headRow);
+  const body = document.createElement('tbody');
+  [...commissions].sort((a,b) => (b.createdAt?._seconds || 0) - (a.createdAt?._seconds || 0)).forEach((commission) => {
+    const row = document.createElement('tr');
+    row.append(
+      financeEl('td', '', commission.courseId || '—'),
+      financeEl('td', '', financeMoney(commission.paymentAmountPaise)),
+      financeEl('td', '', financeMoney(commission.commissionAmountPaise)),
+      financeEl('td', '', commission.status || '—'),
+      financeEl('td', '', financeDate(commission.createdAt))
+    );
+    const action = document.createElement('td');
+    if (commission.status === 'pending') {
+      action.append(
+        financeAction('Approve', () => setFinanceCommissionStatus(commission.id, 'approved')),
+        financeAction('Reject', () => setFinanceCommissionStatus(commission.id, 'rejected'))
+      );
+    } else action.textContent = '—';
+    row.appendChild(action);
+    body.appendChild(row);
+  });
+  table.append(head, body);
+  wrap.appendChild(table);
+  return wrap;
+}
+
+function renderPayoutTable(payouts) {
+  const wrap = financeEl('div', 'finance-table-wrap');
+  const table = financeEl('table', 'finance-table');
+  const head = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  ['Amount','Status','Reference','Processed'].forEach((label) => headRow.appendChild(financeEl('th', '', label)));
+  head.appendChild(headRow);
+  const body = document.createElement('tbody');
+  payouts.forEach((payout) => {
+    const row = document.createElement('tr');
+    row.append(
+      financeEl('td', '', financeMoney(payout.amountPaise)),
+      financeEl('td', '', payout.status || '—'),
+      financeEl('td', '', payout.safeTransactionReference || '—'),
+      financeEl('td', '', financeDate(payout.processedAt))
+    );
+    body.appendChild(row);
+  });
+  table.append(head, body);
+  wrap.appendChild(table);
+  return wrap;
+}
+
+function renderFinanceMemberDetail() {
+  const host = document.getElementById('finance-member-detail');
+  const data = selectedReferralMember || {};
+  const member = data.member || {};
+  host.replaceChildren();
+  const card = financeEl('section', 'form-card');
+  card.appendChild(financeEl('div', 'form-card-title', member.name || 'Finance Executive'));
+  const privateGrid = financeEl('div', 'finance-private-grid');
+  addFinanceValue(privateGrid, 'UPI ID', member.upiId || '—');
+  addFinanceValue(privateGrid, 'Email', member.email || '—');
+  addFinanceValue(privateGrid, 'WhatsApp', member.whatsapp || '—');
+  addFinanceValue(privateGrid, 'Location', `${member.city || '—'}, ${member.state || '—'}`);
+  addFinanceValue(privateGrid, 'Referral code', member.referralCode || '—');
+  addFinanceValue(privateGrid, 'Status', `${member.status || 'active'} · code ${member.referralCodeStatus || 'active'}`);
+  const summary = financeEl('div', 'finance-summary-grid');
+  addFinanceValue(summary, 'Total referrals', member.referralCount || 0);
+  addFinanceValue(summary, 'Unique buyers', member.successfulBuyerCount || 0);
+  addFinanceValue(summary, 'Pending', financeMoney(member.pendingPaise));
+  addFinanceValue(summary, 'Approved', financeMoney(member.approvedPaise));
+  addFinanceValue(summary, 'Paid', financeMoney(member.paidPaise));
+  addFinanceValue(summary, 'Reversed', financeMoney(member.reversedPaise));
+  const actions = financeEl('div', 'finance-actions');
+  if (member.status === 'active') actions.appendChild(financeAction('Ban', () => setFinanceMemberStatus('banned')));
+  else actions.appendChild(financeAction('Unban', () => setFinanceMemberStatus('active')));
+  actions.append(
+    financeAction('Revoke referral code', revokeFinanceCode),
+    financeAction('Close membership', () => setFinanceMemberStatus('closed')),
+    financeAction('Record approved payout', recordFinancePayout),
+    financeAction('Export statement', exportFinanceStatement)
+  );
+  const email = financeEl('a', '', 'Send email');
+  email.href = `mailto:${encodeURIComponent(member.email || '')}`;
+  const whatsapp = financeEl('a', '', 'Open WhatsApp');
+  whatsapp.href = `https://wa.me/${encodeURIComponent(String(member.whatsapp || '').replace(/\D/g,''))}`;
+  whatsapp.target = '_blank';
+  whatsapp.rel = 'noopener';
+  actions.append(email, whatsapp);
+  card.append(privateGrid, summary, actions, financeEl('h3', '', 'Commission history'), renderCommissionTable(data.commissions || []), financeEl('h3', '', 'Payout history'), renderPayoutTable(data.payouts || []));
+  host.appendChild(card);
+}
+
+async function setFinanceMemberStatus(status) {
+  const member = selectedReferralMember?.member;
+  if (!member || !confirm(`Set ${member.name} to ${status}?`)) return;
+  const reason = prompt('Reason (optional):', '') || '';
+  try {
+    await adminSetReferralMemberStatusFn({ uid:member.uid, status, reason });
+    showToast(`Member status: ${status}`, 'success');
+    await Promise.all([loadFinanceMembers(), loadFinanceMemberDetail(member.uid)]);
+  } catch (error) { showToast(error?.message || 'Status update failed.', 'error'); }
+}
+
+async function revokeFinanceCode() {
+  const member = selectedReferralMember?.member;
+  if (!member || !confirm(`Revoke referral code ${member.referralCode}?`)) return;
+  const reason = prompt('Reason (optional):', '') || '';
+  try {
+    await adminRevokeReferralCodeFn({ uid:member.uid, reason });
+    showToast('Referral code revoked.', 'success');
+    await loadFinanceMemberDetail(member.uid);
+  } catch (error) { showToast(error?.message || 'Code revocation failed.', 'error'); }
+}
+
+async function setFinanceCommissionStatus(commissionId, status) {
+  const reason = status === 'rejected' ? (prompt('Rejection reason:', '') || '') : '';
+  if (status === 'rejected' && !reason) return;
+  try {
+    await adminSetReferralCommissionStatusFn({ commissionId, status, reason });
+    showToast(`Commission ${status}.`, 'success');
+    await loadFinanceMemberDetail(selectedReferralMember.member.uid);
+  } catch (error) { showToast(error?.message || 'Commission update failed.', 'error'); }
+}
+
+async function recordFinancePayout() {
+  const member = selectedReferralMember?.member;
+  const approved = (selectedReferralMember?.commissions || []).filter((item) => item.status === 'approved');
+  if (!member || !approved.length) return showToast('No approved commissions are ready for payout.', 'error');
+  const reference = prompt(`Record ${financeMoney(approved.reduce((sum,item)=>sum+Number(item.commissionAmountPaise||0),0))} as manually paid. Enter transaction reference:`, '') || '';
+  if (!reference) return;
+  try {
+    await adminRecordReferralPayoutFn({ referrerUid:member.uid, commissionIds:approved.map(item=>item.id), safeTransactionReference:reference });
+    showToast('Manual payout recorded.', 'success');
+    await Promise.all([loadFinanceMembers(), loadFinanceMemberDetail(member.uid)]);
+  } catch (error) { showToast(error?.message || 'Payout record failed.', 'error'); }
+}
+
+function exportFinanceStatement() {
+  const data = selectedReferralMember || {};
+  const member = data.member || {};
+  const rows = [['courseId','paymentAmountINR','commissionINR','status','orderReference']];
+  (data.commissions || []).forEach((item) => rows.push([
+    item.courseId || '',
+    (Number(item.paymentAmountPaise || 0) / 100).toFixed(2),
+    (Number(item.commissionAmountPaise || 0) / 100).toFixed(2),
+    item.status || '',
+    item.orderId || ''
+  ]));
+  const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
+  link.download = `ideakdc-referral-${member.referralCode || 'statement'}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+// ════════════════════════════════════════
 // NAV
 // ════════════════════════════════════════
 window.switchPanel = (name, el) => {
@@ -2921,6 +3269,7 @@ window.switchPanel = (name, el) => {
   document.getElementById('panel-'+name).classList.add('active');
   el.classList.add('active');
   if (name === 'upload') resetUploadState();
+  if (name === 'finance') Promise.all([loadReferralSettings(), loadFinanceMembers()]);
 };
 
 // ════════════════════════════════════════

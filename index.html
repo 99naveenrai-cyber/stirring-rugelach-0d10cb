@@ -602,6 +602,32 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .form-group input:focus{outline:none;border-color:var(--accent)}
 .auth-toggle{text-align:center;margin-top:1rem;font-size:.82rem;color:var(--muted)}
 .auth-toggle a{color:var(--accent);cursor:pointer;font-weight:600}
+/* Student Finance Support */
+.referral-page{width:min(100%,980px);margin:0 auto;padding:clamp(1rem,3vw,2rem) 1rem calc(var(--bottom-nav-height) + 28px)}
+.referral-hero{padding:clamp(1rem,3vw,1.7rem) 0;border-bottom:1px solid var(--border);margin-bottom:1rem}
+.referral-hero h1{font-size:clamp(1.45rem,5vw,2.2rem);color:var(--deep);margin:.2rem 0 .45rem}
+.referral-hero p{color:var(--muted);max-width:68ch;line-height:1.55}
+.referral-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.72fr);gap:1rem;align-items:start}
+.referral-panel{background:#fff;border:1px solid var(--border);border-radius:8px;padding:clamp(.9rem,3vw,1.25rem);box-shadow:0 8px 24px rgba(16,24,47,.06)}
+.referral-panel h2{font-size:1.08rem;color:var(--deep);margin-bottom:.75rem}
+.referral-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.72rem}
+.referral-form-grid .form-group{margin:0}.referral-form-grid .wide{grid-column:1/-1}.referral-form-grid input{width:100%}
+.referral-submit{width:100%;min-height:46px;border:0;border-radius:7px;background:#0a5fb8;color:#fff;font-weight:800;cursor:pointer;margin-top:.85rem}
+.referral-submit:disabled{opacity:.58;cursor:wait}
+.referral-note{font-size:.78rem;color:var(--muted);line-height:1.45;margin-top:.65rem}
+.referral-status{min-height:1.3em;margin-top:.65rem;font-size:.82rem;font-weight:700;color:var(--muted)}
+.referral-status.error{color:#b42318}.referral-status.success{color:#087443}
+.referral-identity{display:flex;justify-content:space-between;gap:.8rem;align-items:flex-start;margin-bottom:1rem}
+.referral-code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:900;color:#0a5fb8;font-size:1.05rem}
+.referral-badge{font-size:.72rem;font-weight:800;padding:4px 8px;border-radius:99px;background:#e9f8ef;color:#087443}
+.referral-badge.banned,.referral-badge.closed{background:#fff0f0;color:#b42318}
+.referral-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+.referral-stat{background:#f6f8fb;border:1px solid #e2e7ef;border-radius:7px;padding:.72rem}
+.referral-stat strong{display:block;color:var(--deep);font-size:1.05rem}.referral-stat span{font-size:.72rem;color:var(--muted)}
+.referral-share{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem}
+.referral-share button,.referral-share a{min-height:42px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #bfd2e7;background:#fff;color:#0a4f91;border-radius:7px;padding:.55rem .75rem;font-weight:750;text-decoration:none;cursor:pointer}
+.referral-list{display:grid;gap:.5rem;margin-top:.8rem}.referral-activity{padding:.65rem 0;border-top:1px solid #edf0f4;font-size:.8rem;color:#46566b}
+@media(max-width:720px){.referral-grid{grid-template-columns:1fr}.referral-form-grid{grid-template-columns:1fr}.referral-form-grid .wide{grid-column:auto}.referral-stats{grid-template-columns:1fr 1fr}.bottom-nav .bn-item{font-size:.58rem}}
 </style>
 </head>
 <body>
@@ -632,6 +658,9 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   </button>
   <button class="bn-item" id="bn-dash" onclick="showDashboard();setNav('bn-dash')">
     <span class="bn-icon">📚</span>मेरे Courses
+  </button>
+  <button class="bn-item" id="bn-referral" onclick="showReferralSupport();setNav('bn-referral')">
+    <span class="bn-icon">₹</span>Finance Support
   </button>
   <button class="bn-item logout-item" id="bn-logout" onclick="doLogout()">
     <span class="bn-icon">🚪</span>Logout
@@ -796,6 +825,22 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 </div>
 
 <!-- ════════════════════════════════════════
+     PAGE: STUDENT FINANCE SUPPORT
+════════════════════════════════════════ -->
+<div class="page" id="page-referral">
+  <main class="referral-page" aria-labelledby="referral-title">
+    <section class="referral-hero">
+      <div class="section-eyebrow">IdeaKDC student opportunity</div>
+      <h1 id="referral-title">Student Finance Support</h1>
+      <p>Share your IdeaKDC referral link. Verified paid purchases can earn commission according to the active programme rules.</p>
+    </section>
+    <div id="referral-content" aria-live="polite">
+      <div class="catalogue-empty">Finance Support loading...</div>
+    </div>
+  </main>
+</div>
+
+<!-- ════════════════════════════════════════
      PAGE: VIDEO
 ════════════════════════════════════════ -->
 <div class="page" id="page-video">
@@ -955,6 +1000,9 @@ const getPublicCourseCatalogueFn = httpsCallable(functions, 'getPublicCourseCata
 const getAuthorizedLessonVideoFn = httpsCallable(functions, 'getAuthorizedLessonVideo');
 const getAuthorizedLessonQuizFn = httpsCallable(functions, 'getAuthorizedLessonQuiz');
 const submitLessonQuizAnswerFn = httpsCallable(functions, 'submitLessonQuizAnswer');
+const joinReferralProgramFn = httpsCallable(functions, 'joinReferralProgram');
+const claimReferralAttributionFn = httpsCallable(functions, 'claimReferralAttribution');
+const getMyReferralDashboardFn = httpsCallable(functions, 'getMyReferralDashboard');
 const gProvider = new GoogleAuthProvider();
 
 // ── STATE ──
@@ -972,6 +1020,13 @@ let convoStep  = 0;
 let convoSteps = ['name', 'class', 'state', 'mobile', 'auth'];
 let isRegistrationSaving = false;
 const REG_PENDING_KEY = 'ideakdcPendingRegistration';
+const REFERRAL_PENDING_KEY = 'ideakdcPendingReferralCode';
+
+function captureReferralCodeFromUrl() {
+  const code = String(new URLSearchParams(window.location.search).get('ref') || '').trim().toUpperCase();
+  if (/^[A-Z2-9]{10}$/.test(code)) localStorage.setItem(REFERRAL_PENDING_KEY, code);
+}
+captureReferralCodeFromUrl();
 
 // Dashboard navigation state
 let dashState = { view:'subjects', subject:null, chapter:null };
@@ -1055,6 +1110,7 @@ onAuthStateChanged(auth, async (user) => {
   hideLoader();
   if (await handleAdminSeparateQuizPreview(user)) return;
   await Promise.all([profilePromise, loadCourses()]);
+  if (user) await claimPendingReferralAttribution();
   await handleCashfreeReturnFromUrl();
   if (user) await completePendingRegistrationAfterAuth(user);
   await handleCourseRouteFromUrl();
@@ -3174,6 +3230,247 @@ window.doLogout = async () => {
   navHome();
   showToast('Logout हो गया।');
 };
+
+// ════════════════════════════════════════
+// STUDENT FINANCE SUPPORT
+// ════════════════════════════════════════
+async function claimPendingReferralAttribution() {
+  const code = localStorage.getItem(REFERRAL_PENDING_KEY) || '';
+  if (!currentUser || !/^[A-Z2-9]{10}$/.test(code)) return;
+  try {
+    await claimReferralAttributionFn({ referralCode: code, source: 'referral-link' });
+    localStorage.removeItem(REFERRAL_PENDING_KEY);
+    showToast('Referral link आपके account से जुड़ गया।', 'success');
+  } catch (error) {
+    const codeValue = String(error?.code || '');
+    if (codeValue.includes('already-exists') || codeValue.includes('not-found') || codeValue.includes('invalid-argument')) {
+      localStorage.removeItem(REFERRAL_PENDING_KEY);
+    }
+  }
+}
+
+window.showReferralSupport = async () => {
+  if (!currentUser) { showLogin(); return; }
+  clearCourseRoute();
+  setNav('bn-referral');
+  pushPage('referral');
+  pushHistory();
+  await renderReferralSupport();
+};
+
+function referralCurrency(paise) {
+  return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:2 })
+    .format(Number(paise || 0) / 100);
+}
+
+function referralField(label, id, type='text', value='') {
+  const group = document.createElement('div');
+  group.className = 'form-group';
+  const labelEl = document.createElement('label');
+  labelEl.htmlFor = id;
+  labelEl.textContent = label;
+  const input = document.createElement('input');
+  input.id = id;
+  input.type = type;
+  input.value = value;
+  input.required = true;
+  input.autocomplete = type === 'email' ? 'email' : type === 'tel' ? 'tel' : 'on';
+  group.append(labelEl, input);
+  return group;
+}
+
+function renderReferralJoinForm(container) {
+  const panel = document.createElement('section');
+  panel.className = 'referral-panel';
+  const title = document.createElement('h2');
+  title.textContent = 'Join Student Finance Support';
+  const form = document.createElement('form');
+  form.id = 'referral-join-form';
+  const grid = document.createElement('div');
+  grid.className = 'referral-form-grid';
+  grid.append(
+    referralField('Full name', 'ref-name', 'text', currentUserData?.name || currentUser?.displayName || ''),
+    referralField('UPI ID', 'ref-upi'),
+    referralField('State', 'ref-state', 'text', currentUserData?.state || ''),
+    referralField('City', 'ref-city'),
+    referralField('Email', 'ref-email', 'email', currentUser?.email || ''),
+    referralField('WhatsApp number', 'ref-whatsapp', 'tel', currentUserData?.mobile || currentUserData?.phone || '')
+  );
+  const button = document.createElement('button');
+  button.type = 'submit';
+  button.className = 'referral-submit';
+  button.textContent = 'Join Student Finance Support';
+  const status = document.createElement('div');
+  status.id = 'referral-join-status';
+  status.className = 'referral-status';
+  status.setAttribute('aria-live', 'polite');
+  const note = document.createElement('p');
+  note.className = 'referral-note';
+  note.textContent = 'Your UPI and contact details remain private. Commission is created only after a verified paid purchase.';
+  form.append(grid, button, status, note);
+  form.addEventListener('submit', submitReferralMembership);
+  panel.append(title, form);
+  container.replaceChildren(panel);
+}
+
+async function submitReferralMembership(event) {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector('button[type="submit"]');
+  const status = document.getElementById('referral-join-status');
+  const payload = {
+    name: document.getElementById('ref-name').value,
+    upiId: document.getElementById('ref-upi').value,
+    state: document.getElementById('ref-state').value,
+    city: document.getElementById('ref-city').value,
+    email: document.getElementById('ref-email').value,
+    whatsapp: document.getElementById('ref-whatsapp').value
+  };
+  button.disabled = true;
+  status.className = 'referral-status';
+  status.textContent = 'Membership बनाई जा रही है...';
+  try {
+    await joinReferralProgramFn(payload);
+    status.className = 'referral-status success';
+    status.textContent = 'Student Finance Support membership ready.';
+    await renderReferralSupport();
+  } catch (error) {
+    status.className = 'referral-status error';
+    status.textContent = error?.message || 'Membership create नहीं हो सकी।';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function referralStat(label, value) {
+  const item = document.createElement('div');
+  item.className = 'referral-stat';
+  const strong = document.createElement('strong');
+  strong.textContent = value;
+  const span = document.createElement('span');
+  span.textContent = label;
+  item.append(strong, span);
+  return item;
+}
+
+function activityLabel(item = {}) {
+  if (item.type === 'referred') return 'A new student joined through your link.';
+  if (item.type === 'purchase') return `Verified purchase: ${item.courseId || 'course'}`;
+  if (item.type === 'reversal') return `Purchase reversed: ${item.courseId || 'course'}`;
+  return 'Referral activity updated.';
+}
+
+function renderReferralDashboard(container, dashboard) {
+  const grid = document.createElement('div');
+  grid.className = 'referral-grid';
+  const main = document.createElement('section');
+  main.className = 'referral-panel';
+  const identity = document.createElement('div');
+  identity.className = 'referral-identity';
+  const identityText = document.createElement('div');
+  const name = document.createElement('h2');
+  name.textContent = dashboard.name || 'Finance Support Member';
+  const upi = document.createElement('div');
+  upi.className = 'referral-note';
+  upi.textContent = `UPI: ${dashboard.maskedUpiId || '—'}`;
+  const code = document.createElement('div');
+  code.className = 'referral-code';
+  code.textContent = dashboard.referralCode || '—';
+  identityText.append(name, upi, code);
+  const badge = document.createElement('span');
+  badge.className = `referral-badge ${dashboard.status || 'active'}`;
+  badge.textContent = String(dashboard.status || 'active').toUpperCase();
+  identity.append(identityText, badge);
+  const stats = document.createElement('div');
+  stats.className = 'referral-stats';
+  stats.append(
+    referralStat('People referred', dashboard.referralCount || 0),
+    referralStat('Unique buyers', dashboard.successfulBuyerCount || 0),
+    referralStat('Pending commission', referralCurrency(dashboard.pendingPaise)),
+    referralStat('Approved commission', referralCurrency(dashboard.approvedPaise)),
+    referralStat('Paid amount', referralCurrency(dashboard.paidPaise)),
+    referralStat('Reversed commission', referralCurrency(dashboard.reversedPaise))
+  );
+  const referralLink = `${window.location.origin}/?ref=${encodeURIComponent(dashboard.referralCode || '')}`;
+  const share = document.createElement('div');
+  share.className = 'referral-share';
+  const copyButton = document.createElement('button');
+  copyButton.type = 'button';
+  copyButton.textContent = 'Copy Referral Link';
+  copyButton.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(referralLink);
+    showToast('Referral link copied.', 'success');
+  });
+  const whatsapp = document.createElement('a');
+  whatsapp.href = `https://wa.me/?text=${encodeURIComponent(`Learn with IdeaKDC: ${referralLink}`)}`;
+  whatsapp.target = '_blank';
+  whatsapp.rel = 'noopener';
+  whatsapp.textContent = 'Share on WhatsApp';
+  const email = document.createElement('a');
+  email.href = `mailto:?subject=${encodeURIComponent('IdeaKDC learning referral')}&body=${encodeURIComponent(referralLink)}`;
+  email.textContent = 'Share by Email';
+  share.append(copyButton, whatsapp, email);
+  main.append(identity, stats, share);
+
+  const activityPanel = document.createElement('section');
+  activityPanel.className = 'referral-panel';
+  const activityTitle = document.createElement('h2');
+  activityTitle.textContent = 'Recent activity';
+  const list = document.createElement('div');
+  list.className = 'referral-list';
+  const activities = Array.isArray(dashboard.recentActivity) ? dashboard.recentActivity : [];
+  if (!activities.length) {
+    const empty = document.createElement('p');
+    empty.className = 'referral-note';
+    empty.textContent = 'No referral activity yet.';
+    list.appendChild(empty);
+  } else {
+    activities.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'referral-activity';
+      row.textContent = activityLabel(item);
+      list.appendChild(row);
+    });
+  }
+  const payoutTitle = document.createElement('h2');
+  payoutTitle.style.marginTop = '1rem';
+  payoutTitle.textContent = 'Recent payouts';
+  const payoutList = document.createElement('div');
+  payoutList.className = 'referral-list';
+  const payouts = Array.isArray(dashboard.recentPayouts) ? dashboard.recentPayouts : [];
+  if (!payouts.length) {
+    const empty = document.createElement('p');
+    empty.className = 'referral-note';
+    empty.textContent = 'No payout has been recorded yet.';
+    payoutList.appendChild(empty);
+  } else {
+    payouts.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'referral-activity';
+      row.textContent = `${referralCurrency(item.amountPaise)} · ${item.status || 'recorded manual payout'}`;
+      payoutList.appendChild(row);
+    });
+  }
+  activityPanel.append(activityTitle, list, payoutTitle, payoutList);
+  grid.append(main, activityPanel);
+  container.replaceChildren(grid);
+}
+
+async function renderReferralSupport() {
+  const container = document.getElementById('referral-content');
+  if (!container || !currentUser) return;
+  container.innerHTML = '<div class="catalogue-empty">Finance Support loading...</div>';
+  try {
+    const result = await getMyReferralDashboardFn({});
+    const dashboard = result.data || {};
+    if (!dashboard.joined) renderReferralJoinForm(container);
+    else renderReferralDashboard(container, dashboard);
+  } catch (error) {
+    const message = document.createElement('div');
+    message.className = 'referral-status error';
+    message.textContent = error?.message || 'Finance Support dashboard load नहीं हो सका।';
+    container.replaceChildren(message);
+  }
+}
 
 // ════════════════════════════════════════
 // DASHBOARD

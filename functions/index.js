@@ -20,6 +20,21 @@ const {
   validateString,
   validateStringArray
 } = require("./security-utils");
+const {
+  EMAIL_PATTERN,
+  PHONE_PATTERN,
+  REFERRAL_CODE_PATTERN,
+  UPI_ID_PATTERN,
+  calculateCommissionPaise,
+  generateReferralCode,
+  inrToPaise,
+  maskUpiId,
+  normalizeEmail,
+  normalizePhone,
+  normalizeReferralCode,
+  normalizeSpaces,
+  normalizeUpiId
+} = require("./referral-utils");
 
 admin.initializeApp();
 
@@ -40,6 +55,7 @@ const WEBHOOK_PROCESSING_LEASE_MS = 5 * 60 * 1000;
 const WEBHOOK_MAX_BODY_BYTES = 256 * 1024;
 const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const SAFE_RESOURCE_ID_PATTERN = /^[^/\\\u0000-\u001F]{1,180}$/;
+const REFERRAL_MEMBER_STATUSES = Object.freeze(["active", "banned", "closed"]);
 
 function callableOptions(options = {}) {
   return {
@@ -1793,6 +1809,582 @@ function numbersMatch(a, b) {
   return Math.abs(Number(a || 0) - Number(b || 0)) < 0.01;
 }
 
+function validatedTextArray(value, fieldName, options = {}) {
+  try {
+    return validateStringArray(value, fieldName, options);
+  } catch (error) {
+    if (error instanceof RequestValidationError) {
+      throw new HttpsError("invalid-argument", error.message);
+    }
+    throw error;
+  }
+}
+
+function requireReferralAuth(request) {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Login is required for Student Finance Support.");
+  }
+  return request.auth;
+}
+
+function referralCommissionDocId(orderId) {
+  return crypto.createHash("sha256").update(`referral:${orderId}`).digest("hex").slice(0, 40);
+}
+
+function safeRecentItems(value, limit = 12) {
+  return Array.isArray(value) ? value.slice(0, limit) : [];
+}
+
+function prependRecentItem(existing, item, limit = 12) {
+  return [item, ...safeRecentItems(existing, limit - 1)];
+}
+
+function referralMemberResponse(member = {}) {
+  return {
+    joined: true,
+    name: String(member.name || ""),
+    maskedUpiId: maskUpiId(member.upiId),
+    referralCode: String(member.referralCode || ""),
+    referralCodeStatus: String(member.referralCodeStatus || "active"),
+    status: String(member.status || "active"),
+    referralCount: Number(member.referralCount || 0),
+    successfulBuyerCount: Number(member.successfulBuyerCount || 0),
+    pendingPaise: Number(member.pendingPaise || 0),
+    approvedPaise: Number(member.approvedPaise || 0),
+    paidPaise: Number(member.paidPaise || 0),
+    reversedPaise: Number(member.reversedPaise || 0),
+    recentActivity: safeRecentItems(member.recentActivity),
+    recentPayouts: safeRecentItems(member.recentPayouts)
+  };
+}
+
+async function referralSettings() {
+  const snap = await db.collection("systemConfig").doc("referrals").get();
+  return snap.exists ? snap.data() || {} : {
+    enabled: false,
+    commissionType: "percentage",
+    percentageBps: 1000,
+    fixedAmountPaise: 0,
+    minimumPayoutPaise: 10000
+  };
+}
+
+exports.joinReferralProgram = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireReferralAuth(request);
+  enforceCallableRateLimit(request, "referral-join", 4, 10 * 60 * 1000);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["name", "upiId", "state", "city", "email", "whatsapp"],
+    requiredKeys: ["name", "upiId", "state", "city", "email", "whatsapp"],
+    maxBytes: 4096
+  });
+  const name = normalizeSpaces(validatedText(data.name, "name", { required: true, maxLength: 120 }));
+  const upiId = normalizeUpiId(validatedText(data.upiId, "upiId", {
+    required: true,
+    maxLength: 193,
+    pattern: UPI_ID_PATTERN
+  }));
+  const state = normalizeSpaces(validatedText(data.state, "state", { required: true, maxLength: 100 }));
+  const city = normalizeSpaces(validatedText(data.city, "city", { required: true, maxLength: 100 }));
+  const email = normalizeEmail(validatedText(data.email, "email", {
+    required: true,
+    maxLength: 254,
+    pattern: EMAIL_PATTERN
+  }));
+  const whatsapp = normalizePhone(data.whatsapp);
+  if (!PHONE_PATTERN.test(whatsapp)) {
+    throw new HttpsError("invalid-argument", "WhatsApp number must contain 10 to 15 digits.");
+  }
+  const authenticatedEmail = normalizeEmail(auth.token?.email || "");
+  if (authenticatedEmail && authenticatedEmail !== email) {
+    throw new HttpsError("invalid-argument", "Use the email connected to your logged-in account.");
+  }
+
+  const memberRef = db.collection("referralMembers").doc(auth.uid);
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const referralCode = generateReferralCode();
+    const codeRef = db.collection("referralCodes").doc(referralCode);
+    try {
+      const member = await db.runTransaction(async (transaction) => {
+        const [memberSnap, codeSnap] = await Promise.all([
+          transaction.get(memberRef),
+          transaction.get(codeRef)
+        ]);
+        if (memberSnap.exists) {
+          throw new HttpsError("already-exists", "You are already a Student Finance Support member.");
+        }
+        if (codeSnap.exists) throw new Error("referral-code-collision");
+        const now = FieldValue.serverTimestamp();
+        const record = {
+          uid: auth.uid,
+          name,
+          upiId,
+          email,
+          whatsapp,
+          state,
+          city,
+          referralCode,
+          referralCodeStatus: "active",
+          status: "active",
+          referralCount: 0,
+          successfulBuyerCount: 0,
+          pendingPaise: 0,
+          approvedPaise: 0,
+          paidPaise: 0,
+          reversedPaise: 0,
+          recentActivity: [],
+          recentPayouts: [],
+          createdAt: now,
+          updatedAt: now
+        };
+        transaction.create(memberRef, record);
+        transaction.create(codeRef, {
+          ownerUid: auth.uid,
+          status: "active",
+          createdAt: now,
+          updatedAt: now
+        });
+        return { ...record, createdAt: null, updatedAt: null };
+      });
+      logger.info("Referral membership created", {
+        uid: maskIdentifier(auth.uid, "uid"),
+        referralCode: maskIdentifier(referralCode, "referral")
+      });
+      return referralMemberResponse(member);
+    } catch (error) {
+      if (error.message === "referral-code-collision") continue;
+      throw error;
+    }
+  }
+  throw new HttpsError("aborted", "A unique referral code could not be allocated. Please retry.");
+});
+
+exports.claimReferralAttribution = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireReferralAuth(request);
+  enforceCallableRateLimit(request, "referral-claim", 8, 10 * 60 * 1000);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["referralCode", "source"],
+    requiredKeys: ["referralCode"],
+    maxBytes: 1024
+  });
+  const referralCode = normalizeReferralCode(data.referralCode);
+  if (!REFERRAL_CODE_PATTERN.test(referralCode)) {
+    throw new HttpsError("invalid-argument", "Referral code is invalid.");
+  }
+  const source = validatedText(data.source || "link", "source", { maxLength: 40 }) || "link";
+  const settings = await referralSettings();
+  if (settings.enabled !== true) {
+    throw new HttpsError("failed-precondition", "New referrals are currently paused.");
+  }
+  const existingPurchases = await db.collection("users")
+    .doc(auth.uid)
+    .collection("purchases")
+    .where("access", "==", true)
+    .limit(1)
+    .get();
+  if (!existingPurchases.empty) {
+    throw new HttpsError("failed-precondition", "Referral attribution must be completed before a paid purchase.");
+  }
+
+  const attributionRef = db.collection("referralAttributions").doc(auth.uid);
+  const codeRef = db.collection("referralCodes").doc(referralCode);
+  const result = await db.runTransaction(async (transaction) => {
+    const [attributionSnap, codeSnap] = await Promise.all([
+      transaction.get(attributionRef),
+      transaction.get(codeRef)
+    ]);
+    if (attributionSnap.exists) {
+      const existing = attributionSnap.data() || {};
+      if (existing.referralCode !== referralCode) {
+        throw new HttpsError("already-exists", "Your first referral attribution is already fixed.");
+      }
+      return { attributed: true, existing: true };
+    }
+    if (!codeSnap.exists || codeSnap.data()?.status !== "active") {
+      throw new HttpsError("not-found", "Referral code is unavailable.");
+    }
+    const referrerUid = codeSnap.data().ownerUid;
+    if (!referrerUid || referrerUid === auth.uid) {
+      throw new HttpsError("failed-precondition", "Self-referral is not allowed.");
+    }
+    const memberRef = db.collection("referralMembers").doc(referrerUid);
+    const memberSnap = await transaction.get(memberRef);
+    if (!memberSnap.exists || memberSnap.data()?.status !== "active") {
+      throw new HttpsError("failed-precondition", "This referral member is not active.");
+    }
+    const now = FieldValue.serverTimestamp();
+    const activity = {
+      type: "referred",
+      referredUidHash: maskIdentifier(auth.uid, "student"),
+      createdAtMillis: Date.now()
+    };
+    transaction.create(attributionRef, {
+      referredUid: auth.uid,
+      referrerUid,
+      referralCode,
+      source,
+      status: "active",
+      attributedAt: now,
+      updatedAt: now
+    });
+    transaction.update(memberRef, {
+      referralCount: FieldValue.increment(1),
+      recentActivity: prependRecentItem(memberSnap.data()?.recentActivity, activity),
+      lastActivityAt: now,
+      updatedAt: now
+    });
+    return { attributed: true, existing: false };
+  });
+  return result;
+});
+
+exports.getMyReferralDashboard = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireReferralAuth(request);
+  validatedCallableData(request, { allowedKeys: [], maxBytes: 128 });
+  enforceCallableRateLimit(request, "referral-dashboard", 30, 60 * 1000);
+  const snap = await db.collection("referralMembers").doc(auth.uid).get();
+  if (!snap.exists) return { joined: false };
+  return referralMemberResponse(snap.data());
+});
+
+exports.adminListReferralMembers = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  requireAdminAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["search", "status"],
+    maxBytes: 1024
+  });
+  enforceCallableRateLimit(request, "admin-referral-list", 30, 60 * 1000);
+  const search = normalizeSpaces(data.search || "").toLowerCase();
+  const status = validatedText(data.status || "", "status", {
+    maxLength: 20,
+    allowedValues: ["", ...REFERRAL_MEMBER_STATUSES]
+  });
+  const snap = await db.collection("referralMembers").limit(250).get();
+  const members = snap.docs.map((docSnap) => {
+    const item = docSnap.data() || {};
+    return {
+      uid: docSnap.id,
+      name: String(item.name || ""),
+      referralCode: String(item.referralCode || ""),
+      state: String(item.state || ""),
+      city: String(item.city || ""),
+      status: String(item.status || "active"),
+      referralCount: Number(item.referralCount || 0),
+      successfulBuyerCount: Number(item.successfulBuyerCount || 0),
+      pendingPaise: Number(item.pendingPaise || 0),
+      paidPaise: Number(item.paidPaise || 0)
+    };
+  }).filter((item) => {
+    if (status && item.status !== status) return false;
+    if (!search) return true;
+    return `${item.name} ${item.referralCode} ${item.state} ${item.city}`.toLowerCase().includes(search);
+  });
+  return { members };
+});
+
+exports.adminGetReferralMember = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  requireAdminAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["uid"],
+    requiredKeys: ["uid"],
+    maxBytes: 512
+  });
+  enforceCallableRateLimit(request, "admin-referral-detail", 40, 60 * 1000);
+  const uid = validatedResourceId(data.uid, "uid");
+  const [memberSnap, commissionSnap, payoutSnap] = await Promise.all([
+    db.collection("referralMembers").doc(uid).get(),
+    db.collection("referralCommissions").where("referrerUid", "==", uid).limit(200).get(),
+    db.collection("referralPayouts").where("referrerUid", "==", uid).limit(100).get()
+  ]);
+  if (!memberSnap.exists) throw new HttpsError("not-found", "Referral member was not found.");
+  const member = memberSnap.data() || {};
+  const commissions = commissionSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+  const payouts = payoutSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+  return {
+    member: { uid, ...member },
+    commissions,
+    payouts
+  };
+});
+
+exports.adminSaveReferralSettings = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireAdminAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["enabled", "commissionType", "percentage", "fixedAmountInr", "minimumPayoutInr", "effectiveAt"],
+    requiredKeys: ["enabled", "commissionType", "percentage", "fixedAmountInr", "minimumPayoutInr"],
+    maxBytes: 2048
+  });
+  enforceCallableRateLimit(request, "admin-referral-settings", 10, 60 * 1000);
+  if (typeof data.enabled !== "boolean") throw new HttpsError("invalid-argument", "enabled must be true or false.");
+  const commissionType = validatedText(data.commissionType, "commissionType", {
+    required: true,
+    allowedValues: ["percentage", "fixed"]
+  });
+  const percentage = Number(data.percentage || 0);
+  const fixedAmountPaise = inrToPaise(data.fixedAmountInr);
+  const minimumPayoutPaise = inrToPaise(data.minimumPayoutInr);
+  if (commissionType === "percentage" && (!Number.isFinite(percentage) || percentage < 1 || percentage > 50)) {
+    throw new HttpsError("invalid-argument", "Percentage must be between 1 and 50.");
+  }
+  if (commissionType === "fixed" && (fixedAmountPaise < 100 || fixedAmountPaise > 10000000)) {
+    throw new HttpsError("invalid-argument", "Fixed commission must be between ₹1 and ₹100,000.");
+  }
+  if (minimumPayoutPaise < 0 || minimumPayoutPaise > 100000000) {
+    throw new HttpsError("invalid-argument", "Minimum payout is outside the supported range.");
+  }
+  const effectiveAtMillis = data.effectiveAt ? Date.parse(String(data.effectiveAt)) : Date.now();
+  if (!Number.isFinite(effectiveAtMillis)) throw new HttpsError("invalid-argument", "Effective date is invalid.");
+  const settings = {
+    enabled: data.enabled,
+    commissionType,
+    percentageBps: commissionType === "percentage" ? Math.round(percentage * 100) : 0,
+    fixedAmountPaise: commissionType === "fixed" ? fixedAmountPaise : 0,
+    minimumPayoutPaise,
+    effectiveAt: Timestamp.fromMillis(effectiveAtMillis),
+    updatedBy: auth.uid,
+    updatedAt: FieldValue.serverTimestamp()
+  };
+  await db.collection("systemConfig").doc("referrals").set(settings, { merge: true });
+  await db.collection("referralAuditLogs").add({
+    action: "settings-updated",
+    actorUid: auth.uid,
+    targetUid: "",
+    safeMetadata: { enabled: settings.enabled, commissionType },
+    createdAt: FieldValue.serverTimestamp()
+  });
+  return { saved: true, settings: { ...settings, effectiveAt: effectiveAtMillis, updatedAt: null } };
+});
+
+exports.adminGetReferralSettings = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  requireAdminAuth(request);
+  validatedCallableData(request, { allowedKeys: [], maxBytes: 128 });
+  const settings = await referralSettings();
+  return {
+    enabled: settings.enabled === true,
+    commissionType: settings.commissionType || "percentage",
+    percentage: Number(settings.percentageBps || 0) / 100,
+    fixedAmountInr: Number(settings.fixedAmountPaise || 0) / 100,
+    minimumPayoutInr: Number(settings.minimumPayoutPaise || 0) / 100,
+    effectiveAt: timestampMillis(settings.effectiveAt) || Date.now()
+  };
+});
+
+exports.adminSetReferralMemberStatus = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireAdminAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["uid", "status", "reason"],
+    requiredKeys: ["uid", "status"],
+    maxBytes: 2048
+  });
+  enforceCallableRateLimit(request, "admin-referral-status", 20, 60 * 1000);
+  const uid = validatedResourceId(data.uid, "uid");
+  const status = validatedText(data.status, "status", { required: true, allowedValues: REFERRAL_MEMBER_STATUSES });
+  const reason = validatedText(data.reason || "", "reason", { maxLength: 300 });
+  const memberRef = db.collection("referralMembers").doc(uid);
+  await db.runTransaction(async (transaction) => {
+    const memberSnap = await transaction.get(memberRef);
+    if (!memberSnap.exists) throw new HttpsError("not-found", "Referral member was not found.");
+    const code = memberSnap.data()?.referralCode;
+    const codeRef = code ? db.collection("referralCodes").doc(code) : null;
+    if (codeRef) await transaction.get(codeRef);
+    const now = FieldValue.serverTimestamp();
+    transaction.update(memberRef, {
+      status,
+      statusReason: reason,
+      referralCodeStatus: status === "active" ? "active" : "revoked",
+      updatedAt: now
+    });
+    if (codeRef) transaction.set(codeRef, {
+      status: status === "active" ? "active" : "revoked",
+      updatedAt: now,
+      revokedAt: status === "active" ? null : now
+    }, { merge: true });
+  });
+  await db.collection("referralAuditLogs").add({
+    action: `member-${status}`,
+    actorUid: auth.uid,
+    targetUid: uid,
+    safeMetadata: { reason },
+    createdAt: FieldValue.serverTimestamp()
+  });
+  return { updated: true, status };
+});
+
+exports.adminRevokeReferralCode = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireAdminAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["uid", "reason"],
+    requiredKeys: ["uid"],
+    maxBytes: 2048
+  });
+  enforceCallableRateLimit(request, "admin-referral-revoke-code", 20, 60 * 1000);
+  const uid = validatedResourceId(data.uid, "uid");
+  const reason = validatedText(data.reason || "", "reason", { maxLength: 300 });
+  const memberRef = db.collection("referralMembers").doc(uid);
+  await db.runTransaction(async (transaction) => {
+    const memberSnap = await transaction.get(memberRef);
+    if (!memberSnap.exists) throw new HttpsError("not-found", "Referral member was not found.");
+    const referralCode = memberSnap.data()?.referralCode;
+    if (!referralCode) throw new HttpsError("failed-precondition", "Referral code is missing.");
+    const codeRef = db.collection("referralCodes").doc(referralCode);
+    await transaction.get(codeRef);
+    const now = FieldValue.serverTimestamp();
+    transaction.set(codeRef, { status: "revoked", revokedAt: now, updatedAt: now }, { merge: true });
+    transaction.update(memberRef, { referralCodeStatus: "revoked", updatedAt: now });
+  });
+  await db.collection("referralAuditLogs").add({
+    action: "referral-code-revoked",
+    actorUid: auth.uid,
+    targetUid: uid,
+    safeMetadata: { reason },
+    createdAt: FieldValue.serverTimestamp()
+  });
+  return { revoked: true };
+});
+
+exports.adminSetReferralCommissionStatus = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireAdminAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["commissionId", "status", "reason"],
+    requiredKeys: ["commissionId", "status"],
+    maxBytes: 2048
+  });
+  enforceCallableRateLimit(request, "admin-referral-commission", 30, 60 * 1000);
+  const commissionId = validatedResourceId(data.commissionId, "commissionId");
+  const status = validatedText(data.status, "status", { required: true, allowedValues: ["approved", "rejected"] });
+  const reason = validatedText(data.reason || "", "reason", { maxLength: 300 });
+  if (status === "rejected" && !reason) throw new HttpsError("invalid-argument", "A rejection reason is required.");
+  const commissionRef = db.collection("referralCommissions").doc(commissionId);
+  let targetUid = "";
+  await db.runTransaction(async (transaction) => {
+    const commissionSnap = await transaction.get(commissionRef);
+    if (!commissionSnap.exists) throw new HttpsError("not-found", "Commission was not found.");
+    const commission = commissionSnap.data() || {};
+    targetUid = commission.referrerUid;
+    if (commission.status === status) return;
+    if (commission.status !== "pending") {
+      throw new HttpsError("failed-precondition", "Only a pending commission can be approved or rejected.");
+    }
+    const memberRef = db.collection("referralMembers").doc(targetUid);
+    const memberSnap = await transaction.get(memberRef);
+    if (!memberSnap.exists) throw new HttpsError("not-found", "Referral member was not found.");
+    const amount = Number(commission.commissionAmountPaise || 0);
+    const now = FieldValue.serverTimestamp();
+    transaction.update(commissionRef, {
+      status,
+      decisionReason: reason,
+      approvedAt: status === "approved" ? now : null,
+      rejectedAt: status === "rejected" ? now : null,
+      decidedBy: auth.uid,
+      updatedAt: now
+    });
+    transaction.update(memberRef, {
+      pendingPaise: FieldValue.increment(-amount),
+      approvedPaise: status === "approved" ? FieldValue.increment(amount) : FieldValue.increment(0),
+      updatedAt: now
+    });
+  });
+  await db.collection("referralAuditLogs").add({
+    action: `commission-${status}`,
+    actorUid: auth.uid,
+    targetUid,
+    safeMetadata: { commissionId: maskIdentifier(commissionId, "commission"), reason },
+    createdAt: FieldValue.serverTimestamp()
+  });
+  return { updated: true, status };
+});
+
+exports.adminRecordReferralPayout = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireAdminAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["referrerUid", "commissionIds", "safeTransactionReference"],
+    requiredKeys: ["referrerUid", "commissionIds", "safeTransactionReference"],
+    maxBytes: 8192
+  });
+  enforceCallableRateLimit(request, "admin-referral-payout", 10, 60 * 1000);
+  const referrerUid = validatedResourceId(data.referrerUid, "referrerUid");
+  const commissionIds = validatedTextArray(data.commissionIds, "commissionIds", {
+    maxItems: 100,
+    itemMaxLength: 180,
+    pattern: SAFE_RESOURCE_ID_PATTERN
+  });
+  if (!commissionIds.length || new Set(commissionIds).size !== commissionIds.length) {
+    throw new HttpsError("invalid-argument", "Select one or more unique approved commissions.");
+  }
+  const safeTransactionReference = validatedText(data.safeTransactionReference, "safeTransactionReference", {
+    required: true,
+    maxLength: 120,
+    pattern: /^[A-Za-z0-9._\-/ ]+$/
+  });
+  const memberRef = db.collection("referralMembers").doc(referrerUid);
+  const settingsRef = db.collection("systemConfig").doc("referrals");
+  const payoutRef = db.collection("referralPayouts").doc();
+  let payoutAmountPaise = 0;
+  await db.runTransaction(async (transaction) => {
+    const [memberSnap, settingsSnap] = await Promise.all([
+      transaction.get(memberRef),
+      transaction.get(settingsRef)
+    ]);
+    if (!memberSnap.exists) throw new HttpsError("not-found", "Referral member was not found.");
+    const commissionRefs = commissionIds.map((id) => db.collection("referralCommissions").doc(id));
+    const commissionSnaps = [];
+    for (const ref of commissionRefs) commissionSnaps.push(await transaction.get(ref));
+    const commissions = commissionSnaps.map((snap) => {
+      if (!snap.exists) throw new HttpsError("not-found", "A selected commission was not found.");
+      return snap.data() || {};
+    });
+    for (const commission of commissions) {
+      if (commission.referrerUid !== referrerUid || commission.status !== "approved") {
+        throw new HttpsError("failed-precondition", "Every selected commission must be approved for this member.");
+      }
+      payoutAmountPaise += Number(commission.commissionAmountPaise || 0);
+    }
+    if (payoutAmountPaise <= 0) throw new HttpsError("failed-precondition", "Payout amount is not valid.");
+    const minimumPayoutPaise = Number(settingsSnap.data()?.minimumPayoutPaise || 0);
+    if (minimumPayoutPaise > 0 && payoutAmountPaise < minimumPayoutPaise) {
+      throw new HttpsError("failed-precondition", "Approved balance is below the configured minimum payout.");
+    }
+    const now = FieldValue.serverTimestamp();
+    const payoutSummary = {
+      payoutId: payoutRef.id,
+      amountPaise: payoutAmountPaise,
+      status: "paid",
+      createdAtMillis: Date.now()
+    };
+    transaction.create(payoutRef, {
+      referrerUid,
+      amountPaise: payoutAmountPaise,
+      currency: "INR",
+      status: "paid",
+      commissionIds,
+      safeTransactionReference,
+      payoutMethod: "manual-record",
+      createdAt: now,
+      processedAt: now,
+      processedBy: auth.uid
+    });
+    commissionRefs.forEach((ref) => transaction.update(ref, {
+      status: "paid",
+      payoutId: payoutRef.id,
+      paidAt: now,
+      updatedAt: now
+    }));
+    transaction.update(memberRef, {
+      approvedPaise: FieldValue.increment(-payoutAmountPaise),
+      paidPaise: FieldValue.increment(payoutAmountPaise),
+      recentPayouts: prependRecentItem(memberSnap.data()?.recentPayouts, payoutSummary),
+      updatedAt: now
+    });
+  });
+  await db.collection("referralAuditLogs").add({
+    action: "payout-recorded",
+    actorUid: auth.uid,
+    targetUid: referrerUid,
+    safeMetadata: { payoutId: maskIdentifier(payoutRef.id, "payout"), amountPaise: payoutAmountPaise },
+    createdAt: FieldValue.serverTimestamp()
+  });
+  return { recorded: true, payoutId: payoutRef.id, amountPaise: payoutAmountPaise };
+});
+
 function purchaseDocId(uid, courseId) {
   return crypto.createHash("sha256").update(`${uid}:${courseId}`).digest("hex").slice(0, 32);
 }
@@ -2143,6 +2735,7 @@ exports.verifyCashfreePayment = onCall(callableOptions({
 
 async function finalizeSuccessfulPayment(orderId, order, providerPayload) {
   const purchaseId = purchaseDocId(order.userId, order.courseId);
+  const referralRecordId = referralCommissionDocId(orderId);
   const purchaseRef = db.collection("purchases").doc(purchaseId);
   const userPurchaseRef = db
     .collection("users")
@@ -2152,6 +2745,9 @@ async function finalizeSuccessfulPayment(orderId, order, providerPayload) {
   const enrollmentRef = db.collection("enrollments").doc(enrollmentDocId(order.userId, order.courseId));
   const orderLockRef = paymentOrderLockRef(order.userId, order.courseId);
   const orderDocRef = db.collection("paymentOrders").doc(orderId);
+  const attributionRef = db.collection("referralAttributions").doc(order.userId);
+  const referralEventRef = db.collection("referralPurchaseEvents").doc(referralRecordId);
+  const referralSettingsRef = db.collection("systemConfig").doc("referrals");
 
   const now = FieldValue.serverTimestamp();
   const payment = providerPayload?.payment || {};
@@ -2178,7 +2774,12 @@ async function finalizeSuccessfulPayment(orderId, order, providerPayload) {
   };
 
   await db.runTransaction(async (transaction) => {
-    const currentOrderSnap = await transaction.get(orderDocRef);
+    const [currentOrderSnap, attributionSnap, referralEventSnap, settingsSnap] = await Promise.all([
+      transaction.get(orderDocRef),
+      transaction.get(attributionRef),
+      transaction.get(referralEventRef),
+      transaction.get(referralSettingsRef)
+    ]);
     const currentOrderStatus = currentOrderSnap.exists
       ? String(currentOrderSnap.data()?.status || "").toLowerCase()
       : "";
@@ -2188,6 +2789,50 @@ async function finalizeSuccessfulPayment(orderId, order, providerPayload) {
         "Course access was revoked after a refund or chargeback."
       );
     }
+
+    let referralWrites = null;
+    const attribution = attributionSnap.exists ? attributionSnap.data() || {} : {};
+    if (
+      !referralEventSnap.exists &&
+      attribution.status === "active" &&
+      attribution.referrerUid &&
+      attribution.referrerUid !== order.userId
+    ) {
+      const memberRef = db.collection("referralMembers").doc(attribution.referrerUid);
+      const buyerStateRef = db.collection("referralBuyerStates")
+        .doc(`${attribution.referrerUid}_${order.userId}`);
+      const commissionRef = db.collection("referralCommissions").doc(referralRecordId);
+      const [memberSnap, buyerStateSnap, commissionSnap] = await Promise.all([
+        transaction.get(memberRef),
+        transaction.get(buyerStateRef),
+        transaction.get(commissionRef)
+      ]);
+      if (memberSnap.exists) {
+        const member = memberSnap.data() || {};
+        const buyerState = buyerStateSnap.exists ? buyerStateSnap.data() || {} : {};
+        const settings = settingsSnap.exists ? settingsSnap.data() || {} : {};
+        const effectiveAt = timestampMillis(settings.effectiveAt);
+        const settingsEffective = !effectiveAt || effectiveAt <= Date.now();
+        const paymentAmountPaise = inrToPaise(order.amount);
+        const commissionAmountPaise = member.status === "active" && settingsEffective
+          ? calculateCommissionPaise(paymentAmountPaise, settings)
+          : 0;
+        referralWrites = {
+          memberRef,
+          member,
+          buyerStateRef,
+          buyerState,
+          commissionRef,
+          commissionExists: commissionSnap.exists,
+          settings,
+          paymentAmountPaise,
+          commissionAmountPaise,
+          referrerUid: attribution.referrerUid,
+          firstActivePurchase: Number(buyerState.activePurchaseCount || 0) === 0
+        };
+      }
+    }
+
     transaction.set(purchaseRef, purchase, { merge: true });
     transaction.set(userPurchaseRef, {
       ...purchase,
@@ -2231,6 +2876,62 @@ async function finalizeSuccessfulPayment(orderId, order, providerPayload) {
       status: "paid",
       updatedAt: now
     }, { merge: true });
+
+    if (referralWrites) {
+      const activity = {
+        type: "purchase",
+        courseId: order.courseId,
+        amountPaise: referralWrites.paymentAmountPaise,
+        commissionPaise: referralWrites.commissionAmountPaise,
+        createdAtMillis: Date.now()
+      };
+      transaction.create(referralEventRef, {
+        referrerUid: referralWrites.referrerUid,
+        referredUid: order.userId,
+        courseId: order.courseId,
+        orderId,
+        purchaseId,
+        commissionId: referralWrites.commissionAmountPaise > 0 ? referralRecordId : "",
+        status: "active",
+        createdAt: now,
+        updatedAt: now
+      });
+      transaction.set(referralWrites.buyerStateRef, {
+        referrerUid: referralWrites.referrerUid,
+        referredUid: order.userId,
+        activePurchaseCount: Number(referralWrites.buyerState.activePurchaseCount || 0) + 1,
+        updatedAt: now
+      }, { merge: true });
+      const memberUpdate = {
+        recentActivity: prependRecentItem(referralWrites.member.recentActivity, activity),
+        lastActivityAt: now,
+        updatedAt: now
+      };
+      if (referralWrites.firstActivePurchase) {
+        memberUpdate.successfulBuyerCount = FieldValue.increment(1);
+      }
+      if (referralWrites.commissionAmountPaise > 0 && !referralWrites.commissionExists) {
+        memberUpdate.pendingPaise = FieldValue.increment(referralWrites.commissionAmountPaise);
+        transaction.create(referralWrites.commissionRef, {
+          referrerUid: referralWrites.referrerUid,
+          referredUid: order.userId,
+          courseId: order.courseId,
+          orderId,
+          purchaseId,
+          paymentAmountPaise: referralWrites.paymentAmountPaise,
+          commissionType: referralWrites.settings.commissionType,
+          commissionRateSnapshot: referralWrites.settings.commissionType === "percentage"
+            ? { percentageBps: Number(referralWrites.settings.percentageBps || 0) }
+            : { fixedAmountPaise: Number(referralWrites.settings.fixedAmountPaise || 0) },
+          commissionAmountPaise: referralWrites.commissionAmountPaise,
+          currency: order.currency || "INR",
+          status: "pending",
+          createdAt: now,
+          updatedAt: now
+        });
+      }
+      transaction.update(referralWrites.memberRef, memberUpdate);
+    }
   });
 
   return purchaseId;
@@ -2587,6 +3288,7 @@ async function updateOrderFromIncompleteWebhook(orderId, order, payload, normali
 
 async function revokeCourseAccessFromWebhook(orderId, order, payload, revocation) {
   const purchaseId = purchaseDocId(order.userId, order.courseId);
+  const referralRecordId = referralCommissionDocId(orderId);
   const purchaseRef = db.collection("purchases").doc(purchaseId);
   const userPurchaseRef = db
     .collection("users")
@@ -2596,6 +3298,8 @@ async function revokeCourseAccessFromWebhook(orderId, order, payload, revocation
   const enrollmentRef = db.collection("enrollments").doc(enrollmentDocId(order.userId, order.courseId));
   const orderRef = db.collection("paymentOrders").doc(orderId);
   const lockRef = paymentOrderLockRef(order.userId, order.courseId);
+  const referralEventRef = db.collection("referralPurchaseEvents").doc(referralRecordId);
+  const commissionRef = db.collection("referralCommissions").doc(referralRecordId);
   const now = FieldValue.serverTimestamp();
   const auditEntry = {
     type: revocation.status,
@@ -2607,7 +3311,11 @@ async function revokeCourseAccessFromWebhook(orderId, order, payload, revocation
   };
 
   await db.runTransaction(async (transaction) => {
-    const orderSnap = await transaction.get(orderRef);
+    const [orderSnap, referralEventSnap, commissionSnap] = await Promise.all([
+      transaction.get(orderRef),
+      transaction.get(referralEventRef),
+      transaction.get(commissionRef)
+    ]);
     if (!orderSnap.exists) {
       throw new Error("Payment order disappeared during access revocation.");
     }
@@ -2617,6 +3325,25 @@ async function revokeCourseAccessFromWebhook(orderId, order, payload, revocation
       currentOrder.lastRevocationReferenceId === revocation.referenceId
     ) {
       return;
+    }
+
+    let referralReversal = null;
+    const referralEvent = referralEventSnap.exists ? referralEventSnap.data() || {} : {};
+    if (referralEventSnap.exists && referralEvent.status === "active" && referralEvent.referrerUid) {
+      const memberRef = db.collection("referralMembers").doc(referralEvent.referrerUid);
+      const buyerStateRef = db.collection("referralBuyerStates")
+        .doc(`${referralEvent.referrerUid}_${order.userId}`);
+      const [memberSnap, buyerStateSnap] = await Promise.all([
+        transaction.get(memberRef),
+        transaction.get(buyerStateRef)
+      ]);
+      referralReversal = {
+        memberRef,
+        member: memberSnap.exists ? memberSnap.data() || {} : null,
+        buyerStateRef,
+        buyerState: buyerStateSnap.exists ? buyerStateSnap.data() || {} : {},
+        commission: commissionSnap.exists ? commissionSnap.data() || {} : null
+      };
     }
 
     const sharedUpdate = {
@@ -2656,6 +3383,51 @@ async function revokeCourseAccessFromWebhook(orderId, order, payload, revocation
       status: revocation.status,
       updatedAt: now
     }, { merge: true });
+
+    if (referralReversal) {
+      const previousPurchaseCount = Number(referralReversal.buyerState.activePurchaseCount || 0);
+      const nextPurchaseCount = Math.max(0, previousPurchaseCount - 1);
+      transaction.update(referralEventRef, {
+        status: "reversed",
+        reversalReason: revocation.reason,
+        reversedAt: now,
+        updatedAt: now
+      });
+      transaction.set(referralReversal.buyerStateRef, {
+        activePurchaseCount: nextPurchaseCount,
+        updatedAt: now
+      }, { merge: true });
+      if (referralReversal.member) {
+        const memberUpdate = {
+          recentActivity: prependRecentItem(referralReversal.member.recentActivity, {
+            type: "reversal",
+            courseId: order.courseId,
+            createdAtMillis: Date.now()
+          }),
+          updatedAt: now
+        };
+        if (previousPurchaseCount === 1) {
+          memberUpdate.successfulBuyerCount = FieldValue.increment(-1);
+        }
+        const commission = referralReversal.commission;
+        if (commission && commission.status !== "reversed") {
+          const amount = Number(commission.commissionAmountPaise || 0);
+          if (["pending", "approved", "paid"].includes(commission.status)) {
+            memberUpdate.reversedPaise = FieldValue.increment(amount);
+          }
+          if (commission.status === "pending") memberUpdate.pendingPaise = FieldValue.increment(-amount);
+          if (commission.status === "approved") memberUpdate.approvedPaise = FieldValue.increment(-amount);
+          transaction.update(commissionRef, {
+            previousStatus: commission.status,
+            status: "reversed",
+            reversalReason: revocation.reason,
+            reversedAt: now,
+            updatedAt: now
+          });
+        }
+        transaction.update(referralReversal.memberRef, memberUpdate);
+      }
+    }
   });
 }
 

@@ -209,3 +209,70 @@ test("admin can write a validated separate quiz and invalid fields are rejected"
     updatedAt: { __timestamp: timestamp }
   }, adminToken, ["unexpectedAnswerExport", "updatedAt"]));
 });
+
+test("referral members can read only their own profile and cannot write financial fields", async () => {
+  await seed(`referralMembers/${studentUid}`, {
+    uid: studentUid,
+    name: "Aarav",
+    upiId: "aarav@upi",
+    referralCode: "ABCD234567",
+    status: "active",
+    pendingPaise: 2500
+  });
+  await seed(`referralMembers/${otherStudentUid}`, {
+    uid: otherStudentUid,
+    name: "Meera",
+    upiId: "meera@upi",
+    referralCode: "EFGH234567",
+    status: "active"
+  });
+  await expectAllowed(readDocument(`referralMembers/${studentUid}`, studentToken));
+  await expectDenied(readDocument(`referralMembers/${otherStudentUid}`, studentToken));
+  await expectDenied(writeDocument(`referralMembers/${studentUid}`, { pendingPaise: 999999 }, studentToken, ["pendingPaise"]));
+  await expectDenied(writeDocument(`referralMembers/${studentUid}`, { status: "active" }, studentToken, ["status"]));
+  await expectAllowed(readDocument(`referralMembers/${studentUid}`, adminToken));
+});
+
+test("students cannot forge referral attribution, commissions, payouts or settings", async () => {
+  await expectDenied(writeDocument(`referralAttributions/${studentUid}`, {
+    referredUid: studentUid,
+    referrerUid: otherStudentUid,
+    referralCode: "EFGH234567",
+    status: "active"
+  }, studentToken));
+  await expectDenied(writeDocument("referralCommissions/fake", {
+    referrerUid: studentUid,
+    commissionAmountPaise: 50000,
+    status: "paid"
+  }, studentToken));
+  await expectDenied(writeDocument("referralPayouts/fake", {
+    referrerUid: studentUid,
+    amountPaise: 50000,
+    status: "paid"
+  }, studentToken));
+  await expectDenied(writeDocument("referralCodes/FAKE234567", {
+    ownerUid: studentUid,
+    status: "active"
+  }, studentToken));
+  await expectDenied(writeDocument("systemConfig/referrals", {
+    enabled: true,
+    percentageBps: 5000
+  }, studentToken));
+});
+
+test("referral financial records are not readable by students", async () => {
+  await seed("referralCommissions/commission-1", {
+    referrerUid: studentUid,
+    commissionAmountPaise: 2500,
+    status: "pending"
+  });
+  await seed("referralPayouts/payout-1", {
+    referrerUid: studentUid,
+    amountPaise: 2500,
+    status: "paid"
+  });
+  await expectDenied(readDocument("referralCommissions/commission-1", studentToken));
+  await expectDenied(readDocument("referralPayouts/payout-1", studentToken));
+  await expectAllowed(readDocument("referralCommissions/commission-1", adminToken));
+  await expectAllowed(readDocument("referralPayouts/payout-1", adminToken));
+});
