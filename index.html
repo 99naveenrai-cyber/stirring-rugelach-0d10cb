@@ -3320,6 +3320,7 @@ const REFERRAL_CITIES_BY_STATE = {
 
 function referralLocationField(label, id, listId, value='') {
   const group = referralField(label, id, 'text', value);
+  group.classList.add('wide');
   const input = group.querySelector('input');
   input.setAttribute('list', listId);
   input.placeholder = `Select or type ${label.toLowerCase()}`;
@@ -3373,10 +3374,7 @@ function renderReferralJoinForm(container) {
   status.id = 'referral-join-status';
   status.className = 'referral-status';
   status.setAttribute('aria-live', 'polite');
-  const note = document.createElement('p');
-  note.className = 'referral-note';
-  note.textContent = 'Your UPI and contact details remain private. Financial Assistance is created only after a verified paid purchase.';
-  form.append(grid, button, status, note);
+  form.append(grid, button, status);
   form.addEventListener('submit', submitReferralMembership);
   panel.append(title, form);
   container.replaceChildren(panel);
