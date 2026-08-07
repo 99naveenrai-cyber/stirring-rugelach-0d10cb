@@ -631,6 +631,12 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .referral-share button,.referral-share a{min-height:42px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #bfd2e7;background:#fff;color:#0a4f91;border-radius:7px;padding:.55rem .75rem;font-weight:750;text-decoration:none;cursor:pointer}
 .referral-list{display:grid;gap:.5rem;margin-top:.8rem}.referral-activity{padding:.65rem 0;border-top:1px solid #edf0f4;font-size:.8rem;color:#46566b}
 @media(max-width:720px){.referral-grid{grid-template-columns:1fr}.referral-form-grid{grid-template-columns:1fr}.referral-form-grid .wide{grid-column:auto}.referral-stats{grid-template-columns:1fr 1fr}.bottom-nav .bn-item{font-size:.58rem}}
+/* Task 1-3: new UPI & course link styles */
+.referral-upi-confirm-panel{margin-top:.7rem;background:#f0f7ff;border:1px solid #8eb8e3;border-radius:8px;padding:.8rem}
+.referral-upi-confirmed{font-size:.85rem;color:#1a3a5c;margin-bottom:.6rem;line-height:1.6}
+.referral-btn-secondary{min-height:38px;margin-top:.5rem;margin-right:.4rem;border:1px solid #bfd2e7;border-radius:7px;background:#f6faff;color:#0a4f91;padding:.45rem .75rem;font-weight:700;cursor:pointer;font-size:.82rem}.referral-btn-secondary:disabled{opacity:.55;cursor:wait}
+.referral-link-section{margin-top:1rem;padding:.75rem;background:#f8fbff;border:1px solid #dbe5f0;border-radius:8px}
+.referral-course-selector{margin-top:.7rem;display:flex;flex-direction:column;gap:.4rem;max-height:280px;overflow-y:auto}
 </style>
 </head>
 <body>
@@ -1002,6 +1008,7 @@ const joinReferralProgramFn = httpsCallable(functions, 'joinReferralProgram');
 const verifyReferralUpiFn = httpsCallable(functions, 'verifyReferralUpi');
 const claimReferralAttributionFn = httpsCallable(functions, 'claimReferralAttribution');
 const getMyReferralDashboardFn = httpsCallable(functions, 'getMyReferralDashboard');
+const setReferralLinkCourseFn = httpsCallable(functions, 'setReferralLinkCourse');
 const gProvider = new GoogleAuthProvider();
 
 // ── STATE ──
@@ -1022,8 +1029,11 @@ const REG_PENDING_KEY = 'ideakdcPendingRegistration';
 const REFERRAL_PENDING_KEY = 'ideakdcPendingReferralCode';
 
 function captureReferralCodeFromUrl() {
-  const code = String(new URLSearchParams(window.location.search).get('ref') || '').trim().toUpperCase();
+  const params = new URLSearchParams(window.location.search);
+  const code = String(params.get('ref') || '').trim().toUpperCase();
   if (/^[A-Z2-9]{10}$/.test(code)) localStorage.setItem(REFERRAL_PENDING_KEY, code);
+  const rc = String(params.get('rc') || '').trim();
+  if (rc) localStorage.setItem('ideakdcPendingReferralCourse', rc);
 }
 captureReferralCodeFromUrl();
 
@@ -2614,18 +2624,20 @@ function setupPaymentPage() {
 }
 
 function cashfreeErrorMessage(error) {
-  const code = error?.code || '';
-  const message = error?.message || '';
+  const code = String(error?.code || '');
+  const message = String(error?.message || '');
   if (code.includes('unauthenticated')) return 'Login required before payment.';
   if (code.includes('not-found') || code.includes('invalid-argument')) return 'Invalid course. Please choose the course again.';
+  if (code.includes('deadline-exceeded')) return 'Payment service did not respond in time. Please try again in a moment.';
+  if (code.includes('unavailable')) return 'Payment service is temporarily unavailable. Please try again in a moment.';
   if (code.includes('failed-precondition')) return message || 'Payment order failed. Please try again.';
   return 'Payment order failed. Please try again.';
 }
 
 function cashfreeVerifyMessage(result) {
-  if (result.verified || result.status === 'paid') return 'Payment successful. Course access unlocked.';
-  if (result.status === 'pending') return 'Payment is pending. Please check again after a few moments.';
-  return 'Payment failed or cancelled. Course access was not unlocked.';
+  if (result.verified || result.status === 'paid') return 'Payment successful. Course access is unlocked. 🎉';
+  if (result.status === 'pending') return 'We are checking your payment. Please do not pay again — we will update you shortly.';
+  return 'Payment failed. No amount has been confirmed as received. You can safely try again.';
 }
 
 let cashfreeSdkPromise = null;
@@ -3236,14 +3248,21 @@ window.doLogout = async () => {
 async function claimPendingReferralAttribution() {
   const code = localStorage.getItem(REFERRAL_PENDING_KEY) || '';
   if (!currentUser || !/^[A-Z2-9]{10}$/.test(code)) return;
+  const pendingCourse = localStorage.getItem('ideakdcPendingReferralCourse') || '';
   try {
-    await claimReferralAttributionFn({ referralCode: code, source: 'referral-link' });
+    await claimReferralAttributionFn({
+      referralCode: code,
+      source: 'referral-link',
+      ...(pendingCourse ? { courseId: pendingCourse } : {})
+    });
     localStorage.removeItem(REFERRAL_PENDING_KEY);
+    localStorage.removeItem('ideakdcPendingReferralCourse');
     showToast('Referral link आपके account से जुड़ गया।', 'success');
   } catch (error) {
     const codeValue = String(error?.code || '');
     if (codeValue.includes('already-exists') || codeValue.includes('not-found') || codeValue.includes('invalid-argument')) {
       localStorage.removeItem(REFERRAL_PENDING_KEY);
+      localStorage.removeItem('ideakdcPendingReferralCourse');
     }
   }
 }
@@ -3406,7 +3425,7 @@ function renderReferralJoinForm(container) {
   const grid = document.createElement('div');
   grid.className = 'referral-form-grid';
   const nameField = referralField('Full name', 'ref-name', 'text', currentUserData?.name || currentUser?.displayName || '');
-  const upiField = referralField('UPI ID', 'ref-upi');
+  const upiField = referralField('UPI ID (e.g. yourname@bank)', 'ref-upi');
   grid.append(
     nameField,
     upiField,
@@ -3417,25 +3436,22 @@ function renderReferralJoinForm(container) {
   );
   const verification = document.createElement('div');
   verification.className = 'referral-upi-verify';
-  const consentLabel = document.createElement('label');
-  consentLabel.className = 'referral-upi-consent';
-  const consent = document.createElement('input');
-  consent.id = 'ref-upi-consent';
-  consent.type = 'checkbox';
-  const consentText = document.createElement('span');
-  consentText.textContent = 'I consent to Cashfree verifying this UPI ID and its account-holder name.';
-  consentLabel.append(consent, consentText);
   const verifyButton = document.createElement('button');
   verifyButton.id = 'ref-upi-verify-btn';
   verifyButton.className = 'referral-verify-btn';
   verifyButton.type = 'button';
-  verifyButton.textContent = 'Verify UPI ID';
+  verifyButton.textContent = 'Verify UPI ID so that your earnings go to the correct bank account';
   verifyButton.addEventListener('click', verifyReferralUpiFromForm);
   const verifyStatus = document.createElement('div');
   verifyStatus.id = 'ref-upi-verify-status';
   verifyStatus.className = 'referral-status';
   verifyStatus.setAttribute('aria-live', 'polite');
-  verification.append(consentLabel, verifyButton, verifyStatus);
+  // Confirm panel — hidden until verification succeeds
+  const confirmPanel = document.createElement('div');
+  confirmPanel.id = 'ref-upi-confirm-panel';
+  confirmPanel.className = 'referral-upi-confirm-panel';
+  confirmPanel.style.display = 'none';
+  verification.append(verifyButton, verifyStatus, confirmPanel);
   grid.appendChild(verification);
   const button = document.createElement('button');
   button.type = 'submit';
@@ -3455,29 +3471,97 @@ function renderReferralJoinForm(container) {
   });
 }
 
+// UPI ID basic format validation (matches backend UPI_ID_PATTERN shape)
+function isValidUpiFormat(upiId) {
+  return /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$/.test(String(upiId || '').trim());
+}
+
+function upiErrorMessage(error) {
+  const msg = String(error?.message || '');
+  const code = String(error?.code || '');
+  if (code.includes('deadline-exceeded')) return 'UPI verification service did not respond in time. Please try again in a few minutes.';
+  if (code.includes('unavailable')) return 'Could not connect to UPI verification service. Check your connection and try again.';
+  if (msg.toLowerCase().includes('sandbox') || msg.toLowerCase().includes('test mode')) {
+    return 'UPI verification failed in test mode. Use a Cashfree sandbox-supported UPI ID (e.g. success@cashfree).';
+  }
+  if (code.includes('invalid-argument') || msg.toLowerCase().includes('format') || msg.toLowerCase().includes('invalid')) {
+    return 'UPI ID format is invalid. Use the format: yourname@bank';
+  }
+  return msg || 'UPI ID could not be verified. Please check it and try again.';
+}
+
+function showUpiConfirmPanel(containerId, verifiedName, upiId, onConfirm, onEdit) {
+  const panel = document.getElementById(containerId);
+  if (!panel) return;
+  panel.style.display = 'block';
+  panel.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'referral-upi-confirmed';
+  info.innerHTML = `<strong>✅ UPI Verified</strong><br>Account Holder: <strong>${verifiedName}</strong><br>UPI ID: ${upiId}`;
+  const yesBtn = document.createElement('button');
+  yesBtn.type = 'button';
+  yesBtn.className = 'referral-verify-btn';
+  yesBtn.textContent = 'Yes, Correct — Use this UPI';
+  yesBtn.addEventListener('click', onConfirm);
+  const editBtn = document.createElement('button');
+  editBtn.type = 'button';
+  editBtn.className = 'referral-btn-secondary';
+  editBtn.textContent = 'Edit UPI ID';
+  editBtn.addEventListener('click', onEdit);
+  panel.append(info, yesBtn, editBtn);
+}
+
+let _referralUpiConfirmed = false;
+
 async function verifyReferralUpiFromForm() {
   const button = document.getElementById('ref-upi-verify-btn');
   const status = document.getElementById('ref-upi-verify-status');
-  const consent = document.getElementById('ref-upi-consent');
-  if (!consent?.checked) {
+  const upiInput = document.getElementById('ref-upi');
+  const upiId = String(upiInput?.value || '').trim();
+  if (!isValidUpiFormat(upiId)) {
     status.className = 'referral-status error';
-    status.textContent = 'Please give consent before UPI verification.';
+    status.textContent = 'UPI ID format is invalid. Use the format: yourname@bank (e.g. ram@upi)';
     return;
   }
   button.disabled = true;
   status.className = 'referral-status';
-  status.textContent = 'Verifying UPI ID...';
+  status.textContent = 'Verifying UPI ID…';
+  const confirmPanel = document.getElementById('ref-upi-confirm-panel');
+  if (confirmPanel) confirmPanel.style.display = 'none';
+  _referralUpiConfirmed = false;
   try {
     const result = await verifyReferralUpiFn({
-      upiId: document.getElementById('ref-upi').value,
+      upiId,
       name: document.getElementById('ref-name').value,
       userConsent: true
     });
+    const verifiedName = result.data?.verifiedName || 'Confirmed';
     status.className = 'referral-status success';
-    status.textContent = `Verified account name: ${result.data?.verifiedName || 'Confirmed'}`;
+    status.textContent = '';
+    showUpiConfirmPanel(
+      'ref-upi-confirm-panel',
+      verifiedName,
+      upiId,
+      () => { // Yes, Correct
+        _referralUpiConfirmed = true;
+        if (upiInput) upiInput.readOnly = true;
+        if (confirmPanel) {
+          confirmPanel.innerHTML = `<div class="referral-upi-confirmed">✅ UPI confirmed: <strong>${verifiedName}</strong></div>`;
+        }
+        status.textContent = '';
+      },
+      () => { // Edit
+        _referralUpiConfirmed = false;
+        if (upiInput) { upiInput.readOnly = false; upiInput.value = ''; upiInput.focus(); }
+        if (confirmPanel) confirmPanel.style.display = 'none';
+        button.disabled = false;
+        status.className = 'referral-status';
+        status.textContent = '';
+      }
+    );
   } catch (error) {
     status.className = 'referral-status error';
-    status.textContent = error?.message || 'UPI verification failed.';
+    status.textContent = upiErrorMessage(error);
   } finally {
     button.disabled = false;
   }
@@ -3487,9 +3571,15 @@ async function submitReferralMembership(event) {
   event.preventDefault();
   const button = event.currentTarget.querySelector('button[type="submit"]');
   const status = document.getElementById('referral-join-status');
+  const upiId = String(document.getElementById('ref-upi')?.value || '').trim();
+  if (!upiId) {
+    status.className = 'referral-status error';
+    status.textContent = 'Please enter your UPI ID.';
+    return;
+  }
   const payload = {
     name: document.getElementById('ref-name').value,
-    upiId: document.getElementById('ref-upi').value,
+    upiId,
     state: getReferralLocationValue('ref-state'),
     city: getReferralLocationValue('ref-city'),
     email: document.getElementById('ref-email').value,
@@ -3581,18 +3671,31 @@ function renderReferralDashboard(container, dashboard) {
   email.textContent = 'Share by Email';
   share.append(copyButton, whatsapp, email);
   main.append(identity, stats, share);
+  // UPI verification / verified name section
   if (!upiVerified) {
-    const verifyButton = document.createElement('button');
-    verifyButton.type = 'button';
-    verifyButton.className = 'referral-verify-btn';
-    verifyButton.textContent = 'Verify my UPI ID';
-    verifyButton.addEventListener('click', verifyExistingReferralUpi);
-    main.appendChild(verifyButton);
+    const upiVerifySection = document.createElement('div');
+    upiVerifySection.className = 'referral-upi-verify';
+    const verifyBtn = document.createElement('button');
+    verifyBtn.type = 'button';
+    verifyBtn.className = 'referral-verify-btn';
+    verifyBtn.textContent = 'Verify UPI ID so that your earnings go to the correct bank account';
+    verifyBtn.id = 'dash-upi-verify-btn';
+    const verifyStatusDiv = document.createElement('div');
+    verifyStatusDiv.id = 'dash-upi-verify-status';
+    verifyStatusDiv.className = 'referral-status';
+    verifyStatusDiv.setAttribute('aria-live', 'polite');
+    const confirmPanelDiv = document.createElement('div');
+    confirmPanelDiv.id = 'dash-upi-confirm-panel';
+    confirmPanelDiv.className = 'referral-upi-confirm-panel';
+    confirmPanelDiv.style.display = 'none';
+    verifyBtn.addEventListener('click', () => verifyExistingReferralUpi(verifyBtn, verifyStatusDiv, confirmPanelDiv));
+    upiVerifySection.append(verifyBtn, verifyStatusDiv, confirmPanelDiv);
+    main.appendChild(upiVerifySection);
   } else if (dashboard.verifiedName) {
-    const verifiedName = document.createElement('p');
-    verifiedName.className = 'referral-note';
-    verifiedName.textContent = `Verified account name: ${dashboard.verifiedName}`;
-    main.appendChild(verifiedName);
+    const verifiedNameP = document.createElement('p');
+    verifiedNameP.className = 'referral-note';
+    verifiedNameP.textContent = `✅ Verified account name: ${dashboard.verifiedName}`;
+    main.appendChild(verifiedNameP);
   }
 
   const activityPanel = document.createElement('section');
@@ -3634,23 +3737,123 @@ function renderReferralDashboard(container, dashboard) {
       payoutList.appendChild(row);
     });
   }
+  // Course-specific referral link section
+  const linkSection = document.createElement('div');
+  linkSection.className = 'referral-link-section';
+  const linkTitle = document.createElement('p');
+  linkTitle.className = 'referral-note';
+  const currentCourse = dashboard.linkedCourseId || '';
+  if (currentCourse) {
+    linkTitle.textContent = `Current link: Course-specific (${currentCourse})`;
+  } else {
+    linkTitle.textContent = 'Current link: General (any course)';
+  }
+  const changeLinkBtn = document.createElement('button');
+  changeLinkBtn.type = 'button';
+  changeLinkBtn.className = 'referral-btn-secondary';
+  changeLinkBtn.textContent = currentCourse ? 'Change / Clear Course Link' : 'Choose Course to Share';
+  changeLinkBtn.addEventListener('click', () => showReferralCourseLinkSelector(dashboard, linkSection, linkTitle, changeLinkBtn));
+  linkSection.append(linkTitle, changeLinkBtn);
+  main.appendChild(linkSection);
+
   activityPanel.append(activityTitle, list, payoutTitle, payoutList);
   grid.append(main, activityPanel);
   container.replaceChildren(grid);
 }
 
-async function verifyExistingReferralUpi(event) {
-  if (!confirm('I consent to Cashfree verifying my saved UPI ID and account-holder name.')) return;
-  const button = event.currentTarget;
-  button.disabled = true;
+async function verifyExistingReferralUpi(btnEl, statusEl, confirmPanelEl) {
+  if (!btnEl) return;
+  btnEl.disabled = true;
+  if (statusEl) { statusEl.className = 'referral-status'; statusEl.textContent = 'Verifying UPI ID…'; }
+  if (confirmPanelEl) confirmPanelEl.style.display = 'none';
   try {
     const result = await verifyReferralUpiFn({ userConsent: true });
-    showToast(`UPI verified: ${result.data?.verifiedName || 'Confirmed'}`, 'success');
-    await renderReferralSupport();
+    const verifiedName = result.data?.verifiedName || 'Confirmed';
+    const maskedUpi = result.data?.maskedUpiId || '';
+    if (statusEl) statusEl.textContent = '';
+    if (confirmPanelEl) {
+      showUpiConfirmPanel(
+        confirmPanelEl.id,
+        verifiedName,
+        maskedUpi,
+        async () => {
+          confirmPanelEl.innerHTML = `<div class="referral-upi-confirmed">✅ UPI confirmed: <strong>${verifiedName}</strong></div>`;
+          await renderReferralSupport();
+        },
+        () => {
+          confirmPanelEl.style.display = 'none';
+          btnEl.disabled = false;
+          if (statusEl) { statusEl.className = 'referral-status'; statusEl.textContent = ''; }
+        }
+      );
+    } else {
+      showToast(`UPI verified: ${verifiedName}`, 'success');
+      await renderReferralSupport();
+    }
   } catch (error) {
-    showToast(error?.message || 'UPI verification failed.', 'error');
+    const msg = upiErrorMessage(error);
+    if (statusEl) { statusEl.className = 'referral-status error'; statusEl.textContent = msg; }
+    else showToast(msg, 'error');
   } finally {
-    button.disabled = false;
+    btnEl.disabled = false;
+  }
+}
+
+// Course link selector UI for referral dashboard (Task 2)
+async function showReferralCourseLinkSelector(dashboard, sectionEl, labelEl, triggerBtn) {
+  // Remove any existing selector to avoid duplicates
+  const existing = sectionEl.querySelector('.referral-course-selector');
+  if (existing) { existing.remove(); return; }
+  const selector = document.createElement('div');
+  selector.className = 'referral-course-selector';
+  selector.innerHTML = '<p style="color:#aaa;margin-bottom:8px">Loading courses…</p>';
+  sectionEl.appendChild(selector);
+  try {
+    // Reuse the public catalogue function to get course list
+    const result = await getPublicCourseCatalogueFn({});
+    const courses = (result.data?.courses || []).filter(c => c.courseId && c.title);
+    selector.innerHTML = '';
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'referral-btn-secondary';
+    clearBtn.textContent = 'No Specific Course (General Link)';
+    clearBtn.addEventListener('click', async () => {
+      clearBtn.disabled = true;
+      try {
+        await setReferralLinkCourseFn({ courseId: '' });
+        labelEl.textContent = 'Current link: General (any course)';
+        triggerBtn.textContent = 'Choose Course to Share';
+        selector.remove();
+        showToast('Referral link updated: general link', 'success');
+      } catch (err) { showToast(err?.message || 'Could not update link.', 'error'); clearBtn.disabled = false; }
+    });
+    selector.appendChild(clearBtn);
+    if (!courses.length) {
+      const none = document.createElement('p');
+      none.className = 'referral-note';
+      none.style.color = '#aaa';
+      none.textContent = 'No courses found.';
+      selector.appendChild(none);
+    }
+    courses.forEach(course => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'referral-btn-secondary';
+      btn.textContent = course.title;
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+          await setReferralLinkCourseFn({ courseId: course.courseId });
+          labelEl.textContent = `Current link: Course-specific (${course.title})`;
+          triggerBtn.textContent = 'Change / Clear Course Link';
+          selector.remove();
+          showToast(`Referral link updated: ${course.title}`, 'success');
+        } catch (err) { showToast(err?.message || 'Could not update link.', 'error'); btn.disabled = false; }
+      });
+      selector.appendChild(btn);
+    });
+  } catch (err) {
+    selector.innerHTML = `<p class="referral-status error">${err?.message || 'Could not load courses.'}</p>`;
   }
 }
 

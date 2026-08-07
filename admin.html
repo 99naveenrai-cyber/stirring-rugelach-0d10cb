@@ -3061,7 +3061,7 @@ window.renderFinanceMembers = () => {
     row.type = 'button';
     row.addEventListener('click', () => loadFinanceMemberDetail(member.uid));
     const identity = financeEl('div');
-    identity.append(financeEl('strong', '', member.name || '—'), financeEl('small', '', `${member.referralCode || '—'} · ${member.city || '—'}, ${member.state || '—'} · ${member.status || 'active'}`));
+    identity.append(financeEl('strong', '', member.name || '—'), financeEl('small', '', `${member.referralCode || '—'} · ${member.city || '—'}, ${member.state || '—'} · ${member.status || 'active'} · UPI ${member.upiVerificationStatus || 'pending'}`));
     const referred = financeEl('div', 'finance-metric');
     referred.append(financeEl('b', '', String(member.referralCount || 0)), document.createTextNode('Referred'));
     const buyers = financeEl('div', 'finance-metric');
@@ -3170,6 +3170,7 @@ function renderFinanceMemberDetail() {
   addFinanceValue(privateGrid, 'WhatsApp', member.whatsapp || '—');
   addFinanceValue(privateGrid, 'Location', `${member.city || '—'}, ${member.state || '—'}`);
   addFinanceValue(privateGrid, 'Referral code', member.referralCode || '—');
+  addFinanceValue(privateGrid, 'Link type', member.linkedCourseId ? `Course-specific (${member.linkedCourseId})` : 'General (any course)');
   addFinanceValue(privateGrid, 'Status', `${member.status || 'active'} · code ${member.referralCodeStatus || 'active'}`);
   const summary = financeEl('div', 'finance-summary-grid');
   addFinanceValue(summary, 'Total referrals', member.referralCount || 0);

@@ -1732,7 +1732,13 @@ async function callCashfreeCreateOrder({ request, auth, course, amount, orderId 
       "Content-Type": "application/json",
       ...cashfreeHeaders(orderId)
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15000)
+  }).catch((err) => {
+    if (err.name === "TimeoutError" || err.name === "AbortError") {
+      throw new HttpsError("deadline-exceeded", "Payment service did not respond in time. Please try again.");
+    }
+    throw new HttpsError("unavailable", "Could not connect to payment service. Check your connection and try again.");
   });
 
   const payload = await readJsonResponse(response, "create-order");
@@ -1759,7 +1765,13 @@ async function callCashfreeCreateOrder({ request, auth, course, amount, orderId 
 async function callCashfreeGetOrder(orderId) {
   const response = await fetch(`${CASHFREE_TEST_BASE_URL}/orders/${encodeURIComponent(orderId)}`, {
     method: "GET",
-    headers: cashfreeHeaders(orderId)
+    headers: cashfreeHeaders(orderId),
+    signal: AbortSignal.timeout(15000)
+  }).catch((err) => {
+    if (err.name === "TimeoutError" || err.name === "AbortError") {
+      throw new HttpsError("deadline-exceeded", "Payment verification timed out. Do not pay again — your payment status will be checked automatically.");
+    }
+    throw new HttpsError("unavailable", "Payment verification is temporarily unavailable. Do not pay again.");
   });
   const payload = await readJsonResponse(response, "get-order");
   if (!response.ok) {
@@ -1776,7 +1788,13 @@ async function callCashfreeGetOrder(orderId) {
 async function callCashfreeOrderPayments(orderId) {
   const response = await fetch(`${CASHFREE_TEST_BASE_URL}/orders/${encodeURIComponent(orderId)}/payments`, {
     method: "GET",
-    headers: cashfreeHeaders(orderId)
+    headers: cashfreeHeaders(orderId),
+    signal: AbortSignal.timeout(15000)
+  }).catch((err) => {
+    if (err.name === "TimeoutError" || err.name === "AbortError") {
+      throw new HttpsError("deadline-exceeded", "Payment verification timed out. Do not pay again — your payment status will be checked automatically.");
+    }
+    throw new HttpsError("unavailable", "Payment verification is temporarily unavailable. Do not pay again.");
   });
   const payload = await readJsonResponse(response, "order-payments");
   if (!response.ok) {
@@ -1851,6 +1869,7 @@ function referralMemberResponse(member = {}) {
     verifiedName: String(member.upiVerifiedName || ""),
     referralCode: String(member.referralCode || ""),
     referralCodeStatus: String(member.referralCodeStatus || "active"),
+    linkedCourseId: String(member.linkedCourseId || ""),
     status: String(member.status || "active"),
     referralCount: Number(member.referralCount || 0),
     successfulBuyerCount: Number(member.successfulBuyerCount || 0),
@@ -1890,7 +1909,13 @@ async function verifyUpiWithCashfree({ uid, upiId, name }) {
         timestamp: new Date().toISOString(),
         purpose: "Verify UPI ID for IdeaKDC Student Partner Program payout"
       }
-    })
+    }),
+    signal: AbortSignal.timeout(20000)
+  }).catch((err) => {
+    if (err.name === "TimeoutError" || err.name === "AbortError") {
+      throw new HttpsError("deadline-exceeded", "UPI verification service did not respond in time. Please try again in a few minutes.");
+    }
+    throw new HttpsError("unavailable", "Could not connect to UPI verification service. Check your connection and try again.");
   });
   const payload = await readJsonResponse(response, "verify-referral-upi");
   const status = String(payload.status || "").toUpperCase();
@@ -2115,7 +2140,7 @@ exports.claimReferralAttribution = onCall(callableOptions({ region: "asia-south1
   const auth = requireReferralAuth(request);
   enforceCallableRateLimit(request, "referral-claim", 8, 10 * 60 * 1000);
   const data = validatedCallableData(request, {
-    allowedKeys: ["referralCode", "source"],
+    allowedKeys: ["referralCode", "source", "courseId"],
     requiredKeys: ["referralCode"],
     maxBytes: 1024
   });
@@ -2124,6 +2149,9 @@ exports.claimReferralAttribution = onCall(callableOptions({ region: "asia-south1
     throw new HttpsError("invalid-argument", "Referral code is invalid.");
   }
   const source = validatedText(data.source || "link", "source", { maxLength: 40 }) || "link";
+  const linkedCourseId = data.courseId
+    ? validatedResourceId(data.courseId, "courseId", false)
+    : "";
   const settings = await referralSettings();
   if (settings.enabled !== true) {
     throw new HttpsError("failed-precondition", "New referrals are currently paused.");
@@ -2175,6 +2203,7 @@ exports.claimReferralAttribution = onCall(callableOptions({ region: "asia-south1
       referrerUid,
       referralCode,
       source,
+      linkedCourseId: linkedCourseId || "",
       status: "active",
       attributedAt: now,
       updatedAt: now
@@ -2221,6 +2250,9 @@ exports.adminListReferralMembers = onCall(callableOptions({ region: "asia-south1
       state: String(item.state || ""),
       city: String(item.city || ""),
       status: String(item.status || "active"),
+      upiVerificationStatus: String(item.upiVerificationStatus || "pending"),
+      upiVerifiedName: String(item.upiVerifiedName || ""),
+      linkedCourseId: String(item.linkedCourseId || ""),
       referralCount: Number(item.referralCount || 0),
       successfulBuyerCount: Number(item.successfulBuyerCount || 0),
       pendingPaise: Number(item.pendingPaise || 0),
@@ -2257,6 +2289,38 @@ exports.adminGetReferralMember = onCall(callableOptions({ region: "asia-south1" 
     commissions,
     payouts
   };
+});
+
+exports.setReferralLinkCourse = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireReferralAuth(request);
+  enforceCallableRateLimit(request, "referral-set-link-course", 10, 60 * 1000);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["courseId"],
+    maxBytes: 512
+  });
+  // Empty string or omitted courseId clears the course link (general link).
+  const courseId = data.courseId
+    ? validatedResourceId(data.courseId, "courseId", false)
+    : "";
+  const memberRef = db.collection("referralMembers").doc(auth.uid);
+  const memberSnap = await memberRef.get();
+  if (!memberSnap.exists) {
+    throw new HttpsError("not-found", "You are not yet a Student Partner Program member.");
+  }
+  if (memberSnap.data()?.status !== "active") {
+    throw new HttpsError("failed-precondition", "Your membership is not active.");
+  }
+  if (courseId) {
+    // Validate the course exists so members can't set arbitrary IDs.
+    await findCourseById(courseId).catch(() => {
+      throw new HttpsError("not-found", "The selected course was not found.");
+    });
+  }
+  await memberRef.update({
+    linkedCourseId: courseId,
+    updatedAt: FieldValue.serverTimestamp()
+  });
+  return { linkedCourseId: courseId };
 });
 
 exports.adminSaveReferralSettings = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
@@ -2950,11 +3014,16 @@ async function finalizeSuccessfulPayment(orderId, order, providerPayload) {
 
     let referralWrites = null;
     const attribution = attributionSnap.exists ? attributionSnap.data() || {} : {};
+    // Strict course gate: if the attribution was for a specific course, only
+    // credit commission when the buyer purchases exactly that course.
+    const attributionCourseGatePass = !attribution.linkedCourseId ||
+      attribution.linkedCourseId === order.courseId;
     if (
       !referralEventSnap.exists &&
       attribution.status === "active" &&
       attribution.referrerUid &&
-      attribution.referrerUid !== order.userId
+      attribution.referrerUid !== order.userId &&
+      attributionCourseGatePass
     ) {
       const memberRef = db.collection("referralMembers").doc(attribution.referrerUid);
       const buyerStateRef = db.collection("referralBuyerStates")
