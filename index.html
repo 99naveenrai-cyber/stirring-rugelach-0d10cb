@@ -637,6 +637,8 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .referral-btn-secondary{min-height:38px;margin-top:.5rem;margin-right:.4rem;border:1px solid #bfd2e7;border-radius:7px;background:#f6faff;color:#0a4f91;padding:.45rem .75rem;font-weight:700;cursor:pointer;font-size:.82rem}.referral-btn-secondary:disabled{opacity:.55;cursor:wait}
 .referral-link-section{margin-top:1rem;padding:.75rem;background:#f8fbff;border:1px solid #dbe5f0;border-radius:8px}
 .referral-course-selector{margin-top:.7rem;display:flex;flex-direction:column;gap:.4rem;max-height:280px;overflow-y:auto}
+.referral-upi-error-popup{display:none;margin-top:.6rem;background:#fff3f3;border:1.5px solid #e53e3e;border-radius:8px;padding:.7rem 1rem;color:#b42318;font-size:.85rem;font-weight:600;position:relative;line-height:1.5}
+.referral-popup-close{position:absolute;top:.3rem;right:.5rem;background:none;border:none;color:#b42318;font-size:1.1rem;cursor:pointer;padding:0;line-height:1;font-weight:900}.referral-popup-close:hover{color:#7b0b0b}
 </style>
 </head>
 <body>
@@ -3434,33 +3436,20 @@ function renderReferralJoinForm(container) {
     referralField('Email', 'ref-email', 'email', currentUser?.email || ''),
     referralField('WhatsApp number', 'ref-whatsapp', 'tel', currentUserData?.mobile || currentUserData?.phone || '')
   );
-  const verification = document.createElement('div');
-  verification.className = 'referral-upi-verify';
-  const verifyButton = document.createElement('button');
-  verifyButton.id = 'ref-upi-verify-btn';
-  verifyButton.className = 'referral-verify-btn';
-  verifyButton.type = 'button';
-  verifyButton.textContent = 'Verify UPI ID so that your earnings go to the correct bank account';
-  verifyButton.addEventListener('click', verifyReferralUpiFromForm);
-  const verifyStatus = document.createElement('div');
-  verifyStatus.id = 'ref-upi-verify-status';
-  verifyStatus.className = 'referral-status';
-  verifyStatus.setAttribute('aria-live', 'polite');
-  // Confirm panel — hidden until verification succeeds
-  const confirmPanel = document.createElement('div');
-  confirmPanel.id = 'ref-upi-confirm-panel';
-  confirmPanel.className = 'referral-upi-confirm-panel';
-  confirmPanel.style.display = 'none';
-  verification.append(verifyButton, verifyStatus, confirmPanel);
-  grid.appendChild(verification);
   const button = document.createElement('button');
   button.type = 'submit';
   button.className = 'referral-submit';
-  button.textContent = 'Join Student Partner Program';
+  button.textContent = 'Create Account';
   const status = document.createElement('div');
   status.id = 'referral-join-status';
   status.className = 'referral-status';
   status.setAttribute('aria-live', 'polite');
+  // UPI error popup — shown inline below UPI field on verification failure
+  const upiErrorPopup = document.createElement('div');
+  upiErrorPopup.id = 'ref-upi-error-popup';
+  upiErrorPopup.className = 'referral-upi-error-popup';
+  upiErrorPopup.style.display = 'none';
+  grid.appendChild(upiErrorPopup);
   form.append(grid, button, status);
   form.addEventListener('submit', submitReferralMembership);
   panel.append(title, form);
@@ -3490,6 +3479,31 @@ function upiErrorMessage(error) {
   return msg || 'UPI ID could not be verified. Please check it and try again.';
 }
 
+// Show inline UPI error popup below the UPI field asking user to correct it
+function showUpiErrorPopup(message) {
+  const upiInput = document.getElementById('ref-upi');
+  const popup = document.getElementById('ref-upi-error-popup');
+  if (!popup) return;
+  popup.style.display = 'block';
+  popup.innerHTML = '';
+  const icon = document.createElement('span');
+  icon.textContent = '⚠️ ';
+  const text = document.createElement('span');
+  text.textContent = message || 'Write correct UPI ID';
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'referral-popup-close';
+  closeBtn.textContent = '×';
+  closeBtn.addEventListener('click', () => {
+    popup.style.display = 'none';
+    if (upiInput) { upiInput.value = ''; upiInput.focus(); }
+  });
+  popup.append(icon, text, closeBtn);
+  // Auto-focus UPI field so user can retype
+  if (upiInput) { upiInput.select(); upiInput.focus(); }
+}
+
+// showUpiConfirmPanel kept for dashboard verify flow
 function showUpiConfirmPanel(containerId, verifiedName, upiId, onConfirm, onEdit) {
   const panel = document.getElementById(containerId);
   if (!panel) return;
@@ -3511,91 +3525,59 @@ function showUpiConfirmPanel(containerId, verifiedName, upiId, onConfirm, onEdit
   panel.append(info, yesBtn, editBtn);
 }
 
-let _referralUpiConfirmed = false;
-
-async function verifyReferralUpiFromForm() {
-  const button = document.getElementById('ref-upi-verify-btn');
-  const status = document.getElementById('ref-upi-verify-status');
+async function submitReferralMembership(event) {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector('button[type="submit"]');
+  const status = document.getElementById('referral-join-status');
   const upiInput = document.getElementById('ref-upi');
   const upiId = String(upiInput?.value || '').trim();
+  // Hide any previous UPI error popup
+  const popup = document.getElementById('ref-upi-error-popup');
+  if (popup) popup.style.display = 'none';
+  // Basic format check before hitting backend
   if (!isValidUpiFormat(upiId)) {
+    showUpiErrorPopup('UPI ID format is invalid. Use the format: yourname@bank (e.g. yourname@paytm)');
+    return;
+  }
+  const name = String(document.getElementById('ref-name')?.value || '').trim();
+  if (!name) {
     status.className = 'referral-status error';
-    status.textContent = 'UPI ID format is invalid. Use the format: yourname@bank (e.g. ram@upi)';
+    status.textContent = 'Please enter your full name.';
     return;
   }
   button.disabled = true;
   status.className = 'referral-status';
   status.textContent = 'Verifying UPI ID…';
-  const confirmPanel = document.getElementById('ref-upi-confirm-panel');
-  if (confirmPanel) confirmPanel.style.display = 'none';
-  _referralUpiConfirmed = false;
+  // Step 1: Verify UPI silently
+  let upiVerified = false;
   try {
-    const result = await verifyReferralUpiFn({
-      upiId,
-      name: document.getElementById('ref-name').value,
-      userConsent: true
-    });
-    const verifiedName = result.data?.verifiedName || 'Confirmed';
-    status.className = 'referral-status success';
-    status.textContent = '';
-    showUpiConfirmPanel(
-      'ref-upi-confirm-panel',
-      verifiedName,
-      upiId,
-      () => { // Yes, Correct
-        _referralUpiConfirmed = true;
-        if (upiInput) upiInput.readOnly = true;
-        if (confirmPanel) {
-          confirmPanel.innerHTML = `<div class="referral-upi-confirmed">✅ UPI confirmed: <strong>${verifiedName}</strong></div>`;
-        }
-        status.textContent = '';
-      },
-      () => { // Edit
-        _referralUpiConfirmed = false;
-        if (upiInput) { upiInput.readOnly = false; upiInput.value = ''; upiInput.focus(); }
-        if (confirmPanel) confirmPanel.style.display = 'none';
-        button.disabled = false;
-        status.className = 'referral-status';
-        status.textContent = '';
-      }
-    );
-  } catch (error) {
-    status.className = 'referral-status error';
-    status.textContent = upiErrorMessage(error);
-  } finally {
+    await verifyReferralUpiFn({ upiId, name, userConsent: true });
+    upiVerified = true;
+  } catch (upiError) {
     button.disabled = false;
-  }
-}
-
-async function submitReferralMembership(event) {
-  event.preventDefault();
-  const button = event.currentTarget.querySelector('button[type="submit"]');
-  const status = document.getElementById('referral-join-status');
-  const upiId = String(document.getElementById('ref-upi')?.value || '').trim();
-  if (!upiId) {
-    status.className = 'referral-status error';
-    status.textContent = 'Please enter your UPI ID.';
+    status.textContent = '';
+    showUpiErrorPopup(upiErrorMessage(upiError));
     return;
   }
+  // Step 2: UPI verified — create account
+  if (!upiVerified) return;
+  status.textContent = 'Creating your account…';
   const payload = {
-    name: document.getElementById('ref-name').value,
+    name,
     upiId,
     state: getReferralLocationValue('ref-state'),
     city: getReferralLocationValue('ref-city'),
-    email: document.getElementById('ref-email').value,
-    whatsapp: document.getElementById('ref-whatsapp').value
+    email: String(document.getElementById('ref-email')?.value || '').trim(),
+    whatsapp: String(document.getElementById('ref-whatsapp')?.value || '').trim()
   };
-  button.disabled = true;
-  status.className = 'referral-status';
-  status.textContent = 'Membership बनाई जा रही है...';
   try {
     await joinReferralProgramFn(payload);
     status.className = 'referral-status success';
-    status.textContent = 'Student Partner Program membership ready.';
+    status.textContent = '✅ Account created! Welcome to the Student Partner Program.';
     await renderReferralSupport();
-  } catch (error) {
+  } catch (joinError) {
     status.className = 'referral-status error';
-    status.textContent = error?.message || 'Membership create नहीं हो सकी।';
+    status.textContent = joinError?.message || 'Account creation failed. Please try again.';
   } finally {
     button.disabled = false;
   }
