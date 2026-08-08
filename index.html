@@ -1027,7 +1027,7 @@ window.closeLiveModal = () => {
 };
 
 function renderLiveClassModal() {
-  // Render Class Grid (6 to 12)
+  // Render Class Grid (6 to 12) - All classes tappable at one tap!
   const classGrid = document.getElementById('lc-class-grid');
   classGrid.innerHTML = '';
   const classes = ['6','7','8','9','10','11','12'];
@@ -1040,16 +1040,15 @@ function renderLiveClassModal() {
     let cls = 'lc-class-btn';
     if (hasLive) cls += ' live';
     else if (hasPlanned) cls += ' planned';
-    else cls += ' disabled';
 
-    if (c === _selectedClass && hasPlanned) cls += ' selected';
+    if (c === _selectedClass) cls += ' selected';
 
     btn.className = cls;
     btn.innerHTML = `${c}th${hasLive ? '<br><span style="font-size:.6rem">🔴 LIVE</span>' : hasPlanned ? '<br><span style="font-size:.6rem">📅 Plan</span>' : ''}`;
     
     btn.onclick = () => {
-      if (!hasPlanned) return; // Disabled if not planned in admin
       _selectedClass = c;
+      _selectedSessionDoc = null;
       renderLiveClassModal();
     };
     classGrid.appendChild(btn);
@@ -1094,14 +1093,23 @@ function renderLiveClassModal() {
     item.innerHTML = `<span>${subj}</span>${badge}`;
     
     item.onclick = () => {
-      if (!sess) return;
       _selectedSubject = subj;
-      _selectedSessionDoc = sess;
+      _selectedSessionDoc = sess || null;
       renderLiveClassModal();
-      showSessionCard(sess);
+      if (sess) {
+        showSessionCard(sess);
+      } else {
+        showNoClassWhatsAppCard(_selectedClass, subj);
+      }
     };
     subjectList.appendChild(item);
   });
+
+  // If selected class has no planned session at all, show WhatsApp message card automatically
+  const classHasAnySession = _livePlannedSessions.some(s => s.classNum === _selectedClass);
+  if (!classHasAnySession && !_selectedSessionDoc) {
+    showNoClassWhatsAppCard(_selectedClass, '');
+  }
 }
 
 window.selectLcStream = (stream) => {
@@ -1112,13 +1120,46 @@ window.selectLcStream = (stream) => {
   renderLiveClassModal();
 };
 
+
+function showNoClassWhatsAppCard(classNum, subject) {
+  const card = document.getElementById('lc-session-card');
+  if (!card) return;
+  card.style.display = 'block';
+  card.style.background = 'rgba(245, 158, 11, 0.08)';
+  card.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+  
+  const targetLabel = subject ? `Class ${classNum}th ${subject}` : `Class ${classNum}th`;
+  const waText = encodeURIComponent(`Hello Teacher, I want to attend a Live Class for ${targetLabel}. Please schedule one!`);
+
+  card.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:.3rem">📅 🏫</div>
+      <div style="font-weight:900;font-size:1rem;color:#92400e;margin-bottom:.3rem">No Class Now</div>
+      <p style="font-size:.82rem;color:#b45309;margin-bottom:1rem;line-height:1.4">
+        No live class is scheduled for <strong>${targetLabel}</strong> at the moment.
+      </p>
+      <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:44px;background:#25D366;color:#fff;border-radius:12px;font-weight:800;font-size:.9rem;text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.35)">
+        📱 WhatsApp Your Teacher
+      </a>
+    </div>
+  `;
+}
+
 function showSessionCard(sess) {
   const card = document.getElementById('lc-session-card');
   card.style.display = 'block';
-  document.getElementById('lc-card-title').textContent = `${sess.subject} (Class ${sess.classNum})`;
-  document.getElementById('lc-card-badge').textContent = sess.status === 'live' ? '🔴 LIVE NOW' : '📅 PLANNED';
-  document.getElementById('lc-card-badge').style.background = sess.status === 'live' ? '#ef4444' : '#0284c7';
-  document.getElementById('lc-card-time').textContent = `Date: ${sess.date} | Time: ${sess.time} | Price: ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}`;
+  card.style.background = 'rgba(239,68,68,0.06)';
+  card.style.borderColor = 'rgba(239,68,68,0.3)';
+  card.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
+      <span style="font-weight:800;color:#0f172a" id="lc-card-title">${sess.subject} (Class ${sess.classNum})</span>
+      <span style="font-size:.7rem;font-weight:800;padding:3px 8px;border-radius:99px;background:${sess.status === 'live' ? '#ef4444' : '#0284c7'};color:#fff" id="lc-card-badge">${sess.status === 'live' ? '🔴 LIVE NOW' : '📅 PLANNED'}</span>
+    </div>
+    <div style="font-size:.8rem;color:#475569;margin-bottom:.8rem" id="lc-card-time">Date: ${sess.date} | Time: ${sess.time} | Price: ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}</div>
+    <button onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:44px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.92rem;cursor:pointer;box-shadow:0 4px 14px rgba(239,68,68,0.4)">
+      🚀 Join Live Stream
+    </button>
+  `;
 }
 
 window.joinSelectedLiveSession = async () => {
