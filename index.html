@@ -1003,11 +1003,11 @@ let _liveQuizUnsub = null;
 let _liveQuizTimerInt = null;
 
 window.showLive = async () => {
-  if (!currentUser) { showLogin(); return; }
   const modal = document.getElementById('live-class-modal');
   if (!modal) return;
   modal.style.opacity = '1';
   modal.style.pointerEvents = 'auto';
+  renderLiveClassModal(); // Render immediately for instant 0ms response!
 
   try {
     const res = await getPlannedLiveSessionsFn({});
@@ -1016,7 +1016,7 @@ window.showLive = async () => {
     console.warn('[Live sessions fetch error]', err);
     _livePlannedSessions = [];
   }
-  renderLiveClassModal();
+  renderLiveClassModal(); // Update with fetched sessions
 };
 
 window.closeLiveModal = () => {
@@ -1163,6 +1163,7 @@ function showSessionCard(sess) {
 }
 
 window.joinSelectedLiveSession = async () => {
+  if (!currentUser) { showLogin(); return; }
   if (!_selectedSessionDoc) return;
   const sess = _selectedSessionDoc;
   const btn = document.getElementById('lc-join-btn');

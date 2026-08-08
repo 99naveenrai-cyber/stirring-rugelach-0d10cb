@@ -4084,7 +4084,6 @@ exports.adminListLiveSessions = onCall(callableOptions({ region: 'asia-south1' }
 
 // Public: list planned + live sessions for students (no youtubeVideoId exposed)
 exports.getPlannedLiveSessions = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
-  requireAuth(request);
   const snap = await db.collection('liveClasses')
     .where('status', 'in', ['planned','live'])
     .orderBy('date').orderBy('time')
