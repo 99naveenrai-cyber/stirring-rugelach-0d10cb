@@ -610,7 +610,289 @@ body{padding-bottom:65px}
       </button>
     </div>
     <div id="coupon-list"></div>
+
+  <!-- ══ PANEL: LIVE CLASSES ══ -->
+  <div class="panel" id="panel-live">
+    <div class="panel-title" style="color:var(--red,#c53030)">🔴 Live Class Manager</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem" id="lc-grid">
+      <!-- LEFT: Plan & Session List -->
+      <div>
+        <div class="form-card">
+          <div class="form-card-title">🗓️ Plan New Live Class</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+            <div class="form-group">
+              <label>Class</label>
+              <select id="lc-class" onchange="onLcClassChange()">
+                <option value="">Select Class...</option>
+                <option value="6">Class 6th</option>
+                <option value="7">Class 7th</option>
+                <option value="8">Class 8th</option>
+                <option value="9">Class 9th</option>
+                <option value="10">Class 10th</option>
+                <option value="11">Class 11th</option>
+                <option value="12">Class 12th</option>
+              </select>
+            </div>
+            <div class="form-group" id="lc-stream-wrap" style="display:none">
+              <label>Stream</label>
+              <select id="lc-stream" onchange="onLcStreamChange()">
+                <option value="science">Science</option>
+                <option value="commerce">Commerce</option>
+                <option value="arts">Arts / Humanities</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <select id="lc-subject"><option value="">Select class first...</option></select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="lc-date">
+            </div>
+            <div class="form-group">
+              <label>Time</label>
+              <input type="time" id="lc-time">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Price (₹ — 0 for Free)</label>
+            <input type="number" id="lc-price" min="0" value="0">
+          </div>
+          <button class="btn-submit" onclick="saveLiveSession()" id="lc-save-btn">
+            <span>💾 Save Planned Session</span>
+          </button>
+          <div id="lc-save-status" style="font-size:.78rem;margin-top:.4rem"></div>
+        </div>
+
+        <div class="form-card" style="margin-top:1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem">
+            <div class="form-card-title" style="margin:0">📋 All Planned & Live Sessions</div>
+            <button onclick="loadAdminLiveSessions()" class="btn-secondary" style="padding:.2rem .6rem;font-size:.75rem">🔄 Refresh</button>
+          </div>
+          <div id="lc-session-list"><div style="color:#aaa;font-size:.8rem">Loading sessions...</div></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Live Control & Real-time Quiz -->
+      <div>
+        <div class="form-card" style="border:2px solid var(--red,#c53030)">
+          <div class="form-card-title" style="color:var(--red,#c53030)">🔴 Live Control & Quiz Publisher</div>
+          <div id="lc-selected-info" style="font-size:.82rem;font-weight:700;color:#2d3748;background:#fff5f5;padding:.5rem .75rem;border-radius:6px;margin-bottom:.8rem">
+            👈 Select a session from the left list to control live quiz
+          </div>
+
+          <!-- Go Live Box -->
+          <div id="lc-golive-box" style="display:none;background:#fff5f5;border:1px solid #feb2b2;padding:.75rem;border-radius:8px;margin-bottom:1rem">
+            <div style="font-weight:800;font-size:.82rem;color:#c53030;margin-bottom:.4rem">▶️ Go Live — Stream Setup</div>
+            <p style="font-size:.72rem;color:#742a2a;margin-bottom:.5rem">Paste your OBS YouTube Unlisted Stream URL below to start:</p>
+            <input type="url" id="lc-yt-url" placeholder="https://www.youtube.com/watch?v=... or live link" style="width:100%;padding:.4rem;font-size:.8rem;border:1px solid #cbd5e0;border-radius:6px;margin-bottom:.5rem;box-sizing:border-box">
+            <button onclick="goLiveStream()" class="btn-submit" style="background:#c53030;width:100%">
+              <span>🔴 Start Live Stream Now</span>
+            </button>
+          </div>
+
+          <!-- Feature 1: Uploaded Questions -->
+          <div id="lc-uploaded-box" style="display:none;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #edf2f7">
+            <div style="font-weight:800;font-size:.82rem;margin-bottom:.4rem">📁 Feature 1: Uploaded Question Bank</div>
+            <div style="margin-bottom:.5rem">
+              <label style="font-size:.72rem;font-weight:700">Upload Questions JSON file</label>
+              <input type="file" id="lc-json-file" accept=".json" onchange="uploadLiveJsonQuestions(this)" style="font-size:.75rem;margin-top:.2rem">
+              <div id="lc-json-status" style="font-size:.72rem;margin-top:.2rem"></div>
+            </div>
+            <div id="lc-uploaded-q-list" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:.35rem"></div>
+          </div>
+
+          <!-- Feature 2: Write Question on the Spot -->
+          <div id="lc-spot-box" style="display:none">
+            <div style="font-weight:800;font-size:.82rem;margin-bottom:.4rem">✍️ Feature 2: Write Question On The Spot</div>
+            <div class="form-group" style="margin-bottom:.4rem">
+              <textarea id="lc-spot-text" rows="2" placeholder="Write live question..." style="width:100%;padding:.4rem;border:1px solid #cbd5e0;border-radius:6px;font-size:.8rem;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;margin-bottom:.4rem">
+              <input type="text" id="lc-spot-a" placeholder="Option A" style="padding:.35rem;font-size:.78rem;border:1px solid #cbd5e0;border-radius:5px">
+              <input type="text" id="lc-spot-b" placeholder="Option B" style="padding:.35rem;font-size:.78rem;border:1px solid #cbd5e0;border-radius:5px">
+              <input type="text" id="lc-spot-c" placeholder="Option C" style="padding:.35rem;font-size:.78rem;border:1px solid #cbd5e0;border-radius:5px">
+              <input type="text" id="lc-spot-d" placeholder="Option D" style="padding:.35rem;font-size:.78rem;border:1px solid #cbd5e0;border-radius:5px">
+            </div>
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap">
+              <span style="font-size:.75rem;font-weight:700">Correct Option:</span>
+              <label style="font-size:.78rem"><input type="radio" name="lc-spot-correct" value="0" checked> A</label>
+              <label style="font-size:.78rem"><input type="radio" name="lc-spot-correct" value="1"> B</label>
+              <label style="font-size:.78rem"><input type="radio" name="lc-spot-correct" value="2"> C</label>
+              <label style="font-size:.78rem"><input type="radio" name="lc-spot-correct" value="3"> D</label>
+            </div>
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem">
+              <span style="font-size:.75rem;font-weight:700">Timer:</span>
+              <select id="lc-spot-timer" style="padding:.3rem;font-size:.78rem;border:1px solid #cbd5e0;border-radius:5px">
+                <option value="5">5 seconds</option>
+                <option value="10">10 seconds</option>
+                <option value="20">20 seconds</option>
+                <option value="30" selected>30 seconds</option>
+                <option value="60">60 seconds</option>
+                <option value="90">90 seconds</option>
+                <option value="120">120 seconds</option>
+              </select>
+            </div>
+            <button onclick="publishSpotQuiz()" class="btn-submit" style="background:#2b6cb0;width:100%;margin-bottom:.4rem">
+              <span>🚀 Publish Quiz To Students</span>
+            </button>
+            <button onclick="clearActiveQuiz()" class="btn-secondary" style="width:100%;margin-bottom:.4rem">
+              <span>✖ Clear Active Quiz</span>
+            </button>
+            <button onclick="endLiveClassSession()" class="btn-secondary" style="width:100%;color:#c53030;border-color:#feb2b2">
+              <span>⏹ End Live Session</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
   </div>
+
+  </div>
+
+  <!-- ══ PANEL: LIVE CLASSES ══ -->
+  <div class="panel" id="panel-live">
+    <div class="panel-title" style="color:var(--red,#c53030)">🔴 Live Class Manager</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem" id="lc-grid">
+      <!-- LEFT: Plan & Session List -->
+      <div>
+        <div class="form-card">
+          <div class="form-card-title">🗓️ Plan New Live Class</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+            <div class="form-group">
+              <label>Class</label>
+              <select id="lc-class" onchange="onLcClassChange()">
+                <option value="">Select Class...</option>
+                <option value="6">Class 6th</option>
+                <option value="7">Class 7th</option>
+                <option value="8">Class 8th</option>
+                <option value="9">Class 9th</option>
+                <option value="10">Class 10th</option>
+                <option value="11">Class 11th</option>
+                <option value="12">Class 12th</option>
+              </select>
+            </div>
+            <div class="form-group" id="lc-stream-wrap" style="display:none">
+              <label>Stream</label>
+              <select id="lc-stream" onchange="onLcStreamChange()">
+                <option value="science">Science</option>
+                <option value="commerce">Commerce</option>
+                <option value="arts">Arts / Humanities</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <select id="lc-subject"><option value="">Select class first...</option></select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="lc-date">
+            </div>
+            <div class="form-group">
+              <label>Time</label>
+              <input type="time" id="lc-time">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Price (₹ — 0 for Free)</label>
+            <input type="number" id="lc-price" min="0" value="0">
+          </div>
+          <button class="btn-submit" onclick="saveLiveSession()" id="lc-save-btn">
+            <span>💾 Save Planned Session</span>
+          </button>
+          <div id="lc-save-status" style="font-size:.78rem;margin-top:.4rem"></div>
+        </div>
+
+        <div class="form-card" style="margin-top:1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem">
+            <div class="form-card-title" style="margin:0">📋 All Planned & Live Sessions</div>
+            <button onclick="loadAdminLiveSessions()" class="btn-secondary" style="padding:.2rem .6rem;font-size:.75rem">🔄 Refresh</button>
+          </div>
+          <div id="lc-session-list"><div style="color:#aaa;font-size:.8rem">Loading sessions...</div></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Live Control & Real-time Quiz -->
+      <div>
+        <div class="form-card" style="border:2px solid var(--red,#c53030)">
+          <div class="form-card-title" style="color:var(--red,#c53030)">🔴 Live Control & Quiz Publisher</div>
+          <div id="lc-selected-info" style="font-size:.82rem;font-weight:700;color:#2d3748;background:#fff5f5;padding:.5rem .75rem;border-radius:6px;margin-bottom:.8rem">
+            👈 Select a session from the left list to control live quiz
+          </div>
+
+          <!-- Go Live Box -->
+          <div id="lc-golive-box" style="display:none;background:#fff5f5;border:1px solid #feb2b2;padding:.75rem;border-radius:8px;margin-bottom:1rem">
+            <div style="font-weight:800;font-size:.82rem;color:#c53030;margin-bottom:.4rem">▶️ Go Live — Stream Setup</div>
+            <p style="font-size:.72rem;color:#742a2a;margin-bottom:.5rem">Paste your OBS YouTube Unlisted Stream URL below to start:</p>
+            <input type="url" id="lc-yt-url" placeholder="https://www.youtube.com/watch?v=... or live link" style="width:100%;padding:.4rem;font-size:.8rem;border:1px solid #cbd5e0;border-radius:6px;margin-bottom:.5rem;box-sizing:border-box">
+            <button onclick="goLiveStream()" class="btn-submit" style="background:#c53030;width:100%">
+              <span>🔴 Start Live Stream Now</span>
+            </button>
+          </div>
+
+          <!-- Feature 1: Uploaded Questions -->
+          <div id="lc-uploaded-box" style="display:none;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #edf2f7">
+            <div style="font-weight:800;font-size:.82rem;margin-bottom:.4rem">📁 Feature 1: Uploaded Question Bank</div>
+            <div style="margin-bottom:.5rem">
+              <label style="font-size:.72rem;font-weight:700">Upload Questions JSON file</label>
+              <input type="file" id="lc-json-file" accept=".json" onchange="uploadLiveJsonQuestions(this)" style="font-size:.75rem;margin-top:.2rem">
+              <div id="lc-json-status" style="font-size:.72rem;margin-top:.2rem"></div>
+            </div>
+            <div id="lc-uploaded-q-list" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:.35rem"></div>
+          </div>
+
+          <!-- Feature 2: Write Question on the Spot -->
+          <div id="lc-spot-box" style="display:none">
+            <div style="font-weight:800;font-size:.82rem;margin-bottom:.4rem">✍️ Feature 2: Write Question On The Spot</div>
+            <div class="form-group" style="margin-bottom:.4rem">
+              <textarea id="lc-spot-text" rows="2" placeholder="Write live question..." style="width:100%;padding:.4rem;border:1px solid #cbd5e0;border-radius:6px;font-size:.8rem;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;margin-bottom:.4rem">
+              <input type="text" id="lc-spot-a" placeholder="Option A" style="padding:.35rem;font-size:.78rem;border:1px solid #cbd5e0;border-radius:5px">
+              <input type="text" id="lc-spot-b" placeholder="Option B" style="padding:.35rem;font-size:.78rem;border:1px solid #cbd5e0;border-radius:5px">
+              <input type="text" id="lc-spot-c" placeholder="Option C" style="padding:.35rem;font-size:.78rem;border:1px solid #cbd5e0;border-radius:5px">
+              <input type="text" id="lc-spot-d" placeholder="Option D" style="padding:.35rem;font-size:.78rem;border:1px solid #cbd5e0;border-radius:5px">
+            </div>
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap">
+              <span style="font-size:.75rem;font-weight:700">Correct Option:</span>
+              <label style="font-size:.78rem"><input type="radio" name="lc-spot-correct" value="0" checked> A</label>
+              <label style="font-size:.78rem"><input type="radio" name="lc-spot-correct" value="1"> B</label>
+              <label style="font-size:.78rem"><input type="radio" name="lc-spot-correct" value="2"> C</label>
+              <label style="font-size:.78rem"><input type="radio" name="lc-spot-correct" value="3"> D</label>
+            </div>
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem">
+              <span style="font-size:.75rem;font-weight:700">Timer:</span>
+              <select id="lc-spot-timer" style="padding:.3rem;font-size:.78rem;border:1px solid #cbd5e0;border-radius:5px">
+                <option value="5">5 seconds</option>
+                <option value="10">10 seconds</option>
+                <option value="20">20 seconds</option>
+                <option value="30" selected>30 seconds</option>
+                <option value="60">60 seconds</option>
+                <option value="90">90 seconds</option>
+                <option value="120">120 seconds</option>
+              </select>
+            </div>
+            <button onclick="publishSpotQuiz()" class="btn-submit" style="background:#2b6cb0;width:100%;margin-bottom:.4rem">
+              <span>🚀 Publish Quiz To Students</span>
+            </button>
+            <button onclick="clearActiveQuiz()" class="btn-secondary" style="width:100%;margin-bottom:.4rem">
+              <span>✖ Clear Active Quiz</span>
+            </button>
+            <button onclick="endLiveClassSession()" class="btn-secondary" style="width:100%;color:#c53030;border-color:#feb2b2">
+              <span>⏹ End Live Session</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Bottom Tab Nav -->
   <div class="bottom-tabs">
@@ -632,6 +914,9 @@ body{padding-bottom:65px}
     </button>
     <button class="btab" id="btab-coupons" onclick="switchPanel('coupons',this)">
       <span class="btab-icon">🎟️</span>Coupons
+    </button>
+    <button class="btab" id="btab-live" onclick="switchPanel('live',this)">
+      <span class="btab-icon">🔴</span>Live
     </button>
   </div>
 
@@ -673,6 +958,14 @@ const auth      = getAuth(app);
 const db        = getFirestore(app);
 const storage   = getStorage(app);
 const functions = getFunctions(app, 'asia-south1');
+const adminSaveLiveClassFn = httpsCallable(functions, 'adminSaveLiveClass');
+const adminUploadLiveQuestionsFn = httpsCallable(functions, 'adminUploadLiveQuestions');
+const adminGoLiveFn = httpsCallable(functions, 'adminGoLive');
+const adminEndLiveClassFn = httpsCallable(functions, 'adminEndLiveClass');
+const adminDeleteLiveClassFn = httpsCallable(functions, 'adminDeleteLiveClass');
+const adminPublishLiveQuizFn = httpsCallable(functions, 'adminPublishLiveQuiz');
+const adminClearLiveQuizFn = httpsCallable(functions, 'adminClearLiveQuiz');
+const adminListLiveSessionsFn = httpsCallable(functions, 'adminListLiveSessions');
 const adminUploadPreflightFn = httpsCallable(functions, 'adminUploadPreflight');
 const repairProtectedCourseThumbnailsFn = httpsCallable(functions, 'repairProtectedCourseThumbnails');
 const diagnoseCourseThumbnailsFn = httpsCallable(functions, 'diagnoseCourseThumbnails');
@@ -3278,6 +3571,7 @@ window.switchPanel = (name, el) => {
   el.classList.add('active');
   if (name === 'upload') resetUploadState();
   if (name === 'finance') Promise.all([loadReferralSettings(), loadFinanceMembers()]);
+  if (name === 'live') loadAdminLiveSessions();
 };
 
 // ════════════════════════════════════════
@@ -3305,6 +3599,297 @@ function fireErr(code){
   'auth/invalid-credential':'Email या password गलत है।','auth/too-many-requests':'बहुत attempts। बाद में try करें।'};
   return m[code]||'Error: '+code;
 }
+
+// ════════════════════════════════════════
+// LIVE CLASS ADMIN LOGIC
+// ════════════════════════════════════════
+const LIVE_SUBJECTS_MAP = {
+  '6':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '7':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '8':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '9':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '10': ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '11-science':  ['Physics','Chemistry','Mathematics','Biology','Computer Science','English'],
+  '11-commerce': ['Accountancy','Business Studies','Economics','Mathematics','English'],
+  '11-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi'],
+  '12-science':  ['Physics','Chemistry','Mathematics','Biology','Computer Science','English'],
+  '12-commerce': ['Accountancy','Business Studies','Economics','Mathematics','English'],
+  '12-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi'],
+};
+
+let selectedLiveSession = null;
+
+window.onLcClassChange = () => {
+  const c = document.getElementById('lc-class').value;
+  const streamWrap = document.getElementById('lc-stream-wrap');
+  if (c === '11' || c === '12') {
+    streamWrap.style.display = 'block';
+  } else {
+    streamWrap.style.display = 'none';
+  }
+  updateLcSubjectOptions();
+};
+
+window.onLcStreamChange = () => {
+  updateLcSubjectOptions();
+};
+
+function updateLcSubjectOptions() {
+  const c = document.getElementById('lc-class').value;
+  const s = document.getElementById('lc-stream').value;
+  const select = document.getElementById('lc-subject');
+  select.innerHTML = '';
+  if (!c) {
+    select.innerHTML = '<option value="">Select class first...</option>';
+    return;
+  }
+  const key = (c === '11' || c === '12') ? `${c}-${s}` : c;
+  const list = LIVE_SUBJECTS_MAP[key] || [];
+  list.forEach(subj => {
+    const opt = document.createElement('option');
+    opt.value = subj;
+    opt.textContent = subj;
+    select.appendChild(opt);
+  });
+}
+
+window.saveLiveSession = async () => {
+  const classNum = document.getElementById('lc-class').value;
+  const stream = document.getElementById('lc-stream').value;
+  const subject = document.getElementById('lc-subject').value;
+  const date = document.getElementById('lc-date').value;
+  const time = document.getElementById('lc-time').value;
+  const price = Number(document.getElementById('lc-price').value) || 0;
+  const statusEl = document.getElementById('lc-save-status');
+
+  if (!classNum || !subject || !date || !time) {
+    statusEl.style.color = 'red';
+    statusEl.textContent = 'Mandatory fields missing: Class, Subject, Date, Time.';
+    return;
+  }
+
+  statusEl.style.color = '#555';
+  statusEl.textContent = 'Saving planned session...';
+  try {
+    await adminSaveLiveClassFn({
+      classNum,
+      stream: (classNum === '11' || classNum === '12') ? stream : '',
+      subject,
+      date,
+      time,
+      price: Math.round(price * 100) // paise
+    });
+    statusEl.style.color = 'green';
+    statusEl.textContent = '✅ Session planned successfully!';
+    loadAdminLiveSessions();
+  } catch (err) {
+    statusEl.style.color = 'red';
+    statusEl.textContent = err?.message || 'Error saving session.';
+  }
+};
+
+window.loadAdminLiveSessions = async () => {
+  const container = document.getElementById('lc-session-list');
+  container.innerHTML = '<div style="color:#aaa;font-size:.8rem">Loading sessions...</div>';
+  try {
+    const res = await adminListLiveSessionsFn({});
+    const sessions = res.data?.sessions || [];
+    if (sessions.length === 0) {
+      container.innerHTML = '<div style="color:#aaa;font-size:.8rem">No planned sessions yet.</div>';
+      return;
+    }
+    container.innerHTML = '';
+    sessions.forEach(sess => {
+      const card = document.createElement('div');
+      card.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:.5rem .75rem;margin-bottom:.4rem;cursor:pointer;font-size:.8rem;background:#fff';
+      if (selectedLiveSession?.sessionId === sess.sessionId) {
+        card.style.borderColor = '#c53030';
+        card.style.background = '#fff5f5';
+      }
+      const isLive = sess.status === 'live';
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Class ${sess.classNum}${sess.stream ? ' ('+sess.stream+')' : ''} — ${sess.subject}</strong>
+          <span style="font-size:.7rem;padding:2px 6px;border-radius:4px;background:${isLive?'#feb2b2':'#edf2f7'};color:${isLive?'#9b2c2c':'#4a5568'};font-weight:800">${(sess.status||'planned').toUpperCase()}</span>
+        </div>
+        <div style="font-size:.75rem;color:#718096;margin-top:2px">
+          📅 ${sess.date} ⏰ ${sess.time} | 💰 ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}
+        </div>
+      `;
+      card.onclick = () => selectLiveSession(sess);
+      container.appendChild(card);
+    });
+  } catch (err) {
+    container.innerHTML = `<div style="color:red;font-size:.8rem">Failed to load sessions: ${err?.message}</div>`;
+  }
+};
+
+function selectLiveSession(sess) {
+  selectedLiveSession = sess;
+  loadAdminLiveSessions(); // refresh highlight
+  const info = document.getElementById('lc-selected-info');
+  info.innerHTML = `📌 Selected: <strong>Class ${sess.classNum} ${sess.subject}</strong> (${sess.date} ${sess.time}) — Status: <span style="color:#c53030;font-weight:800">${sess.status.toUpperCase()}</span>`;
+  
+  document.getElementById('lc-golive-box').style.display = (sess.status === 'planned' || sess.status === 'live') ? 'block' : 'none';
+  document.getElementById('lc-uploaded-box').style.display = (sess.status === 'live') ? 'block' : 'none';
+  document.getElementById('lc-spot-box').style.display = (sess.status === 'live') ? 'block' : 'none';
+
+  renderUploadedQuestions(sess.questions || []);
+}
+
+function renderUploadedQuestions(questions) {
+  const container = document.getElementById('lc-uploaded-q-list');
+  container.innerHTML = '';
+  if (!questions || questions.length === 0) {
+    container.innerHTML = '<div style="color:#aaa;font-size:.75rem">No JSON questions uploaded for this session yet.</div>';
+    return;
+  }
+  questions.forEach((q, idx) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:.4rem .6rem;font-size:.78rem;display:flex;justify-content:space-between;align-items:center';
+    item.innerHTML = `
+      <div style="flex:1;margin-right:.5rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+        <strong>Q${idx+1}:</strong> ${q.text}
+      </div>
+      <div style="display:flex;align-items:center;gap:.3rem">
+        <select id="lc-q-timer-${idx}" style="font-size:.7rem;padding:2px">
+          <option value="5">5s</option>
+          <option value="10">10s</option>
+          <option value="20">20s</option>
+          <option value="30" selected>30s</option>
+          <option value="60">60s</option>
+          <option value="90">90s</option>
+          <option value="120">120s</option>
+        </select>
+        <button onclick="publishUploadedQuiz(${idx})" style="background:#2b6cb0;color:#fff;border:none;border-radius:4px;padding:2px 6px;font-size:.7rem;cursor:pointer">🚀 Publish</button>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+window.uploadLiveJsonQuestions = (fileInput) => {
+  const file = fileInput.files[0];
+  if (!file || !selectedLiveSession) return;
+  const status = document.getElementById('lc-json-status');
+  status.textContent = 'Reading JSON...';
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('JSON root must be an array of questions.');
+      status.textContent = 'Uploading questions to session...';
+      await adminUploadLiveQuestionsFn({
+        sessionId: selectedLiveSession.sessionId,
+        questions: data
+      });
+      selectedLiveSession.questions = data;
+      renderUploadedQuestions(data);
+      status.style.color = 'green';
+      status.textContent = `✅ Successfully uploaded ${data.length} questions!`;
+    } catch (err) {
+      status.style.color = 'red';
+      status.textContent = err?.message || 'Invalid JSON format.';
+    }
+  };
+  reader.readAsText(file);
+};
+
+window.goLiveStream = async () => {
+  if (!selectedLiveSession) return;
+  const url = document.getElementById('lc-yt-url').value;
+  if (!url) {
+    alert('Please enter your OBS YouTube Unlisted Stream URL.');
+    return;
+  }
+  try {
+    const res = await adminGoLiveFn({
+      sessionId: selectedLiveSession.sessionId,
+      youtubeUrl: url
+    });
+    alert('🔴 STREAM IS LIVE NOW!');
+    selectedLiveSession.status = 'live';
+    selectLiveSession(selectedLiveSession);
+  } catch (err) {
+    alert('Error going live: ' + (err?.message || 'Invalid URL'));
+  }
+};
+
+window.publishUploadedQuiz = async (idx) => {
+  if (!selectedLiveSession || !selectedLiveSession.questions) return;
+  const q = selectedLiveSession.questions[idx];
+  const timer = Number(document.getElementById(`lc-q-timer-${idx}`)?.value || 30);
+  try {
+    await adminPublishLiveQuizFn({
+      sessionId: selectedLiveSession.sessionId,
+      question: q.text,
+      options: q.options,
+      correctIndex: q.correct,
+      timeLimit: timer
+    });
+    showToast(`🚀 Published Q${idx+1} (${timer}s timer) to live stream!`, 'success');
+  } catch (err) {
+    alert('Failed to publish quiz: ' + err?.message);
+  }
+};
+
+window.publishSpotQuiz = async () => {
+  if (!selectedLiveSession) return;
+  const text = document.getElementById('lc-spot-text').value.trim();
+  const a = document.getElementById('lc-spot-a').value.trim();
+  const b = document.getElementById('lc-spot-b').value.trim();
+  const c = document.getElementById('lc-spot-c').value.trim();
+  const d = document.getElementById('lc-spot-d').value.trim();
+  const correctRadios = document.getElementsByName('lc-spot-correct');
+  let correctIdx = 0;
+  for (let r of correctRadios) { if (r.checked) correctIdx = Number(r.value); }
+  const timer = Number(document.getElementById('lc-spot-timer').value || 30);
+
+  if (!text || !a || !b) {
+    alert('Question text and at least Options A & B are required.');
+    return;
+  }
+
+  const options = [a, b];
+  if (c) options.push(c);
+  if (d) options.push(d);
+
+  try {
+    await adminPublishLiveQuizFn({
+      sessionId: selectedLiveSession.sessionId,
+      question: text,
+      options: options,
+      correctIndex: correctIdx,
+      timeLimit: timer
+    });
+    showToast(`🚀 Published live spot quiz (${timer}s timer)!`, 'success');
+  } catch (err) {
+    alert('Failed to publish quiz: ' + err?.message);
+  }
+};
+
+window.clearActiveQuiz = async () => {
+  if (!selectedLiveSession) return;
+  try {
+    await adminClearLiveQuizFn({ sessionId: selectedLiveSession.sessionId });
+    showToast('✖ Active quiz cleared from live stream.', 'info');
+  } catch (err) {
+    alert('Error clearing quiz: ' + err?.message);
+  }
+};
+
+window.endLiveClassSession = async () => {
+  if (!selectedLiveSession || !confirm('Are you sure you want to end this live session?')) return;
+  try {
+    await adminEndLiveClassFn({ sessionId: selectedLiveSession.sessionId });
+    selectedLiveSession.status = 'ended';
+    selectLiveSession(selectedLiveSession);
+    showToast('⏹ Live session ended.', 'info');
+  } catch (err) {
+    alert('Error ending session: ' + err?.message);
+  }
+};
+
 </script>
 </body>
 </html>

@@ -664,6 +664,9 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   <button class="bn-item active" id="bn-home" onclick="navHome();setNav('bn-home')">
     <span class="bn-icon">🏠</span>Home
   </button>
+  <button class="bn-item" id="bn-live" onclick="showLive();setNav('bn-live')">
+    <span class="bn-icon">🔴</span>Live
+  </button>
   <button class="bn-item" id="bn-catalogue" onclick="showAllCourses();setNav('bn-catalogue')">
     <span class="bn-icon">📘</span>All Courses
   </button>
@@ -973,6 +976,327 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
     host.innerHTML = '<div class="uploaded-landing-error">Landing experience unavailable. Courses remain available below.</div>';
   }
 })();
+
+// ════════════════════════════════════════
+// STUDENT LIVE CLASS & REAL-TIME QUIZ LOGIC
+// ════════════════════════════════════════
+const LIVE_STUDENT_SUBJECTS = {
+  '6':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '7':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '8':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '9':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '10': ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '11-science':  ['Physics','Chemistry','Mathematics','Biology','Computer Science','English'],
+  '11-commerce': ['Accountancy','Business Studies','Economics','Mathematics','English'],
+  '11-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi'],
+  '12-science':  ['Physics','Chemistry','Mathematics','Biology','Computer Science','English'],
+  '12-commerce': ['Accountancy','Business Studies','Economics','Mathematics','English'],
+  '12-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi'],
+};
+
+let _livePlannedSessions = [];
+let _selectedClass = '8';
+let _selectedStream = 'science';
+let _selectedSubject = '';
+let _selectedSessionDoc = null;
+let _liveQuizUnsub = null;
+let _liveQuizTimerInt = null;
+
+window.showLive = async () => {
+  if (!currentUser) { showLogin(); return; }
+  const modal = document.getElementById('live-class-modal');
+  if (!modal) return;
+  modal.style.opacity = '1';
+  modal.style.pointerEvents = 'auto';
+
+  try {
+    const res = await getPlannedLiveSessionsFn({});
+    _livePlannedSessions = res.data?.sessions || [];
+  } catch (err) {
+    console.warn('[Live sessions fetch error]', err);
+    _livePlannedSessions = [];
+  }
+  renderLiveClassModal();
+};
+
+window.closeLiveModal = () => {
+  const modal = document.getElementById('live-class-modal');
+  if (!modal) return;
+  modal.style.opacity = '0';
+  modal.style.pointerEvents = 'none';
+};
+
+function renderLiveClassModal() {
+  // Render Class Grid (6 to 12)
+  const classGrid = document.getElementById('lc-class-grid');
+  classGrid.innerHTML = '';
+  const classes = ['6','7','8','9','10','11','12'];
+  
+  classes.forEach(c => {
+    const btn = document.createElement('button');
+    const hasPlanned = _livePlannedSessions.some(s => s.classNum === c);
+    const hasLive = _livePlannedSessions.some(s => s.classNum === c && s.status === 'live');
+    
+    let cls = 'lc-class-btn';
+    if (hasLive) cls += ' live';
+    else if (hasPlanned) cls += ' planned';
+    else cls += ' disabled';
+
+    if (c === _selectedClass && hasPlanned) cls += ' selected';
+
+    btn.className = cls;
+    btn.innerHTML = `${c}th${hasLive ? '<br><span style="font-size:.6rem">🔴 LIVE</span>' : hasPlanned ? '<br><span style="font-size:.6rem">📅 Plan</span>' : ''}`;
+    
+    btn.onclick = () => {
+      if (!hasPlanned) return; // Disabled if not planned in admin
+      _selectedClass = c;
+      renderLiveClassModal();
+    };
+    classGrid.appendChild(btn);
+  });
+
+  // Stream Selection for 11/12
+  const streamWrap = document.getElementById('lc-modal-stream-wrap');
+  if (_selectedClass === '11' || _selectedClass === '12') {
+    streamWrap.style.display = 'block';
+  } else {
+    streamWrap.style.display = 'none';
+  }
+
+  // Render Core Subjects
+  const key = (_selectedClass === '11' || _selectedClass === '12') ? `${_selectedClass}-${_selectedStream}` : _selectedClass;
+  const subjects = LIVE_STUDENT_SUBJECTS[key] || [];
+  const subjectList = document.getElementById('lc-subject-list');
+  subjectList.innerHTML = '';
+
+  subjects.forEach(subj => {
+    const sess = _livePlannedSessions.find(s => s.classNum === _selectedClass && s.subject === subj && (s.stream || '') === (_selectedClass==='11'||_selectedClass==='12'?_selectedStream:''));
+    const item = document.createElement('div');
+    
+    let cls = 'lc-subject-item';
+    let badge = '<span style="font-size:.7rem;color:#94a3b8">Not planned</span>';
+
+    if (sess) {
+      if (sess.status === 'live') {
+        cls += ' live';
+        badge = '<span style="font-size:.7rem;font-weight:900;color:#ef4444">🔴 LIVE NOW</span>';
+      } else {
+        cls += ' planned';
+        badge = `<span style="font-size:.7rem;font-weight:800;color:#0284c7">📅 ${sess.date} ${sess.time}</span>`;
+      }
+    } else {
+      cls += ' disabled';
+    }
+
+    if (sess && _selectedSessionDoc?.sessionId === sess.sessionId) cls += ' selected';
+
+    item.className = cls;
+    item.innerHTML = `<span>${subj}</span>${badge}`;
+    
+    item.onclick = () => {
+      if (!sess) return;
+      _selectedSubject = subj;
+      _selectedSessionDoc = sess;
+      renderLiveClassModal();
+      showSessionCard(sess);
+    };
+    subjectList.appendChild(item);
+  });
+}
+
+window.selectLcStream = (stream) => {
+  _selectedStream = stream;
+  document.querySelectorAll('.lc-stream-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.stream === stream);
+  });
+  renderLiveClassModal();
+};
+
+function showSessionCard(sess) {
+  const card = document.getElementById('lc-session-card');
+  card.style.display = 'block';
+  document.getElementById('lc-card-title').textContent = `${sess.subject} (Class ${sess.classNum})`;
+  document.getElementById('lc-card-badge').textContent = sess.status === 'live' ? '🔴 LIVE NOW' : '📅 PLANNED';
+  document.getElementById('lc-card-badge').style.background = sess.status === 'live' ? '#ef4444' : '#0284c7';
+  document.getElementById('lc-card-time').textContent = `Date: ${sess.date} | Time: ${sess.time} | Price: ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}`;
+}
+
+window.joinSelectedLiveSession = async () => {
+  if (!_selectedSessionDoc) return;
+  const sess = _selectedSessionDoc;
+  const btn = document.getElementById('lc-join-btn');
+  btn.disabled = true;
+  btn.textContent = 'Verifying access...';
+
+  try {
+    // 1. Register or initiate payment
+    const regRes = await registerForLiveClassFn({ sessionId: sess.sessionId });
+    
+    if (regRes.data?.requiresPayment) {
+      // Trigger Cashfree Payment Flow for paid live class
+      btn.textContent = 'Creating Payment Order...';
+      const orderRes = await createCashfreeOrderFn({
+        courseId: `live_${sess.sessionId}`,
+        customPricePaise: regRes.data.pricePaise
+      });
+      const paymentSessionId = orderRes.data?.paymentSessionId;
+      const orderId = orderRes.data?.orderId;
+      
+      const cashfree = await loadCashfreeSdk();
+      const checkout = cashfree.checkout({ paymentSessionId, returnUrl: window.location.href });
+      checkout.start();
+      btn.disabled = false;
+      btn.textContent = '🚀 Join Live Stream';
+      return;
+    }
+
+    // 2. Get stream access (YouTube Video ID)
+    btn.textContent = 'Opening Live Stream...';
+    const accessRes = await getPlayerAccessFn({ sessionId: sess.sessionId });
+    const ytId = accessRes.data?.youtubeVideoId;
+    
+    if (!ytId) {
+      showToast('Stream is not live yet. Admin will start streaming shortly.', 'info');
+      btn.disabled = false;
+      btn.textContent = '🚀 Join Live Stream';
+      return;
+    }
+
+    // 3. Launch full screen stream
+    closeLiveModal();
+    openLiveStreamPage(ytId, sess.sessionId);
+  } catch (err) {
+    showToast(err?.message || 'Could not join live stream.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 Join Live Stream';
+  }
+};
+
+// ════════════════════════════════════════
+// FULL-SCREEN LIVE STREAM & QUIZ OVERLAY
+// ════════════════════════════════════════
+function openLiveStreamPage(youtubeVideoId, sessionId) {
+  const page = document.getElementById('page-live');
+  const iframe = document.getElementById('live-yt-iframe');
+  if (!page || !iframe) return;
+
+  iframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1`;
+  page.style.display = 'block';
+
+  // Real-Time Quiz Listener via Firestore onSnapshot
+  if (_liveQuizUnsub) _liveQuizUnsub();
+  _liveQuizUnsub = onSnapshot(doc(db, 'liveQuizState', sessionId), (snap) => {
+    const data = snap.data();
+    if (data && data.active && data.question) {
+      showLiveQuizOverlay(data.question);
+    } else {
+      hideLiveQuizOverlay();
+    }
+  });
+}
+
+function showLiveQuizOverlay(q) {
+  const overlay = document.getElementById('live-quiz-overlay');
+  const qText = document.getElementById('live-quiz-question-text');
+  const grid = document.getElementById('live-quiz-options-grid');
+  const timerText = document.getElementById('live-quiz-timer-text');
+  const timerBar = document.getElementById('live-quiz-timer-bar');
+
+  if (!overlay || !qText || !grid) return;
+
+  qText.textContent = q.text;
+  grid.innerHTML = '';
+  let studentSelectedIdx = -1;
+
+  q.options.forEach((optText, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'live-quiz-opt-btn';
+    btn.innerHTML = `<strong>${String.fromCharCode(65+idx)})</strong> ${optText}`;
+    btn.onclick = () => {
+      studentSelectedIdx = idx;
+      document.querySelectorAll('.live-quiz-opt-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+    grid.appendChild(btn);
+  });
+
+  overlay.style.display = 'block';
+
+  // Timer countdown
+  let timeLeft = q.timeLimit || 30;
+  timerText.textContent = `${timeLeft}s`;
+  timerBar.style.transition = 'none';
+  timerBar.style.width = '100%';
+
+  setTimeout(() => {
+    timerBar.style.transition = `width ${timeLeft}s linear`;
+    timerBar.style.width = '0%';
+  }, 50);
+
+  if (_liveQuizTimerInt) clearInterval(_liveQuizTimerInt);
+  _liveQuizTimerInt = setInterval(() => {
+    timeLeft--;
+    timerText.textContent = `${timeLeft}s`;
+    if (timeLeft <= 0) {
+      clearInterval(_liveQuizTimerInt);
+      // Reveal Answer with Dramatic Glow
+      revealQuizAnswer(q.correctIndex, studentSelectedIdx);
+    }
+  }, 1000);
+}
+
+function revealQuizAnswer(correctIdx, studentSelectedIdx) {
+  const options = document.querySelectorAll('.live-quiz-opt-btn');
+  options.forEach((btn, idx) => {
+    if (idx === correctIdx) {
+      btn.classList.add('correct-glow');
+    }
+    if (studentSelectedIdx !== -1 && studentSelectedIdx !== correctIdx && idx === studentSelectedIdx) {
+      btn.classList.add('wrong-glow');
+    }
+  });
+
+  // Auto-hide overlay after 3.5 seconds of feedback
+  setTimeout(() => {
+    hideLiveQuizOverlay();
+  }, 3500);
+}
+
+function hideLiveQuizOverlay() {
+  const overlay = document.getElementById('live-quiz-overlay');
+  if (overlay) overlay.style.display = 'none';
+  if (_liveQuizTimerInt) clearInterval(_liveQuizTimerInt);
+}
+
+window.confirmLeaveLiveStream = () => {
+  // Use existing video exit confirmation popup
+  if (typeof showVideoExitConfirmation === 'function') {
+    showVideoExitConfirmation();
+    // Wrap exit action
+    const leaveBtn = document.getElementById('video-exit-leave');
+    if (leaveBtn) {
+      leaveBtn.onclick = () => {
+        closeVideoExitConfirmation(false);
+        exitLiveStream();
+      };
+    }
+  } else {
+    if (confirm('Are you sure you want to leave the live stream?')) {
+      exitLiveStream();
+    }
+  }
+};
+
+function exitLiveStream() {
+  const page = document.getElementById('page-live');
+  const iframe = document.getElementById('live-yt-iframe');
+  if (iframe) iframe.src = '';
+  if (page) page.style.display = 'none';
+  if (_liveQuizUnsub) { _liveQuizUnsub(); _liveQuizUnsub = null; }
+  hideLiveQuizOverlay();
+}
+
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -980,7 +1304,7 @@ import { getAuth, signInWithEmailAndPassword,
          signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged, updateProfile }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection,
-         getDocs, query, where, orderBy, serverTimestamp, writeBatch }
+         getDocs, query, where, orderBy, serverTimestamp, writeBatch, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getFunctions, httpsCallable }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
@@ -1011,6 +1335,10 @@ const verifyReferralUpiFn = httpsCallable(functions, 'verifyReferralUpi');
 const claimReferralAttributionFn = httpsCallable(functions, 'claimReferralAttribution');
 const getMyReferralDashboardFn = httpsCallable(functions, 'getMyReferralDashboard');
 const setReferralLinkCourseFn = httpsCallable(functions, 'setReferralLinkCourse');
+const getPlannedLiveSessionsFn = httpsCallable(functions, 'getPlannedLiveSessions');
+const registerForLiveClassFn = httpsCallable(functions, 'registerForLiveClass');
+const confirmLiveClassRegistrationFn = httpsCallable(functions, 'confirmLiveClassRegistration');
+const getPlayerAccessFn = httpsCallable(functions, 'getPlayerAccess');
 const gProvider = new GoogleAuthProvider();
 
 // ── STATE ──
@@ -6072,5 +6400,116 @@ function firebaseErrMsg(code) {
 
 pageHistory = ['home'];
 </script>
+
+<!-- ════════════════════════════════════════
+     LIVE CLASS GLASSMORPHISM MODAL
+════════════════════════════════════════ -->
+<div id="live-class-modal" style="position:fixed;inset:0;background:rgba(10,15,30,0.75);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .3s ease">
+  <div style="background:linear-gradient(135deg,rgba(255,255,255,0.96),rgba(240,244,255,0.92));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.8);border-radius:24px;padding:1.6rem;width:min(92vw,480px);max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.35);position:relative">
+    <button onclick="closeLiveModal()" style="position:absolute;top:1rem;right:1rem;background:rgba(0,0,0,0.06);border:none;border-radius:50%;width:32px;height:32px;font-size:1.2rem;font-weight:700;cursor:pointer;display:grid;place-items:center">&times;</button>
+    <div style="font-size:1.35rem;font-weight:900;color:#0f172a;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem">
+      <span style="color:#ef4444">🔴</span> Live Classes
+    </div>
+    <p style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem">Select a class & subject to check planned live streams</p>
+    
+    <!-- Step 1: Class Selection -->
+    <div style="margin-bottom:1.2rem">
+      <div style="font-size:.78rem;font-weight:800;color:#334155;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Select Class</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem" id="lc-class-grid">
+        <!-- Javascript populates classes 6 to 12 -->
+      </div>
+    </div>
+
+    <!-- Step 2: Stream Selection (Class 11/12) -->
+    <div id="lc-modal-stream-wrap" style="display:none;margin-bottom:1.2rem">
+      <div style="font-size:.78rem;font-weight:800;color:#334155;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Select Stream</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem">
+        <button class="lc-stream-btn active" data-stream="science" onclick="selectLcStream('science')">Science</button>
+        <button class="lc-stream-btn" data-stream="commerce" onclick="selectLcStream('commerce')">Commerce</button>
+        <button class="lc-stream-btn" data-stream="arts" onclick="selectLcStream('arts')">Arts</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Subject Selection -->
+    <div style="margin-bottom:1.2rem">
+      <div style="font-size:.78rem;font-weight:800;color:#334155;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Core Subjects</div>
+      <div style="display:flex;flex-direction:column;gap:.4rem" id="lc-subject-list">
+        <div style="font-size:.8rem;color:#94a3b8;text-align:center;padding:1rem">Select class above to see subjects</div>
+      </div>
+    </div>
+
+    <!-- Step 4: Session Details & Join -->
+    <div id="lc-session-card" style="display:none;background:rgba(239,68,68,0.06);border:1.5px solid rgba(239,68,68,0.3);border-radius:16px;padding:1rem;margin-top:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
+        <span style="font-weight:800;color:#0f172a" id="lc-card-title">Subject</span>
+        <span style="font-size:.7rem;font-weight:800;padding:3px 8px;border-radius:99px;background:#ef4444;color:#fff" id="lc-card-badge">LIVE NOW</span>
+      </div>
+      <div style="font-size:.8rem;color:#475569;margin-bottom:.8rem" id="lc-card-time">Date & Time</div>
+      <button onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:44px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.92rem;cursor:pointer;box-shadow:0 4px 14px rgba(239,68,68,0.4)">
+        🚀 Join Live Stream
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: LIVE STREAM (FULL SCREEN)
+════════════════════════════════════════ -->
+<div id="page-live" style="position:fixed;inset:0;width:100vw;height:100vh;background:#000;z-index:999;display:none;overflow:hidden">
+  <!-- Fullscreen Iframe -->
+  <iframe id="live-yt-iframe" style="width:100%;height:100%;border:none" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+  
+  <!-- Floating Back / Leave Button -->
+  <button onclick="confirmLeaveLiveStream()" style="position:absolute;top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));z-index:1005;background:rgba(15,23,42,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:99px;padding:.4rem 1rem;font-weight:700;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;box-shadow:0 4px 12px rgba(0,0,0,0.4)">
+    ← Leave Live
+  </button>
+
+  <!-- Real-Time Quiz Overlay Card -->
+  <div id="live-quiz-overlay" style="position:absolute;bottom:max(20px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1006;width:min(92vw,520px);background:rgba(15,23,42,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(255,255,255,0.25);border-radius:20px;padding:1.2rem;color:#fff;box-shadow:0 20px 50px rgba(0,0,0,0.6);display:none;transition:all .3s ease">
+    <!-- Timer Progress Bar -->
+    <div style="width:100%;height:5px;background:rgba(255,255,255,0.15);border-radius:99px;overflow:hidden;margin-bottom:1rem">
+      <div id="live-quiz-timer-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#3b82f6,#ef4444);transition:width 1s linear"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+      <span style="font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#38bdf8">🔴 Live Quiz Question</span>
+      <span id="live-quiz-timer-text" style="font-size:.8rem;font-weight:900;color:#f43f5e">30s</span>
+    </div>
+    <div id="live-quiz-question-text" style="font-size:.98rem;font-weight:700;line-height:1.4;margin-bottom:1rem;color:#f8fafc">Question text goes here...</div>
+    <div id="live-quiz-options-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+      <!-- JavaScript builds options -->
+    </div>
+  </div>
+</div>
+
+<style>
+  .lc-class-btn{padding:.5rem;border:1px solid #cbd5e0;border-radius:10px;background:#fff;font-weight:800;font-size:.85rem;color:#475569;cursor:pointer;transition:all .2s;text-align:center}
+  .lc-class-btn.planned{border-color:#3b82f6;background:#eff6ff;color:#1d4ed8;box-shadow:0 0 10px rgba(59,130,246,0.2)}
+  .lc-class-btn.live{border-color:#ef4444;background:#fef2f2;color:#dc2626;box-shadow:0 0 12px rgba(239,68,68,0.3);animation:pulseRed 2s infinite}
+  .lc-class-btn.disabled{opacity:.4;cursor:not-allowed;background:#f8fafc}
+  .lc-class-btn.selected{ring:3px #3b82f6;background:#3b82f6!important;color:#fff!important}
+
+  .lc-stream-btn{padding:.4rem;border:1px solid #cbd5e0;border-radius:8px;background:#fff;font-size:.78rem;font-weight:700;cursor:pointer}
+  .lc-stream-btn.selected{background:#1e293b;color:#fff;border-color:#1e293b}
+
+  .lc-subject-item{padding:.65rem .85rem;border:1px solid #e2e8f0;border-radius:12px;background:#fff;display:flex;justify-content:space-between;align-items:center;font-size:.85rem;font-weight:700;color:#334155;cursor:pointer;transition:all .15s}
+  .lc-subject-item.planned{border-color:#3b82f6;background:#f0f9ff;color:#0369a1}
+  .lc-subject-item.live{border-color:#ef4444;background:#fff1f2;color:#be123c}
+  .lc-subject-item.disabled{opacity:.45;cursor:not-allowed;background:#f8fafc;color:#94a3b8}
+  .lc-subject-item.selected{border-color:#ef4444;box-shadow:0 0 0 2px #ef4444}
+
+  .live-quiz-opt-btn{padding:.7rem .9rem;border:1.5px solid rgba(255,255,255,0.2);border-radius:12px;background:rgba(255,255,255,0.06);color:#f1f5f9;font-size:.88rem;font-weight:600;text-align:left;cursor:pointer;transition:all .2s}
+  .live-quiz-opt-btn:hover{background:rgba(255,255,255,0.15)}
+  .live-quiz-opt-btn.selected{border-color:#38bdf8;background:rgba(56,189,248,0.25)}
+  
+  /* Green Glow for Correct */
+  .live-quiz-opt-btn.correct-glow{border-color:#22c55e!important;background:rgba(34,197,94,0.35)!important;box-shadow:0 0 25px #22c55e!important;animation:glowGreen .5s ease;color:#fff!important;font-weight:800}
+  /* Red Glow & Shake for Wrong */
+  .live-quiz-opt-btn.wrong-glow{border-color:#ef4444!important;background:rgba(239,68,68,0.35)!important;box-shadow:0 0 25px #ef4444!important;animation:shakeRed .4s ease;color:#fff!important}
+
+  @keyframes pulseRed{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+  @keyframes glowGreen{0%{box-shadow:0 0 5px #22c55e}50%{box-shadow:0 0 30px #22c55e}100%{box-shadow:0 0 25px #22c55e}}
+  @keyframes shakeRed{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+</style>
+
 </body>
 </html>

@@ -3903,3 +3903,262 @@ exports.cashfreeWebhook = onRequest({
     res.status(500).json({ received: false, requestId, error: "webhook_processing_failed" });
   }
 });
+
+
+// ══════════════════════════════════════════════
+// LIVE CLASSES
+// ══════════════════════════════════════════════
+
+const LIVE_CLASS_NUMBERS = ['6','7','8','9','10','11','12'];
+const LIVE_CLASS_STREAMS = ['science','commerce','arts'];
+const LIVE_CLASS_SUBJECTS = {
+  '6':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '7':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '8':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '9':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '10': ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
+  '11-science':  ['Physics','Chemistry','Mathematics','Biology','Computer Science','English'],
+  '11-commerce': ['Accountancy','Business Studies','Economics','Mathematics','English'],
+  '11-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi'],
+  '12-science':  ['Physics','Chemistry','Mathematics','Biology','Computer Science','English'],
+  '12-commerce': ['Accountancy','Business Studies','Economics','Mathematics','English'],
+  '12-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi'],
+};
+
+function liveSubjectKey(classNum, stream) {
+  const c = String(classNum || '');
+  if (c === '11' || c === '12') return `${c}-${stream || 'science'}`;
+  return c;
+}
+
+function validateLiveSession(data) {
+  const classNum = String(data.classNum || '').trim();
+  const stream   = String(data.stream   || '').trim().toLowerCase();
+  const subject  = String(data.subject  || '').trim();
+  const date     = String(data.date     || '').trim();
+  const time     = String(data.time     || '').trim();
+  const price    = Number(data.price) || 0;
+  if (!LIVE_CLASS_NUMBERS.includes(classNum))
+    throw new HttpsError('invalid-argument', 'Invalid class number.');
+  if ((classNum === '11' || classNum === '12') && !LIVE_CLASS_STREAMS.includes(stream))
+    throw new HttpsError('invalid-argument', 'Stream required for Class 11/12.');
+  const key = liveSubjectKey(classNum, stream);
+  if (!LIVE_CLASS_SUBJECTS[key] || !LIVE_CLASS_SUBJECTS[key].includes(subject))
+    throw new HttpsError('invalid-argument', `Invalid subject for Class ${classNum}.`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
+    throw new HttpsError('invalid-argument', 'Date must be YYYY-MM-DD.');
+  if (!/^\d{2}:\d{2}$/.test(time))
+    throw new HttpsError('invalid-argument', 'Time must be HH:MM.');
+  if (price < 0 || price > 100000000)
+    throw new HttpsError('invalid-argument', 'Invalid price.');
+  return { classNum, stream, subject, date, time, price };
+}
+
+// Admin: create or update a live session (no YouTube URL at planning time)
+exports.adminSaveLiveClass = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const { sessionId } = request.data || {};
+  const v = validateLiveSession(request.data);
+  const now = FieldValue.serverTimestamp();
+  const payload = {
+    classNum: v.classNum,
+    stream:   v.stream,
+    subject:  v.subject,
+    date:     v.date,
+    time:     v.time,
+    pricePaise: v.price,
+    updatedAt: now,
+  };
+  if (sessionId) {
+    await db.collection('liveClasses').doc(String(sessionId)).set(payload, { merge: true });
+    return { sessionId };
+  }
+  payload.status    = 'planned';
+  payload.questions = [];
+  payload.createdAt = now;
+  const ref = await db.collection('liveClasses').add(payload);
+  return { sessionId: ref.id };
+});
+
+// Admin: upload JSON questions to a session
+exports.adminUploadLiveQuestions = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const sessionId = String(request.data?.sessionId || '').trim();
+  const questions = request.data?.questions;
+  if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
+  if (!Array.isArray(questions) || questions.length === 0)
+    throw new HttpsError('invalid-argument', 'questions must be a non-empty array.');
+  if (questions.length > 200) throw new HttpsError('invalid-argument', 'Max 200 questions per session.');
+  // Validate each question
+  for (const q of questions) {
+    if (!q.text || !Array.isArray(q.options) || q.options.length < 2 || typeof q.correct !== 'number')
+      throw new HttpsError('invalid-argument', 'Each question needs text, options array, and correct index.');
+  }
+  await db.collection('liveClasses').doc(sessionId).update({ questions, updatedAt: FieldValue.serverTimestamp() });
+  return { count: questions.length };
+});
+
+// Admin: go live — set YouTube video ID and flip status to live
+exports.adminGoLive = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const sessionId = String(request.data?.sessionId || '').trim();
+  const rawUrl    = String(request.data?.youtubeUrl || '').trim();
+  if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
+  const youtubeVideoId = extractYouTubeVideoId(rawUrl);
+  if (!youtubeVideoId) throw new HttpsError('invalid-argument', 'Invalid YouTube URL or video ID.');
+  await db.collection('liveClasses').doc(sessionId).update({
+    status: 'live',
+    youtubeVideoId,
+    liveStartedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  return { ok: true, youtubeVideoId };
+});
+
+// Admin: end a live session
+exports.adminEndLiveClass = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const sessionId = String(request.data?.sessionId || '').trim();
+  if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
+  await db.collection('liveClasses').doc(sessionId).update({
+    status: 'ended',
+    liveEndedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  // Clear any active quiz
+  await db.collection('liveQuizState').doc(sessionId).set({ active: false, clearedAt: FieldValue.serverTimestamp() }, { merge: true });
+  return { ok: true };
+});
+
+// Admin: delete a planned session
+exports.adminDeleteLiveClass = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const sessionId = String(request.data?.sessionId || '').trim();
+  if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
+  await db.collection('liveClasses').doc(sessionId).delete();
+  await db.collection('liveQuizState').doc(sessionId).delete().catch(() => {});
+  return { ok: true };
+});
+
+// Admin: publish a quiz question to students in real-time
+exports.adminPublishLiveQuiz = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const sessionId    = String(request.data?.sessionId || '').trim();
+  const questionText = String(request.data?.question  || '').trim();
+  const options      = request.data?.options;
+  const correctIndex = Number(request.data?.correctIndex ?? -1);
+  const timeLimit    = Number(request.data?.timeLimit) || 30;
+  if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
+  if (!questionText) throw new HttpsError('invalid-argument', 'question text required.');
+  if (!Array.isArray(options) || options.length < 2 || options.length > 4)
+    throw new HttpsError('invalid-argument', 'options must be array of 2-4 strings.');
+  if (correctIndex < 0 || correctIndex >= options.length)
+    throw new HttpsError('invalid-argument', 'correctIndex out of range.');
+  const allowed = [5,10,20,30,60,90,120];
+  if (!allowed.includes(timeLimit)) throw new HttpsError('invalid-argument', 'Invalid timeLimit.');
+  await db.collection('liveQuizState').doc(sessionId).set({
+    active:       true,
+    question:     { text: questionText, options: options.map(o => String(o)), correctIndex, timeLimit },
+    publishedAt:  FieldValue.serverTimestamp(),
+    sessionId,
+  });
+  return { ok: true };
+});
+
+// Admin: clear the active quiz
+exports.adminClearLiveQuiz = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const sessionId = String(request.data?.sessionId || '').trim();
+  if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
+  await db.collection('liveQuizState').doc(sessionId).set({ active: false, clearedAt: FieldValue.serverTimestamp() }, { merge: true });
+  return { ok: true };
+});
+
+// Admin: list all sessions
+exports.adminListLiveSessions = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const snap = await db.collection('liveClasses').orderBy('createdAt','desc').get();
+  const sessions = snap.docs.map(d => ({ sessionId: d.id, ...d.data(), createdAt: d.data().createdAt?.toDate?.()?.toISOString() || null, updatedAt: d.data().updatedAt?.toDate?.()?.toISOString() || null }));
+  return { sessions };
+});
+
+// Public: list planned + live sessions for students (no youtubeVideoId exposed)
+exports.getPlannedLiveSessions = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAuth(request);
+  const snap = await db.collection('liveClasses')
+    .where('status', 'in', ['planned','live'])
+    .orderBy('date').orderBy('time')
+    .get();
+  const sessions = snap.docs.map(d => {
+    const data = d.data();
+    return {
+      sessionId:  d.id,
+      classNum:   data.classNum,
+      stream:     data.stream || '',
+      subject:    data.subject,
+      date:       data.date,
+      time:       data.time,
+      pricePaise: data.pricePaise || 0,
+      status:     data.status,
+      // intentionally omit youtubeVideoId
+    };
+  });
+  return { sessions };
+});
+
+// Student: register (free) or get payment order (paid)
+exports.registerForLiveClass = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  const auth = requireAuth(request);
+  const sessionId = String(request.data?.sessionId || '').trim();
+  if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
+  const sessionSnap = await db.collection('liveClasses').doc(sessionId).get();
+  if (!sessionSnap.exists) throw new HttpsError('not-found', 'Session not found.');
+  const session = sessionSnap.data();
+  if (!['planned','live'].includes(session.status))
+    throw new HttpsError('failed-precondition', 'This session has ended.');
+  // Check if already registered
+  const regRef = db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid);
+  const existing = await regRef.get();
+  if (existing.exists) return { registered: true, alreadyRegistered: true };
+  if ((session.pricePaise || 0) === 0) {
+    // Free — register immediately
+    await regRef.set({ uid: auth.uid, email: auth.token?.email || '', joinedAt: FieldValue.serverTimestamp(), paidPaise: 0 });
+    return { registered: true, free: true };
+  }
+  // Paid — return session info for Cashfree order (frontend calls createCashfreeOrder with liveSessionId)
+  return { registered: false, requiresPayment: true, pricePaise: session.pricePaise, sessionId };
+});
+
+// Confirm live class registration after payment
+exports.confirmLiveClassRegistration = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  const auth = requireAuth(request);
+  const sessionId = String(request.data?.sessionId || '').trim();
+  const orderId   = String(request.data?.orderId   || '').trim();
+  if (!sessionId || !orderId) throw new HttpsError('invalid-argument', 'sessionId and orderId required.');
+  // Verify payment order is paid via existing payments collection
+  const orderSnap = await db.collection('paymentOrders').doc(orderId).get();
+  if (!orderSnap.exists) throw new HttpsError('not-found', 'Payment order not found.');
+  const order = orderSnap.data();
+  if (order.status !== 'paid') throw new HttpsError('failed-precondition', 'Payment not confirmed.');
+  if (order.uid !== auth.uid)  throw new HttpsError('permission-denied', 'Order does not belong to this user.');
+  const regRef = db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid);
+  await regRef.set({ uid: auth.uid, email: auth.token?.email || '', joinedAt: FieldValue.serverTimestamp(), paidPaise: order.amountPaise || 0 }, { merge: true });
+  return { registered: true };
+});
+
+// Student: get YouTube video ID — only if registered
+exports.getPlayerAccess = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  const auth = requireAuth(request);
+  const sessionId = String(request.data?.sessionId || '').trim();
+  if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
+  const [sessionSnap, regSnap] = await Promise.all([
+    db.collection('liveClasses').doc(sessionId).get(),
+    db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid).get(),
+  ]);
+  if (!sessionSnap.exists) throw new HttpsError('not-found', 'Session not found.');
+  const session = sessionSnap.data();
+  if (!regSnap.exists) throw new HttpsError('permission-denied', 'You are not registered for this session.');
+  if (session.status === 'ended') throw new HttpsError('failed-precondition', 'This session has ended.');
+  if (!session.youtubeVideoId) throw new HttpsError('failed-precondition', 'Stream not started yet. Please try again in a moment.');
+  return { youtubeVideoId: session.youtubeVideoId, status: session.status };
+});
