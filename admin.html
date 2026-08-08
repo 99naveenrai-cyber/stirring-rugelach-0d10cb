@@ -266,7 +266,16 @@ body{padding-bottom:65px}
   <!-- Top Nav -->
   <div class="top-nav">
     <div class="top-nav-brand"><span class="brand-wordmark" aria-label="ideaKDC"><span class="brand-idea">idea</span><span class="brand-kdc">KDC</span></span><span>Admin</span></div>
-    <div class="top-nav-right">
+    <div class="top-nav-right" style="display:flex;align-items:center;gap:.6rem">
+      <nav class="top-header-nav" style="display:flex;align-items:center;gap:.35rem;margin-right:.5rem">
+        <button class="top-tab active" id="ttab-dashboard" onclick="switchPanel('dashboard',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">📊 Dashboard</button>
+        <button class="top-tab" id="ttab-upload" onclick="switchPanel('upload',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">➕ Upload</button>
+        <button class="top-tab" id="ttab-content" onclick="switchPanel('content',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">📚 Content</button>
+        <button class="top-tab" id="ttab-enrollments" onclick="switchPanel('enrollments',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">📋 Enrollments</button>
+        <button class="top-tab" id="ttab-finance" onclick="switchPanel('finance',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">₹ Finance</button>
+        <button class="top-tab" id="ttab-coupons" onclick="switchPanel('coupons',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">🎟️ Coupons</button>
+        <button class="top-tab" id="ttab-live" onclick="switchPanel('live',this)" style="padding:4px 10px;border-radius:6px;border:1.5px solid #ef4444;background:#fff5f5;font-size:.75rem;font-weight:800;cursor:pointer;color:#c53030">🔴 Live</button>
+      </nav>
       <span class="admin-badge" id="admin-email-badge">Admin</span>
       <button class="btn-logout" onclick="doLogout()">Logout</button>
     </div>
@@ -863,7 +872,7 @@ let selectedReferralMember = null;
 // ════════════════════════════════════════
 onAuthStateChanged(auth, async (user) => {
   hideLoader();
-  if (user && ADMIN_EMAILS.includes(user.email)) {
+  if (user && ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-shell').style.display = 'block';
     document.getElementById('admin-email-badge').textContent = user.email.split('@')[0];
@@ -3426,13 +3435,38 @@ function exportFinanceStatement() {
 // NAV
 // ════════════════════════════════════════
 window.switchPanel = (name, el) => {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.btab').forEach(b=>b.classList.remove('active'));
-  document.getElementById('panel-'+name).classList.add('active');
-  el.classList.add('active');
-  if (name === 'upload') resetUploadState();
-  if (name === 'finance') Promise.all([loadReferralSettings(), loadFinanceMembers()]);
-  if (name === 'live') loadAdminLiveSessions();
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.btab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.top-tab').forEach(t => {
+    t.classList.remove('active');
+    t.style.borderColor = '#cbd5e1';
+    t.style.background = '#fff';
+    t.style.color = '#1e293b';
+  });
+
+  const targetPanel = document.getElementById('panel-' + name);
+  if (targetPanel) targetPanel.classList.add('active');
+
+  const bottomTab = document.getElementById('btab-' + name);
+  if (bottomTab) bottomTab.classList.add('active');
+
+  const topTab = document.getElementById('ttab-' + name);
+  if (topTab) {
+    topTab.classList.add('active');
+    if (name === 'live') {
+      topTab.style.borderColor = '#ef4444';
+      topTab.style.background = '#fee2e2';
+      topTab.style.color = '#991b1b';
+    } else {
+      topTab.style.borderColor = '#2563eb';
+      topTab.style.background = '#eff6ff';
+      topTab.style.color = '#1d4ed8';
+    }
+  }
+
+  if (name === 'upload' && typeof resetUploadState === 'function') resetUploadState();
+  if (name === 'finance' && typeof loadReferralSettings === 'function') Promise.all([loadReferralSettings(), loadFinanceMembers()]);
+  if (name === 'live' && typeof window.loadAdminLiveSessions === 'function') window.loadAdminLiveSessions();
 };
 
 // ════════════════════════════════════════
@@ -3678,7 +3712,7 @@ window.uploadLiveJsonQuestions = (fileInput) => {
         questions: data
       });
       selectedLiveSession.questions = data;
-      renderUploadedQuestions(data);
+      window.renderUploadedQuestions(data);
       status.style.color = 'green';
       status.textContent = `✅ Successfully uploaded ${data.length} questions!`;
     } catch (err) {
@@ -3703,7 +3737,7 @@ window.goLiveStream = async () => {
     });
     alert('🔴 STREAM IS LIVE NOW!');
     selectedLiveSession.status = 'live';
-    selectLiveSession(selectedLiveSession);
+    window.selectLiveSession(selectedLiveSession);
   } catch (err) {
     alert('Error going live: ' + (err?.message || 'Invalid URL'));
   }
@@ -3777,7 +3811,7 @@ window.endLiveClassSession = async () => {
   try {
     await adminEndLiveClassFn({ sessionId: selectedLiveSession.sessionId });
     selectedLiveSession.status = 'ended';
-    selectLiveSession(selectedLiveSession);
+    window.selectLiveSession(selectedLiveSession);
     showToast('⏹ Live session ended.', 'info');
   } catch (err) {
     alert('Error ending session: ' + err?.message);
