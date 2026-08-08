@@ -653,6 +653,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
     <span class="logo-slogan">Creating Thoughtful Minds</span>
   </div>
   <div class="nav-right" id="nav-right">
+    <button class="btn-nav" style="border-color:#ef4444;color:#ef4444;font-weight:800" onclick="showLive()">🔴 Live Class</button>
     <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
     <button class="btn-nav btn-nav-primary" onclick="showLogin()">Login करें</button>
     <button class="btn-nav" onclick="startConvoReg(null)">New Student</button>
@@ -1005,9 +1006,11 @@ let _liveQuizTimerInt = null;
 window.showLive = async () => {
   const modal = document.getElementById('live-class-modal');
   if (!modal) return;
+  modal.style.display = 'flex';
   modal.style.opacity = '1';
   modal.style.pointerEvents = 'auto';
-  renderLiveClassModal(); // Render immediately for instant 0ms response!
+  modal.style.zIndex = '20000';
+  renderLiveClassModal(); // Render immediately for 0ms response!
 
   try {
     const res = await getPlannedLiveSessionsFn({});
@@ -1016,7 +1019,7 @@ window.showLive = async () => {
     console.warn('[Live sessions fetch error]', err);
     _livePlannedSessions = [];
   }
-  renderLiveClassModal(); // Update with fetched sessions
+  renderLiveClassModal();
 };
 
 window.closeLiveModal = () => {
@@ -1024,6 +1027,7 @@ window.closeLiveModal = () => {
   if (!modal) return;
   modal.style.opacity = '0';
   modal.style.pointerEvents = 'none';
+  setTimeout(() => { modal.style.display = 'none'; }, 300);
 };
 
 function renderLiveClassModal() {
@@ -1906,14 +1910,16 @@ function updateNav(loggedIn) {
   if (loggedIn) {
     const name = currentUser.displayName || currentUser.email.split('@')[0];
     nr.innerHTML = `
-      <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
+      <button class="btn-nav" style="border-color:#ef4444;color:#ef4444;font-weight:800" onclick="showLive()">🔴 Live Class</button>
       <button class="btn-nav" onclick="showAllCourses()">All Courses</button>
+      <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
       <span style="font-size:.72rem;font-weight:700;color:#0a2a5e;background:rgba(255,255,255,.5);padding:5px 9px;border-radius:8px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👋 ${name}</span>`;
     if (logoutBtn) logoutBtn.style.display = 'flex';
   } else {
     nr.innerHTML = `
-      <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
+      <button class="btn-nav" style="border-color:#ef4444;color:#ef4444;font-weight:800" onclick="showLive()">🔴 Live Class</button>
       <button class="btn-nav" onclick="showAllCourses()">All Courses</button>
+      <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
       <button class="btn-nav btn-nav-primary" onclick="showLogin()">Login करें</button>
       <button class="btn-nav" onclick="startConvoReg(null)">New Student</button>`;
     if (logoutBtn) logoutBtn.style.display = 'none';

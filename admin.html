@@ -3551,6 +3551,7 @@ window.saveLiveSession = async () => {
 
 window.loadAdminLiveSessions = async () => {
   const container = document.getElementById('lc-session-list');
+  if (!container) return;
   container.innerHTML = '<div style="color:#aaa;font-size:.8rem">Loading sessions...</div>';
   try {
     const res = await adminListLiveSessionsFn({});
@@ -3562,7 +3563,9 @@ window.loadAdminLiveSessions = async () => {
     container.innerHTML = '';
     sessions.forEach(sess => {
       const card = document.createElement('div');
-      card.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:.5rem .75rem;margin-bottom:.4rem;cursor:pointer;font-size:.8rem;background:#fff';
+      card.id = `lc-card-${sess.sessionId}`;
+      card.className = 'lc-session-card-item';
+      card.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:.55rem .75rem;margin-bottom:.4rem;cursor:pointer;font-size:.8rem;background:#fff;transition:all .15s';
       if (selectedLiveSession?.sessionId === sess.sessionId) {
         card.style.borderColor = '#c53030';
         card.style.background = '#fff5f5';
@@ -3571,13 +3574,16 @@ window.loadAdminLiveSessions = async () => {
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center">
           <strong>Class ${sess.classNum}${sess.stream ? ' ('+sess.stream+')' : ''} — ${sess.subject}</strong>
-          <span style="font-size:.7rem;padding:2px 6px;border-radius:4px;background:${isLive?'#feb2b2':'#edf2f7'};color:${isLive?'#9b2c2c':'#4a5568'};font-weight:800">${(sess.status||'planned').toUpperCase()}</span>
+          <div style="display:flex;align-items:center;gap:.4rem">
+            <span style="font-size:.7rem;padding:2px 6px;border-radius:4px;background:${isLive?'#feb2b2':'#edf2f7'};color:${isLive?'#9b2c2c':'#4a5568'};font-weight:800">${(sess.status||'planned').toUpperCase()}</span>
+            <button onclick="event.stopPropagation();deleteLiveClassSession('${sess.sessionId}')" style="background:none;border:none;color:#e53e3e;font-size:.8rem;cursor:pointer;padding:2px" title="Delete Session">🗑️</button>
+          </div>
         </div>
-        <div style="font-size:.75rem;color:#718096;margin-top:2px">
+        <div style="font-size:.75rem;color:#718096;margin-top:3px">
           📅 ${sess.date} ⏰ ${sess.time} | 💰 ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}
         </div>
       `;
-      card.onclick = () => selectLiveSession(sess);
+      card.onclick = () => window.selectLiveSession(sess);
       container.appendChild(card);
     });
   } catch (err) {
@@ -3585,21 +3591,36 @@ window.loadAdminLiveSessions = async () => {
   }
 };
 
-function selectLiveSession(sess) {
+window.selectLiveSession = (sess) => {
   selectedLiveSession = sess;
-  loadAdminLiveSessions(); // refresh highlight
+  document.querySelectorAll('.lc-session-card-item').forEach(c => {
+    c.style.borderColor = '#e2e8f0';
+    c.style.background = '#fff';
+  });
+  const activeCard = document.getElementById(`lc-card-${sess.sessionId}`);
+  if (activeCard) {
+    activeCard.style.borderColor = '#c53030';
+    activeCard.style.background = '#fff5f5';
+  }
   const info = document.getElementById('lc-selected-info');
-  info.innerHTML = `📌 Selected: <strong>Class ${sess.classNum} ${sess.subject}</strong> (${sess.date} ${sess.time}) — Status: <span style="color:#c53030;font-weight:800">${sess.status.toUpperCase()}</span>`;
+  if (info) {
+    info.innerHTML = `📌 Selected: <strong>Class ${sess.classNum} ${sess.subject}</strong> (${sess.date} ${sess.time}) — Status: <span style="color:#c53030;font-weight:800">${sess.status.toUpperCase()}</span>`;
+  }
   
-  document.getElementById('lc-golive-box').style.display = (sess.status === 'planned' || sess.status === 'live') ? 'block' : 'none';
-  document.getElementById('lc-uploaded-box').style.display = (sess.status === 'live') ? 'block' : 'none';
-  document.getElementById('lc-spot-box').style.display = (sess.status === 'live') ? 'block' : 'none';
+  const goLiveBox = document.getElementById('lc-golive-box');
+  const uploadedBox = document.getElementById('lc-uploaded-box');
+  const spotBox = document.getElementById('lc-spot-box');
 
-  renderUploadedQuestions(sess.questions || []);
-}
+  if (goLiveBox) goLiveBox.style.display = (sess.status === 'planned' || sess.status === 'live') ? 'block' : 'none';
+  if (uploadedBox) uploadedBox.style.display = (sess.status === 'live') ? 'block' : 'none';
+  if (spotBox) spotBox.style.display = (sess.status === 'live') ? 'block' : 'none';
 
-function renderUploadedQuestions(questions) {
+  window.renderUploadedQuestions(sess.questions || []);
+};
+
+window.renderUploadedQuestions = (questions) => {
   const container = document.getElementById('lc-uploaded-q-list');
+  if (!container) return;
   container.innerHTML = '';
   if (!questions || questions.length === 0) {
     container.innerHTML = '<div style="color:#aaa;font-size:.75rem">No JSON questions uploaded for this session yet.</div>';
@@ -3627,7 +3648,19 @@ function renderUploadedQuestions(questions) {
     `;
     container.appendChild(item);
   });
-}
+};
+
+window.deleteLiveClassSession = async (sessionId) => {
+  if (!confirm('Are you sure you want to delete this planned live session?')) return;
+  try {
+    await adminDeleteLiveClassFn({ sessionId });
+    if (selectedLiveSession?.sessionId === sessionId) selectedLiveSession = null;
+    showToast('Session deleted.', 'info');
+    window.loadAdminLiveSessions();
+  } catch (err) {
+    alert('Error deleting session: ' + err?.message);
+  }
+};
 
 window.uploadLiveJsonQuestions = (fileInput) => {
   const file = fileInput.files[0];
