@@ -640,17 +640,16 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .referral-upi-error-popup{display:none;margin-top:.6rem;background:#fff3f3;border:1.5px solid #e53e3e;border-radius:8px;padding:.7rem 1rem;color:#b42318;font-size:.85rem;font-weight:600;position:relative;line-height:1.5}
 .referral-popup-close{position:absolute;top:.3rem;right:.5rem;background:none;border:none;color:#b42318;font-size:1.1rem;cursor:pointer;padding:0;line-height:1;font-weight:900}.referral-popup-close:hover{color:#7b0b0b}
 
-  /* Mesmerising Navy Blue Live Class Styles */
-  .lc-navy-btn{padding:.7rem .5rem;border:1.5px solid rgba(56,189,248,0.25);border-radius:14px;background:rgba(15,23,42,0.6);font-weight:800;font-size:.85rem;color:#f1f5f9;cursor:pointer;transition:all .2s cubic-bezier(0.4,0,0.2,1);text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
-  .lc-navy-btn:hover,.lc-navy-btn:active{border-color:#38bdf8;background:rgba(56,189,248,0.2);transform:translateY(-2px) scale(1.02);box-shadow:0 0 20px rgba(56,189,248,0.4)}
-  .lc-navy-btn.planned{border-color:#38bdf8;background:rgba(56,189,248,0.25);color:#38bdf8}
-  .lc-navy-btn.live{border-color:#ef4444;background:rgba(239,68,68,0.25);color:#f87171;animation:pulseRed 2s infinite}
+  /* Light Navy Blue Live Class Styles */
+  .lc-navy-btn{padding:.7rem .5rem;border:1.5px solid rgba(30,58,138,0.2);border-radius:14px;background:rgba(255,255,255,0.9);font-weight:800;font-size:.85rem;color:#1e3a8a;cursor:pointer;transition:all .2s cubic-bezier(0.4,0,0.2,1);text-align:center;box-shadow:0 4px 12px rgba(15,23,42,0.06)}
+  .lc-navy-btn:hover,.lc-navy-btn:active{border-color:#2563eb;background:rgba(37,99,235,0.08);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px rgba(37,99,235,0.15)}
+  .lc-navy-btn.planned{border-color:#2563eb;background:rgba(37,99,235,0.12);color:#1d4ed8}
+  .lc-navy-btn.live{border-color:#ef4444;background:rgba(239,68,68,0.12);color:#dc2626;animation:pulseRed 2s infinite}
 
-  .lc-chapter-item{padding:.65rem .85rem;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(15,23,42,0.6);display:flex;justify-content:space-between;align-items:center;font-size:.84rem;font-weight:600;color:#e2e8f0;cursor:pointer;transition:all .2s}
-  .lc-chapter-item:hover{border-color:#38bdf8;background:rgba(56,189,248,0.15);transform:translateX(3px)}
-  .lc-chapter-item.revision-tab{border-color:#f59e0b;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:800}
-
-</style>
+  .lc-chapter-item{padding:.65rem .85rem;border:1px solid rgba(30,58,138,0.12);border-radius:12px;background:rgba(255,255,255,0.95);display:flex;justify-content:space-between;align-items:center;font-size:.84rem;font-weight:600;color:#1e293b;cursor:pointer;transition:all .2s}
+  .lc-chapter-item:hover{border-color:#2563eb;background:rgba(37,99,235,0.06);transform:translateX(3px)}
+  .lc-chapter-item.revision-tab{border-color:#d97706;background:rgba(251,191,36,0.15);color:#b45309;font-weight:800}
+  </style>
 </head>
 <body>
 
@@ -1237,35 +1236,41 @@ function checkSessionAndShowCard(chap) {
 
   if (sess) {
     _selectedSessionDoc = sess;
-    card.style.background = 'rgba(239,68,68,0.1)';
-    card.style.borderColor = 'rgba(239,68,68,0.4)';
+    card.style.background = 'rgba(255,255,255,0.95)';
+    card.style.borderColor = 'rgba(30,58,138,0.25)';
+    card.style.boxShadow = '0 10px 30px rgba(30,58,138,0.12)';
     card.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
-        <span style="font-weight:800;color:#fff">${sess.subject} — ${chap}</span>
-        <span style="font-size:.7rem;font-weight:900;padding:3px 8px;border-radius:99px;background:${sess.status === 'live' ? '#ef4444' : '#0284c7'};color:#fff">${sess.status === 'live' ? '🔴 LIVE NOW' : '📅 PLANNED'}</span>
+        <span style="font-weight:800;color:#1e3a8a;font-size:.95rem">${sess.subject} — ${chap}</span>
+        <span style="font-size:.7rem;font-weight:900;padding:4px 10px;border-radius:99px;background:${sess.status === 'live' ? '#ef4444' : '#1d4ed8'};color:#fff">${sess.status === 'live' ? '🔴 LIVE NOW' : '📅 PLANNED'}</span>
       </div>
-      <div style="font-size:.8rem;color:#cbd5e1;margin-bottom:.8rem">Date: ${sess.date} | Time: ${sess.time} | Price: ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}</div>
-      <button onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:44px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.92rem;cursor:pointer;box-shadow:0 4px 14px rgba(239,68,68,0.4)">
+      <div style="font-size:.85rem;color:#475569;margin-bottom:.9rem;background:rgba(30,58,138,0.05);padding:8px 12px;border-radius:10px;line-height:1.5">
+        <strong>📅 Date:</strong> ${sess.date}<br>
+        <strong>⏰ Time:</strong> ${sess.time}<br>
+        <strong>💰 Price:</strong> ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}
+      </div>
+      <button onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:44px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.92rem;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,0.35)">
         🚀 Join Live Stream
       </button>
     `;
   } else {
     _selectedSessionDoc = null;
-    card.style.background = 'rgba(245,158,11,0.1)';
-    card.style.borderColor = 'rgba(245,158,11,0.4)';
+    card.style.background = 'rgba(254,243,199,0.7)';
+    card.style.borderColor = 'rgba(245,158,11,0.3)';
+    card.style.boxShadow = '0 10px 30px rgba(245,158,11,0.1)';
     
     const targetInfo = `Class ${_navClass}th ${_navSubject} (${chap})`;
-    const waText = encodeURIComponent(`Hello Teacher, please schedule a Live Class for ${targetInfo}!`);
+    const waText = encodeURIComponent(`Hello Mentor, please schedule a Live Class for ${targetInfo}!`);
 
     card.innerHTML = `
       <div style="text-align:center">
         <div style="font-size:1.8rem;margin-bottom:.2rem">🏫 📖</div>
-        <div style="font-weight:900;font-size:1.02rem;color:#fbbf24;margin-bottom:.3rem">No Live Class Scheduled Right Now</div>
-        <p style="font-size:.8rem;color:#cbd5e1;margin-bottom:.9rem;line-height:1.4">
+        <div style="font-weight:900;font-size:1.02rem;color:#b45309;margin-bottom:.3rem">No Live Class Scheduled Right Now</div>
+        <p style="font-size:.8rem;color:#64748b;margin-bottom:.9rem;line-height:1.4">
           No live stream is planned for <strong>${targetInfo}</strong> at this moment.
         </p>
         <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:44px;background:#25D366;color:#fff;border-radius:12px;font-weight:800;font-size:.9rem;text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.35)">
-          📱 WhatsApp Your Teacher
+          📱 WhatsApp Your Mentor
         </a>
       </div>
     `;
@@ -6561,23 +6566,26 @@ pageHistory = ['home'];
 <!-- ════════════════════════════════════════
      LIVE CLASS NAVY BLUE GRADIENT GLASSMORPHISM MODAL
 ════════════════════════════════════════ -->
-<div id="live-class-modal" style="position:fixed;inset:0;background:rgba(5,15,35,0.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);z-index:20000;display:none;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .35s cubic-bezier(0.4,0,0.2,1)">
-  <div style="background:linear-gradient(145deg,rgba(10,25,50,0.95),rgba(30,58,138,0.9),rgba(15,23,42,0.96));backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border:1.5px solid rgba(56,189,248,0.3);border-radius:28px;padding:1.6rem;width:min(92vw,500px);max-height:88vh;overflow-y:auto;box-shadow:0 25px 65px rgba(2,6,23,0.8);position:relative;color:#f8fafc">
+<!-- ════════════════════════════════════════
+     LIVE CLASS LIGHT NAVY BLUE GLASSMORPHISM MODAL
+════════════════════════════════════════ -->
+<div id="live-class-modal" style="position:fixed;inset:0;background:rgba(15,23,42,0.45);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:20000;display:none;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .35s cubic-bezier(0.4,0,0.2,1)">
+  <div style="background:linear-gradient(145deg,#ffffff 0%,#f0f4f8 60%,#e2e8f0 100%);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border:1.5px solid rgba(30,58,138,0.18);border-radius:28px;padding:1.6rem;width:min(92vw,500px);max-height:88vh;overflow-y:auto;box-shadow:0 25px 65px rgba(15,23,42,0.18);position:relative;color:#0f172a">
     
     <!-- Top Bar: Back & Close -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <button id="lc-back-btn" onclick="goBackLiveStep()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:99px;padding:4px 12px;font-size:.78rem;font-weight:700;color:#38bdf8;cursor:pointer;display:none;align-items:center;gap:.3rem">
+      <button id="lc-back-btn" onclick="goBackLiveStep()" style="background:rgba(30,58,138,0.08);border:1px solid rgba(30,58,138,0.15);border-radius:99px;padding:4px 12px;font-size:.78rem;font-weight:700;color:#1e3a8a;cursor:pointer;display:none;align-items:center;gap:.3rem">
         ← Back
       </button>
-      <div style="font-size:1.25rem;font-weight:900;color:#fff;display:flex;align-items:center;gap:.5rem">
+      <div style="font-size:1.25rem;font-weight:900;color:#1e3a8a;display:flex;align-items:center;gap:.5rem">
         <span style="color:#ef4444;animation:pulseRed 2s infinite">🔴</span> Live Classes
       </div>
-      <button onclick="closeLiveModal()" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:32px;height:32px;font-size:1.2rem;font-weight:700;color:#cbd5e1;cursor:pointer;display:grid;place-items:center">&times;</button>
+      <button onclick="closeLiveModal()" style="background:rgba(30,58,138,0.08);border:none;border-radius:50%;width:32px;height:32px;font-size:1.2rem;font-weight:700;color:#475569;cursor:pointer;display:grid;place-items:center">&times;</button>
     </div>
 
     <!-- Step Progress Indicator -->
-    <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:6px 12px;margin-bottom:1.2rem;font-size:.72rem;font-weight:700;color:#94a3b8">
-      <span id="step-lbl-class" style="color:#38bdf8">1. Class</span> →
+    <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(30,58,138,0.06);border:1px solid rgba(30,58,138,0.12);border-radius:14px;padding:6px 12px;margin-bottom:1.2rem;font-size:.72rem;font-weight:700;color:#64748b">
+      <span id="step-lbl-class" style="color:#1e3a8a">1. Class</span> →
       <span id="step-lbl-stream" style="display:none">2. Stream →</span>
       <span id="step-lbl-subject">2. Subject</span> →
       <span id="step-lbl-chapter">3. Chapter / Revision</span>
@@ -6585,13 +6593,13 @@ pageHistory = ['home'];
     
     <!-- STEP 1: CLASS SELECTION -->
     <div id="lc-step-1">
-      <div style="font-size:.8rem;font-weight:800;color:#38bdf8;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em">Select Your Class</div>
+      <div style="font-size:.8rem;font-weight:800;color:#1e3a8a;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em">Select Your Class</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem" id="lc-class-grid"></div>
     </div>
 
     <!-- STEP 2: STREAM SELECTION (Class 11/12) -->
     <div id="lc-step-2" style="display:none">
-      <div style="font-size:.8rem;font-weight:800;color:#38bdf8;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em">Select Stream</div>
+      <div style="font-size:.8rem;font-weight:800;color:#1e3a8a;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em">Select Stream</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
         <button class="lc-navy-btn" onclick="selectLcStream('science')">🔬 Science</button>
         <button class="lc-navy-btn" onclick="selectLcStream('commerce')">📊 Commerce</button>
@@ -6601,18 +6609,18 @@ pageHistory = ['home'];
 
     <!-- STEP 3: SUBJECT SELECTION -->
     <div id="lc-step-3" style="display:none">
-      <div style="font-size:.8rem;font-weight:800;color:#38bdf8;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em" id="lc-step3-title">Select Subject</div>
+      <div style="font-size:.8rem;font-weight:800;color:#1e3a8a;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em" id="lc-step3-title">Select Subject</div>
       <div style="display:flex;flex-direction:column;gap:.5rem" id="lc-subject-list"></div>
     </div>
 
     <!-- STEP 4: CHAPTER & REVISION SELECTION -->
     <div id="lc-step-4" style="display:none">
-      <div style="font-size:.8rem;font-weight:800;color:#38bdf8;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em" id="lc-step4-title">Select Chapter / Revision</div>
+      <div style="font-size:.8rem;font-weight:800;color:#1e3a8a;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em" id="lc-step4-title">Select Chapter / Revision</div>
       <div style="display:flex;flex-direction:column;gap:.45rem;max-height:260px;overflow-y:auto;padding-right:4px" id="lc-chapter-list"></div>
     </div>
 
     <!-- SESSION DETAILS / NO CLASS POPUP CARD -->
-    <div id="lc-session-card" style="display:none;margin-top:1.2rem"></div>
+    <div id="lc-session-card" style="display:none;margin-top:1.2rem;border-radius:18px;padding:1.2rem;border:1.5px solid rgba(30,58,138,0.2)"></div>
   </div>
 </div>
 
