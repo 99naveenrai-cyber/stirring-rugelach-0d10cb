@@ -216,6 +216,12 @@ body{padding-bottom:65px}
 .finance-table-wrap{overflow:auto;margin-top:.7rem}.finance-table{width:100%;border-collapse:collapse;font-size:.75rem}.finance-table th,.finance-table td{text-align:left;padding:.55rem;border-bottom:1px solid var(--border);white-space:nowrap}.finance-table th{color:var(--muted)}
 .finance-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}.finance-settings-grid .form-group{margin:0}.finance-settings-grid .wide{grid-column:1/-1}
 @media(max-width:760px){.finance-member{grid-template-columns:1fr 1fr}.finance-member>div:first-child{grid-column:1/-1}.finance-private-grid,.finance-summary-grid,.finance-settings-grid{grid-template-columns:1fr}.finance-settings-grid .wide{grid-column:auto}.bottom-tabs .btab{font-size:.56rem}}
+
+  /* Responsive Top Nav Tabs for Desktop/Tablet only */
+  @media (max-width: 768px) {
+    .top-header-nav { display: none !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -619,6 +625,7 @@ body{padding-bottom:65px}
       </button>
     </div>
     <div id="coupon-list"></div>
+  </div>
 
   <!-- ══ PANEL: LIVE CLASSES ══ -->
   <div class="panel" id="panel-live">
@@ -758,11 +765,6 @@ body{padding-bottom:65px}
         </div>
       </div>
     </div>
-  </div>
-
-  </div>
-
-  <!-- ══ PANEL: LIVE CLASSES ══ -->
 
 <!-- Bottom Tab Nav -->
   <div class="bottom-tabs">
