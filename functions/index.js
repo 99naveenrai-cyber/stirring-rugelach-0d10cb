@@ -4077,17 +4077,19 @@ exports.adminClearLiveQuiz = onCall(callableOptions({ region: 'asia-south1' }), 
 // Admin: list all sessions
 exports.adminListLiveSessions = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
   requireAdminAuth(request);
-  const snap = await db.collection('liveClasses').orderBy('createdAt','desc').get();
-  const sessions = snap.docs.map(d => ({ sessionId: d.id, ...d.data(), createdAt: d.data().createdAt?.toDate?.()?.toISOString() || null, updatedAt: d.data().updatedAt?.toDate?.()?.toISOString() || null }));
+  const snap = await db.collection('liveClasses').get();
+  const sessions = snap.docs.map(d => ({
+    sessionId: d.id,
+    ...d.data(),
+    createdAt: d.data().createdAt?.toDate?.()?.toISOString() || null,
+    updatedAt: d.data().updatedAt?.toDate?.()?.toISOString() || null
+  })).sort((a,b) => String(b.date || '' + b.time || '').localeCompare(String(a.date || '' + a.time || '')));
   return { sessions };
 });
 
 // Public: list planned + live sessions for students (no youtubeVideoId exposed)
 exports.getPlannedLiveSessions = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
-  const snap = await db.collection('liveClasses')
-    .where('status', 'in', ['planned','live'])
-    .orderBy('date').orderBy('time')
-    .get();
+  const snap = await db.collection('liveClasses').where('status', 'in', ['planned','live']).get();
   const sessions = snap.docs.map(d => {
     const data = d.data();
     return {
@@ -4095,13 +4097,13 @@ exports.getPlannedLiveSessions = onCall(callableOptions({ region: 'asia-south1' 
       classNum:   data.classNum,
       stream:     data.stream || '',
       subject:    data.subject,
+      chapter:    data.chapter || '',
       date:       data.date,
       time:       data.time,
       pricePaise: data.pricePaise || 0,
       status:     data.status,
-      // intentionally omit youtubeVideoId
     };
-  });
+  }).sort((a,b) => String(a.date || '' + a.time || '').localeCompare(String(b.date || '' + b.time || '')));
   return { sessions };
 });
 

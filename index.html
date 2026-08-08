@@ -639,6 +639,17 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .referral-course-selector{margin-top:.7rem;display:flex;flex-direction:column;gap:.4rem;max-height:280px;overflow-y:auto}
 .referral-upi-error-popup{display:none;margin-top:.6rem;background:#fff3f3;border:1.5px solid #e53e3e;border-radius:8px;padding:.7rem 1rem;color:#b42318;font-size:.85rem;font-weight:600;position:relative;line-height:1.5}
 .referral-popup-close{position:absolute;top:.3rem;right:.5rem;background:none;border:none;color:#b42318;font-size:1.1rem;cursor:pointer;padding:0;line-height:1;font-weight:900}.referral-popup-close:hover{color:#7b0b0b}
+
+  /* Mesmerising Navy Blue Live Class Styles */
+  .lc-navy-btn{padding:.7rem .5rem;border:1.5px solid rgba(56,189,248,0.25);border-radius:14px;background:rgba(15,23,42,0.6);font-weight:800;font-size:.85rem;color:#f1f5f9;cursor:pointer;transition:all .2s cubic-bezier(0.4,0,0.2,1);text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+  .lc-navy-btn:hover,.lc-navy-btn:active{border-color:#38bdf8;background:rgba(56,189,248,0.2);transform:translateY(-2px) scale(1.02);box-shadow:0 0 20px rgba(56,189,248,0.4)}
+  .lc-navy-btn.planned{border-color:#38bdf8;background:rgba(56,189,248,0.25);color:#38bdf8}
+  .lc-navy-btn.live{border-color:#ef4444;background:rgba(239,68,68,0.25);color:#f87171;animation:pulseRed 2s infinite}
+
+  .lc-chapter-item{padding:.65rem .85rem;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(15,23,42,0.6);display:flex;justify-content:space-between;align-items:center;font-size:.84rem;font-weight:600;color:#e2e8f0;cursor:pointer;transition:all .2s}
+  .lc-chapter-item:hover{border-color:#38bdf8;background:rgba(56,189,248,0.15);transform:translateX(3px)}
+  .lc-chapter-item.revision-tab{border-color:#f59e0b;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:800}
+
 </style>
 </head>
 <body>
@@ -979,26 +990,69 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 })();
 
 // ════════════════════════════════════════
-// STUDENT LIVE CLASS & REAL-TIME QUIZ LOGIC
 // ════════════════════════════════════════
-const LIVE_STUDENT_SUBJECTS = {
-  '6':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
-  '7':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
-  '8':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
-  '9':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
-  '10': ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
-  '11-science':  ['Physics','Chemistry','Mathematics','Biology','Computer Science','English'],
-  '11-commerce': ['Accountancy','Business Studies','Economics','Mathematics','English'],
-  '11-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi'],
-  '12-science':  ['Physics','Chemistry','Mathematics','Biology','Computer Science','English'],
-  '12-commerce': ['Accountancy','Business Studies','Economics','Mathematics','English'],
-  '12-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi'],
+// MESMERISING NAVY BLUE STEP-BY-STEP LIVE NAV & NCERT SYLLABUS
+// ════════════════════════════════════════
+const NCERT_SYLLABUS = {
+  // Class 6
+  '6-Mathematics': ['🔁 Revision & Important PYQs','Ch 1: Knowing Our Numbers','Ch 2: Whole Numbers','Ch 3: Playing with Numbers','Ch 4: Basic Geometrical Ideas','Ch 5: Understanding Elementary Shapes','Ch 6: Integers','Ch 7: Fractions','Ch 8: Decimals','Ch 9: Data Handling','Ch 10: Mensuration','Ch 11: Algebra','Ch 12: Ratio & Proportion'],
+  '6-Science': ['🔁 Revision & Important PYQs','Ch 1: Components of Food','Ch 2: Sorting Materials into Groups','Ch 3: Separation of Substances','Ch 4: Getting to Know Plants','Ch 5: Body Movements','Ch 6: The Living Organisms','Ch 7: Motion & Distance','Ch 8: Light, Shadows & Reflections','Ch 9: Electricity & Circuits','Ch 10: Fun with Magnets','Ch 11: Air Around Us'],
+  '6-Social Science': ['🔁 Revision & Important PYQs','History: What, Where, How & When?','History: Hunting to Growing Food','Geography: Earth in Solar System','Geography: Globe Latitudes & Longitudes','Civics: Understanding Diversity'],
+  '6-English': ['🔁 Revision & Important PYQs','Unit 1: A House, A Home & Patrick's Homework','Unit 2: How the Dog Found a Master','Grammar: Nouns, Pronouns & Verbs','Writing: Letter & Essay'],
+  '6-Hindi': ['🔁 Revision & Important PYQs','पाठ 1: वह चिड़िया जो','पाठ 2: बचपन','हिंदी व्याकरण एवं निबंध'],
+  '6-Sanskrit': ['🔁 Revision & Important PYQs','प्रथमो पाठः: शब्दपरिचयः I','द्वितीयो पाठः: शब्दपरिचयः II','संस्कृत व्याकरणम्'],
+
+  // Class 7
+  '7-Mathematics': ['🔁 Revision & Important PYQs','Ch 1: Integers','Ch 2: Fractions & Decimals','Ch 3: Data Handling','Ch 4: Simple Equations','Ch 5: Lines & Angles','Ch 6: Triangles & Its Properties','Ch 7: Comparing Quantities','Ch 8: Rational Numbers','Ch 9: Perimeter & Area','Ch 10: Algebraic Expressions','Ch 11: Exponents & Powers'],
+  '7-Science': ['🔁 Revision & Important PYQs','Ch 1: Nutrition in Plants','Ch 2: Nutrition in Animals','Ch 3: Heat','Ch 4: Acids, Bases & Salts','Ch 5: Physical & Chemical Changes','Ch 6: Respiration in Organisms','Ch 7: Transportation in Organisms','Ch 8: Reproduction in Plants','Ch 9: Motion & Time','Ch 10: Electric Current & Effects','Ch 11: Light'],
+  '7-Social Science': ['🔁 Revision & Important PYQs','History: Changes Through a Thousand Years','Geography: Environment & Inside Earth','Civics: On Equality & Healthcare'],
+  '7-English': ['🔁 Revision & Important PYQs','Unit 1: Three Questions','Unit 2: A Gift of Chappals','Grammar & Composition'],
+  '7-Hindi': ['🔁 Revision & Important PYQs','पाठ 1: हम पंछी उन्मुक्त गगन के','पाठ 2: हिमालय की बेटियां','हिंदी व्याकरण'],
+  '7-Sanskrit': ['🔁 Revision & Important PYQs','प्रथमो पाठः: सुभाषितानि','द्वितीयो पाठः: दुर्बुद्धिः विनश्यति'],
+
+  // Class 8
+  '8-Mathematics': ['🔁 Revision & Important PYQs','Ch 1: Rational Numbers','Ch 2: Linear Equations in One Variable','Ch 3: Understanding Quadrilaterals','Ch 4: Data Handling','Ch 5: Square & Square Roots','Ch 6: Cube & Cube Roots','Ch 7: Comparing Quantities','Ch 8: Algebraic Expressions','Ch 9: Mensuration','Ch 10: Exponents & Powers','Ch 11: Direct & Inverse Proportions','Ch 12: Factorisation','Ch 13: Intro to Graphs'],
+  '8-Science': ['🔁 Revision & Important PYQs','Ch 1: Crop Production & Management','Ch 2: Microorganisms: Friend & Foe','Ch 3: Coal and Petroleum','Ch 4: Combustion and Flame','Ch 5: Conservation of Plants & Animals','Ch 6: Reproduction in Animals','Ch 7: Reaching Age of Adolescence','Ch 8: Force and Pressure','Ch 9: Friction','Ch 10: Sound','Ch 11: Chemical Effects of Current','Ch 12: Natural Phenomena','Ch 13: Light'],
+  '8-Social Science': ['🔁 Revision & Important PYQs','History: How, When and Where','Geography: Resources & Land, Water','Civics: Indian Constitution & Secularism'],
+  '8-English': ['🔁 Revision & Important PYQs','Unit 1: Best Christmas Present','Unit 2: The Tsunami','Grammar & Writing'],
+  '8-Hindi': ['🔁 Revision & Important PYQs','पाठ 1: लाख की चूड़ियां','पाठ 2: बस की यात्रा','हिंदी व्याकरण'],
+  '8-Sanskrit': ['🔁 Revision & Important PYQs','प्रथमो पाठः: सुभाषितानि','द्वितीयो पाठः: बिलस्य वाणी'],
+
+  // Class 9
+  '9-Mathematics': ['🔁 Revision & Important PYQs','Ch 1: Number Systems','Ch 2: Polynomials','Ch 3: Coordinate Geometry','Ch 4: Linear Equations in Two Variables','Ch 5: Euclid's Geometry','Ch 6: Lines and Angles','Ch 7: Triangles','Ch 8: Quadrilaterals','Ch 9: Circles','Ch 10: Heron's Formula','Ch 11: Surface Areas & Volumes','Ch 12: Statistics'],
+  '9-Science': ['🔁 Revision & Important PYQs','Ch 1: Matter in Surroundings','Ch 2: Is Matter Pure?','Ch 3: Atoms and Molecules','Ch 4: Structure of Atom','Ch 5: Fundamental Unit of Life','Ch 6: Tissues','Ch 7: Motion','Ch 8: Force & Laws of Motion','Ch 9: Gravitation','Ch 10: Work and Energy','Ch 11: Sound','Ch 12: Improvement in Food'],
+  '9-Social Science': ['🔁 Revision & Important PYQs','History: French Revolution','Geography: India Size & Physical Features','Civics: What is Democracy?','Economics: Village Palampur'],
+  '9-English': ['🔁 Revision & Important PYQs','Beehive: The Fun They Had & Sound of Music','Moments: The Lost Child & Toto','Grammar & Writing'],
+  '9-Hindi': ['🔁 Revision & Important PYQs','क्षितिज: दो बैलों की कथा','कृतिका: इस जल प्रलय में','हिंदी व्याकरण'],
+  '9-Sanskrit': ['🔁 Revision & Important PYQs','प्रथमो पाठः: भारतीवसन्तगीतिः','द्वितीयो पाठः: स्वर्णकाकः'],
+
+  // Class 10
+  '10-Mathematics': ['🔁 Revision & Important PYQs','Ch 1: Real Numbers','Ch 2: Polynomials','Ch 3: Pair of Linear Equations','Ch 4: Quadratic Equations','Ch 5: Arithmetic Progressions','Ch 6: Triangles','Ch 7: Coordinate Geometry','Ch 8: Introduction to Trigonometry','Ch 9: Applications of Trigonometry','Ch 10: Circles','Ch 11: Areas Related to Circles','Ch 12: Surface Areas & Volumes','Ch 13: Statistics','Ch 14: Probability'],
+  '10-Science': ['🔁 Revision & Important PYQs','Ch 1: Chemical Reactions & Equations','Ch 2: Acids, Bases & Salts','Ch 3: Metals & Non-Metals','Ch 4: Carbon & Its Compounds','Ch 5: Life Processes','Ch 6: Control & Coordination','Ch 7: How do Organisms Reproduce?','Ch 8: Heredity','Ch 9: Light Reflection & Refraction','Ch 10: Human Eye & Colourful World','Ch 11: Electricity','Ch 12: Magnetic Effects of Current','Ch 13: Our Environment'],
+  '10-Social Science': ['🔁 Revision & Important PYQs','History: Nationalism in Europe & India','Geography: Resources & Agriculture','Civics: Power Sharing & Federalism','Economics: Sectors of Indian Economy'],
+  '10-English': ['🔁 Revision & Important PYQs','First Flight: Letter to God & Nelson Mandela','Footprints: Triumph of Surgery','Grammar & Composition'],
+  '10-Hindi': ['🔁 Revision & Important PYQs','क्षितिज: पद (सूरदास), राम-लक्ष्मण संवाद','कृतिका: माता का अंचल','हिंदी व्याकरण'],
+  '10-Sanskrit': ['🔁 Revision & Important PYQs','प्रथमो पाठः: शुचिपर्यावरणम्','द्वितीयो पाठः: बुद्धिर्बलवती सदा'],
+
+  // Class 11 Science
+  '11-science-Physics': ['🔁 Revision & Important PYQs','Ch 1: Units & Measurements','Ch 2: Motion in Straight Line','Ch 3: Motion in a Plane','Ch 4: Laws of Motion','Ch 5: Work, Energy & Power','Ch 6: System of Particles & Rotational Motion','Ch 7: Gravitation','Ch 8: Properties of Solids','Ch 9: Properties of Fluids','Ch 10: Thermal Properties of Matter','Ch 11: Thermodynamics','Ch 12: Kinetic Theory','Ch 13: Oscillations','Ch 14: Waves'],
+  '11-science-Chemistry': ['🔁 Revision & Important PYQs','Ch 1: Basic Concepts of Chemistry','Ch 2: Structure of Atom','Ch 3: Periodic Classification','Ch 4: Chemical Bonding','Ch 5: Chemical Thermodynamics','Ch 6: Equilibrium','Ch 7: Redox Reactions','Ch 8: Organic Chemistry Basics','Ch 9: Hydrocarbons'],
+  '11-science-Biology': ['🔁 Revision & Important PYQs','Unit 1: Diversity in Living World','Unit 2: Structural Organisation','Unit 3: Cell Structure & Function','Unit 4: Plant Physiology','Unit 5: Human Physiology'],
+  '11-science-Mathematics': ['🔁 Revision & Important PYQs','Ch 1: Sets','Ch 2: Relations & Functions','Ch 3: Trigonometric Functions','Ch 4: Complex Numbers','Ch 5: Linear Inequalities','Ch 6: Permutations & Combinations','Ch 7: Binomial Theorem','Ch 8: Sequences & Series','Ch 9: Straight Lines','Ch 10: Conic Sections','Ch 11: 3D Geometry','Ch 12: Limits & Derivatives','Ch 13: Statistics','Ch 14: Probability'],
+
+  // Class 12 Science
+  '12-science-Physics': ['🔁 Revision & Important PYQs','Ch 1: Electric Charges & Fields','Ch 2: Electrostatic Potential & Capacitance','Ch 3: Current Electricity','Ch 4: Moving Charges & Magnetism','Ch 5: Magnetism & Matter','Ch 6: Electromagnetic Induction','Ch 7: Alternating Current','Ch 8: Electromagnetic Waves','Ch 9: Ray Optics','Ch 10: Wave Optics','Ch 11: Dual Nature of Matter','Ch 12: Atoms','Ch 13: Nuclei','Ch 14: Semiconductor Electronics'],
+  '12-science-Chemistry': ['🔁 Revision & Important PYQs','Ch 1: Solutions','Ch 2: Electrochemistry','Ch 3: Chemical Kinetics','Ch 4: d- & f- Block Elements','Ch 5: Coordination Compounds','Ch 6: Haloalkanes & Haloarenes','Ch 7: Alcohols, Phenols & Ethers','Ch 8: Aldehydes, Ketones & Carboxylic Acids','Ch 9: Amines','Ch 10: Biomolecules'],
+  '12-science-Biology': ['🔁 Revision & Important PYQs','Unit 6: Reproduction in Plants & Humans','Unit 7: Genetics & Evolution','Unit 8: Biology & Human Welfare','Unit 9: Biotechnology','Unit 10: Ecology'],
+  '12-science-Mathematics': ['🔁 Revision & Important PYQs','Ch 1: Relations & Functions','Ch 2: Inverse Trigonometric Functions','Ch 3: Matrices','Ch 4: Determinants','Ch 5: Continuity & Differentiability','Ch 6: Application of Derivatives','Ch 7: Integrals','Ch 8: Application of Integrals','Ch 9: Differential Equations','Ch 10: Vector Algebra','Ch 11: 3D Geometry','Ch 12: Linear Programming','Ch 13: Probability']
 };
 
 let _livePlannedSessions = [];
-let _selectedClass = '8';
-let _selectedStream = 'science';
-let _selectedSubject = '';
+let _currentStep = 1;
+let _navClass = '8';
+let _navStream = 'science';
+let _navSubject = '';
+let _navChapter = '';
 let _selectedSessionDoc = null;
 let _liveQuizUnsub = null;
 let _liveQuizTimerInt = null;
@@ -1010,7 +1064,10 @@ window.showLive = async () => {
   modal.style.opacity = '1';
   modal.style.pointerEvents = 'auto';
   modal.style.zIndex = '20000';
-  renderLiveClassModal(); // Render immediately for 0ms response!
+  
+  _currentStep = 1;
+  _selectedSessionDoc = null;
+  renderNavyStepNavigation();
 
   try {
     const res = await getPlannedLiveSessionsFn({});
@@ -1019,7 +1076,6 @@ window.showLive = async () => {
     console.warn('[Live sessions fetch error]', err);
     _livePlannedSessions = [];
   }
-  renderLiveClassModal();
 };
 
 window.closeLiveModal = () => {
@@ -1030,140 +1086,190 @@ window.closeLiveModal = () => {
   setTimeout(() => { modal.style.display = 'none'; }, 300);
 };
 
-function renderLiveClassModal() {
-  // Render Class Grid (6 to 12) - All classes tappable at one tap!
-  const classGrid = document.getElementById('lc-class-grid');
-  classGrid.innerHTML = '';
+window.goBackLiveStep = () => {
+  if (_currentStep > 1) {
+    if (_currentStep === 3 && (_navClass !== '11' && _navClass !== '12')) {
+      _currentStep = 1;
+    } else {
+      _currentStep--;
+    }
+    document.getElementById('lc-session-card').style.display = 'none';
+    renderNavyStepNavigation();
+  }
+};
+
+function renderNavyStepNavigation() {
+  const backBtn = document.getElementById('lc-back-btn');
+  const step1 = document.getElementById('lc-step-1');
+  const step2 = document.getElementById('lc-step-2');
+  const step3 = document.getElementById('lc-step-3');
+  const step4 = document.getElementById('lc-step-4');
+
+  const lblClass = document.getElementById('step-lbl-class');
+  const lblStream = document.getElementById('step-lbl-stream');
+  const lblSubject = document.getElementById('step-lbl-subject');
+  const lblChapter = document.getElementById('step-lbl-chapter');
+
+  if (backBtn) backBtn.style.display = (_currentStep > 1) ? 'flex' : 'none';
+
+  step1.style.display = (_currentStep === 1) ? 'block' : 'none';
+  step2.style.display = (_currentStep === 2) ? 'block' : 'none';
+  step3.style.display = (_currentStep === 3) ? 'block' : 'none';
+  step4.style.display = (_currentStep === 4) ? 'block' : 'none';
+
+  lblStream.style.display = (_navClass === '11' || _navClass === '12') ? 'inline' : 'none';
+
+  if (lblClass) lblClass.style.color = (_currentStep === 1) ? '#38bdf8' : '#94a3b8';
+  if (lblStream) lblStream.style.color = (_currentStep === 2) ? '#38bdf8' : '#94a3b8';
+  if (lblSubject) lblSubject.style.color = (_currentStep === 3) ? '#38bdf8' : '#94a3b8';
+  if (lblChapter) lblChapter.style.color = (_currentStep === 4) ? '#38bdf8' : '#94a3b8';
+
+  if (_currentStep === 1) renderStep1Classes();
+  else if (_currentStep === 2) renderStep2Streams();
+  else if (_currentStep === 3) renderStep3Subjects();
+  else if (_currentStep === 4) renderStep4Chapters();
+}
+
+function renderStep1Classes() {
+  const grid = document.getElementById('lc-class-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
   const classes = ['6','7','8','9','10','11','12'];
   
   classes.forEach(c => {
     const btn = document.createElement('button');
-    const hasPlanned = _livePlannedSessions.some(s => s.classNum === c);
     const hasLive = _livePlannedSessions.some(s => s.classNum === c && s.status === 'live');
-    
-    let cls = 'lc-class-btn';
-    if (hasLive) cls += ' live';
-    else if (hasPlanned) cls += ' planned';
+    const hasPlan = _livePlannedSessions.some(s => s.classNum === c && s.status === 'planned');
 
-    if (c === _selectedClass) cls += ' selected';
+    let cls = 'lc-navy-btn';
+    if (hasLive) cls += ' live';
+    else if (hasPlan) cls += ' planned';
 
     btn.className = cls;
-    btn.innerHTML = `${c}th${hasLive ? '<br><span style="font-size:.6rem">🔴 LIVE</span>' : hasPlanned ? '<br><span style="font-size:.6rem">📅 Plan</span>' : ''}`;
+    btn.innerHTML = `Class ${c}th${hasLive ? '<br><span style="font-size:.6rem">🔴 LIVE</span>' : hasPlan ? '<br><span style="font-size:.6rem">📅 Plan</span>' : ''}`;
     
     btn.onclick = () => {
-      _selectedClass = c;
-      _selectedSessionDoc = null;
-      renderLiveClassModal();
-    };
-    classGrid.appendChild(btn);
-  });
-
-  // Stream Selection for 11/12
-  const streamWrap = document.getElementById('lc-modal-stream-wrap');
-  if (_selectedClass === '11' || _selectedClass === '12') {
-    streamWrap.style.display = 'block';
-  } else {
-    streamWrap.style.display = 'none';
-  }
-
-  // Render Core Subjects
-  const key = (_selectedClass === '11' || _selectedClass === '12') ? `${_selectedClass}-${_selectedStream}` : _selectedClass;
-  const subjects = LIVE_STUDENT_SUBJECTS[key] || [];
-  const subjectList = document.getElementById('lc-subject-list');
-  subjectList.innerHTML = '';
-
-  subjects.forEach(subj => {
-    const sess = _livePlannedSessions.find(s => s.classNum === _selectedClass && s.subject === subj && (s.stream || '') === (_selectedClass==='11'||_selectedClass==='12'?_selectedStream:''));
-    const item = document.createElement('div');
-    
-    let cls = 'lc-subject-item';
-    let badge = '<span style="font-size:.7rem;color:#94a3b8">Not planned</span>';
-
-    if (sess) {
-      if (sess.status === 'live') {
-        cls += ' live';
-        badge = '<span style="font-size:.7rem;font-weight:900;color:#ef4444">🔴 LIVE NOW</span>';
+      _navClass = c;
+      if (c === '11' || c === '12') {
+        _currentStep = 2;
       } else {
-        cls += ' planned';
-        badge = `<span style="font-size:.7rem;font-weight:800;color:#0284c7">📅 ${sess.date} ${sess.time}</span>`;
+        _currentStep = 3;
       }
-    } else {
-      cls += ' disabled';
-    }
-
-    if (sess && _selectedSessionDoc?.sessionId === sess.sessionId) cls += ' selected';
-
-    item.className = cls;
-    item.innerHTML = `<span>${subj}</span>${badge}`;
-    
-    item.onclick = () => {
-      _selectedSubject = subj;
-      _selectedSessionDoc = sess || null;
-      renderLiveClassModal();
-      if (sess) {
-        showSessionCard(sess);
-      } else {
-        showNoClassWhatsAppCard(_selectedClass, subj);
-      }
+      renderNavyStepNavigation();
     };
-    subjectList.appendChild(item);
+    grid.appendChild(btn);
   });
-
-  // If selected class has no planned session at all, show WhatsApp message card automatically
-  const classHasAnySession = _livePlannedSessions.some(s => s.classNum === _selectedClass);
-  if (!classHasAnySession && !_selectedSessionDoc) {
-    showNoClassWhatsAppCard(_selectedClass, '');
-  }
 }
 
 window.selectLcStream = (stream) => {
-  _selectedStream = stream;
-  document.querySelectorAll('.lc-stream-btn').forEach(b => {
-    b.classList.toggle('selected', b.dataset.stream === stream);
-  });
-  renderLiveClassModal();
+  _navStream = stream;
+  _currentStep = 3;
+  renderNavyStepNavigation();
 };
 
+function renderStep3Subjects() {
+  const title = document.getElementById('lc-step3-title');
+  if (title) title.textContent = `Select Subject (Class ${_navClass}th${_navClass==='11'||_navClass==='12'?' - '+_navStream:''})`;
+  
+  const key = (_navClass === '11' || _navClass === '12') ? `${_navClass}-${_navStream}` : _navClass;
+  const subjects = LIVE_STUDENT_SUBJECTS[key] || ['Mathematics','Science','English','Hindi','Social Science'];
+  const list = document.getElementById('lc-subject-list');
+  if (!list) return;
+  list.innerHTML = '';
 
-function showNoClassWhatsAppCard(classNum, subject) {
+  subjects.forEach(subj => {
+    const hasLive = _livePlannedSessions.some(s => s.classNum === _navClass && s.subject === subj && (s.status === 'live'));
+    const hasPlan = _livePlannedSessions.some(s => s.classNum === _navClass && s.subject === subj && (s.status === 'planned'));
+
+    const item = document.createElement('div');
+    item.className = 'lc-chapter-item';
+    item.innerHTML = `
+      <span style="font-weight:700">${subj}</span>
+      ${hasLive ? '<span style="font-size:.7rem;font-weight:900;color:#ef4444">🔴 LIVE</span>' : hasPlan ? '<span style="font-size:.7rem;font-weight:800;color:#38bdf8">📅 Plan</span>' : '<span style="font-size:.7rem;color:#64748b">→</span>'}
+    `;
+    item.onclick = () => {
+      _navSubject = subj;
+      _currentStep = 4;
+      renderNavyStepNavigation();
+    };
+    list.appendChild(item);
+  });
+}
+
+function renderStep4Chapters() {
+  const title = document.getElementById('lc-step4-title');
+  if (title) title.textContent = `Chapters & Revision (${_navSubject})`;
+  
+  const key = (_navClass === '11' || _navClass === '12') ? `${_navClass}-${_navStream}-${_navSubject}` : `${_navClass}-${_navSubject}`;
+  const chapters = NCERT_SYLLABUS[key] || [
+    '🔁 Revision & Important PYQs',
+    'Ch 1: Introduction & Fundamentals',
+    'Ch 2: Core Concepts & Principles',
+    'Ch 3: Advanced Topics & Case Studies',
+    'Ch 4: Practice Problems & Sample Papers'
+  ];
+
+  const list = document.getElementById('lc-chapter-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  chapters.forEach((chap, idx) => {
+    const item = document.createElement('div');
+    const isRevision = chap.includes('Revision');
+    item.className = 'lc-chapter-item' + (isRevision ? ' revision-tab' : '');
+    item.innerHTML = `<span>${chap}</span><span style="font-size:.7rem;opacity:.8">Select →</span>`;
+    
+    item.onclick = () => {
+      _navChapter = chap;
+      checkSessionAndShowCard(chap);
+    };
+    list.appendChild(item);
+  });
+}
+
+function checkSessionAndShowCard(chap) {
   const card = document.getElementById('lc-session-card');
   if (!card) return;
   card.style.display = 'block';
-  card.style.background = 'rgba(245, 158, 11, 0.08)';
-  card.style.borderColor = 'rgba(245, 158, 11, 0.35)';
-  
-  const targetLabel = subject ? `Class ${classNum}th ${subject}` : `Class ${classNum}th`;
-  const waText = encodeURIComponent(`Hello Teacher, I want to attend a Live Class for ${targetLabel}. Please schedule one!`);
 
-  card.innerHTML = `
-    <div style="text-align:center">
-      <div style="font-size:1.8rem;margin-bottom:.3rem">📅 🏫</div>
-      <div style="font-weight:900;font-size:1rem;color:#92400e;margin-bottom:.3rem">No Class Now</div>
-      <p style="font-size:.82rem;color:#b45309;margin-bottom:1rem;line-height:1.4">
-        No live class is scheduled for <strong>${targetLabel}</strong> at the moment.
-      </p>
-      <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:44px;background:#25D366;color:#fff;border-radius:12px;font-weight:800;font-size:.9rem;text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.35)">
-        📱 WhatsApp Your Teacher
-      </a>
-    </div>
-  `;
-}
+  // Check if session is planned/live in admin for this class & subject
+  const sess = _livePlannedSessions.find(s => s.classNum === _navClass && s.subject === _navSubject && (s.stream || '') === (_navClass==='11'||_navClass==='12'?_navStream:''));
 
-function showSessionCard(sess) {
-  const card = document.getElementById('lc-session-card');
-  card.style.display = 'block';
-  card.style.background = 'rgba(239,68,68,0.06)';
-  card.style.borderColor = 'rgba(239,68,68,0.3)';
-  card.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
-      <span style="font-weight:800;color:#0f172a" id="lc-card-title">${sess.subject} (Class ${sess.classNum})</span>
-      <span style="font-size:.7rem;font-weight:800;padding:3px 8px;border-radius:99px;background:${sess.status === 'live' ? '#ef4444' : '#0284c7'};color:#fff" id="lc-card-badge">${sess.status === 'live' ? '🔴 LIVE NOW' : '📅 PLANNED'}</span>
-    </div>
-    <div style="font-size:.8rem;color:#475569;margin-bottom:.8rem" id="lc-card-time">Date: ${sess.date} | Time: ${sess.time} | Price: ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}</div>
-    <button onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:44px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.92rem;cursor:pointer;box-shadow:0 4px 14px rgba(239,68,68,0.4)">
-      🚀 Join Live Stream
-    </button>
-  `;
+  if (sess) {
+    _selectedSessionDoc = sess;
+    card.style.background = 'rgba(239,68,68,0.1)';
+    card.style.borderColor = 'rgba(239,68,68,0.4)';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
+        <span style="font-weight:800;color:#fff">${sess.subject} — ${chap}</span>
+        <span style="font-size:.7rem;font-weight:900;padding:3px 8px;border-radius:99px;background:${sess.status === 'live' ? '#ef4444' : '#0284c7'};color:#fff">${sess.status === 'live' ? '🔴 LIVE NOW' : '📅 PLANNED'}</span>
+      </div>
+      <div style="font-size:.8rem;color:#cbd5e1;margin-bottom:.8rem">Date: ${sess.date} | Time: ${sess.time} | Price: ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}</div>
+      <button onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:44px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.92rem;cursor:pointer;box-shadow:0 4px 14px rgba(239,68,68,0.4)">
+        🚀 Join Live Stream
+      </button>
+    `;
+  } else {
+    _selectedSessionDoc = null;
+    card.style.background = 'rgba(245,158,11,0.1)';
+    card.style.borderColor = 'rgba(245,158,11,0.4)';
+    
+    const targetInfo = `Class ${_navClass}th ${_navSubject} (${chap})`;
+    const waText = encodeURIComponent(`Hello Teacher, please schedule a Live Class for ${targetInfo}!`);
+
+    card.innerHTML = `
+      <div style="text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:.2rem">🏫 📖</div>
+        <div style="font-weight:900;font-size:1.02rem;color:#fbbf24;margin-bottom:.3rem">No Live Class Scheduled Right Now</div>
+        <p style="font-size:.8rem;color:#cbd5e1;margin-bottom:.9rem;line-height:1.4">
+          No live stream is planned for <strong>${targetInfo}</strong> at this moment.
+        </p>
+        <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:44px;background:#25D366;color:#fff;border-radius:12px;font-weight:800;font-size:.9rem;text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.35)">
+          📱 WhatsApp Your Teacher
+        </a>
+      </div>
+    `;
+  }
 }
 
 window.joinSelectedLiveSession = async () => {
@@ -6452,51 +6558,61 @@ pageHistory = ['home'];
 <!-- ════════════════════════════════════════
      LIVE CLASS GLASSMORPHISM MODAL
 ════════════════════════════════════════ -->
-<div id="live-class-modal" style="position:fixed;inset:0;background:rgba(10,15,30,0.75);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .3s ease">
-  <div style="background:linear-gradient(135deg,rgba(255,255,255,0.96),rgba(240,244,255,0.92));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.8);border-radius:24px;padding:1.6rem;width:min(92vw,480px);max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.35);position:relative">
-    <button onclick="closeLiveModal()" style="position:absolute;top:1rem;right:1rem;background:rgba(0,0,0,0.06);border:none;border-radius:50%;width:32px;height:32px;font-size:1.2rem;font-weight:700;cursor:pointer;display:grid;place-items:center">&times;</button>
-    <div style="font-size:1.35rem;font-weight:900;color:#0f172a;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem">
-      <span style="color:#ef4444">🔴</span> Live Classes
-    </div>
-    <p style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem">Select a class & subject to check planned live streams</p>
+<!-- ════════════════════════════════════════
+     LIVE CLASS NAVY BLUE GRADIENT GLASSMORPHISM MODAL
+════════════════════════════════════════ -->
+<div id="live-class-modal" style="position:fixed;inset:0;background:rgba(5,15,35,0.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);z-index:20000;display:none;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .35s cubic-bezier(0.4,0,0.2,1)">
+  <div style="background:linear-gradient(145deg,rgba(10,25,50,0.95),rgba(30,58,138,0.9),rgba(15,23,42,0.96));backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border:1.5px solid rgba(56,189,248,0.3);border-radius:28px;padding:1.6rem;width:min(92vw,500px);max-height:88vh;overflow-y:auto;box-shadow:0 25px 65px rgba(2,6,23,0.8);position:relative;color:#f8fafc">
     
-    <!-- Step 1: Class Selection -->
-    <div style="margin-bottom:1.2rem">
-      <div style="font-size:.78rem;font-weight:800;color:#334155;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Select Class</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem" id="lc-class-grid">
-        <!-- Javascript populates classes 6 to 12 -->
-      </div>
-    </div>
-
-    <!-- Step 2: Stream Selection (Class 11/12) -->
-    <div id="lc-modal-stream-wrap" style="display:none;margin-bottom:1.2rem">
-      <div style="font-size:.78rem;font-weight:800;color:#334155;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Select Stream</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem">
-        <button class="lc-stream-btn active" data-stream="science" onclick="selectLcStream('science')">Science</button>
-        <button class="lc-stream-btn" data-stream="commerce" onclick="selectLcStream('commerce')">Commerce</button>
-        <button class="lc-stream-btn" data-stream="arts" onclick="selectLcStream('arts')">Arts</button>
-      </div>
-    </div>
-
-    <!-- Step 3: Subject Selection -->
-    <div style="margin-bottom:1.2rem">
-      <div style="font-size:.78rem;font-weight:800;color:#334155;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Core Subjects</div>
-      <div style="display:flex;flex-direction:column;gap:.4rem" id="lc-subject-list">
-        <div style="font-size:.8rem;color:#94a3b8;text-align:center;padding:1rem">Select class above to see subjects</div>
-      </div>
-    </div>
-
-    <!-- Step 4: Session Details & Join -->
-    <div id="lc-session-card" style="display:none;background:rgba(239,68,68,0.06);border:1.5px solid rgba(239,68,68,0.3);border-radius:16px;padding:1rem;margin-top:1rem">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
-        <span style="font-weight:800;color:#0f172a" id="lc-card-title">Subject</span>
-        <span style="font-size:.7rem;font-weight:800;padding:3px 8px;border-radius:99px;background:#ef4444;color:#fff" id="lc-card-badge">LIVE NOW</span>
-      </div>
-      <div style="font-size:.8rem;color:#475569;margin-bottom:.8rem" id="lc-card-time">Date & Time</div>
-      <button onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:44px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.92rem;cursor:pointer;box-shadow:0 4px 14px rgba(239,68,68,0.4)">
-        🚀 Join Live Stream
+    <!-- Top Bar: Back & Close -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <button id="lc-back-btn" onclick="goBackLiveStep()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:99px;padding:4px 12px;font-size:.78rem;font-weight:700;color:#38bdf8;cursor:pointer;display:none;align-items:center;gap:.3rem">
+        ← Back
       </button>
+      <div style="font-size:1.25rem;font-weight:900;color:#fff;display:flex;align-items:center;gap:.5rem">
+        <span style="color:#ef4444;animation:pulseRed 2s infinite">🔴</span> Live Classes
+      </div>
+      <button onclick="closeLiveModal()" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:32px;height:32px;font-size:1.2rem;font-weight:700;color:#cbd5e1;cursor:pointer;display:grid;place-items:center">&times;</button>
     </div>
+
+    <!-- Step Progress Indicator -->
+    <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:6px 12px;margin-bottom:1.2rem;font-size:.72rem;font-weight:700;color:#94a3b8">
+      <span id="step-lbl-class" style="color:#38bdf8">1. Class</span> →
+      <span id="step-lbl-stream" style="display:none">2. Stream →</span>
+      <span id="step-lbl-subject">2. Subject</span> →
+      <span id="step-lbl-chapter">3. Chapter / Revision</span>
+    </div>
+    
+    <!-- STEP 1: CLASS SELECTION -->
+    <div id="lc-step-1">
+      <div style="font-size:.8rem;font-weight:800;color:#38bdf8;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em">Select Your Class</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem" id="lc-class-grid"></div>
+    </div>
+
+    <!-- STEP 2: STREAM SELECTION (Class 11/12) -->
+    <div id="lc-step-2" style="display:none">
+      <div style="font-size:.8rem;font-weight:800;color:#38bdf8;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em">Select Stream</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
+        <button class="lc-navy-btn" onclick="selectLcStream('science')">🔬 Science</button>
+        <button class="lc-navy-btn" onclick="selectLcStream('commerce')">📊 Commerce</button>
+        <button class="lc-navy-btn" onclick="selectLcStream('arts')">🎨 Arts / Humanities</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: SUBJECT SELECTION -->
+    <div id="lc-step-3" style="display:none">
+      <div style="font-size:.8rem;font-weight:800;color:#38bdf8;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em" id="lc-step3-title">Select Subject</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem" id="lc-subject-list"></div>
+    </div>
+
+    <!-- STEP 4: CHAPTER & REVISION SELECTION -->
+    <div id="lc-step-4" style="display:none">
+      <div style="font-size:.8rem;font-weight:800;color:#38bdf8;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em" id="lc-step4-title">Select Chapter / Revision</div>
+      <div style="display:flex;flex-direction:column;gap:.45rem;max-height:260px;overflow-y:auto;padding-right:4px" id="lc-chapter-list"></div>
+    </div>
+
+    <!-- SESSION DETAILS / NO CLASS POPUP CARD -->
+    <div id="lc-session-card" style="display:none;margin-top:1.2rem"></div>
   </div>
 </div>
 
