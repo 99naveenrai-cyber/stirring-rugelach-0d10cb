@@ -3766,9 +3766,11 @@ window.loadAdminLiveSessions = async () => {
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center">
           <strong>Class ${sess.classNum}${sess.stream ? ' ('+sess.stream+')' : ''} — ${sess.subject}</strong>
-          <div style="display:flex;align-items:center;gap:.4rem">
-            <span style="font-size:.7rem;padding:2px 6px;border-radius:4px;background:${isLive?'#feb2b2':'#edf2f7'};color:${isLive?'#9b2c2c':'#4a5568'};font-weight:800">${(sess.status||'planned').toUpperCase()}</span>
-            <button onclick="event.stopPropagation();window.deleteLiveClassSession('${sess.sessionId}')" style="background:none;border:none;color:#e53e3e;font-size:.8rem;cursor:pointer;padding:2px" title="Delete Session">🗑️</button>
+          <div style="display:flex;align-items:center;gap:.35rem">
+            <span style="font-size:.68rem;padding:2px 6px;border-radius:4px;background:${isLive?'#feb2b2':'#edf2f7'};color:${isLive?'#9b2c2c':'#4a5568'};font-weight:800">${(sess.status||'planned').toUpperCase()}</span>
+            <button onclick="event.stopPropagation();window.cancelPlannedClass('${sess.sessionId}')" style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;border-radius:6px;padding:3px 8px;font-size:.7rem;font-weight:800;cursor:pointer" title="Cancel/Delete Class">
+              ❌ Cancel Class
+            </button>
           </div>
         </div>
         <div style="color:#718096;font-size:.72rem;margin-top:2px;margin-bottom:.4rem">📅 ${sess.date} | ⏰ ${sess.time} | 💰 ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}</div>
@@ -3781,6 +3783,111 @@ window.loadAdminLiveSessions = async () => {
     });
   } catch (err) {
     container.innerHTML = `<div style="color:red;font-size:.8rem">Failed to load sessions: ${err?.message}</div>`;
+  }
+};
+
+window.cancelPlannedClass = async (sessionId) => {
+  if (!confirm("Are you sure you want to cancel and delete this planned class?")) return;
+  try {
+    await adminDeleteLiveClassFn({ sessionId });
+    showToast('❌ Class cancelled successfully!', 'success');
+    if (selectedLiveSession?.sessionId === sessionId) {
+      selectedLiveSession = null;
+      document.getElementById('lc-selected-info').innerHTML = 'Select a session on the left to manage live stream or quizzes.';
+      document.getElementById('lc-golive-box').style.display = 'none';
+      document.getElementById('lc-question-manager-wrap').style.display = 'none';
+    }
+    loadAdminLiveSessions();
+  } catch (err) {
+    alert("Error cancelling class: " + err?.message);
+  }
+};
+window.deleteLiveClassSession = window.cancelPlannedClass;
+
+window.renderUploadedQuestions = (questions) => {
+  const container = document.getElementById('lc-uploaded-q-list');
+  if (!container) return;
+  if (!Array.isArray(questions) || questions.length === 0) {
+    container.innerHTML = '<div style="font-size:.75rem;color:#94a3b8;padding:.4rem 0">No questions in bank yet. Write manual question or upload JSON.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  questions.forEach((q, idx) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:.5rem .65rem;font-size:.78rem';
+    
+    const qType = q.type || 'mcq';
+    let typeBadge = qType === 'tf' ? 'TRUE/FALSE' : qType === 'match' ? 'MATCH PAIRS' : 'MCQ';
+    let optsHtml = '';
+
+    if (qType === 'mcq' || qType === 'tf') {
+      const opts = q.options || [];
+      optsHtml = opts.map((optText, oIdx) => {
+        const isCorrect = (oIdx === q.correct);
+        return `<div style="font-size:.72rem;color:${isCorrect ? '#166534' : '#475569'};font-weight:${isCorrect ? '800' : '400'};margin-top:2px">
+          ${isCorrect ? '✓ ' : '• '} ${qType==='mcq' ? String.fromCharCode(65+oIdx)+') ' : ''}${optText}
+        </div>`;
+      }).join('');
+    } else if (qType === 'match' && Array.isArray(q.pairs)) {
+      optsHtml = q.pairs.map((p, pIdx) => `<div style="font-size:.72rem;color:#1e3a8a;margin-top:2px">
+        • ${pIdx+1}. ${p.left} → ${p.right}
+      </div>`).join('');
+    }
+
+    item.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.4rem;margin-bottom:3px">
+        <strong style="color:#0f172a">Q${idx+1}. ${q.text}</strong>
+        <span style="font-size:.65rem;padding:1px 6px;border-radius:99px;background:#e0f2fe;color:#0369a1;font-weight:800;flex-shrink:0">${typeBadge}</span>
+      </div>
+      <div style="margin-bottom:.4rem">${optsHtml}</div>
+      <div style="display:flex;gap:.35rem;justify-content:flex-end;margin-top:.4rem;border-top:1px dashed #e2e8f0;padding-top:4px">
+        <button onclick="publishSpecificQuestion(${idx})" style="background:#2563eb;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.7rem;font-weight:700;cursor:pointer">
+          🚀 Publish Question
+        </button>
+        <button onclick="removeQuestionFromBank(${idx})" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:5px;padding:3px 6px;font-size:.7rem;font-weight:700;cursor:pointer">
+          🗑️ Remove
+        </button>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+};
+
+window.removeQuestionFromBank = async (qIndex) => {
+  if (!selectedLiveSession) return;
+  const currentQuestions = selectedLiveSession.questions || [];
+  currentQuestions.splice(qIndex, 1);
+  try {
+    await adminUploadLiveQuestionsFn({
+      sessionId: selectedLiveSession.sessionId,
+      questions: currentQuestions
+    });
+    selectedLiveSession.questions = currentQuestions;
+    renderUploadedQuestions(currentQuestions);
+    showToast('🗑️ Question removed from bank', 'info');
+  } catch (err) {
+    alert("Error removing question: " + err?.message);
+  }
+};
+
+window.publishSpecificQuestion = async (qIndex) => {
+  if (!selectedLiveSession) return;
+  const q = (selectedLiveSession.questions || [])[qIndex];
+  if (!q) return;
+  try {
+    await adminPublishLiveQuizFn({
+      sessionId: selectedLiveSession.sessionId,
+      question: q.text,
+      options: q.options || [],
+      correctIndex: q.correct || 0,
+      timeLimit: q.timeLimit || 30,
+      type: q.type || 'mcq',
+      pairs: q.pairs || []
+    });
+    showToast('🚀 Question published to live stream!', 'success');
+  } catch (err) {
+    alert("Error publishing question: " + err?.message);
   }
 };
 
