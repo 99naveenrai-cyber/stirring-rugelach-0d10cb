@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b1f4d'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='30' fill='%23ffd365'%3EIK%3C/text%3E%3C/svg%3E">
-<title>IdeaKDC - Register for Online Courses</title>
-<meta name="description" content="Register as a new IdeaKDC student, explore class-wise courses, and start concept clarity, daily practice, and guided revision.">
-<meta property="og:title" content="IdeaKDC Student Registration">
-<meta property="og:description" content="Join IdeaKDC with a simple mobile-friendly registration flow and discover class-wise learning courses.">
+<title>IdeaKDC | School, Class 11–12 &amp; BPSC Learning</title>
+<meta name="description" content="Explore IdeaKDC courses, live classes and quiz practice for school students, Class 11–12 streams and BPSC preparation.">
+<link rel="canonical" href="https://betalaunch.ideakdc.in/">
+<meta property="og:title" content="IdeaKDC | Creating Thoughtful Minds">
+<meta property="og:description" content="Class-wise learning, live classes and quiz practice for school, senior secondary and BPSC learners.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://betalaunch.ideakdc.in/">
 <style>
@@ -150,7 +151,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 
 
 /* User-supplied landing page host. Its design is isolated in Shadow DOM. */
-.uploaded-landing-host{display:block;min-height:100svh;background:#faf6ee;color:#1d1b16;contain:layout style paint}
+.uploaded-landing-host{display:block;min-height:calc(100svh - var(--nav-h));background:#10182f;color:#fff;contain:layout style paint}
 .uploaded-landing-loading,.uploaded-landing-error{min-height:70svh;display:grid;place-items:center;padding:2rem;text-align:center;font-size:.9rem;font-weight:700;color:#6d6656}
 .uploaded-landing-error{color:#7a2320}
 
@@ -190,6 +191,57 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   .btn-nav{font-size:.58rem;padding:6px 6px}
   .courses-section{padding-left:.9rem;padding-right:.9rem}
   .courses-grid{grid-template-columns:1fr}
+}
+
+/* Stage 1 academic header shell */
+.site-header{height:var(--nav-h);position:sticky;top:0;z-index:300;background:rgba(255,253,248,.97);border-bottom:1px solid rgba(35,71,183,.16);box-shadow:0 10px 30px rgba(16,24,47,.09);backdrop-filter:blur(16px)}
+.site-header .site-nav{height:100%;max-width:1500px;margin:0 auto;padding:0 clamp(.75rem,2vw,1.6rem);display:flex;align-items:center;gap:clamp(.55rem,1.4vw,1.25rem);position:static;background:transparent;border:0;box-shadow:none;backdrop-filter:none}
+.site-header .logo{flex:0 0 auto;border:0;background:transparent;font-family:inherit}
+.academic-nav-desktop{display:flex;align-items:center;justify-content:center;min-width:0;flex:1}
+.academic-desktop-list{display:flex;align-items:center;justify-content:center;gap:.1rem}
+.academic-desktop-item{position:relative}
+.academic-trigger{border:0;background:transparent;color:#25304a;font:800 .72rem/1 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;padding:.75rem .68rem;border-radius:7px;cursor:pointer;white-space:nowrap}
+.academic-trigger:hover,.academic-trigger:focus-visible,.academic-trigger[aria-expanded="true"]{background:#eef3ff;color:#173a9a;outline:none}
+.academic-trigger::after{content:'⌄';display:inline-block;margin-left:.3rem;color:#64748b}
+.academic-mega-panel{position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%);width:max-content;max-width:min(760px,92vw);display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:1.1rem;padding:1rem;background:#fff;border:1px solid #dfe5ef;border-radius:8px;box-shadow:0 22px 55px rgba(16,24,47,.18)}
+.academic-mega-panel[hidden]{display:none}
+.academic-mega-group{min-width:150px}
+.academic-group-title,.academic-mobile-group-title{font-size:.7rem;color:#8a6326;text-transform:uppercase;margin:0 0 .45rem;letter-spacing:0;font-weight:900}
+.academic-link-list{display:grid;gap:.12rem}
+.academic-link,.academic-mobile-link{border:0;background:transparent;color:#26324b;text-align:left;font:700 .78rem/1.35 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;padding:.48rem .5rem;border-radius:6px;cursor:pointer;width:100%}
+.academic-link:hover,.academic-link:focus-visible,.academic-mobile-link:hover,.academic-mobile-link:focus-visible{background:#edf4ff;color:#173a9a;outline:2px solid transparent}
+.site-header .nav-right{display:flex;gap:.3rem;align-items:center;flex:0 0 auto}
+.nav-account-actions{display:flex;gap:.3rem;align-items:center}
+.nav-user-name{font-size:.7rem;font-weight:800;color:#0a2a5e;background:#eef3ff;padding:7px 9px;border-radius:7px;max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.academic-mobile-toggle{display:none;width:44px;height:44px;border:1px solid #d6deeb;border-radius:7px;background:#fff;color:#17213b;font-size:1.35rem;cursor:pointer;align-items:center;justify-content:center}
+.academic-mobile-drawer{position:fixed;z-index:290;top:var(--nav-h);left:0;right:0;max-height:calc(100dvh - var(--nav-h) - env(safe-area-inset-bottom));overflow-y:auto;background:#fffdf8;border-bottom:1px solid #dce3ef;box-shadow:0 24px 50px rgba(16,24,47,.2);padding:.8rem clamp(.8rem,4vw,1.2rem) calc(1rem + env(safe-area-inset-bottom))}
+.academic-mobile-drawer[hidden]{display:none}
+.academic-mobile-list{display:grid;gap:.4rem}
+.academic-mobile-section{border-bottom:1px solid #e8edf4;padding-bottom:.4rem}
+.academic-mobile-trigger{width:100%;min-height:48px;border:0;background:transparent;display:flex;align-items:center;justify-content:space-between;color:#17213b;font:900 .93rem/1.2 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;text-align:left;cursor:pointer}
+.academic-mobile-trigger::after{content:'+';font-size:1.15rem;color:#2347b7}
+.academic-mobile-trigger[aria-expanded="true"]::after{content:'−'}
+.academic-mobile-panel{padding:.15rem 0 .55rem .35rem;columns:2;column-gap:.7rem}
+.academic-mobile-panel[hidden]{display:none}
+.academic-mobile-group-title{break-after:avoid;column-span:all;margin-top:.4rem}
+.academic-mobile-link{min-height:42px;break-inside:avoid}
+.academic-mobile-utility{display:flex;gap:.5rem;flex-wrap:wrap;padding-top:.8rem}
+.academic-mobile-utility .btn-nav{min-height:44px;flex:1 1 135px}
+.mobile-account-actions{display:flex;gap:.5rem;flex-wrap:wrap;width:100%}
+.mobile-account-actions .btn-nav{flex:1 1 135px}
+body.academic-menu-open{overflow:hidden}
+
+@media (max-width:1120px){
+  .site-header .nav-right>.nav-secondary{display:none}
+  .academic-trigger{padding-inline:.48rem;font-size:.68rem}
+}
+@media (max-width:900px){
+  .site-header .site-nav{justify-content:space-between;padding:0 .8rem}
+  .academic-nav-desktop,.site-header .nav-right{display:none}
+  .academic-mobile-toggle{display:flex}
+}
+@media (max-width:520px){
+  .academic-mobile-panel{columns:1}
 }
 
 /* ══════════════════════════════
@@ -756,6 +808,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
 <script src="live-event-sync.js"></script>
+<script src="academic-navigation.js" defer></script>
 </head>
 <body>
 
@@ -763,18 +816,37 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 <div class="toast" id="toast"></div>
 
 <!-- ══ NAV ══ -->
-<nav>
-  <div class="logo" onclick="navHome()" aria-label="ideaKDC - Creating Thoughtful Minds">
-    <span class="logo-word"><span class="logo-idea">idea</span><span class="logo-kdc">KDC</span></span>
-    <span class="logo-slogan">Creating Thoughtful Minds</span>
+<header class="site-header">
+  <nav class="site-nav" aria-label="Primary navigation">
+    <button class="logo" type="button" onclick="navHome()" aria-label="ideaKDC home - Creating Thoughtful Minds">
+      <span class="logo-word"><span class="logo-idea">idea</span><span class="logo-kdc">KDC</span></span>
+      <span class="logo-slogan">Creating Thoughtful Minds</span>
+    </button>
+    <div class="academic-nav-desktop" id="academic-nav-desktop" aria-label="Academic categories"></div>
+    <div class="nav-right">
+      <button class="btn-nav nav-secondary" style="border-color:#ef4444;color:#ef4444;font-weight:800" onclick="showLive()">🔴 Live Class</button>
+      <button class="btn-nav nav-secondary" onclick="showReferralSupport()">Student Partner</button>
+      <div class="nav-account-actions" id="nav-account-actions">
+        <button class="btn-nav btn-nav-primary" onclick="showLogin()">Login करें</button>
+        <button class="btn-nav" onclick="startConvoReg(null)">New Student</button>
+      </div>
+    </div>
+    <button class="academic-mobile-toggle" id="academic-mobile-toggle" type="button" aria-expanded="false" aria-controls="academic-mobile-drawer" aria-label="Open academic menu">☰</button>
+  </nav>
+  <div class="academic-mobile-drawer" id="academic-mobile-drawer" hidden>
+    <div id="academic-nav-mobile" aria-label="Mobile academic categories"></div>
+    <div class="academic-mobile-utility">
+      <button class="btn-nav" onclick="showLive()">🔴 Live Class</button>
+      <button class="btn-nav" onclick="showAllCourses()">सभी Courses</button>
+      <button class="btn-nav" onclick="showReferralSupport()">Student Partner</button>
+      <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
+      <div class="mobile-account-actions" id="mobile-account-actions">
+        <button class="btn-nav btn-nav-primary" onclick="showLogin()">Login करें</button>
+        <button class="btn-nav" onclick="startConvoReg(null)">New Student</button>
+      </div>
+    </div>
   </div>
-  <div class="nav-right" id="nav-right">
-    <button class="btn-nav" style="border-color:#ef4444;color:#ef4444;font-weight:800" onclick="showLive()">🔴 Live Class</button>
-    <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
-    <button class="btn-nav btn-nav-primary" onclick="showLogin()">Login करें</button>
-    <button class="btn-nav" onclick="startConvoReg(null)">New Student</button>
-  </div>
-</nav>
+</header>
 
 <!-- ══ BOTTOM NAV ══ -->
 <div class="bottom-nav" id="bottom-nav">
@@ -1025,10 +1097,10 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
       .replace(/\bhtml\s*\{/g, ':host{')
       .replace(/\bbody\s*\{/g, '.landing-root{')
       + `
-        :host{display:block;background:#faf6ee;color:#1d1b16}
+        :host{display:block;background:#10182f;color:#fff}
         .landing-root{position:relative;min-height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
         .hero{position:relative}
-        .courses-jump{cursor:pointer}
+        [data-landing-action]{cursor:pointer}
       `;
 
     const root = document.createElement('div');
@@ -1038,27 +1110,14 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
     });
     shadow.replaceChildren(style, root);
 
-    const courseButton = root.querySelector('.btn.primary');
-    if (courseButton) {
-      courseButton.classList.add('courses-jump');
-      courseButton.href = '#courses';
-      courseButton.removeAttribute('target');
-      courseButton.removeAttribute('rel');
-      courseButton.addEventListener('click', event => {
-        event.preventDefault();
-        document.getElementById('courses')?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-      });
-    }
-
-    const ticker = root.querySelector('#ticker');
-    if (ticker) {
-      let mins = 4812;
-      window.setInterval(() => {
-        if (!document.getElementById('page-home')?.classList.contains('active')) return;
-        mins += Math.floor(Math.random() * 7) + 1;
-        ticker.textContent = String(mins).padStart(6, '0');
-      }, 220);
-    }
+    root.querySelector('[data-landing-action="register"]')?.addEventListener('click', event => {
+      event.preventDefault();
+      if (typeof startConvoReg === 'function') startConvoReg(null);
+    });
+    root.querySelector('[data-landing-action="courses"]')?.addEventListener('click', event => {
+      event.preventDefault();
+      if (typeof showAllCourses === 'function') showAllCourses();
+    });
 
     const revealEls = [...root.querySelectorAll('.reveal')];
     if (reduceMotion || !('IntersectionObserver' in window)) {
@@ -1070,31 +1129,6 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
       revealEls.forEach(element => revealObserver.observe(element));
     }
 
-    const diyaWrap = root.querySelector('#diyas');
-    if (diyaWrap && 'IntersectionObserver' in window) {
-      const diyaObserver = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) return;
-          entry.target.querySelectorAll('.diya').forEach((diya, index) => {
-            window.setTimeout(() => diya.classList.add('lit'), index * 400);
-          });
-          diyaObserver.unobserve(entry.target);
-        });
-      }, { threshold: .4 });
-      diyaObserver.observe(diyaWrap);
-    }
-
-    const hub = root.querySelector('.hub');
-    if (hub && 'IntersectionObserver' in window) {
-      const hubObserver = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add('in');
-          hubObserver.unobserve(entry.target);
-        });
-      }, { threshold: .3 });
-      hubObserver.observe(hub);
-    }
   } catch (error) {
     console.warn('IdeaKDC landing page could not load:', error.message);
     host.innerHTML = '<div class="uploaded-landing-error">Landing experience unavailable. Courses remain available below.</div>';
@@ -2442,28 +2476,37 @@ window.setNav = (id) => {
 };
 
 function updateNav(loggedIn) {
-  const nr = document.getElementById('nav-right');
+  const accountHosts = [
+    document.getElementById('nav-account-actions'),
+    document.getElementById('mobile-account-actions')
+  ].filter(Boolean);
   const bn = document.getElementById('bottom-nav');
   const logoutBtn = document.getElementById('bn-logout');
   bn.classList.add('show');
   document.body.classList.add('has-bottom-nav');
-  if (loggedIn) {
-    const name = currentUser.displayName || currentUser.email.split('@')[0];
-    nr.innerHTML = `
-      <button class="btn-nav" style="border-color:#ef4444;color:#ef4444;font-weight:800" onclick="showLive()">🔴 Live Class</button>
-      <button class="btn-nav" onclick="showAllCourses()">All Courses</button>
-      <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
-      <span style="font-size:.72rem;font-weight:700;color:#0a2a5e;background:rgba(255,255,255,.5);padding:5px 9px;border-radius:8px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👋 ${name}</span>`;
-    if (logoutBtn) logoutBtn.style.display = 'flex';
-  } else {
-    nr.innerHTML = `
-      <button class="btn-nav" style="border-color:#ef4444;color:#ef4444;font-weight:800" onclick="showLive()">🔴 Live Class</button>
-      <button class="btn-nav" onclick="showAllCourses()">All Courses</button>
-      <button class="btn-nav" onclick="location.href='contact.html'">Contact</button>
-      <button class="btn-nav btn-nav-primary" onclick="showLogin()">Login करें</button>
-      <button class="btn-nav" onclick="startConvoReg(null)">New Student</button>`;
-    if (logoutBtn) logoutBtn.style.display = 'none';
-  }
+  accountHosts.forEach(host => {
+    host.replaceChildren();
+    const addButton = (label, handler, primary = false) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `btn-nav${primary ? ' btn-nav-primary' : ''}`;
+      button.textContent = label;
+      button.addEventListener('click', handler);
+      host.append(button);
+    };
+    if (loggedIn) {
+      const name = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Student';
+      addButton('Dashboard', showDashboard, true);
+      const nameLabel = document.createElement('span');
+      nameLabel.className = 'nav-user-name';
+      nameLabel.textContent = `नमस्ते ${name}`;
+      host.append(nameLabel);
+    } else {
+      addButton('Login करें', showLogin, true);
+      addButton('New Student', () => startConvoReg(null));
+    }
+  });
+  if (logoutBtn) logoutBtn.style.display = loggedIn ? 'flex' : 'none';
 }
 
 window.showLogin = () => { pushPage('login'); pushHistory(); };
