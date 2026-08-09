@@ -812,9 +812,9 @@ body{padding-bottom:65px}
                 <div>
                   <label style="font-size:.75rem;font-weight:700;display:block">Screen Position:</label>
                   <select id="lc-spot-position" style="width:100%;padding:3px 6px;font-size:.75rem;border-radius:5px;border:1px solid #cbd5e1">
-                    <option value="center" selected>Center (Default)</option>
-                    <option value="right">Bottom-Right</option>
-                    <option value="left">Bottom-Left</option>
+                    <option value="center" selected>Center (90% Width - Default)</option>
+                    <option value="right">Far Right (50% Width)</option>
+                    <option value="left">Far Left (50% Width)</option>
                   </select>
                 </div>
               </div>
@@ -3930,7 +3930,10 @@ window.renderUploadedQuestions = (questions) => {
     item.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.4rem;margin-bottom:3px">
         <strong style="color:#0f172a">Q${idx+1}. ${q.text}</strong>
-        <span style="font-size:.65rem;padding:1px 6px;border-radius:99px;background:#e0f2fe;color:#0369a1;font-weight:800;flex-shrink:0">${typeBadge}</span>
+        <div style="display:flex;gap:.25rem;flex-shrink:0">
+          <span style="font-size:.62rem;padding:1px 5px;border-radius:99px;background:#fef3c7;color:#92400e;font-weight:800">${q.position==='right'?'FAR-RIGHT 50%':q.position==='left'?'FAR-LEFT 50%':'CENTER 90%'}</span>
+          <span style="font-size:.62rem;padding:1px 5px;border-radius:99px;background:#e0f2fe;color:#0369a1;font-weight:800">${typeBadge}</span>
+        </div>
       </div>
       <div style="margin-bottom:.4rem">${optsHtml}</div>
       <div style="display:flex;gap:.35rem;justify-content:flex-end;margin-top:.4rem;border-top:1px dashed #e2e8f0;padding-top:4px">
