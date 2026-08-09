@@ -14,6 +14,12 @@
   ],
   "hosting": {
     "public": ".",
+    "rewrites": [
+      {
+        "source": "/class-**",
+        "destination": "/index.html"
+      }
+    ],
     "headers": [
       {
         "source": "**",
