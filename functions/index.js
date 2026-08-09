@@ -4045,20 +4045,39 @@ exports.adminPublishLiveQuiz = onCall(callableOptions({ region: 'asia-south1' })
   requireAdminAuth(request);
   const sessionId    = String(request.data?.sessionId || '').trim();
   const questionText = String(request.data?.question  || '').trim();
+  const qType        = String(request.data?.type      || 'mcq').trim().toLowerCase();
   const options      = request.data?.options;
   const correctIndex = Number(request.data?.correctIndex ?? -1);
+  const pairs        = request.data?.pairs;
   const timeLimit    = Number(request.data?.timeLimit) || 30;
+
   if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
   if (!questionText) throw new HttpsError('invalid-argument', 'question text required.');
-  if (!Array.isArray(options) || options.length < 2 || options.length > 4)
-    throw new HttpsError('invalid-argument', 'options must be array of 2-4 strings.');
-  if (correctIndex < 0 || correctIndex >= options.length)
-    throw new HttpsError('invalid-argument', 'correctIndex out of range.');
+
   const allowed = [5,10,20,30,60,90,120];
   if (!allowed.includes(timeLimit)) throw new HttpsError('invalid-argument', 'Invalid timeLimit.');
+
+  let qObj = { text: questionText, type: qType, timeLimit };
+
+  if (qType === 'mcq') {
+    if (!Array.isArray(options) || options.length < 2 || options.length > 4)
+      throw new HttpsError('invalid-argument', 'MCQ options must be an array of 2-4 items.');
+    if (correctIndex < 0 || correctIndex >= options.length)
+      throw new HttpsError('invalid-argument', 'correctIndex out of range.');
+    qObj.options = options.map(o => String(o));
+    qObj.correctIndex = correctIndex;
+  } else if (qType === 'tf') {
+    qObj.options = ['TRUE (सही)', 'FALSE (गलत)'];
+    qObj.correctIndex = (correctIndex === 0) ? 0 : 1;
+  } else if (qType === 'match') {
+    if (!Array.isArray(pairs) || pairs.length < 2)
+      throw new HttpsError('invalid-argument', 'Matching pairs must have at least 2 items.');
+    qObj.pairs = pairs;
+  }
+
   await db.collection('liveQuizState').doc(sessionId).set({
     active:       true,
-    question:     { text: questionText, options: options.map(o => String(o)), correctIndex, timeLimit },
+    question:     qObj,
     publishedAt:  FieldValue.serverTimestamp(),
     sessionId,
   });
@@ -4152,14 +4171,18 @@ exports.getPlayerAccess = onCall(callableOptions({ region: 'asia-south1' }), asy
   const auth = requireAuth(request);
   const sessionId = String(request.data?.sessionId || '').trim();
   if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
+  
+  const userEmail = (auth.token?.email || '').toLowerCase();
+  const isAdmin = ADMIN_EMAILS.includes(userEmail);
+
   const [sessionSnap, regSnap] = await Promise.all([
     db.collection('liveClasses').doc(sessionId).get(),
     db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid).get(),
   ]);
   if (!sessionSnap.exists) throw new HttpsError('not-found', 'Session not found.');
   const session = sessionSnap.data();
-  if (!regSnap.exists) throw new HttpsError('permission-denied', 'You are not registered for this session.');
-  if (session.status === 'ended') throw new HttpsError('failed-precondition', 'This session has ended.');
+  if (!isAdmin && !regSnap.exists) throw new HttpsError('permission-denied', 'You are not registered for this session.');
+  if (session.status === 'ended' && !isAdmin) throw new HttpsError('failed-precondition', 'This session has ended.');
   if (!session.youtubeVideoId) throw new HttpsError('failed-precondition', 'Stream not started yet. Please try again in a moment.');
-  return { youtubeVideoId: session.youtubeVideoId, status: session.status };
+  return { youtubeVideoId: session.youtubeVideoId, status: session.status, isAdmin };
 });

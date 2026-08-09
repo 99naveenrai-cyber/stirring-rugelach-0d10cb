@@ -1362,21 +1362,83 @@ function showLiveQuizOverlay(q) {
 
   if (!overlay || !qText || !grid) return;
 
-  qText.textContent = q.text;
+  const qType = q.type || 'mcq';
+  qText.innerHTML = `<span style="font-size:.7rem;padding:2px 8px;border-radius:99px;background:#38bdf8;color:#0f172a;font-weight:900;margin-right:.4rem;text-transform:uppercase">${qType === 'tf' ? 'TRUE/FALSE' : qType === 'match' ? 'MATCH PAIRS' : 'MCQ'}</span> ${q.text}`;
   grid.innerHTML = '';
   let studentSelectedIdx = -1;
+  let selectedPairLeft = null;
+  let studentMatches = {};
 
-  q.options.forEach((optText, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'live-quiz-opt-btn';
-    btn.innerHTML = `<strong>${String.fromCharCode(65+idx)})</strong> ${optText}`;
-    btn.onclick = () => {
-      studentSelectedIdx = idx;
-      document.querySelectorAll('.live-quiz-opt-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-    };
-    grid.appendChild(btn);
-  });
+  if (qType === 'mcq' || qType === 'tf') {
+    const opts = q.options || (qType === 'tf' ? ['TRUE (सही)', 'FALSE (गलत)'] : []);
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = qType === 'tf' ? '1fr 1fr' : '1fr 1fr';
+
+    opts.forEach((optText, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'live-quiz-opt-btn';
+      btn.innerHTML = qType === 'tf' ? optText : `<strong>${String.fromCharCode(65+idx)})</strong> ${optText}`;
+      btn.onclick = () => {
+        studentSelectedIdx = idx;
+        document.querySelectorAll('.live-quiz-opt-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      };
+      grid.appendChild(btn);
+    });
+  } else if (qType === 'match' && Array.isArray(q.pairs)) {
+    grid.style.display = 'flex';
+    grid.style.flexDirection = 'column';
+    grid.style.gap = '.4rem';
+
+    const matchWrap = document.createElement('div');
+    matchWrap.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:.6rem;width:100%';
+    
+    const leftCol = document.createElement('div');
+    leftCol.style.cssText = 'display:flex;flex-direction:column;gap:.35rem';
+    
+    const rightCol = document.createElement('div');
+    rightCol.style.cssText = 'display:flex;flex-direction:column;gap:.35rem';
+
+    // Shuffle right column for matching game
+    const shuffledRight = [...q.pairs.map(p => p.right)].sort(() => Math.random() - 0.5);
+
+    q.pairs.forEach((pair, idx) => {
+      const lBtn = document.createElement('button');
+      lBtn.className = 'live-quiz-opt-btn';
+      lBtn.id = `match-left-${idx}`;
+      lBtn.innerHTML = `<strong>${idx+1}.</strong> ${pair.left}`;
+      lBtn.onclick = () => {
+        selectedPairLeft = idx;
+        document.querySelectorAll('[id^="match-left-"]').forEach(b => b.style.borderColor = 'rgba(255,255,255,0.2)');
+        lBtn.style.borderColor = '#fbbf24';
+      };
+      leftCol.appendChild(lBtn);
+    });
+
+    shuffledRight.forEach((rVal, rIdx) => {
+      const rBtn = document.createElement('button');
+      rBtn.className = 'live-quiz-opt-btn';
+      rBtn.id = `match-right-${rIdx}`;
+      rBtn.innerHTML = rVal;
+      rBtn.onclick = () => {
+        if (selectedPairLeft !== null) {
+          studentMatches[selectedPairLeft] = rVal;
+          rBtn.style.borderColor = '#38bdf8';
+          rBtn.style.background = 'rgba(56,189,248,0.2)';
+          const lBtn = document.getElementById(`match-left-${selectedPairLeft}`);
+          if (lBtn) {
+            lBtn.style.borderColor = '#38bdf8';
+            lBtn.style.background = 'rgba(56,189,248,0.2)';
+          }
+        }
+      };
+      rightCol.appendChild(rBtn);
+    });
+
+    matchWrap.appendChild(leftCol);
+    matchWrap.appendChild(rightCol);
+    grid.appendChild(matchWrap);
+  }
 
   overlay.style.display = 'block';
 

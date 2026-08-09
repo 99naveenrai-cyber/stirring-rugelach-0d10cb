@@ -222,6 +222,18 @@ body{padding-bottom:65px}
     .top-header-nav { display: none !important; }
   }
 
+
+  /* Mobile Responsive Fix & Live Creator Tabs */
+  @media (max-width: 640px) {
+    #lc-grid { grid-template-columns: 1fr !important; gap: .75rem !important; }
+    .panel { padding: .75rem .5rem 4.5rem !important; }
+    .top-header-nav { display: none !important; }
+    .form-card { padding: .85rem !important; border-radius: 14px !important; }
+  }
+
+  .lc-tab-btn { padding: .4rem .8rem; border: 1.5px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-weight: 700; font-size: .78rem; cursor: pointer; color: #475569; transition: all .15s; }
+  .lc-tab-btn.active { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
+
 </style>
 </head>
 <body>
@@ -3627,6 +3639,24 @@ window.loadAdminLiveSessions = async () => {
   }
 };
 
+window.switchLcSubtab = (tab) => {
+  document.getElementById('lc-subtab-manual').classList.toggle('active', tab === 'manual');
+  document.getElementById('lc-subtab-json').classList.toggle('active', tab === 'json');
+  document.getElementById('lc-box-manual').style.display = (tab === 'manual') ? 'block' : 'none';
+  document.getElementById('lc-box-json').style.display = (tab === 'json') ? 'block' : 'none';
+};
+
+window.onSpotTypeChange = () => {
+  const type = document.getElementById('lc-spot-type').value;
+  document.getElementById('lc-type-mcq-wrap').style.display = (type === 'mcq') ? 'grid' : 'none';
+  document.getElementById('lc-type-tf-wrap').style.display = (type === 'tf') ? 'block' : 'none';
+  document.getElementById('lc-type-match-wrap').style.display = (type === 'match') ? 'block' : 'none';
+};
+
+window.watchAdminLivePreview = (sessionId) => {
+  window.open(`index.html#page-live?session=${sessionId}&adminPreview=1`, '_blank');
+};
+
 window.selectLiveSession = (sess) => {
   selectedLiveSession = sess;
   document.querySelectorAll('.lc-session-card-item').forEach(c => {
@@ -3644,155 +3674,111 @@ window.selectLiveSession = (sess) => {
   }
   
   const goLiveBox = document.getElementById('lc-golive-box');
-  const uploadedBox = document.getElementById('lc-uploaded-box');
-  const spotBox = document.getElementById('lc-spot-box');
+  const qManagerWrap = document.getElementById('lc-question-manager-wrap');
 
   if (goLiveBox) goLiveBox.style.display = (sess.status === 'planned' || sess.status === 'live') ? 'block' : 'none';
-  if (uploadedBox) uploadedBox.style.display = (sess.status === 'live') ? 'block' : 'none';
-  if (spotBox) spotBox.style.display = (sess.status === 'live') ? 'block' : 'none';
+  if (qManagerWrap) qManagerWrap.style.display = (sess.status === 'live') ? 'block' : 'none';
 
   window.renderUploadedQuestions(sess.questions || []);
 };
 
-window.renderUploadedQuestions = (questions) => {
-  const container = document.getElementById('lc-uploaded-q-list');
+window.loadAdminLiveSessions = async () => {
+  const container = document.getElementById('lc-session-list');
   if (!container) return;
-  container.innerHTML = '';
-  if (!questions || questions.length === 0) {
-    container.innerHTML = '<div style="color:#aaa;font-size:.75rem">No JSON questions uploaded for this session yet.</div>';
-    return;
-  }
-  questions.forEach((q, idx) => {
-    const item = document.createElement('div');
-    item.style.cssText = 'background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:.4rem .6rem;font-size:.78rem;display:flex;justify-content:space-between;align-items:center';
-    item.innerHTML = `
-      <div style="flex:1;margin-right:.5rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-        <strong>Q${idx+1}:</strong> ${q.text}
-      </div>
-      <div style="display:flex;align-items:center;gap:.3rem">
-        <select id="lc-q-timer-${idx}" style="font-size:.7rem;padding:2px">
-          <option value="5">5s</option>
-          <option value="10">10s</option>
-          <option value="20">20s</option>
-          <option value="30" selected>30s</option>
-          <option value="60">60s</option>
-          <option value="90">90s</option>
-          <option value="120">120s</option>
-        </select>
-        <button onclick="publishUploadedQuiz(${idx})" style="background:#2b6cb0;color:#fff;border:none;border-radius:4px;padding:2px 6px;font-size:.7rem;cursor:pointer">🚀 Publish</button>
-      </div>
-    `;
-    container.appendChild(item);
-  });
-};
-
-window.deleteLiveClassSession = async (sessionId) => {
-  if (!confirm('Are you sure you want to delete this planned live session?')) return;
+  container.innerHTML = '<div style="color:#aaa;font-size:.8rem">Loading sessions...</div>';
   try {
-    await adminDeleteLiveClassFn({ sessionId });
-    if (selectedLiveSession?.sessionId === sessionId) selectedLiveSession = null;
-    showToast('Session deleted.', 'info');
-    window.loadAdminLiveSessions();
-  } catch (err) {
-    alert('Error deleting session: ' + err?.message);
-  }
-};
-
-window.uploadLiveJsonQuestions = (fileInput) => {
-  const file = fileInput.files[0];
-  if (!file || !selectedLiveSession) return;
-  const status = document.getElementById('lc-json-status');
-  status.textContent = 'Reading JSON...';
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (!Array.isArray(data)) throw new Error('JSON root must be an array of questions.');
-      status.textContent = 'Uploading questions to session...';
-      await adminUploadLiveQuestionsFn({
-        sessionId: selectedLiveSession.sessionId,
-        questions: data
-      });
-      selectedLiveSession.questions = data;
-      window.renderUploadedQuestions(data);
-      status.style.color = 'green';
-      status.textContent = `✅ Successfully uploaded ${data.length} questions!`;
-    } catch (err) {
-      status.style.color = 'red';
-      status.textContent = err?.message || 'Invalid JSON format.';
+    const res = await adminListLiveSessionsFn({});
+    const sessions = res.data?.sessions || [];
+    if (sessions.length === 0) {
+      container.innerHTML = '<div style="color:#aaa;font-size:.8rem">No planned sessions yet.</div>';
+      return;
     }
-  };
-  reader.readAsText(file);
-};
-
-window.goLiveStream = async () => {
-  if (!selectedLiveSession) return;
-  const url = document.getElementById('lc-yt-url').value;
-  if (!url) {
-    alert('Please enter your OBS YouTube Unlisted Stream URL.');
-    return;
-  }
-  try {
-    const res = await adminGoLiveFn({
-      sessionId: selectedLiveSession.sessionId,
-      youtubeUrl: url
+    container.innerHTML = '';
+    sessions.forEach(sess => {
+      const card = document.createElement('div');
+      card.id = `lc-card-${sess.sessionId}`;
+      card.className = 'lc-session-card-item';
+      card.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:.55rem .75rem;margin-bottom:.4rem;cursor:pointer;font-size:.8rem;background:#fff;transition:all .15s';
+      if (selectedLiveSession?.sessionId === sess.sessionId) {
+        card.style.borderColor = '#c53030';
+        card.style.background = '#fff5f5';
+      }
+      const isLive = sess.status === 'live';
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Class ${sess.classNum}${sess.stream ? ' ('+sess.stream+')' : ''} — ${sess.subject}</strong>
+          <div style="display:flex;align-items:center;gap:.4rem">
+            <span style="font-size:.7rem;padding:2px 6px;border-radius:4px;background:${isLive?'#feb2b2':'#edf2f7'};color:${isLive?'#9b2c2c':'#4a5568'};font-weight:800">${(sess.status||'planned').toUpperCase()}</span>
+            <button onclick="event.stopPropagation();window.deleteLiveClassSession('${sess.sessionId}')" style="background:none;border:none;color:#e53e3e;font-size:.8rem;cursor:pointer;padding:2px" title="Delete Session">🗑️</button>
+          </div>
+        </div>
+        <div style="color:#718096;font-size:.72rem;margin-top:2px;margin-bottom:.4rem">📅 ${sess.date} | ⏰ ${sess.time} | 💰 ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}</div>
+        <button onclick="event.stopPropagation();window.watchAdminLivePreview('${sess.sessionId}')" style="background:#1e3a8a;color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:.7rem;font-weight:700;cursor:pointer">
+          👁️ Watch Stream (Admin Free Preview)
+        </button>
+      `;
+      card.onclick = () => window.selectLiveSession(sess);
+      container.appendChild(card);
     });
-    alert('🔴 STREAM IS LIVE NOW!');
-    selectedLiveSession.status = 'live';
-    window.selectLiveSession(selectedLiveSession);
   } catch (err) {
-    alert('Error going live: ' + (err?.message || 'Invalid URL'));
-  }
-};
-
-window.publishUploadedQuiz = async (idx) => {
-  if (!selectedLiveSession || !selectedLiveSession.questions) return;
-  const q = selectedLiveSession.questions[idx];
-  const timer = Number(document.getElementById(`lc-q-timer-${idx}`)?.value || 30);
-  try {
-    await adminPublishLiveQuizFn({
-      sessionId: selectedLiveSession.sessionId,
-      question: q.text,
-      options: q.options,
-      correctIndex: q.correct,
-      timeLimit: timer
-    });
-    showToast(`🚀 Published Q${idx+1} (${timer}s timer) to live stream!`, 'success');
-  } catch (err) {
-    alert('Failed to publish quiz: ' + err?.message);
+    container.innerHTML = `<div style="color:red;font-size:.8rem">Failed to load sessions: ${err?.message}</div>`;
   }
 };
 
 window.publishSpotQuiz = async () => {
   if (!selectedLiveSession) return;
-  const text = document.getElementById('lc-spot-text').value.trim();
-  const a = document.getElementById('lc-spot-a').value.trim();
-  const b = document.getElementById('lc-spot-b').value.trim();
-  const c = document.getElementById('lc-spot-c').value.trim();
-  const d = document.getElementById('lc-spot-d').value.trim();
-  const correctRadios = document.getElementsByName('lc-spot-correct');
-  let correctIdx = 0;
-  for (let r of correctRadios) { if (r.checked) correctIdx = Number(r.value); }
+  const qType = document.getElementById('lc-spot-type').value;
+  const text  = document.getElementById('lc-spot-text').value.trim();
   const timer = Number(document.getElementById('lc-spot-timer').value || 30);
 
-  if (!text || !a || !b) {
-    alert('Question text and at least Options A & B are required.');
+  if (!text) {
+    alert('Please enter question text.');
     return;
   }
 
-  const options = [a, b];
-  if (c) options.push(c);
-  if (d) options.push(d);
+  let payload = {
+    sessionId: selectedLiveSession.sessionId,
+    question: text,
+    type: qType,
+    timeLimit: timer
+  };
+
+  if (qType === 'mcq') {
+    const a = document.getElementById('lc-spot-a').value.trim();
+    const b = document.getElementById('lc-spot-b').value.trim();
+    const c = document.getElementById('lc-spot-c').value.trim();
+    const d = document.getElementById('lc-spot-d').value.trim();
+    const correctRadios = document.getElementsByName('lc-spot-correct');
+    let correctIdx = 0;
+    for (let r of correctRadios) { if (r.checked) correctIdx = Number(r.value); }
+    if (!a || !b) { alert('MCQ requires Options A and B.'); return; }
+    const options = [a, b];
+    if (c) options.push(c);
+    if (d) options.push(d);
+    payload.options = options;
+    payload.correctIndex = correctIdx;
+  } else if (qType === 'tf') {
+    const tfRadios = document.getElementsByName('lc-tf-correct');
+    let tfCorrect = 0;
+    for (let r of tfRadios) { if (r.checked) tfCorrect = Number(r.value); }
+    payload.options = ['TRUE (सही)', 'FALSE (गलत)'];
+    payload.correctIndex = tfCorrect;
+  } else if (qType === 'match') {
+    const l1 = document.getElementById('lc-match-l1').value.trim();
+    const r1 = document.getElementById('lc-match-r1').value.trim();
+    const l2 = document.getElementById('lc-match-l2').value.trim();
+    const r2 = document.getElementById('lc-match-r2').value.trim();
+    const l3 = document.getElementById('lc-match-l3').value.trim();
+    const r3 = document.getElementById('lc-match-r3').value.trim();
+    if (!l1 || !r1 || !l2 || !r2) { alert('Match pairs require at least 2 pairs.'); return; }
+    const pairs = [{ left: l1, right: r1 }, { left: l2, right: r2 }];
+    if (l3 && r3) pairs.push({ left: l3, right: r3 });
+    payload.pairs = pairs;
+  }
 
   try {
-    await adminPublishLiveQuizFn({
-      sessionId: selectedLiveSession.sessionId,
-      question: text,
-      options: options,
-      correctIndex: correctIdx,
-      timeLimit: timer
-    });
-    showToast(`🚀 Published live spot quiz (${timer}s timer)!`, 'success');
+    await adminPublishLiveQuizFn(payload);
+    showToast(`🚀 Published live ${qType.toUpperCase()} quiz (${timer}s timer)!`, 'success');
   } catch (err) {
     alert('Failed to publish quiz: ' + err?.message);
   }
