@@ -1053,17 +1053,26 @@ let selectedReferralMember = null;
 // ════════════════════════════════════════
 onAuthStateChanged(auth, async (user) => {
   hideLoader();
-  if (user && ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-shell').style.display = 'block';
-    document.getElementById('admin-email-badge').textContent = user.email.split('@')[0];
-    startListeners();
-  } else {
-    if (user) { await signOut(auth); showErr(document.getElementById('login-err'), 'Admin access नहीं है।'); }
+  try {
+    if (user && ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-shell').style.display = 'block';
+      const badge = document.getElementById('admin-email-badge');
+      if (badge) badge.textContent = (user.email || '').split('@')[0];
+      startListeners();
+    } else {
+      if (user) { await signOut(auth); showErr(document.getElementById('login-err'), 'Admin access नहीं है।'); }
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('app-shell').style.display = 'none';
+    }
+  } catch (err) {
+    console.error('[Admin Auth Sync Error]', err);
     document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('app-shell').style.display = 'none';
   }
 });
+
+// Immediate 800ms safety timeout to prevent infinite loader buffering
+setTimeout(hideLoader, 800);
 
 window.doLogin = async () => {
   const email = document.getElementById('login-email').value.trim();
@@ -3653,8 +3662,10 @@ window.switchPanel = (name, el) => {
 // ════════════════════════════════════════
 function hideLoader() {
   const l = document.getElementById('global-loader');
-  l.classList.add('hide');
-  setTimeout(()=>l.style.display='none',400);
+  if (l) {
+    l.classList.add('hide');
+    setTimeout(()=>{ if (l) l.style.display='none'; }, 400);
+  }
 }
 function showToast(msg,type='') {
   const t = document.getElementById('toast');
