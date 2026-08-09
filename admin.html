@@ -1001,7 +1001,7 @@ window.NCERT_CURRICULUM_2026_27 = {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup,
-         GoogleAuthProvider, signOut, onAuthStateChanged }
+         signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc,
          updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, onSnapshot, writeBatch }
@@ -1128,8 +1128,15 @@ async function doGoogleLoginHandler() {
   try {
     await signInWithPopup(auth, gProvider);
   } catch(e) {
-    console.error('[Google Login Error]', e);
-    if (e.code !== 'auth/popup-closed-by-user' && err) {
+    console.warn('[Google Popup Login Warning]', e);
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
+      try {
+        await signInWithRedirect(auth, gProvider);
+      } catch(redirectErr) {
+        console.error('[Google Redirect Login Error]', redirectErr);
+        if (err) showErr(err, fireErr(redirectErr.code || redirectErr.message));
+      }
+    } else if (e.code !== 'auth/popup-closed-by-user' && err) {
       showErr(err, fireErr(e.code || e.message));
     }
   }
