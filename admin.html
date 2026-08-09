@@ -780,9 +780,14 @@ body{padding-bottom:65px}
                 <option value="120">120 seconds</option>
               </select>
             </div>
-            <button onclick="publishSpotQuiz()" class="btn-submit" style="background:#2b6cb0;width:100%;margin-bottom:.4rem">
-              <span>🚀 Publish Quiz To Students</span>
-            </button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem">
+              <button onclick="saveSpotQuestionToBank()" class="btn-submit" style="background:#1e3a8a;padding:.45rem .3rem;font-size:.75rem">
+                <span>💾 Save Question to Bank</span>
+              </button>
+              <button onclick="publishSpotQuiz()" class="btn-submit" style="background:#2b6cb0;padding:.45rem .3rem;font-size:.75rem">
+                <span>🚀 Publish Quiz Now</span>
+              </button>
+            </div>
             <button onclick="clearActiveQuiz()" class="btn-secondary" style="width:100%;margin-bottom:.4rem">
               <span>✖ Clear Active Quiz</span>
             </button>
@@ -3681,7 +3686,7 @@ window.selectLiveSession = (sess) => {
   const qManagerWrap = document.getElementById('lc-question-manager-wrap');
 
   if (goLiveBox) goLiveBox.style.display = (sess.status === 'planned' || sess.status === 'live') ? 'block' : 'none';
-  if (qManagerWrap) qManagerWrap.style.display = (sess.status === 'live') ? 'block' : 'none';
+  if (qManagerWrap) qManagerWrap.style.display = (sess.status === 'planned' || sess.status === 'live') ? 'block' : 'none';
 
   window.renderUploadedQuestions(sess.questions || []);
 };
@@ -3726,6 +3731,76 @@ window.loadAdminLiveSessions = async () => {
     });
   } catch (err) {
     container.innerHTML = `<div style="color:red;font-size:.8rem">Failed to load sessions: ${err?.message}</div>`;
+  }
+};
+
+window.saveSpotQuestionToBank = async () => {
+  if (!selectedLiveSession) return;
+  const qType = document.getElementById('lc-spot-type').value;
+  const text  = document.getElementById('lc-spot-text').value.trim();
+
+  if (!text) {
+    alert('Please enter question text.');
+    return;
+  }
+
+  let qObj = { text, type: qType };
+
+  if (qType === 'mcq') {
+    const a = document.getElementById('lc-spot-a').value.trim();
+    const b = document.getElementById('lc-spot-b').value.trim();
+    const c = document.getElementById('lc-spot-c').value.trim();
+    const d = document.getElementById('lc-spot-d').value.trim();
+    const correctRadios = document.getElementsByName('lc-spot-correct');
+    let correctIdx = 0;
+    for (let r of correctRadios) { if (r.checked) correctIdx = Number(r.value); }
+    if (!a || !b) { alert('MCQ requires Options A and B.'); return; }
+    const options = [a, b];
+    if (c) options.push(c);
+    if (d) options.push(d);
+    qObj.options = options;
+    qObj.correct = correctIdx;
+  } else if (qType === 'tf') {
+    const tfRadios = document.getElementsByName('lc-tf-correct');
+    let tfCorrect = 0;
+    for (let r of tfRadios) { if (r.checked) tfCorrect = Number(r.value); }
+    qObj.options = ['TRUE (सही)', 'FALSE (गलत)'];
+    qObj.correct = tfCorrect;
+  } else if (qType === 'match') {
+    const l1 = document.getElementById('lc-match-l1').value.trim();
+    const r1 = document.getElementById('lc-match-r1').value.trim();
+    const l2 = document.getElementById('lc-match-l2').value.trim();
+    const r2 = document.getElementById('lc-match-r2').value.trim();
+    const l3 = document.getElementById('lc-match-l3').value.trim();
+    const r3 = document.getElementById('lc-match-r3').value.trim();
+    if (!l1 || !r1 || !l2 || !r2) { alert('Match pairs require at least 2 pairs.'); return; }
+    const pairs = [{ left: l1, right: r1 }, { left: l2, right: r2 }];
+    if (l3 && r3) pairs.push({ left: l3, right: r3 });
+    qObj.pairs = pairs;
+    qObj.options = pairs.map(p => `${p.left} → ${p.right}`);
+    qObj.correct = 0;
+  }
+
+  const existingQuestions = selectedLiveSession.questions || [];
+  const updatedQuestions = [...existingQuestions, qObj];
+
+  try {
+    await adminUploadLiveQuestionsFn({
+      sessionId: selectedLiveSession.sessionId,
+      questions: updatedQuestions
+    });
+    selectedLiveSession.questions = updatedQuestions;
+    renderUploadedQuestions(updatedQuestions);
+    showToast('💾 Question saved to class quiz bank!', 'success');
+
+    // Reset inputs
+    document.getElementById('lc-spot-text').value = '';
+    document.getElementById('lc-spot-a').value = '';
+    document.getElementById('lc-spot-b').value = '';
+    document.getElementById('lc-spot-c').value = '';
+    document.getElementById('lc-spot-d').value = '';
+  } catch (err) {
+    alert('Error saving question: ' + err?.message);
   }
 };
 
