@@ -234,6 +234,21 @@ body{padding-bottom:65px}
   .lc-tab-btn { padding: .4rem .8rem; border: 1.5px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-weight: 700; font-size: .78rem; cursor: pointer; color: #475569; transition: all .15s; }
   .lc-tab-btn.active { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
 
+
+  /* ── UNIFIED ULTRA-CLEAN ADMIN NAV BAR ── */
+  .admin-sub-nav{display:flex;align-items:center;gap:.4rem;padding:.5rem 1rem;background:#ffffff;border-bottom:1.5px solid #e2e8f0;position:sticky;top:56px;z-index:99;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;box-shadow:0 2px 8px rgba(15,23,42,0.05)}
+  .admin-nav-item{padding:.45rem .85rem;border:1.5px solid #cbd5e1;border-radius:10px;background:#f8fafc;font-family:'Inter',sans-serif;font-weight:700;font-size:.78rem;color:#334155;cursor:pointer;transition:all .18s cubic-bezier(0.4,0,0.2,1);display:inline-flex;align-items:center;gap:.35rem;flex-shrink:0}
+  .admin-nav-item:hover{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;transform:translateY(-1px)}
+  .admin-nav-item.active{border-color:#1e3a8a;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#ffffff;box-shadow:0 4px 14px rgba(37,99,235,0.35)}
+  .admin-nav-item.live-item{border-color:#ef4444;color:#dc2626;background:#fff5f5}
+  .admin-nav-item.live-item.active{border-color:#dc2626;background:linear-gradient(135deg,#dc2626,#ef4444);color:#ffffff;box-shadow:0 4px 14px rgba(239,68,68,0.35)}
+
+  @media (max-width: 640px) {
+    .top-header-nav { display: none !important; }
+    .admin-sub-nav { padding: .4rem .6rem; gap: .3rem; }
+    .admin-nav-item { padding: .4rem .65rem; font-size: .74rem; }
+  }
+
 </style>
 </head>
 <body>
@@ -284,19 +299,21 @@ body{padding-bottom:65px}
   <!-- Top Nav -->
   <div class="top-nav">
     <div class="top-nav-brand"><span class="brand-wordmark" aria-label="ideaKDC"><span class="brand-idea">idea</span><span class="brand-kdc">KDC</span></span><span>Admin</span></div>
-    <div class="top-nav-right" style="display:flex;align-items:center;gap:.6rem">
-      <nav class="top-header-nav" style="display:flex;align-items:center;gap:.35rem;margin-right:.5rem">
-        <button class="top-tab active" id="ttab-dashboard" onclick="switchPanel('dashboard',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">📊 Dashboard</button>
-        <button class="top-tab" id="ttab-upload" onclick="switchPanel('upload',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">➕ Upload</button>
-        <button class="top-tab" id="ttab-content" onclick="switchPanel('content',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">📚 Content</button>
-        <button class="top-tab" id="ttab-enrollments" onclick="switchPanel('enrollments',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">📋 Enrollments</button>
-        <button class="top-tab" id="ttab-finance" onclick="switchPanel('finance',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">₹ Finance</button>
-        <button class="top-tab" id="ttab-coupons" onclick="switchPanel('coupons',this)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.75rem;font-weight:700;cursor:pointer;color:#1e293b">🎟️ Coupons</button>
-        <button class="top-tab" id="ttab-live" onclick="switchPanel('live',this)" style="padding:4px 10px;border-radius:6px;border:1.5px solid #ef4444;background:#fff5f5;font-size:.75rem;font-weight:800;cursor:pointer;color:#c53030">🔴 Live</button>
-      </nav>
+    <div class="top-nav-right">
       <span class="admin-badge" id="admin-email-badge">Admin</span>
       <button class="btn-logout" onclick="doLogout()">Logout</button>
     </div>
+  </div>
+
+  <!-- Unified Horizontal Admin Sub-Nav (Visible on ALL devices) -->
+  <div class="admin-sub-nav">
+    <button class="admin-nav-item active" id="subnav-dashboard" onclick="switchPanel('dashboard',this)">📊 Dashboard</button>
+    <button class="admin-nav-item" id="subnav-upload" onclick="switchPanel('upload',this)">➕ Upload</button>
+    <button class="admin-nav-item" id="subnav-content" onclick="switchPanel('content',this)">📚 Content</button>
+    <button class="admin-nav-item" id="subnav-enrollments" onclick="switchPanel('enrollments',this)">📋 Enrollments</button>
+    <button class="admin-nav-item" id="subnav-finance" onclick="switchPanel('finance',this)">₹ Finance</button>
+    <button class="admin-nav-item" id="subnav-coupons" onclick="switchPanel('coupons',this)">🎟️ Coupons</button>
+    <button class="admin-nav-item live-item" id="subnav-live" onclick="switchPanel('live',this)">🔴 Live Class</button>
   </div>
 
   <!-- ══ PANEL: DASHBOARD ══ -->
@@ -828,7 +845,7 @@ const firebaseConfig = {
   messagingSenderId:"577382246228",
   appId:"1:577382246228:web:e3ec8a45d65b2799268ac1"
 };
-const ADMIN_EMAILS = ["99naveenrai@gmail.com"];
+const ADMIN_EMAILS = ["99naveenrai@gmail.com", "admin@ideakdc.com"];
 const YOUTUBE_API_KEY = "AIzaSyAi4zGbfdWxvd-Q76PLBF4FtTTh7g9B_FE";
 const SUBJECTS = {
   '5-10': ['Maths','Science','English','SST','Hindi'],
@@ -3451,32 +3468,19 @@ function exportFinanceStatement() {
 window.switchPanel = (name, el) => {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.btab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.top-tab').forEach(t => {
-    t.classList.remove('active');
-    t.style.borderColor = '#cbd5e1';
-    t.style.background = '#fff';
-    t.style.color = '#1e293b';
-  });
+  document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
 
   const targetPanel = document.getElementById('panel-' + name);
-  if (targetPanel) targetPanel.classList.add('active');
+  if (targetPanel) {
+    targetPanel.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const subNavItem = document.getElementById('subnav-' + name);
+  if (subNavItem) subNavItem.classList.add('active');
 
   const bottomTab = document.getElementById('btab-' + name);
   if (bottomTab) bottomTab.classList.add('active');
-
-  const topTab = document.getElementById('ttab-' + name);
-  if (topTab) {
-    topTab.classList.add('active');
-    if (name === 'live') {
-      topTab.style.borderColor = '#ef4444';
-      topTab.style.background = '#fee2e2';
-      topTab.style.color = '#991b1b';
-    } else {
-      topTab.style.borderColor = '#2563eb';
-      topTab.style.background = '#eff6ff';
-      topTab.style.color = '#1d4ed8';
-    }
-  }
 
   if (name === 'upload' && typeof resetUploadState === 'function') resetUploadState();
   if (name === 'finance' && typeof loadReferralSettings === 'function') Promise.all([loadReferralSettings(), loadFinanceMembers()]);
