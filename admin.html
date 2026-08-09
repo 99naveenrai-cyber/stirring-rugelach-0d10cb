@@ -20,7 +20,7 @@
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
 
 /* ── LOADER ── */
-#global-loader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .3s}
+#global-loader{display:none !important}
 #global-loader.hide{opacity:0;pointer-events:none}
 .spinner{width:36px;height:36px;border:3px solid var(--accent-light);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -312,7 +312,7 @@ window.NCERT_CURRICULUM_2026_27 = {
 </script>
 </head>
 <body>
-<div id="global-loader"><div class="spinner"></div></div>
+<!-- global-loader removed for instant load -->
 <div class="toast" id="toast"></div>
 
 <!-- ══ SCREENSHOT MODAL ══ -->
