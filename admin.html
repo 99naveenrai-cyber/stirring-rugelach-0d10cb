@@ -832,6 +832,14 @@ body{padding-bottom:65px}
             <!-- OPTION 2: Upload JSON Question Bank -->
             <div id="lc-box-json" style="display:none">
               <p style="font-size:.72rem;color:#64748b;margin-bottom:.4rem">Upload a JSON array of pre-planned questions for this class.</p>
+              <div class="form-group" style="margin-bottom:.5rem">
+                <label style="font-size:.75rem;font-weight:700;display:block">Default Screen Position for JSON Bank:</label>
+                <select id="lc-json-position" style="width:100%;padding:4px 6px;font-size:.75rem;border-radius:5px;border:1px solid #cbd5e1;background:#fff">
+                  <option value="center" selected>Center (90% Width - Default)</option>
+                  <option value="right">Far Right (50% Width)</option>
+                  <option value="left">Far Left (50% Width)</option>
+                </select>
+              </div>
               <input type="file" id="lc-json-file" accept=".json" onchange="uploadLiveJsonQuestions(this)" style="font-size:.75rem;margin-bottom:.4rem">
               <div id="lc-json-status" style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;margin-bottom:.4rem;flex-wrap:wrap"></div>
             </div>
@@ -3828,6 +3836,11 @@ window.uploadLiveJsonQuestions = async (inputEl) => {
     if (!Array.isArray(questions) || questions.length === 0) {
       throw new Error("Invalid JSON: Must be an array of questions or contain a 'questions' array.");
     }
+
+    const defaultPos = document.getElementById('lc-json-position')?.value || 'center';
+    questions.forEach(q => {
+      if (!q.position) q.position = defaultPos;
+    });
 
     await adminUploadLiveQuestionsFn({
       sessionId: selectedLiveSession.sessionId,
