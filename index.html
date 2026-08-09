@@ -1252,18 +1252,38 @@ function renderStep1Classes() {
   });
 }
 
+window.openClassLiveNavigation = (classNum) => {
+  _navClass = String(classNum || '6');
+  if (_navClass === '11' || _navClass === '12') {
+    _currentStep = 2; // Stream selection
+  } else {
+    _currentStep = 3; // Subject selection
+  }
+  window.showLive();
+};
+
 window.selectLcStream = (stream) => {
-  _navStream = stream;
+  _navStream = (stream === 'arts') ? 'humanities' : stream;
   _currentStep = 3;
   renderNavyStepNavigation();
 };
 
 function renderStep3Subjects() {
   const title = document.getElementById('lc-step3-title');
-  if (title) title.textContent = `Select Subject (Class ${_navClass}th${_navClass==='11'||_navClass==='12'?' - '+_navStream:''})`;
+  const streamLabel = (_navStream === 'humanities' || _navStream === 'arts') ? 'Arts/Humanities' : (_navStream ? _navStream.toUpperCase() : '');
+  if (title) title.textContent = `Select Subject (Class ${_navClass}th${_navClass==='11'||_navClass==='12'?' - '+streamLabel:''})`;
   
-  const key = (_navClass === '11' || _navClass === '12') ? `${_navClass}-${_navStream}` : _navClass;
-  const subjects = LIVE_STUDENT_SUBJECTS[key] || ['Mathematics','Science','English','Hindi','Social Science'];
+  let subjects = [];
+  if (_navClass === '11' || _navClass === '12') {
+    const s = _navStream || 'science';
+    if (s === 'science') subjects = ['Mathematics', 'Physics', 'Chemistry', 'English'];
+    else if (s === 'commerce') subjects = ['Accountancy', 'Business Studies', 'Economics', 'English'];
+    else if (s === 'humanities' || s === 'arts') subjects = ['Political Science', 'History', 'Geography', 'Hindi Core', 'English'];
+    else subjects = ['Mathematics', 'Physics', 'Chemistry', 'English'];
+  } else {
+    subjects = ['Mathematics', 'Science', 'English', 'Social Science'];
+  }
+
   const list = document.getElementById('lc-subject-list');
   if (!list) return;
   list.innerHTML = '';
@@ -1295,25 +1315,29 @@ function renderStep4Chapters() {
   const classData = curr[_navClass] || {};
   let chapters = [];
 
-  const subjSlug = _navSubject.toLowerCase().replace(/\s+/g, '-');
+  const subjSlug = _navSubject.toLowerCase().replace(/[\s_]+/g, '-');
+  const streamSlug = (_navStream === 'arts' ? 'humanities' : _navStream) || 'science';
+
   if (_navClass === '11' || _navClass === '12') {
-    if (subjSlug === 'english' && classData.commonSubjects?.english) {
-      chapters = classData.commonSubjects.english;
+    if (subjSlug === 'english') {
+      chapters = classData['english'] || [];
     } else {
-      const streamData = classData.streams?.[_navStream] || {};
-      chapters = streamData.subjects?.[subjSlug] || [];
+      const key = `${streamSlug}-${subjSlug}`;
+      chapters = classData[key] || [];
     }
   } else {
     chapters = classData[subjSlug] || [];
   }
 
-  if (chapters.length === 0) {
+  if (!Array.isArray(chapters) || chapters.length === 0) {
     chapters = ['Ch 1: General Fundamentals', 'Ch 2: Core Concepts', 'Ch 3: Advanced Topics', 'Ch 4: Practice Problems & Sample Papers'];
+  } else {
+    chapters = [...chapters];
   }
 
   // Prepend Revision Tab
-  if (!chapters.includes('🔁 Revision & Important PYQs')) {
-    chapters = ['🔁 Revision & Important PYQs', ...chapters];
+  if (!chapters.some(c => String(c).includes('Revision'))) {
+    chapters.unshift('🔁 Revision & Important PYQs');
   }
 
   const list = document.getElementById('lc-chapter-list');
@@ -1322,7 +1346,7 @@ function renderStep4Chapters() {
 
   chapters.forEach((chap, idx) => {
     const item = document.createElement('div');
-    const isRevision = chap.includes('Revision');
+    const isRevision = String(chap).includes('Revision');
     item.className = 'lc-chapter-item' + (isRevision ? ' revision-tab' : '');
     item.innerHTML = `<span>${chap}</span><span style="font-size:.7rem;opacity:.8">Select →</span>`;
     

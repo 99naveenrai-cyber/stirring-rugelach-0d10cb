@@ -3660,19 +3660,21 @@ function updateLcChapterOptions() {
   const classData = curr[c] || {};
   let chapList = [];
 
-  const subjSlug = subj.toLowerCase().replace(/\s+/g, '-');
+  const subjSlug = subj.toLowerCase().replace(/[\s_]+/g, '-');
+  const streamSlug = (s === 'arts' ? 'humanities' : s) || 'science';
+
   if (c === '11' || c === '12') {
-    if (subjSlug === 'english' && classData.commonSubjects?.english) {
-      chapList = classData.commonSubjects.english;
+    if (subjSlug === 'english') {
+      chapList = classData['english'] || [];
     } else {
-      const streamData = classData.streams?.[s] || {};
-      chapList = streamData.subjects?.[subjSlug] || [];
+      const key = `${streamSlug}-${subjSlug}`;
+      chapList = classData[key] || [];
     }
   } else {
     chapList = classData[subjSlug] || [];
   }
 
-  if (chapList.length === 0) {
+  if (!Array.isArray(chapList) || chapList.length === 0) {
     chapList = ['Ch 1: General Fundamentals', 'Ch 2: Core Concepts', 'Ch 3: Advanced Topics', 'Ch 4: Revision & PYQs'];
   }
 
