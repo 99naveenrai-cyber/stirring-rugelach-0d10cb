@@ -3060,7 +3060,10 @@ function renderContent() {
         <span class="meta-chip ${contentFree?'free':'paid'}">${contentFree?'🆓 Free':'💎 Paid'}</span>
       </div>
       ${c.desc ? `<div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">${c.desc}</div>` : ''}
-      <div class="content-item-actions">
+      <div class="content-item-actions" style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-top:.4rem">
+        <button class="btn-preview-course" type="button" onclick="window.previewCourseAsAdmin('${c.courseId || c._id}')" style="background:linear-gradient(135deg, #1e3a8a, #2563eb);color:#ffffff;border:none;border-radius:6px;padding:5px 12px;font-size:.78rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem">
+          👁️ View Course (Admin Free Full Preview)
+        </button>
         <button class="btn-edit" type="button" onclick="beginEditContent('${c._id}')">Edit lesson</button>
         <button class="btn-delete" onclick="deleteContent('${c._id}','${(c.title||'').replace(/'/g,'')}')">🗑️ Delete</button>
       </div>
@@ -3071,6 +3074,14 @@ function renderContent() {
 function streamLabel(s) {
   return {science:'🔬 Science',commerce:'📈 Commerce',humanities:'📖 Humanities'}[s] || s;
 }
+
+window.previewCourseAsAdmin = (courseId) => {
+  if (!courseId) {
+    alert("Course ID missing.");
+    return;
+  }
+  window.open(`index.html#course-player?id=${encodeURIComponent(courseId)}&adminPreview=1`, '_blank');
+};
 
 window.deleteContent = async (id, title) => {
   if (!confirm(`"${title}" delete करें?`)) return;
