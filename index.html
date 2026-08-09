@@ -743,6 +743,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 </style>
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
+<script src="live-event-sync.js"></script>
 </head>
 <body>
 
@@ -1148,6 +1149,11 @@ let _navChapter = '';
 let _selectedSessionDoc = null;
 let _liveQuizUnsub = null;
 let _liveQuizTimerInt = null;
+let _livePlayer = null;
+let _liveStreamClock = null;
+let _liveSyncManager = null;
+let _activeLiveQuizEvent = null;
+const _recordedLiveSyncStates = new Set();
 
 window.showLive = async () => {
   const modal = document.getElementById('live-class-modal');
@@ -1486,24 +1492,137 @@ window.joinSelectedLiveSession = async () => {
 // ════════════════════════════════════════
 // FULL-SCREEN LIVE STREAM & QUIZ OVERLAY
 // ════════════════════════════════════════
-function openLiveStreamPage(youtubeVideoId, sessionId) {
+async function openLiveStreamPage(youtubeVideoId, sessionId) {
   const page = document.getElementById('page-live');
   const iframe = document.getElementById('live-yt-iframe');
   if (!page || !iframe) return;
 
-  iframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1`;
+  stopLiveEventSynchronization();
+  iframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
   page.style.display = 'block';
 
-  // Real-Time Quiz Listener via Firestore onSnapshot
-  if (_liveQuizUnsub) _liveQuizUnsub();
-  _liveQuizUnsub = onSnapshot(doc(db, 'liveQuizState', sessionId), (snap) => {
-    const data = snap.data();
-    if (data && data.active && data.question) {
-      showLiveQuizOverlay(data.question);
-    } else {
-      hideLiveQuizOverlay();
+  const firebase = window._ideaKdcLiveFirebase;
+  if (!firebase || !window.IdeaKDCLiveSync) {
+    showToast('Live synchronization could not start. Please reopen the stream.', 'error');
+    return;
+  }
+
+  _liveStreamClock = new window.IdeaKDCLiveSync.LiveStreamClock();
+  _liveSyncManager = new window.IdeaKDCLiveSync.LiveEventSyncManager({
+    sessionId,
+    clock: _liveStreamClock,
+    missThresholdSeconds: 5,
+    pollIntervalMs: 125,
+    onDisplay: (event, timing) => {
+      _activeLiveQuizEvent = event;
+      showLiveQuizOverlay(event.payload || event.question || {});
+      recordLiveQuizSyncState(sessionId, event, 'displayed', timing);
+    },
+    onStateChange: ({ event, status, details, player }) => {
+      updateStudentLiveSyncDebug(event, status, details, player);
+      if (event && status === 'missed') recordLiveQuizSyncState(sessionId, event, 'missed', details, player);
     }
   });
+
+  const unsubscribers = [];
+  let liveStateActive = null;
+  unsubscribers.push(firebase.onSnapshot(firebase.collection(firebase.db, 'liveQuizState', sessionId, 'events'), (snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+      const event = { eventId: change.doc.id, ...change.doc.data() };
+      if (change.type === 'removed' || event.status === 'cancelled') {
+        _liveSyncManager?.queue?.remove(event.eventId);
+        if (_activeLiveQuizEvent?.eventId === event.eventId) hideLiveQuizOverlay();
+        return;
+      }
+      if (liveStateActive === false) return;
+      _liveSyncManager?.ingest(event);
+    });
+  }, (error) => {
+    console.warn('[Live sync] Event subscription unavailable.', error?.code || error?.message || error);
+  }));
+  unsubscribers.push(firebase.onSnapshot(firebase.doc(firebase.db, 'liveQuizState', sessionId), (snapshot) => {
+    const state = snapshot.data();
+    liveStateActive = state?.active === true;
+    if (!state?.active) {
+      _liveSyncManager?.queue?.clear?.();
+      if (_activeLiveQuizEvent) hideLiveQuizOverlay();
+      return;
+    }
+    if (!state.activeEventId && Number.isFinite(Number(state.streamTime)) && state.question) {
+      _liveSyncManager?.ingest({
+        eventId: `legacy-${sessionId}-${Number(state.streamTime).toFixed(3)}`,
+        sessionId,
+        payload: state.question,
+        streamTime: Number(state.streamTime),
+        offsetMs: Number(state.offsetMs) || 0,
+        targetStreamTime: Number(state.targetStreamTime),
+        status: 'published',
+        version: 1
+      });
+    }
+  }));
+  _liveQuizUnsub = () => unsubscribers.forEach((unsubscribe) => unsubscribe?.());
+
+  try {
+    await window.IdeaKDCLiveSync.loadYouTubeIframeApi();
+    _livePlayer = new YT.Player(iframe, {
+      events: {
+        onReady: (event) => {
+          _livePlayer = event.target;
+          _liveStreamClock.setPlayer(event.target);
+          _liveSyncManager?.start();
+        },
+        onStateChange: () => _liveSyncManager?.tick()
+      }
+    });
+    _liveStreamClock.setPlayer(_livePlayer);
+  } catch (error) {
+    console.warn('[Live sync] YouTube media clock unavailable.', error?.message || error);
+    showToast('Live video opened, but quiz timing could not be synchronized.', 'error');
+  }
+}
+
+function updateStudentLiveSyncDebug(event, status, details = {}, player = {}) {
+  const debug = document.getElementById('live-sync-debug');
+  if (!debug) return;
+  const params = new URLSearchParams(location.search);
+  if (params.get('liveDebug') !== '1') return;
+  debug.style.display = 'block';
+  const target = window.IdeaKDCLiveSync?.targetStreamTime(event);
+  const distance = Number.isFinite(target) ? target - Number(player.currentTime || 0) : null;
+  const playerStates = { '-1': 'unstarted', 0: 'ended', 1: 'playing', 2: 'paused', 3: 'buffering', 5: 'cued' };
+  debug.textContent = `Current playback: ${Number(player.currentTime || 0).toFixed(3)} s | ` +
+    `Target quiz: ${Number.isFinite(target) ? target.toFixed(3) + ' s' : '-'} | ` +
+    `Distance: ${distance === null ? '-' : distance.toFixed(3) + ' s'} | ` +
+    `Player: ${playerStates[player.playerState] || player.playerState} | ` +
+    `Live latency: ${Number.isFinite(player.estimatedLiveLatency) ? player.estimatedLiveLatency.toFixed(2) + ' s' : '-'} | ` +
+    `Question: ${status || 'idle'}`;
+}
+
+function recordLiveQuizSyncState(sessionId, event, state, details = {}, player = {}) {
+  const key = `${event?.eventId}:${state}`;
+  if (!event?.eventId || _recordedLiveSyncStates.has(key) || typeof window._recordLiveQuizSync !== 'function') return;
+  _recordedLiveSyncStates.add(key);
+  window._recordLiveQuizSync({
+    sessionId,
+    eventId: event.eventId,
+    state,
+    receivedAtMs: details.receivedAt || null,
+    receivedPlaybackTime: details.receivedPlaybackTime ?? null,
+    actualDisplayStreamTime: details.actualPlaybackTime ?? player.currentTime ?? null,
+    estimatedLiveLatency: details.estimatedLiveLatency ?? player.estimatedLiveLatency ?? null,
+    syncErrorMs: details.syncErrorMs ?? null,
+    playerState: player.playerState ?? _liveStreamClock?.playerState?.() ?? null,
+    buffering: (player.playerState ?? _liveStreamClock?.playerState?.()) === 3
+  }).catch((error) => console.warn('[Live sync] Diagnostic save skipped.', error?.code || error?.message || error));
+}
+
+function stopLiveEventSynchronization() {
+  if (_liveQuizUnsub) { _liveQuizUnsub(); _liveQuizUnsub = null; }
+  _liveSyncManager?.stop?.();
+  _liveSyncManager = null;
+  _liveStreamClock = null;
+  _activeLiveQuizEvent = null;
 }
 
 function launchDramaticUpwardConfetti() {
@@ -1669,6 +1788,13 @@ function revealQuizAnswer(correctIdx, studentSelectedIdx) {
   if (studentSelectedIdx === correctIdx) {
     launchDramaticUpwardConfetti();
   }
+  if (_activeLiveQuizEvent) {
+    const sessionId = _activeLiveQuizEvent.sessionId;
+    recordLiveQuizSyncState(sessionId, _activeLiveQuizEvent, 'answered', {
+      actualPlaybackTime: _liveStreamClock?.currentTime?.(),
+      estimatedLiveLatency: _liveStreamClock?.estimatedLiveLatency?.()
+    }, _liveStreamClock?.snapshot?.());
+  }
 
   // Auto-hide overlay after 3.5 seconds of feedback
   setTimeout(() => {
@@ -1680,6 +1806,10 @@ function hideLiveQuizOverlay() {
   const overlay = document.getElementById('live-quiz-overlay');
   if (overlay) overlay.style.display = 'none';
   if (_liveQuizTimerInt) clearInterval(_liveQuizTimerInt);
+  _liveSyncManager?.completeCurrent?.('completed', {
+    actualPlaybackTime: _liveStreamClock?.currentTime?.()
+  });
+  _activeLiveQuizEvent = null;
 }
 
 window.confirmLeaveLiveStream = () => {
@@ -1704,9 +1834,11 @@ window.confirmLeaveLiveStream = () => {
 function exitLiveStream() {
   const page = document.getElementById('page-live');
   const iframe = document.getElementById('live-yt-iframe');
+  try { _livePlayer?.stopVideo?.(); } catch (_) {}
   if (iframe) iframe.src = '';
+  _livePlayer = null;
   if (page) page.style.display = 'none';
-  if (_liveQuizUnsub) { _liveQuizUnsub(); _liveQuizUnsub = null; }
+  stopLiveEventSynchronization();
   hideLiveQuizOverlay();
 }
 
@@ -1752,7 +1884,10 @@ const getPlannedLiveSessionsFn = httpsCallable(functions, 'getPlannedLiveSession
 const registerForLiveClassFn = httpsCallable(functions, 'registerForLiveClass');
 const confirmLiveClassRegistrationFn = httpsCallable(functions, 'confirmLiveClassRegistration');
 const getPlayerAccessFn = httpsCallable(functions, 'getPlayerAccess');
+const recordLiveQuizSyncFn = httpsCallable(functions, 'recordLiveQuizSync');
 const gProvider = new GoogleAuthProvider();
+window._ideaKdcLiveFirebase = { db, doc, collection, onSnapshot };
+window._recordLiveQuizSync = (payload) => recordLiveQuizSyncFn(payload);
 
 // ── STATE ──
 let currentUser     = null;
@@ -6891,6 +7026,8 @@ pageHistory = ['home'];
   <button onclick="confirmLeaveLiveStream()" style="position:absolute;top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));z-index:1005;background:rgba(15,23,42,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:99px;padding:.4rem 1rem;font-weight:700;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;box-shadow:0 4px 12px rgba(0,0,0,0.4)">
     ← Leave Live
   </button>
+
+  <div id="live-sync-debug" style="display:none;position:absolute;top:max(62px,calc(env(safe-area-inset-top) + 62px));left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));z-index:1004;background:rgba(2,6,23,.82);color:#bae6fd;border:1px solid rgba(56,189,248,.45);border-radius:8px;padding:.45rem .6rem;font:600 .68rem/1.4 monospace;pointer-events:none"></div>
 
   <!-- Real-Time Quiz Overlay Card -->
   <div id="live-quiz-overlay" style="position:absolute;bottom:max(20px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1006;width:min(92vw,520px);background:rgba(15,23,42,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(255,255,255,0.25);border-radius:20px;padding:1.2rem;color:#fff;box-shadow:0 20px 50px rgba(0,0,0,0.6);display:none;transition:all .3s ease">

@@ -210,6 +210,34 @@ test("admin can write a validated separate quiz and invalid fields are rejected"
   }, adminToken, ["unexpectedAnswerExport", "updatedAt"]));
 });
 
+test("live quiz timeline events are readable only by registered students and admins", async () => {
+  await seed(`liveRegistrations/live-session-1/students/${studentUid}`, {
+    uid: studentUid,
+    joinedAt: { __timestamp: timestamp }
+  });
+  await seed("liveQuizState/live-session-1", {
+    active: true,
+    activeEventId: "event-1"
+  });
+  await seed("liveQuizState/live-session-1/events/event-1", {
+    eventId: "event-1",
+    sessionId: "live-session-1",
+    streamTime: 602.4,
+    offsetMs: 500,
+    targetStreamTime: 602.9,
+    status: "published"
+  });
+  await expectAllowed(readDocument("liveQuizState/live-session-1", studentToken));
+  await expectAllowed(readDocument("liveQuizState/live-session-1/events/event-1", studentToken));
+  await expectDenied(readDocument("liveQuizState/live-session-1/events/event-1", otherStudentToken));
+  await expectDenied(readDocument("liveQuizState/live-session-1/events/event-1", ""));
+  await expectAllowed(readDocument("liveQuizState/live-session-1/events/event-1", adminToken));
+  await expectDenied(writeDocument("liveQuizState/live-session-1/events/fake", {
+    streamTime: 0,
+    status: "published"
+  }, studentToken));
+});
+
 test("referral members can read only their own profile and cannot write financial fields", async () => {
   await seed(`referralMembers/${studentUid}`, {
     uid: studentUid,

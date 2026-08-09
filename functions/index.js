@@ -4056,9 +4056,17 @@ exports.adminPublishLiveQuiz = onCall(callableOptions({ region: 'asia-south1' })
   const pairs        = request.data?.pairs;
   const timeLimit    = Number(request.data?.timeLimit) || 30;
   const position     = String(request.data?.position  || 'center').trim().toLowerCase();
+  const streamTimeInput = request.data?.streamTime;
+  const requestedStreamTime = streamTimeInput === null || streamTimeInput === undefined || streamTimeInput === ''
+    ? Number.NaN
+    : Number(streamTimeInput);
+  const requestedOffsetMs = Number(request.data?.offsetMs ?? 500);
+  const requestedTimingSource = String(request.data?.timingSource || '').trim();
 
   if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
   if (!questionText) throw new HttpsError('invalid-argument', 'question text required.');
+  if (!Number.isFinite(requestedOffsetMs) || requestedOffsetMs < 0 || requestedOffsetMs > 10000)
+    throw new HttpsError('invalid-argument', 'offsetMs must be between 0 and 10000.');
 
   const allowed = [5,10,20,30,60,90,120];
   if (!allowed.includes(timeLimit)) throw new HttpsError('invalid-argument', 'Invalid timeLimit.');
@@ -4081,13 +4089,57 @@ exports.adminPublishLiveQuiz = onCall(callableOptions({ region: 'asia-south1' })
     qObj.pairs = pairs;
   }
 
-  await db.collection('liveQuizState').doc(sessionId).set({
-    active:       true,
-    question:     qObj,
-    publishedAt:  FieldValue.serverTimestamp(),
+  const sessionRef = db.collection('liveClasses').doc(sessionId);
+  const sessionSnap = await sessionRef.get();
+  if (!sessionSnap.exists) throw new HttpsError('not-found', 'Live session not found.');
+  const session = sessionSnap.data();
+  if (session.status !== 'live') throw new HttpsError('failed-precondition', 'The selected session is not live.');
+
+  const serverNowMs = Date.now();
+  const liveStartedMs = session.liveStartedAt?.toMillis?.();
+  const serverElapsed = Number.isFinite(liveStartedMs) ? Math.max(0, (serverNowMs - liveStartedMs) / 1000) : null;
+  const hasPlayerStreamTime = Number.isFinite(requestedStreamTime) && requestedStreamTime >= 0;
+  const streamTime = hasPlayerStreamTime ? requestedStreamTime : serverElapsed;
+  if (!Number.isFinite(streamTime)) {
+    throw new HttpsError('failed-precondition', 'Live media clock is not ready. Please retry in a moment.');
+  }
+  const timingSource = hasPlayerStreamTime
+    ? (['youtube-live-duration', 'youtube-player-current-time'].includes(requestedTimingSource) ? requestedTimingSource : 'youtube-player')
+    : 'server-live-start-fallback';
+  const targetStreamTime = streamTime + requestedOffsetMs / 1000;
+  const stateRef = db.collection('liveQuizState').doc(sessionId);
+  const eventRef = stateRef.collection('events').doc();
+  const event = {
+    eventId: eventRef.id,
     sessionId,
-  });
-  return { ok: true };
+    type: 'quiz',
+    payload: qObj,
+    question: qObj,
+    streamTime,
+    offsetMs: requestedOffsetMs,
+    targetStreamTime,
+    timingSource,
+    quizPlaybackMode: 'continue-live',
+    status: 'published',
+    createdAt: FieldValue.serverTimestamp(),
+    version: 1,
+  };
+  const batch = db.batch();
+  batch.set(eventRef, event);
+  batch.set(stateRef, {
+    active: true,
+    activeEventId: eventRef.id,
+    question: qObj,
+    streamTime,
+    offsetMs: requestedOffsetMs,
+    targetStreamTime,
+    timingSource,
+    publishedAt: FieldValue.serverTimestamp(),
+    sessionId,
+    version: 1,
+  }, { merge: true });
+  await batch.commit();
+  return { ok: true, eventId: eventRef.id, streamTime, offsetMs: requestedOffsetMs, targetStreamTime, timingSource };
 });
 
 // Admin: clear the active quiz
@@ -4095,7 +4147,60 @@ exports.adminClearLiveQuiz = onCall(callableOptions({ region: 'asia-south1' }), 
   requireAdminAuth(request);
   const sessionId = String(request.data?.sessionId || '').trim();
   if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
-  await db.collection('liveQuizState').doc(sessionId).set({ active: false, clearedAt: FieldValue.serverTimestamp() }, { merge: true });
+  const stateRef = db.collection('liveQuizState').doc(sessionId);
+  const stateSnap = await stateRef.get();
+  const activeEventId = String(stateSnap.data()?.activeEventId || '').trim();
+  const batch = db.batch();
+  batch.set(stateRef, { active: false, activeEventId: null, clearedAt: FieldValue.serverTimestamp() }, { merge: true });
+  if (activeEventId && SAFE_RESOURCE_ID_PATTERN.test(activeEventId)) {
+    batch.set(stateRef.collection('events').doc(activeEventId), {
+      status: 'cancelled',
+      cancelledAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  }
+  await batch.commit();
+  return { ok: true };
+});
+
+// Student: record safe synchronization diagnostics after access has already been verified.
+exports.recordLiveQuizSync = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  const auth = requireAuth(request);
+  enforceCallableRateLimit(request, 'record-live-quiz-sync', 120, 60 * 1000);
+  const sessionId = validatedResourceId(request.data?.sessionId, 'sessionId');
+  const eventId = validatedResourceId(request.data?.eventId, 'eventId');
+  const state = validatedText(request.data?.state, 'state', {
+    required: true,
+    maxLength: 20,
+    pattern: /^(displayed|answered|completed|missed)$/
+  });
+  const eventRef = db.collection('liveQuizState').doc(sessionId).collection('events').doc(eventId);
+  const registrationRef = db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid);
+  const [eventSnap, registrationSnap] = await Promise.all([eventRef.get(), registrationRef.get()]);
+  if (!eventSnap.exists) throw new HttpsError('not-found', 'Live quiz event not found.');
+  if (!isAdminAuth(auth) && !registrationSnap.exists) throw new HttpsError('permission-denied', 'Live session access is required.');
+
+  const finiteOrNull = (value, min, max) => {
+    const number = Number(value);
+    return Number.isFinite(number) && number >= min && number <= max ? number : null;
+  };
+  const diagnostic = {
+    eventId,
+    sessionId,
+    uid: auth.uid,
+    state,
+    receivedAtMs: finiteOrNull(request.data?.receivedAtMs, 0, Number.MAX_SAFE_INTEGER),
+    receivedPlaybackTime: finiteOrNull(request.data?.receivedPlaybackTime, 0, 864000),
+    actualDisplayStreamTime: finiteOrNull(request.data?.actualDisplayStreamTime, 0, 864000),
+    estimatedLiveLatency: finiteOrNull(request.data?.estimatedLiveLatency, 0, 86400),
+    syncErrorMs: finiteOrNull(request.data?.syncErrorMs, -600000, 600000),
+    playerState: finiteOrNull(request.data?.playerState, -1, 10),
+    buffering: request.data?.buffering === true,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  await db.collection('liveQuizDiagnostics').doc(sessionId)
+    .collection('students').doc(auth.uid)
+    .collection('events').doc(eventId)
+    .set(diagnostic, { merge: true });
   return { ok: true };
 });
 
@@ -4107,7 +4212,8 @@ exports.adminListLiveSessions = onCall(callableOptions({ region: 'asia-south1' }
     sessionId: d.id,
     ...d.data(),
     createdAt: d.data().createdAt?.toDate?.()?.toISOString() || null,
-    updatedAt: d.data().updatedAt?.toDate?.()?.toISOString() || null
+    updatedAt: d.data().updatedAt?.toDate?.()?.toISOString() || null,
+    liveStartedAt: d.data().liveStartedAt?.toDate?.()?.toISOString() || null
   })).sort((a,b) => String(b.date || '' + b.time || '').localeCompare(String(a.date || '' + a.time || '')));
   return { sessions };
 });

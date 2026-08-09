@@ -266,8 +266,13 @@ service cloud.firestore {
 
     // Live Quiz State — real-time quiz events; authenticated students can read
     match /liveQuizState/{sessionId} {
-      allow read:  if signedIn();
+      allow read:  if isAdmin() || (signedIn() && exists(/databases/$(database)/documents/liveRegistrations/$(sessionId)/students/$(request.auth.uid)));
       allow write: if isAdmin();
+
+      match /events/{eventId} {
+        allow read: if isAdmin() || (signedIn() && exists(/databases/$(database)/documents/liveRegistrations/$(sessionId)/students/$(request.auth.uid)));
+        allow write: if false;
+      }
     }
 
     // Live Registrations — only the backend writes; students can read their own record
