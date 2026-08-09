@@ -77,6 +77,24 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 .courses-section{max-width:1120px;margin:0 auto;padding:clamp(2rem,5vw,4rem) clamp(1rem,4vw,2rem)}
 .courses-head{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin-bottom:1rem}
 .courses-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+.academic-discovery-section{background:#f4f7fc;border-top:1px solid #dde5f1;border-bottom:1px solid #dde5f1;padding:clamp(2.2rem,5vw,4.2rem) clamp(1rem,4vw,2rem)}
+.academic-discovery-inner{width:min(1180px,100%);margin:0 auto}
+.academic-discovery-head{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin-bottom:1.4rem}
+.academic-discovery-head p{max-width:620px;color:#59657a;line-height:1.65;font-size:.9rem}
+.academic-discovery{display:grid;gap:1.65rem}
+.discovery-group{display:grid;grid-template-columns:minmax(150px,190px) minmax(0,1fr);gap:1.1rem;align-items:start}
+.discovery-group-heading{padding-top:.3rem}
+.discovery-group-title{font-size:1rem;color:#10182f;margin-bottom:.3rem}
+.discovery-group-copy{font-size:.76rem;color:#667085;line-height:1.45}
+.discovery-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:.65rem}
+.discovery-card{min-height:112px;padding:.85rem;border:1px solid #d4deed;border-radius:8px;background:#fff;color:#10182f;text-align:left;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;box-shadow:0 8px 24px rgba(16,24,47,.05);transition:border-color .18s,box-shadow .18s,transform .18s}
+.discovery-card:hover,.discovery-card:focus-visible{border-color:#7394df;box-shadow:0 12px 28px rgba(35,71,183,.12);transform:translateY(-2px);outline:none}
+.discovery-card-title{font-size:.9rem;line-height:1.25}
+.discovery-card-copy{margin-top:.28rem;color:#667085;font-size:.72rem;line-height:1.4}
+.discovery-card-arrow{margin-top:auto;padding-top:.6rem;color:#2347b7;font-size:.7rem;font-weight:900}
+.catalogue-filter-summary{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin:0 0 1rem;padding:.75rem .85rem;border:1px solid #cddbf1;border-radius:8px;background:#eef4ff;color:#243352;font-size:.82rem;font-weight:800}
+.catalogue-filter-summary[hidden]{display:none}
+.catalogue-filter-summary .btn-nav{background:#fff}
 .thumb-frame{position:relative;aspect-ratio:16/9;width:100%;overflow:hidden;background:linear-gradient(135deg,#e8eefc,#fff8ec);display:grid;place-items:center;color:var(--deep)}
 .thumb-frame img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb-fallback{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:1rem;font-weight:900;font-size:1.9rem;background:linear-gradient(135deg,#e8eefc,#fff8ec);color:var(--accent)}
@@ -181,6 +199,8 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 
 @media (max-width: 860px){
   .courses-head{display:block}
+  .academic-discovery-head{display:block}
+  .discovery-group{grid-template-columns:1fr;gap:.65rem}
 }
 
 @media (max-width: 520px){
@@ -191,6 +211,9 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
   .btn-nav{font-size:.58rem;padding:6px 6px}
   .courses-section{padding-left:.9rem;padding-right:.9rem}
   .courses-grid{grid-template-columns:1fr}
+  .discovery-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .discovery-card{min-height:104px;padding:.72rem}
+  .catalogue-filter-summary{align-items:flex-start;flex-direction:column}
 }
 
 /* Stage 1 academic header shell */
@@ -879,6 +902,19 @@ body.academic-menu-open{overflow:hidden}
       <div class="uploaded-landing-loading" role="status">IdeaKDC experience loading...</div>
     </section>
 
+    <section class="academic-discovery-section" aria-labelledby="academic-discovery-title">
+      <div class="academic-discovery-inner">
+        <div class="academic-discovery-head">
+          <div>
+            <div class="section-eyebrow">Academic discovery</div>
+            <h2 class="section-title" id="academic-discovery-title">अपना Learning Path चुनें</h2>
+          </div>
+          <p>अपनी class, stream या exam goal चुनें। उपलब्ध courses उसी academic path के अनुसार खुलेंगे।</p>
+        </div>
+        <div class="academic-discovery" id="academic-discovery"></div>
+      </div>
+    </section>
+
     <div class="courses-section" id="courses">
       <div class="courses-head">
         <div>
@@ -903,6 +939,10 @@ body.academic-menu-open{overflow:hidden}
       <h1 id="catalogue-title">All IdeaKDC Courses</h1>
       <p>Explore every active IdeaKDC course class-wise and subject-wise. Free courses can be opened directly. Paid courses stay locked until the exact course purchase is completed for your account.</p>
     </section>
+    <div class="catalogue-filter-summary" id="catalogue-filter-summary" hidden>
+      <span id="catalogue-filter-label"></span>
+      <button class="btn-nav" type="button" onclick="showAllCourses()">सभी Courses दिखाएँ</button>
+    </div>
     <section id="catalogue-content" aria-label="Class-wise course list">
       <div class="catalogue-empty">Courses loading...</div>
     </section>
@@ -1963,6 +2003,8 @@ window._recordLiveQuizSync = (payload) => recordLiveQuizSyncFn(payload);
 let currentUser     = null;
 let currentUserData = null;
 let allCourses      = [];
+let activeAcademicFilter = null;
+let activeAcademicFilterLabel = '';
 let selectedCourse  = null;
 let pageHistory     = [];
 let pendingCourseId = null; // course to unlock after registration
@@ -2106,6 +2148,18 @@ window.navHome = () => {
 };
 
 window.showAllCourses = async () => {
+  activeAcademicFilter = null;
+  activeAcademicFilterLabel = '';
+  clearCourseRoute();
+  setNav('bn-catalogue');
+  pushPage('catalogue');
+  pushHistory();
+  await renderCatalogueContent();
+};
+
+window.showAcademicCourses = async (filter, label = '') => {
+  activeAcademicFilter = filter && typeof filter === 'object' ? { ...filter } : null;
+  activeAcademicFilterLabel = String(label || '').trim();
   clearCourseRoute();
   setNav('bn-catalogue');
   pushPage('catalogue');
@@ -3386,15 +3440,40 @@ function sortClassKeys(a, b) {
 
 async function renderCatalogueContent() {
   const root = document.getElementById('catalogue-content');
+  const title = document.getElementById('catalogue-title');
+  const summary = document.getElementById('catalogue-filter-summary');
+  const summaryLabel = document.getElementById('catalogue-filter-label');
   if (!root) return;
   if (!allCourses.length) {
     root.innerHTML = '<div class="catalogue-empty">Courses जल्द आएंगे।</div>';
     return;
   }
 
-  const accessList = await Promise.all(allCourses.map(course => getCourseAccess(course.id, course)));
-  const accessByCourse = new Map(allCourses.map((course, index) => [course.id, accessList[index]]));
-  const grouped = groupCoursesForCatalogue(allCourses);
+  const matcher = window.IdeaKDCAcademicNavigation?.courseMatchesFilter;
+  const visibleCourses = activeAcademicFilter && typeof matcher === 'function'
+    ? allCourses.filter(course => matcher(course, activeAcademicFilter))
+    : allCourses;
+  const hasFilter = Boolean(activeAcademicFilter && Object.keys(activeAcademicFilter).length);
+  if (title) title.textContent = hasFilter && activeAcademicFilterLabel
+    ? `${activeAcademicFilterLabel} Courses`
+    : 'All IdeaKDC Courses';
+  if (summary) summary.hidden = !hasFilter;
+  if (summaryLabel) summaryLabel.textContent = hasFilter
+    ? `${activeAcademicFilterLabel || 'Selected learning path'} के available courses`
+    : '';
+
+  if (!visibleCourses.length) {
+    root.innerHTML = `
+      <div class="catalogue-empty">
+        <p style="margin-bottom:.8rem">इस learning path में अभी कोई active course नहीं मिला।</p>
+        <button class="btn-nav btn-nav-primary" type="button" onclick="showAllCourses()">सभी Courses देखें</button>
+      </div>`;
+    return;
+  }
+
+  const accessList = await Promise.all(visibleCourses.map(course => getCourseAccess(course.id, course)));
+  const accessByCourse = new Map(visibleCourses.map((course, index) => [course.id, accessList[index]]));
+  const grouped = groupCoursesForCatalogue(visibleCourses);
 
   root.innerHTML = Object.keys(grouped).sort(sortClassKeys).map(classNum => `
     <section class="catalogue-class" aria-labelledby="catalogue-class-${classNum}">

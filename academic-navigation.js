@@ -7,16 +7,16 @@
       label: 'School Preparation',
       groups: [{
         label: 'Classes',
-        items: ['Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'].map(label => ({ label, action: 'courses' }))
+        items: ['5', '6', '7', '8', '9', '10'].map(classNum => ({ label: `Class ${classNum}`, action: 'courses', filter: { classNum } }))
       }]
     },
     {
       id: 'senior-secondary',
       label: 'Class 11–12',
       groups: [
-        { label: 'Science', items: ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English'].map(label => ({ label, action: 'courses' })) },
-        { label: 'Commerce', items: ['Accountancy', 'Economics', 'Business Studies', 'English'].map(label => ({ label, action: 'courses' })) },
-        { label: 'Humanities', items: ['History', 'Political Science', 'Geography', 'Hindi', 'English'].map(label => ({ label, action: 'courses' })) }
+        { label: 'Science', items: ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English'].map(label => ({ label, action: 'courses', filter: { classes: ['11', '12'], stream: 'science', subject: label } })) },
+        { label: 'Commerce', items: ['Accountancy', 'Economics', 'Business Studies', 'English'].map(label => ({ label, action: 'courses', filter: { classes: ['11', '12'], stream: 'commerce', subject: label } })) },
+        { label: 'Humanities', items: ['History', 'Political Science', 'Geography', 'Hindi', 'English'].map(label => ({ label, action: 'courses', filter: { classes: ['11', '12'], stream: 'humanities', subject: label } })) }
       ]
     },
     {
@@ -24,7 +24,7 @@
       label: 'BPSC',
       groups: [{
         label: 'Preparation',
-        items: ['BPSC Prelims', 'BPSC Mains', 'Bihar Special', 'Current Affairs', 'Practice Questions'].map(label => ({ label, action: 'courses' }))
+        items: ['BPSC Prelims', 'BPSC Mains', 'Bihar Special', 'Current Affairs', 'Practice Questions'].map(label => ({ label, action: 'courses', filter: { track: 'bpsc', topic: label } }))
       }]
     },
     {
@@ -40,6 +40,76 @@
     }
   ];
 
+  const discoveryGroups = [
+    {
+      id: 'school-discovery',
+      label: 'School',
+      description: 'Class 5 से Class 10 तक',
+      items: ['5', '6', '7', '8', '9', '10'].map(classNum => ({
+        label: `Class ${classNum}`,
+        description: 'Subjects और available courses',
+        action: 'courses',
+        filter: { classNum }
+      }))
+    },
+    {
+      id: 'senior-discovery',
+      label: 'Senior Secondary',
+      description: 'Class 11–12 streams',
+      items: ['11', '12'].flatMap(classNum => ['science', 'commerce', 'humanities'].map(stream => ({
+        label: `Class ${classNum} ${stream[0].toUpperCase()}${stream.slice(1)}`,
+        description: `${stream[0].toUpperCase()}${stream.slice(1)} learning path`,
+        action: 'courses',
+        filter: { classNum, stream }
+      })))
+    },
+    {
+      id: 'competitive-discovery',
+      label: 'Competitive Exams',
+      description: 'BPSC preparation',
+      items: [
+        { label: 'BPSC Prelims', description: 'Prelims learning path', action: 'courses', filter: { track: 'bpsc', topic: 'BPSC Prelims' } },
+        { label: 'BPSC Mains', description: 'Mains learning path', action: 'courses', filter: { track: 'bpsc', topic: 'BPSC Mains' } }
+      ]
+    }
+  ];
+
+  function normalizedText(value) {
+    return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  function normalizedClass(value) {
+    return normalizedText(value).replace(/^class\s*/, '').replace(/(?:st|nd|rd|th)$/i, '');
+  }
+
+  function inferredStream(course) {
+    const explicit = normalizedText(course?.stream);
+    if (explicit) return explicit === 'arts' ? 'humanities' : explicit;
+    const subject = normalizedText(course?.subject);
+    if (['physics', 'chemistry', 'mathematics', 'maths', 'biology'].includes(subject)) return 'science';
+    if (['accountancy', 'accounts', 'economics', 'business studies'].includes(subject)) return 'commerce';
+    if (['history', 'political science', 'geography', 'hindi'].includes(subject)) return 'humanities';
+    return '';
+  }
+
+  function courseMatchesFilter(course, filter) {
+    if (!filter || !Object.keys(filter).length) return true;
+    const courseClass = normalizedClass(course?.classNum ?? course?.class ?? course?.grade);
+    if (filter.classNum && courseClass !== normalizedClass(filter.classNum)) return false;
+    if (Array.isArray(filter.classes) && !filter.classes.map(normalizedClass).includes(courseClass)) return false;
+    if (filter.stream && inferredStream(course) !== normalizedText(filter.stream)) return false;
+    if (filter.subject && normalizedText(course?.subject) !== normalizedText(filter.subject)) return false;
+
+    const searchText = [course?.classNum, course?.stream, course?.subject, course?.name, course?.tag, course?.category]
+      .map(normalizedText).join(' ');
+    if (filter.track === 'bpsc' && !searchText.includes('bpsc')) return false;
+    if (filter.topic) {
+      const topic = normalizedText(filter.topic).replace(/^bpsc\s*/, '');
+      if (topic && !searchText.includes(topic)) return false;
+    }
+    return true;
+  }
+
   function createElement(tag, className, text) {
     const element = document.createElement(tag);
     if (className) element.className = className;
@@ -50,13 +120,43 @@
   function runAction(item, category, closeMenus) {
     closeMenus();
     global.dispatchEvent(new CustomEvent('ideakdc:academic-navigation', {
-      detail: { category: category.label, destination: item.label }
+      detail: { category: category.label, destination: item.label, filter: item.filter || null }
     }));
     if (item.action === 'live' && typeof global.showLive === 'function') {
       global.showLive();
       return;
     }
+    if (item.filter && typeof global.showAcademicCourses === 'function') {
+      global.showAcademicCourses(item.filter, item.label);
+      return;
+    }
     if (typeof global.showAllCourses === 'function') global.showAllCourses();
+  }
+
+  function renderDiscovery(host, closeMenus) {
+    if (!host) return;
+    const fragment = document.createDocumentFragment();
+    discoveryGroups.forEach(group => {
+      const section = createElement('section', 'discovery-group');
+      section.setAttribute('aria-labelledby', `discovery-title-${group.id}`);
+      const headingWrap = createElement('div', 'discovery-group-heading');
+      const heading = createElement('h3', 'discovery-group-title', group.label);
+      heading.id = `discovery-title-${group.id}`;
+      headingWrap.append(heading, createElement('p', 'discovery-group-copy', group.description));
+      const grid = createElement('div', 'discovery-card-grid');
+      group.items.forEach(item => {
+        const button = createElement('button', 'discovery-card');
+        button.type = 'button';
+        button.append(createElement('strong', 'discovery-card-title', item.label));
+        button.append(createElement('span', 'discovery-card-copy', item.description));
+        button.append(createElement('span', 'discovery-card-arrow', 'Explore →'));
+        button.addEventListener('click', () => runAction(item, group, closeMenus));
+        grid.append(button);
+      });
+      section.append(headingWrap, grid);
+      fragment.append(section);
+    });
+    host.replaceChildren(fragment);
   }
 
   function renderDesktop(host, closeMenus) {
@@ -154,6 +254,7 @@
 
     renderDesktop(desktopHost, closeMenus);
     renderMobile(mobileHost, closeMenus);
+    renderDiscovery(document.getElementById('academic-discovery'), closeMenus);
     mobileDrawer.querySelectorAll('.academic-mobile-utility button').forEach(button => {
       button.addEventListener('click', closeMenus);
     });
@@ -176,7 +277,7 @@
     });
   }
 
-  const api = { categories, init };
+  const api = { categories, discoveryGroups, courseMatchesFilter, inferredStream, init };
   global.IdeaKDCAcademicNavigation = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document !== 'undefined') {
