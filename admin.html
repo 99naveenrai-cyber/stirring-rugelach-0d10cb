@@ -823,12 +823,25 @@ body{padding-bottom:65px}
             <div id="lc-box-json" style="display:none">
               <p style="font-size:.72rem;color:#64748b;margin-bottom:.4rem">Upload a JSON array of pre-planned questions for this class.</p>
               <input type="file" id="lc-json-file" accept=".json" onchange="uploadLiveJsonQuestions(this)" style="font-size:.75rem;margin-bottom:.4rem">
-              <div id="lc-json-status" style="font-size:.72rem;margin-bottom:.4rem"></div>
+              <div id="lc-json-status" style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;margin-bottom:.4rem;flex-wrap:wrap"></div>
             </div>
 
             <!-- Pre-Planned Question Bank List -->
             <div style="margin-top:.8rem;border-top:1px solid #e2e8f0;padding-top:.6rem">
-              <div style="font-weight:800;font-size:.78rem;color:#1e3a8a;margin-bottom:.4rem">📋 Class Quiz Question Bank</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;flex-wrap:wrap;gap:.4rem">
+                <div style="font-weight:800;font-size:.78rem;color:#1e3a8a">📋 Class Quiz Question Bank</div>
+                <div style="display:flex;align-items:center;gap:.35rem">
+                  <select id="lc-q-type-filter" onchange="filterQuestionsByType()" style="padding:2px 6px;font-size:.7rem;border-radius:5px;border:1px solid #cbd5e1;background:#fff">
+                    <option value="all">Filter: All Types</option>
+                    <option value="mcq">MCQ Only</option>
+                    <option value="tf">True/False Only</option>
+                    <option value="match">Match Pairs Only</option>
+                  </select>
+                  <button onclick="toggleQuestionsList()" id="lc-q-toggle-btn" style="background:#0284c7;color:#fff;border:none;border-radius:5px;padding:3px 7px;font-size:.7rem;font-weight:700;cursor:pointer">
+                    👁️ See Questions
+                  </button>
+                </div>
+              </div>
               <div id="lc-uploaded-q-list" style="display:flex;flex-direction:column;gap:.4rem;max-height:220px;overflow-y:auto"></div>
             </div>
 
@@ -3786,6 +3799,61 @@ window.loadAdminLiveSessions = async () => {
   }
 };
 
+window.uploadLiveJsonQuestions = async (inputEl) => {
+  if (!selectedLiveSession) {
+    alert("Please select a planned class first.");
+    return;
+  }
+  const file = inputEl.files?.[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('lc-json-status');
+  if (statusEl) statusEl.innerHTML = '<span style="color:#2563eb">Uploading and validating JSON questions...</span>';
+
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const questions = Array.isArray(parsed) ? parsed : (parsed.questions || []);
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new Error("Invalid JSON: Must be an array of questions or contain a 'questions' array.");
+    }
+
+    await adminUploadLiveQuestionsFn({
+      sessionId: selectedLiveSession.sessionId,
+      questions
+    });
+
+    selectedLiveSession.questions = questions;
+    renderUploadedQuestions(questions);
+
+    if (statusEl) {
+      statusEl.innerHTML = `
+        <span style="color:#15803d;font-weight:800;font-size:.78rem">✅ Uploaded (${questions.length} Questions)</span>
+        <button onclick="toggleQuestionsList()" style="background:#0284c7;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:700;cursor:pointer">👁️ See Questions</button>
+      `;
+    }
+    showToast(`✅ Uploaded ${questions.length} questions successfully!`, 'success');
+  } catch (err) {
+    if (statusEl) statusEl.innerHTML = `<span style="color:#dc2626">Error: ${err?.message}</span>`;
+    alert("Upload failed: " + err?.message);
+  }
+};
+
+window.toggleQuestionsList = () => {
+  const container = document.getElementById('lc-uploaded-q-list');
+  const btn = document.getElementById('lc-q-toggle-btn');
+  if (!container) return;
+  const isHidden = container.style.display === 'none';
+  container.style.display = isHidden ? 'flex' : 'none';
+  if (btn) btn.textContent = isHidden ? '🙈 Hide Questions' : '👁️ See Questions';
+};
+
+window.filterQuestionsByType = () => {
+  if (!selectedLiveSession) return;
+  renderUploadedQuestions(selectedLiveSession.questions || []);
+};
+
 window.cancelPlannedClass = async (sessionId) => {
   if (!confirm("Are you sure you want to cancel and delete this planned class?")) return;
   try {
@@ -3812,8 +3880,22 @@ window.renderUploadedQuestions = (questions) => {
     return;
   }
 
+  const filterEl = document.getElementById('lc-q-type-filter');
+  const filterVal = filterEl ? filterEl.value : 'all';
+
+  const filtered = questions.filter(q => {
+    if (filterVal === 'all') return true;
+    const t = q.type || 'mcq';
+    return t === filterVal;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="font-size:.75rem;color:#94a3b8;padding:.4rem 0">No ${filterVal.toUpperCase()} questions found in this bank.</div>`;
+    return;
+  }
+
   container.innerHTML = '';
-  questions.forEach((q, idx) => {
+  filtered.forEach((q, idx) => {
     const item = document.createElement('div');
     item.style.cssText = 'background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:.5rem .65rem;font-size:.78rem';
     
