@@ -36,6 +36,12 @@ const {
   normalizeUpiId,
   upiFingerprint
 } = require("./referral-utils");
+const {
+  QUIZ_SCORE_MODES,
+  rankRows,
+  scoreAttemptDelta,
+  scorePeriodIds
+} = require("./score-utils");
 
 admin.initializeApp();
 
@@ -59,6 +65,7 @@ const WEBHOOK_MAX_BODY_BYTES = 256 * 1024;
 const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const SAFE_RESOURCE_ID_PATTERN = /^[^/\\\u0000-\u001F]{1,180}$/;
 const REFERRAL_MEMBER_STATUSES = Object.freeze(["active", "banned", "closed"]);
+const QUIZ_SESSION_ID_PATTERN = /^[A-Za-z0-9_-]{8,180}$/;
 
 function callableOptions(options = {}) {
   return {
@@ -1039,6 +1046,91 @@ function safeQuizAnswerKey(value = "") {
   return String(value || "").replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || "question";
 }
 
+function quizScoreSessionRef(uid, clientSessionId) {
+  const safeSessionId = validatedText(clientSessionId, "quizSessionId", {
+    required: true,
+    maxLength: 180,
+    pattern: QUIZ_SESSION_ID_PATTERN
+  });
+  const documentId = crypto.createHash("sha256").update(`${uid}:${safeSessionId}`).digest("hex");
+  return {
+    clientSessionId: safeSessionId,
+    ref: db.collection("quizScoreSessions").doc(documentId)
+  };
+}
+
+function quizRankingRefs(uid, date = new Date()) {
+  const periods = scorePeriodIds(date);
+  return Object.entries(periods).map(([period, periodId]) => ({
+    period,
+    periodId,
+    ref: db.collection("quizRankingPeriods").doc(periodId).collection("students").doc(uid)
+  }));
+}
+
+function applyVerifiedQuizScoreWrites({
+  transaction,
+  sessionRef,
+  sessionSnap,
+  rankingRefs,
+  uid,
+  clientSessionId,
+  mode,
+  courseId,
+  lessonId,
+  questionId,
+  selectedOption,
+  responseId,
+  correct,
+  availableQuestions
+}) {
+  const answerKey = safeQuizAnswerKey(questionId);
+  const previous = sessionSnap.exists ? sessionSnap.get(`answers.${answerKey}`) : null;
+  const alreadyCorrect = previous?.correct === true;
+  const { attemptedDelta, correctDelta, answerAttempts } = scoreAttemptDelta(previous, correct);
+  const now = FieldValue.serverTimestamp();
+  const sessionPayload = {
+    uid,
+    clientSessionId,
+    mode,
+    courseId,
+    lessonId,
+    status: "active",
+    availableQuestions: Math.max(0, Number(availableQuestions || 0)),
+    updatedAt: now,
+    lastAnsweredAt: now,
+    totalAttempted: FieldValue.increment(attemptedDelta),
+    correctAnswers: FieldValue.increment(correctDelta),
+    totalResponses: FieldValue.increment(1),
+    [`answers.${answerKey}`]: {
+      questionId: String(questionId),
+      selectedOption: String(selectedOption),
+      responseId: String(responseId),
+      correct: alreadyCorrect || correct,
+      attempts: answerAttempts,
+      answeredAt: now
+    }
+  };
+  if (!sessionSnap.exists) sessionPayload.startedAt = now;
+  transaction.set(sessionRef, sessionPayload, { merge: true });
+
+  if (attemptedDelta || correctDelta) {
+    rankingRefs.forEach(({ period, periodId, ref }) => {
+      transaction.set(ref, {
+        uid,
+        period,
+        periodId,
+        updatedAt: now,
+        "integrated.attempted": FieldValue.increment(attemptedDelta),
+        "integrated.correct": FieldValue.increment(correctDelta),
+        [`modes.${mode}.attempted`]: FieldValue.increment(attemptedDelta),
+        [`modes.${mode}.correct`]: FieldValue.increment(correctDelta)
+      }, { merge: true });
+    });
+  }
+  return { attemptedDelta, correctDelta };
+}
+
 exports.getPublicCourseCatalogue = onCall(callableOptions({
   region: "asia-south1"
 }), async (request) => {
@@ -1542,7 +1634,7 @@ exports.submitLessonQuizAnswer = onCall(callableOptions({
 }), async (request) => {
   const auth = requireAuth(request);
   const data = validatedCallableData(request, {
-    allowedKeys: ["courseId", "lessonId", "mode", "questionId", "selectedOption", "responseId"],
+    allowedKeys: ["courseId", "lessonId", "mode", "questionId", "selectedOption", "responseId", "quizSessionId"],
     requiredKeys: ["courseId", "lessonId", "questionId", "selectedOption"],
     maxBytes: 4096
   });
@@ -1561,6 +1653,11 @@ exports.submitLessonQuizAnswer = onCall(callableOptions({
     "responseId",
     { required: true, maxLength: 180 }
   );
+  const fallbackSessionId = `legacy_${mode}_${courseId}_${lessonId}_${new Date().toISOString().slice(0, 10)}`
+    .replace(/[^A-Za-z0-9_-]/g, "_")
+    .slice(0, 180);
+  const scoreSession = quizScoreSessionRef(auth.uid, data.quizSessionId || fallbackSessionId);
+  const rankingRefs = quizRankingRefs(auth.uid);
 
   const docs = await loadCourseContentDocs(courseId);
   const lessonIndex = docs.findIndex((doc) => doc.id === lessonId || doc.lessonId === lessonId || doc.contentId === lessonId);
@@ -1603,7 +1700,10 @@ exports.submitLessonQuizAnswer = onCall(callableOptions({
   try {
     const answerKey = safeQuizAnswerKey(questionId);
     await db.runTransaction(async (transaction) => {
-      const snap = await transaction.get(progressRef);
+      const [snap, scoreSessionSnap] = await Promise.all([
+        transaction.get(progressRef),
+        transaction.get(scoreSession.ref)
+      ]);
       const previous = snap.exists ? snap.get(`${mode}.answered.${answerKey}`) : null;
       const alreadyAttempted = !!previous;
       const alreadyCorrect = previous?.correct === true;
@@ -1627,6 +1727,22 @@ exports.submitLessonQuizAnswer = onCall(callableOptions({
       }
       if (correct && !alreadyCorrect) payload[`${mode}.correctAnswers`] = FieldValue.increment(1);
       transaction.set(progressRef, payload, { merge: true });
+      applyVerifiedQuizScoreWrites({
+        transaction,
+        sessionRef: scoreSession.ref,
+        sessionSnap: scoreSessionSnap,
+        rankingRefs,
+        uid: auth.uid,
+        clientSessionId: scoreSession.clientSessionId,
+        mode,
+        courseId,
+        lessonId,
+        questionId,
+        selectedOption,
+        responseId,
+        correct,
+        availableQuestions: questionSet.questions.length
+      });
     });
   } catch (error) {
     remoteSaved = false;
@@ -1648,6 +1764,130 @@ exports.submitLessonQuizAnswer = onCall(callableOptions({
     questionId,
     responseId,
     remoteSaved
+  };
+});
+
+exports.submitLiveQuizAnswer = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["sessionId", "eventId", "selectedOption", "quizSessionId", "responseId"],
+    requiredKeys: ["sessionId", "eventId", "selectedOption", "quizSessionId"],
+    maxBytes: 2048
+  });
+  enforceCallableRateLimit(request, "submit-live-quiz-answer", 120, 60 * 1000);
+  const sessionId = validatedResourceId(data.sessionId, "sessionId");
+  const eventId = validatedResourceId(data.eventId, "eventId");
+  const selectedOption = validatedText(String(data.selectedOption), "selectedOption", {
+    required: true,
+    maxLength: 20,
+    pattern: /^[0-9]+$/
+  });
+  const responseId = validatedText(data.responseId || `${Date.now()}_${crypto.randomBytes(3).toString("hex")}`, "responseId", {
+    required: true,
+    maxLength: 180
+  });
+  const scoreSession = quizScoreSessionRef(auth.uid, data.quizSessionId);
+  const eventRef = db.collection("liveQuizState").doc(sessionId).collection("events").doc(eventId);
+  const registrationRef = db.collection("liveRegistrations").doc(sessionId).collection("students").doc(auth.uid);
+  const [eventSnap, registrationSnap] = await Promise.all([eventRef.get(), registrationRef.get()]);
+  if (!eventSnap.exists) throw new HttpsError("not-found", "Live quiz event was not found.");
+  if (!isAdminAuth(auth) && !registrationSnap.exists) throw new HttpsError("permission-denied", "Live class access is required.");
+  const event = eventSnap.data();
+  const question = event.payload || event.question || {};
+  const correctIndex = Number.isInteger(Number(question.correctIndex))
+    ? Number(question.correctIndex)
+    : Number.isInteger(Number(question.correct)) ? Number(question.correct) : null;
+  if (!Array.isArray(question.options) || correctIndex === null) {
+    throw new HttpsError("failed-precondition", "This live question type cannot be scored automatically.");
+  }
+  const selectedIndex = Number(selectedOption);
+  if (selectedIndex < 0 || selectedIndex >= question.options.length) throw new HttpsError("invalid-argument", "Selected option is invalid.");
+  const correct = selectedIndex === correctIndex;
+  const rankingRefs = quizRankingRefs(auth.uid);
+  await db.runTransaction(async (transaction) => {
+    const scoreSessionSnap = await transaction.get(scoreSession.ref);
+    applyVerifiedQuizScoreWrites({
+      transaction,
+      sessionRef: scoreSession.ref,
+      sessionSnap: scoreSessionSnap,
+      rankingRefs,
+      uid: auth.uid,
+      clientSessionId: scoreSession.clientSessionId,
+      mode: "live",
+      courseId: `live_${sessionId}`,
+      lessonId: sessionId,
+      questionId: eventId,
+      selectedOption,
+      responseId,
+      correct,
+      availableQuestions: 0
+    });
+  });
+  return { correct, eventId, responseId };
+});
+
+exports.finalizeQuizScoreSession = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["quizSessionId"],
+    requiredKeys: ["quizSessionId"],
+    maxBytes: 512
+  });
+  enforceCallableRateLimit(request, "finalize-quiz-score-session", 60, 60 * 1000);
+  const scoreSession = quizScoreSessionRef(auth.uid, data.quizSessionId);
+  const snap = await scoreSession.ref.get();
+  if (!snap.exists) return { finalized: false, reason: "no-attempts" };
+  if (snap.data().uid !== auth.uid) throw new HttpsError("permission-denied", "Score session ownership mismatch.");
+  await scoreSession.ref.set({ status: "completed", endedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  return { finalized: true };
+});
+
+exports.getMyQuizScoreDashboard = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireAuth(request);
+  validatedCallableData(request, { allowedKeys: [], maxBytes: 256 });
+  enforceCallableRateLimit(request, "quiz-score-dashboard", 30, 60 * 1000);
+  const periodIds = scorePeriodIds();
+  const periodEntries = Object.entries(periodIds);
+  const [profileSnap, sessionsSnap, ...rankingSnapshots] = await Promise.all([
+    db.collection("users").doc(auth.uid).get(),
+    db.collection("quizScoreSessions").where("uid", "==", auth.uid).limit(100).get(),
+    ...periodEntries.map(([, periodId]) => db.collection("quizRankingPeriods").doc(periodId).collection("students").limit(5000).get())
+  ]);
+  const toMillis = (value) => value?.toMillis?.() || 0;
+  const sessions = sessionsSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+    .sort((a, b) => toMillis(b.updatedAt) - toMillis(a.updatedAt));
+  const latest = sessions[0] || null;
+  const scopes = ["integrated", ...QUIZ_SCORE_MODES];
+  const periods = {};
+  periodEntries.forEach(([period, periodId], index) => {
+    const rows = rankingSnapshots[index].docs.map((docSnap) => ({ uid: docSnap.id, ...docSnap.data() }));
+    periods[period] = {
+      periodId,
+      scopes: Object.fromEntries(scopes.map((scope) => [scope, rankRows(rows, auth.uid, scope)]))
+    };
+  });
+  const profile = profileSnap.exists ? profileSnap.data() : {};
+  const latestCorrect = Math.max(0, Number(latest?.correctAnswers || 0));
+  const latestAttempted = Math.max(0, Number(latest?.totalAttempted || 0));
+  const latestPercentage = latestAttempted ? Math.round(latestCorrect / latestAttempted * 100) : 0;
+  return {
+    profile: {
+      name: String(profile.name || auth.token?.name || auth.token?.email || "Student").slice(0, 120),
+      gender: ["male", "female"].includes(profile.gender) ? profile.gender : "",
+      whatsapp: String(profile.whatsapp || profile.mobile || profile.phone || "").slice(0, 24),
+      avatarId: String(profile.avatarId || "").slice(0, 40)
+    },
+    latestSession: latest ? {
+      mode: latest.mode,
+      correct: latestCorrect,
+      attempted: latestAttempted,
+      percentage: latestPercentage,
+      courseId: latest.courseId,
+      lessonId: latest.lessonId,
+      status: latest.status || "active",
+      updatedAt: latest.updatedAt?.toDate?.()?.toISOString() || null
+    } : null,
+    periods
   };
 });
 

@@ -35,6 +35,10 @@ service cloud.firestore {
         && optionalString(data, 'state', 100)
         && optionalString(data, 'mobile', 24)
         && optionalString(data, 'phone', 24)
+        && optionalString(data, 'whatsapp', 24)
+        && optionalString(data, 'gender', 12)
+        && optionalString(data, 'avatarId', 40)
+        && (!data.keys().hasAny(['gender']) || data.gender in ['male', 'female'])
         && optionalString(data, 'registrationSource', 80)
         && optionalTimestamp(data, 'createdAt')
         && optionalTimestamp(data, 'updatedAt');
@@ -49,6 +53,9 @@ service cloud.firestore {
           'state',
           'mobile',
           'phone',
+          'whatsapp',
+          'gender',
+          'avatarId',
           'registrationSource',
           'createdAt',
           'updatedAt',
@@ -70,6 +77,9 @@ service cloud.firestore {
           'state',
           'mobile',
           'phone',
+          'whatsapp',
+          'gender',
+          'avatarId',
           'registrationSource',
           'updatedAt'
         ])

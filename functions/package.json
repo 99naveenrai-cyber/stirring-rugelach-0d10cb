@@ -9,7 +9,7 @@
   "scripts": {
     "lint": "node --check index.js",
     "build": "node --check index.js",
-    "test": "node --test test/security-utils.test.js test/admin-security.test.js test/config-security.test.js test/referral-utils.test.js test/referral-integration.test.js",
+    "test": "node --test test/security-utils.test.js test/admin-security.test.js test/config-security.test.js test/referral-utils.test.js test/referral-integration.test.js test/score-utils.test.js",
     "test:rules": "node --test test/firestore.rules.test.js"
   },
   "dependencies": {

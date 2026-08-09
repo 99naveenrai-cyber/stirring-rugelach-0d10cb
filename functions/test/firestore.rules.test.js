@@ -123,6 +123,9 @@ test("students can create and update only their own allowed profile fields", asy
     state: "Bihar",
     mobile: "9876543210",
     phone: "9876543210",
+    whatsapp: "9876543210",
+    gender: "male",
+    avatarId: "male-2",
     registrationSource: "conversation",
     role: "student",
     createdAt: { __timestamp: timestamp },
@@ -135,6 +138,8 @@ test("students can create and update only their own allowed profile fields", asy
   await expectDenied(writeDocument(`users/${otherStudentUid}`, { name: "Other" }, studentToken));
   await expectDenied(writeDocument(`users/${studentUid}`, { role: "admin" }, studentToken, ["role"]));
   await expectDenied(writeDocument(`users/${studentUid}`, { isAdmin: true }, studentToken, ["isAdmin"]));
+  await expectDenied(writeDocument(`users/${studentUid}`, { gender: "unknown" }, studentToken, ["gender"]));
+  await expectDenied(writeDocument(`users/${studentUid}`, { scoreOverride: 100 }, studentToken, ["scoreOverride"]));
   await expectAllowed(readDocument(`users/${studentUid}`, studentToken));
   await expectDenied(readDocument(`users/${studentUid}`, otherStudentToken));
 });
@@ -208,6 +213,20 @@ test("admin can write a validated separate quiz and invalid fields are rejected"
     unexpectedAnswerExport: true,
     updatedAt: { __timestamp: timestamp }
   }, adminToken, ["unexpectedAnswerExport", "updatedAt"]));
+});
+
+test("students cannot write backend-owned quiz score or ranking records", async () => {
+  await expectDenied(writeDocument("quizScoreSessions/fake-session", {
+    uid: studentUid,
+    correctAnswers: 100,
+    totalAttempted: 100
+  }, studentToken));
+  await expectDenied(writeDocument(`quizRankingPeriods/overall/students/${studentUid}`, {
+    uid: studentUid,
+    integrated: { correct: 100, attempted: 100 }
+  }, studentToken));
+  await expectDenied(readDocument("quizScoreSessions/fake-session", studentToken));
+  await expectDenied(readDocument(`quizRankingPeriods/overall/students/${otherStudentUid}`, studentToken));
 });
 
 test("live quiz timeline events are readable only by registered students and admins", async () => {

@@ -305,6 +305,18 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
    STUDENT DASHBOARD
 ══════════════════════════════ */
 .dashboard{max-width:900px;margin:0 auto;padding:1.2rem 1rem 2rem}
+.student-profile-strip{display:grid;grid-template-columns:auto 1fr;gap:.8rem;align-items:center;margin:.8rem 0;padding:.75rem;background:#fff;border:1px solid #dbe3ee;border-radius:8px}
+.student-avatar{--avatar-bg:#dbeafe;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:var(--avatar-bg);border:2px solid rgba(30,58,138,.18);font-size:1.8rem;box-shadow:0 5px 14px rgba(15,23,42,.12)}
+.student-profile-name{font-size:1.05rem;font-weight:900;color:#172554}.student-profile-meta{font-size:.78rem;color:#64748b;margin-top:.15rem}
+.dashboard-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem;margin:.65rem 0 .9rem}
+.dashboard-tab{min-height:44px;border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:7px;font-weight:800;cursor:pointer}.dashboard-tab.active{background:#172554;color:#fff;border-color:#172554}
+.score-hub{display:grid;gap:.8rem}.score-latest{padding:1rem;background:linear-gradient(135deg,#071b43,#123d78);color:#fff;border:1px solid #4ca7ff;border-radius:8px;box-shadow:0 12px 28px rgba(7,27,67,.22)}
+.score-latest-value{font-size:clamp(2rem,8vw,3.6rem);font-weight:950;color:#ffe18b;line-height:1}.score-latest-label{font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:#b9d8ff;margin-bottom:.45rem}
+.score-period{background:#fff;border:1px solid #dbe3ee;border-radius:8px;padding:.8rem}.score-period h3{font-size:.95rem;color:#172554;margin:0 0 .55rem}
+.score-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem}.score-mode-card{border:1px solid #dbeafe;background:#f8fbff;border-radius:7px;padding:.65rem;min-width:0}.score-mode-name{font-size:.7rem;text-transform:uppercase;color:#64748b;font-weight:850}.score-mode-rank{font-size:1.25rem;font-weight:950;color:#1d4ed8;margin:.15rem 0}.score-mode-stat{font-size:.75rem;color:#334155}.score-target{font-size:.72rem;color:#075985;margin-top:.3rem;line-height:1.35}
+.profile-editor{background:#fff;border:1px solid #dbe3ee;border-radius:8px;padding:1rem;display:grid;gap:.75rem}.profile-editor label{font-size:.76rem;font-weight:800;color:#334155;display:grid;gap:.3rem}.profile-editor input,.profile-editor select{min-height:44px;border:1px solid #cbd5e1;border-radius:7px;padding:.55rem .65rem;background:#fff;font:inherit}.profile-save-status{min-height:1.2rem;font-size:.78rem;font-weight:700}
+.score-download{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin-top:.75rem;padding:.55rem .85rem;border:1px solid rgba(255,255,255,.45);border-radius:7px;background:rgba(255,255,255,.12);color:#fff;font-weight:850;cursor:pointer}
+@media(max-width:520px){.dashboard-tabs{grid-template-columns:1fr}.score-mode-grid{grid-template-columns:1fr 1fr}.student-profile-strip{margin-top:.55rem}}
 .dash-header{margin-bottom:1.2rem}
 .dash-welcome{font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:800;font-size:1.3rem;color:#0a2a5e}
 .dash-sub{font-size:.82rem;color:var(--muted);margin-top:.2rem}
@@ -938,6 +950,13 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
       </div>
     </div>
 
+    <div id="student-profile-strip" class="student-profile-strip"></div>
+    <div class="dashboard-tabs" role="tablist" aria-label="Student dashboard views">
+      <button id="dash-tab-courses" class="dashboard-tab active" type="button" onclick="showMyCoursesTab()">My Courses</button>
+      <button id="dash-tab-scores" class="dashboard-tab" type="button" onclick="showScoreDashboard()">Scores & Rank</button>
+      <button id="dash-tab-profile" class="dashboard-tab" type="button" onclick="showStudentProfileEditor()">Edit Profile</button>
+    </div>
+
     <!-- Dynamic dashboard content -->
     <div id="dash-content"></div>
   </div>
@@ -1153,6 +1172,7 @@ let _livePlayer = null;
 let _liveStreamClock = null;
 let _liveSyncManager = null;
 let _activeLiveQuizEvent = null;
+let _liveScoreSessionId = null;
 const _recordedLiveSyncStates = new Set();
 
 window.showLive = async () => {
@@ -1498,6 +1518,7 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
   if (!page || !iframe) return;
 
   stopLiveEventSynchronization();
+  _liveScoreSessionId = window.createQuizSessionId?.('live') || null;
   iframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
   page.style.display = 'block';
 
@@ -1790,6 +1811,15 @@ function revealQuizAnswer(correctIdx, studentSelectedIdx) {
   }
   if (_activeLiveQuizEvent) {
     const sessionId = _activeLiveQuizEvent.sessionId;
+    if (studentSelectedIdx !== -1 && _liveScoreSessionId && window.submitVerifiedLiveQuizAnswer) {
+      window.submitVerifiedLiveQuizAnswer({
+        sessionId,
+        eventId: _activeLiveQuizEvent.eventId,
+        selectedOption: String(studentSelectedIdx),
+        quizSessionId: _liveScoreSessionId,
+        responseId: `${_activeLiveQuizEvent.eventId}__${Date.now()}`
+      }).catch((error) => console.warn('[Live quiz score] save delayed', error?.code || error?.message || error));
+    }
     recordLiveQuizSyncState(sessionId, _activeLiveQuizEvent, 'answered', {
       actualPlaybackTime: _liveStreamClock?.currentTime?.(),
       estimatedLiveLatency: _liveStreamClock?.estimatedLiveLatency?.()
@@ -1838,6 +1868,8 @@ function exitLiveStream() {
   if (iframe) iframe.src = '';
   _livePlayer = null;
   if (page) page.style.display = 'none';
+  window.finalizeQuizSession?.(_liveScoreSessionId);
+  _liveScoreSessionId = null;
   stopLiveEventSynchronization();
   hideLiveQuizOverlay();
 }
@@ -1875,6 +1907,10 @@ const getPublicCourseCatalogueFn = httpsCallable(functions, 'getPublicCourseCata
 const getAuthorizedLessonVideoFn = httpsCallable(functions, 'getAuthorizedLessonVideo');
 const getAuthorizedLessonQuizFn = httpsCallable(functions, 'getAuthorizedLessonQuiz');
 const submitLessonQuizAnswerFn = httpsCallable(functions, 'submitLessonQuizAnswer');
+const submitLiveQuizAnswerFn = httpsCallable(functions, 'submitLiveQuizAnswer');
+const finalizeQuizScoreSessionFn = httpsCallable(functions, 'finalizeQuizScoreSession');
+const getMyQuizScoreDashboardFn = httpsCallable(functions, 'getMyQuizScoreDashboard');
+window.submitVerifiedLiveQuizAnswer = (payload) => submitLiveQuizAnswerFn(payload);
 const joinReferralProgramFn = httpsCallable(functions, 'joinReferralProgram');
 const verifyReferralUpiFn = httpsCallable(functions, 'verifyReferralUpi');
 const claimReferralAttributionFn = httpsCallable(functions, 'claimReferralAttribution');
@@ -2249,6 +2285,8 @@ function resumeActiveLessonVideo() {
 }
 
 function stopAndUnloadActiveLessonVideo() {
+  void window.finalizeQuizSession?.(typeof activeSeparateQuizState === 'undefined' ? null : activeSeparateQuizState?.sessionId);
+  void window.finalizeQuizSession?.(typeof activeLessonQuiz === 'undefined' ? null : activeLessonQuiz?.scoreSessionId);
   window.clearTimeout(window._nextLessonTimer);
   window.clearInterval(window._popupQuizTimer);
   window._nextLessonTimer = null;
@@ -4746,11 +4784,140 @@ window.showDashboard = async () => {
   await renderDashboard();
 };
 
+function avatarVariantFor(uid, gender) {
+  const text = `${uid || 'student'}:${gender || 'student'}`;
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+  return Math.abs(hash) % 6;
+}
+
+function studentAvatarProfile(profile = {}) {
+  const gender = profile.gender === 'male' || profile.gender === 'female' ? profile.gender : '';
+  const storedVariant = Number(String(profile.avatarId || '').split('-').pop());
+  const variant = Number.isInteger(storedVariant) && storedVariant >= 0 && storedVariant < 6 ? storedVariant : avatarVariantFor(currentUser?.uid, gender);
+  const glyphs = gender === 'female'
+    ? ['👩‍🎓','👩‍💻','👩‍🔬','👩‍🏫','👩‍🚀','🧕']
+    : gender === 'male'
+      ? ['👨‍🎓','🧑‍🎓','👨‍💻','🧑‍🔬','👨‍🏫','🧑‍🚀']
+      : ['🎓','📘','🧠','✍️','🔬','📚'];
+  const colors = ['#dbeafe','#dcfce7','#fef3c7','#ede9fe','#cffafe','#ffe4e6'];
+  return { gender, variant, avatarId: `${gender || 'student'}-${variant}`, glyph: glyphs[variant], color: colors[variant] };
+}
+
+function renderStudentProfileStrip() {
+  const holder = document.getElementById('student-profile-strip');
+  if (!holder) return;
+  const profile = currentUserData || {};
+  const avatar = studentAvatarProfile(profile);
+  const name = currentUser?.displayName || profile.name || 'Student';
+  holder.innerHTML = `<div class="student-avatar" style="--avatar-bg:${avatar.color}" aria-label="Student profile picture">${avatar.glyph}</div><div><div class="student-profile-name">${escapeHtml(name)}</div><div class="student-profile-meta">${escapeHtml(profile.gender ? profile.gender[0].toUpperCase() + profile.gender.slice(1) : 'Complete your profile')} · ${escapeHtml(profile.whatsapp || profile.mobile || profile.phone || 'WhatsApp not added')}</div></div>`;
+}
+
+function setDashboardTab(tab) {
+  ['courses','scores','profile'].forEach(name => document.getElementById(`dash-tab-${name}`)?.classList.toggle('active', name === tab));
+}
+
+window.showMyCoursesTab = async () => {
+  dashState = { view: 'my-courses', subject: null, chapter: null };
+  setDashboardTab('courses');
+  await renderDashContent();
+};
+
+function scoreScopeCard(label, score) {
+  const rank = score?.rank ? `#${score.rank}` : '—';
+  return `<article class="score-mode-card"><div class="score-mode-name">${escapeHtml(label)}</div><div class="score-mode-rank">${rank}</div><div class="score-mode-stat">${Number(score?.correct || 0)} correct / ${Number(score?.attempted || 0)} attempted · ${Number(score?.percentage || 0)}%</div><div class="score-target">${escapeHtml(score?.target || 'Complete a quiz to enter this ranking.')}</div></article>`;
+}
+
+function scoreCompliment(percentage) {
+  if (percentage >= 90) return 'Outstanding! Your thoughtful learning is setting the standard.';
+  if (percentage >= 75) return 'Excellent progress! You are building a powerful learning habit.';
+  if (percentage >= 50) return 'Good effort! Every thoughtful attempt is moving you forward.';
+  return 'Keep practising. Your next breakthrough is closer than it looks.';
+}
+
+window.showScoreDashboard = async () => {
+  setDashboardTab('scores');
+  const content = document.getElementById('dash-content');
+  content.innerHTML = '<div class="catalogue-empty">Scores and ranks loading…</div>';
+  try {
+    const result = await getMyQuizScoreDashboardFn({});
+    const dashboard = result.data || {};
+    window._latestQuizScoreDashboard = dashboard;
+    const latest = dashboard.latestSession;
+    const periods = dashboard.periods || {};
+    const periodLabels = { day: 'Today', week: 'This Week', month: 'This Month', overall: 'Overall' };
+    content.innerHTML = `<section class="score-hub"><article class="score-latest"><div class="score-latest-label">Latest session · ${escapeHtml(latest?.mode || 'No quiz yet')}</div><div class="score-latest-value">${Number(latest?.correct || 0)} / ${Number(latest?.attempted || 0)}</div><p>${escapeHtml(scoreCompliment(Number(latest?.percentage || 0)))}</p>${latest ? '<button class="score-download" type="button" onclick="downloadLatestQuizScorecard()">Download premium scorecard</button>' : ''}</article>${Object.entries(periodLabels).map(([period, label]) => { const scopes = periods[period]?.scopes || {}; return `<section class="score-period"><h3>${label} ranking</h3><div class="score-mode-grid">${scoreScopeCard('Integrated', scopes.integrated)}${scoreScopeCard('Live', scopes.live)}${scoreScopeCard('Popup', scopes.popup)}${scoreScopeCard('Separate', scopes.separate)}</div></section>`; }).join('')}</section>`;
+  } catch (error) {
+    content.innerHTML = `<div class="course-viewer-state error"><h2>Scores unavailable</h2><p>${escapeHtml(error?.message || 'Please try again.')}</p><button class="btn-enroll" type="button" onclick="showScoreDashboard()">Retry</button></div>`;
+  }
+};
+
+window.showStudentProfileEditor = () => {
+  setDashboardTab('profile');
+  const content = document.getElementById('dash-content');
+  const profile = currentUserData || {};
+  const avatar = studentAvatarProfile(profile);
+  content.innerHTML = `<section class="profile-editor"><div style="display:flex;align-items:center;gap:.7rem"><div class="student-avatar" style="--avatar-bg:${avatar.color}">${avatar.glyph}</div><div><strong>Student Profile</strong><div class="student-profile-meta">Your academic avatar is selected automatically.</div></div></div><label>Name<input id="student-profile-name" type="text" maxlength="120" value="${escapeHtml(currentUser?.displayName || profile.name || '')}" autocomplete="name"></label><label>Gender<select id="student-profile-gender"><option value="">Select gently…</option><option value="male" ${profile.gender === 'male' ? 'selected' : ''}>Male</option><option value="female" ${profile.gender === 'female' ? 'selected' : ''}>Female</option></select></label><label>WhatsApp contact<input id="student-profile-whatsapp" type="tel" inputmode="numeric" maxlength="10" value="${escapeHtml(profile.whatsapp || profile.mobile || profile.phone || '')}" placeholder="10-digit WhatsApp number"></label><button class="btn-enroll" type="button" onclick="saveStudentProfile()">Save Profile</button><div id="student-profile-save-status" class="profile-save-status" aria-live="polite"></div></section>`;
+};
+
+window.saveStudentProfile = async () => {
+  const status = document.getElementById('student-profile-save-status');
+  const name = String(document.getElementById('student-profile-name')?.value || '').trim();
+  const gender = String(document.getElementById('student-profile-gender')?.value || '');
+  const whatsapp = normalizeIndianMobile(document.getElementById('student-profile-whatsapp')?.value || '');
+  if (!isValidStudentName(name)) { status.textContent = 'Please enter a valid student name.'; status.style.color = '#b91c1c'; return; }
+  if (!['male','female'].includes(gender)) { status.textContent = 'Please select Male or Female.'; status.style.color = '#b91c1c'; return; }
+  if (!/^[6-9]\d{9}$/.test(whatsapp)) { status.textContent = 'Please enter a valid 10-digit WhatsApp number.'; status.style.color = '#b91c1c'; return; }
+  const avatar = studentAvatarProfile({ gender, avatarId: '' });
+  status.textContent = 'Saving…'; status.style.color = '#475569';
+  try {
+    await setDoc(doc(db, 'users', currentUser.uid), { name, gender, whatsapp, avatarId: avatar.avatarId, updatedAt: serverTimestamp() }, { merge: true });
+    await updateProfile(currentUser, { displayName: name }).catch(() => {});
+    currentUserData = { ...(currentUserData || {}), name, gender, whatsapp, avatarId: avatar.avatarId };
+    renderStudentProfileStrip();
+    status.textContent = 'Profile saved successfully.'; status.style.color = '#15803d';
+    window.setTimeout(showStudentProfileEditor, 500);
+  } catch (error) {
+    status.textContent = error?.message || 'Profile could not be saved.'; status.style.color = '#b91c1c';
+  }
+};
+
+window.downloadLatestQuizScorecard = () => {
+  const dashboard = window._latestQuizScoreDashboard;
+  const latest = dashboard?.latestSession;
+  if (!latest) return;
+  const name = dashboard.profile?.name || currentUser?.displayName || 'Student';
+  const canvas = document.createElement('canvas');
+  canvas.width = 1600; canvas.height = 1100;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 1600, 1100);
+  gradient.addColorStop(0, '#061634'); gradient.addColorStop(1, '#123f79');
+  ctx.fillStyle = gradient; ctx.fillRect(0, 0, 1600, 1100);
+  ctx.strokeStyle = '#8ed4ff'; ctx.lineWidth = 10; ctx.strokeRect(38, 38, 1524, 1024);
+  ctx.strokeStyle = '#f4cc68'; ctx.lineWidth = 3; ctx.strokeRect(62, 62, 1476, 976);
+  ctx.textAlign = 'center'; ctx.fillStyle = '#7dd3fc'; ctx.font = '700 44px Arial'; ctx.fillText('ideaKDC', 800, 155);
+  ctx.fillStyle = '#dbeafe'; ctx.font = '600 30px Arial'; ctx.fillText('Creating Thoughtful Minds', 800, 205);
+  ctx.fillStyle = '#f8fafc'; ctx.font = '700 34px Arial'; ctx.fillText('QUIZ ACHIEVEMENT SCORECARD', 800, 315);
+  ctx.fillStyle = '#ffe18b'; ctx.font = '900 82px Arial'; ctx.fillText(name, 800, 440);
+  ctx.fillStyle = '#ffffff'; ctx.font = '900 132px Arial'; ctx.fillText(`${latest.correct} / ${latest.attempted}`, 800, 625);
+  ctx.fillStyle = '#bae6fd'; ctx.font = '700 38px Arial'; ctx.fillText(`${String(latest.mode || '').toUpperCase()} QUIZ · ${latest.percentage}%`, 800, 700);
+  ctx.fillStyle = '#ffffff'; ctx.font = '700 43px Arial'; ctx.fillText(scoreCompliment(latest.percentage), 800, 815, 1350);
+  ctx.fillStyle = '#94a3b8'; ctx.font = '500 25px Arial'; ctx.fillText(`Issued ${new Date().toLocaleDateString('en-IN')} · Verified IdeaKDC learning record`, 800, 970);
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+    link.download = `IdeaKDC-Scorecard-${name.replace(/[^a-zA-Z0-9_-]+/g, '-') || 'Student'}.png`;
+    link.click(); window.setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+  }, 'image/png');
+};
+
 async function renderDashboard() {
   const ud = currentUserData || {};
   const name = currentUser.displayName || ud.name || 'Student';
   document.getElementById('dash-welcome').textContent = `नमस्ते, ${name}! 👋`;
   document.getElementById('dash-sub').textContent = `Class ${ud.classNum||''} ${ud.stream ? '• '+streamName(ud.stream) : ''}`;
+  renderStudentProfileStrip();
+  setDashboardTab('courses');
 
   // Continue Learning
   const progress = await getProgress();
@@ -5264,6 +5431,8 @@ function ensureYouTubeIframeApi() {
 }
 
 function destroyActiveLessonPlayer() {
+  void window.finalizeQuizSession?.(typeof activeSeparateQuizState === 'undefined' ? null : activeSeparateQuizState?.sessionId);
+  void window.finalizeQuizSession?.(typeof activeLessonQuiz === 'undefined' ? null : activeLessonQuiz?.scoreSessionId);
   try {
     pauseActiveLessonVideo();
     window._activeLessonPlayer?.destroy?.();
@@ -5770,6 +5939,20 @@ function quizResponseId(course, lesson, mode, questionId) {
   ].map(value => String(value).replace(/[^a-zA-Z0-9_-]/g, '_')).join('__');
 }
 
+function createQuizSessionId(mode = 'quiz') {
+  const randomId = window.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  return `${mode}_${randomId}`.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 180);
+}
+
+function finalizeQuizSession(sessionId) {
+  if (!sessionId) return Promise.resolve();
+  return finalizeQuizScoreSessionFn({ quizSessionId: sessionId })
+    .catch((error) => console.warn('[Quiz score] session finalization delayed', error?.code || error?.message || error));
+}
+
+window.createQuizSessionId = createQuizSessionId;
+window.finalizeQuizSession = finalizeQuizSession;
+
 function readPendingQuizResponses() {
   try {
     return JSON.parse(localStorage.getItem('pendingQuizResponses') || '[]').filter(Boolean);
@@ -5805,7 +5988,8 @@ async function retryPendingQuizResponses() {
         mode: item.mode,
         questionId: item.questionId,
         selectedOption: item.selectedOption,
-        responseId: item.responseId
+        responseId: item.responseId,
+        quizSessionId: item.quizSessionId
       });
       markPendingQuizSynced(item.responseId);
     } catch (error) {
@@ -5958,6 +6142,7 @@ function renderQuizPanel(course, lesson, mode, quizData, targetId = 'selected-le
 
 function createSeparateQuizState(questionCount) {
   return {
+    sessionId: createQuizSessionId('separate'),
     currentQuestionIndex: 0,
     score: 0,
     answers: Array.from({ length: questionCount }, () => null),
@@ -6002,13 +6187,16 @@ function renderSeparateQuizResult(course, lesson, mode, quizData) {
       </div>
     </div>`;
   triggerQuizMilestone(holder, state.score, true);
+  void finalizeQuizSession(state.sessionId);
   holder.querySelector('.quiz-review-btn')?.addEventListener('click', () => {
     state.reviewing = true;
     state.currentQuestionIndex = 0;
     renderQuizQuestion(course, lesson, mode, quizData, 0);
   });
   holder.querySelector('.quiz-restart-btn')?.addEventListener('click', () => {
+    void finalizeQuizSession(state.sessionId);
     quizData._separateState = createSeparateQuizState(total);
+    activeSeparateQuizState = quizData._separateState;
     renderQuizQuestion(course, lesson, mode, quizData, 0);
   });
 }
@@ -6022,6 +6210,7 @@ async function persistSeparateQuizAnswer(course, lesson, question, selectedOptio
     mode: 'separate',
     questionId: String(question.id),
     selectedOption,
+    quizSessionId: activeSeparateQuizState?.sessionId,
     answeredAt: new Date().toISOString(),
     timestamp: Date.now(),
     syncStatus: 'pending'
@@ -6034,7 +6223,8 @@ async function persistSeparateQuizAnswer(course, lesson, question, selectedOptio
       mode: 'separate',
       questionId: pendingItem.questionId,
       selectedOption,
-      responseId
+      responseId,
+      quizSessionId: pendingItem.quizSessionId
     });
     const data = result.data || {};
     if (data.remoteSaved !== false) markPendingQuizSynced(responseId);
@@ -6361,6 +6551,7 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
     mode,
     questionId: String(question.id),
     selectedOption,
+    quizSessionId: mode === 'popup' ? activeLessonQuiz?.scoreSessionId : activeSeparateQuizState?.sessionId,
     answeredAt: new Date().toISOString(),
     timestamp: Date.now(),
     syncStatus: 'pending'
@@ -6374,7 +6565,8 @@ async function submitQuizAnswer(course, lesson, mode, question, selectedOption, 
       mode,
       questionId: question.id,
       selectedOption,
-      responseId
+      responseId,
+      quizSessionId: pendingItem.quizSessionId
     });
     const data = result.data || {};
     if (localCorrect === null) {
@@ -6516,6 +6708,7 @@ async function configurePopupQuizForPlayer(course, lesson, idx) {
       answeredThisSession: new Set(),
       correctThisSession: new Set(),
       correctCount: 0,
+      scoreSessionId: createQuizSessionId('popup'),
       lastTime: 0,
       active: false
     };
@@ -6616,6 +6809,7 @@ function showTimedPopupQuestion(question, popupConfig, player) {
           activeLessonQuiz.correctCount += 1;
           const popupTotal = activeLessonQuiz.quizData.popupQuiz?.timestamps?.length || 0;
           triggerQuizMilestone(layer, activeLessonQuiz.correctCount, popupTotal > 0 && activeLessonQuiz.correctCount >= popupTotal);
+          if (popupTotal > 0 && activeLessonQuiz.correctCount >= popupTotal) void finalizeQuizSession(activeLessonQuiz.scoreSessionId);
         }
         window.setTimeout(() => {
           dismissPopup(layer);
