@@ -249,6 +249,31 @@ body{padding-bottom:65px}
     .admin-nav-item { padding: .4rem .65rem; font-size: .74rem; }
   }
 
+
+  /* ── MOBILE & TABLET RESPONSIVENESS ENHANCEMENTS ── */
+  @media (max-width: 768px) {
+    .top-header-nav { display: none !important; }
+    .top-nav { padding: 0 .6rem; height: 50px; }
+    .top-nav-brand { font-size: .7rem; }
+    .brand-wordmark { padding: 4px 8px; font-size: 1rem; }
+    .admin-sub-nav { padding: .45rem .5rem; gap: .35rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .admin-nav-item { padding: .4rem .65rem; font-size: .73rem; white-space: nowrap; flex-shrink: 0; }
+    .stats-row { grid-template-columns: 1fr 1fr !important; gap: .5rem !important; }
+    .form-row { grid-template-columns: 1fr !important; }
+    .panel { padding: .75rem .6rem 4rem !important; }
+    .form-card { padding: .9rem !important; margin-bottom: .8rem !important; }
+    .login-card { width: 92vw; padding: 1.5rem; }
+    .content-item-actions { flex-direction: column; align-items: stretch; gap: .35rem !important; }
+    .content-item-actions button { width: 100% !important; justify-content: center !important; }
+    table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .lc-tab-btn { padding: 4px 8px !important; font-size: .7rem !important; }
+  }
+
+  @media (max-width: 480px) {
+    .stats-row { grid-template-columns: 1fr !important; }
+    .login-card h2 { font-size: .9rem; }
+  }
+
 </style>
 <script>
 window.NCERT_CURRICULUM_2026_27 = {
@@ -1074,24 +1099,53 @@ onAuthStateChanged(auth, async (user) => {
 // Immediate 800ms safety timeout to prevent infinite loader buffering
 setTimeout(hideLoader, 800);
 
-window.doLogin = async () => {
-  const email = document.getElementById('login-email').value.trim();
-  const pwd   = document.getElementById('login-pwd').value;
-  const err   = document.getElementById('login-err');
+async function doLoginHandler() {
+  const emailEl = document.getElementById('login-email');
+  const pwdEl   = document.getElementById('login-pwd');
+  const err     = document.getElementById('login-err');
+  if (!emailEl || !pwdEl || !err) return;
+
+  const email = emailEl.value.trim();
+  const pwd   = pwdEl.value;
   err.classList.remove('show');
+
   if (!email || !pwd) return showErr(err, 'Email और password डालें।');
   setBtn('login-btn','login-label',true,'Login हो रहा है...');
-  try { await signInWithEmailAndPassword(auth, email, pwd); }
-  catch(e) { showErr(err, fireErr(e.code)); }
-  setBtn('login-btn','login-label',false,'Login करें');
-};
 
-window.doGoogleLogin = async () => {
-  try { await signInWithPopup(auth, gProvider); }
-  catch(e) { if(e.code!=='auth/popup-closed-by-user') showErr(document.getElementById('login-err'), fireErr(e.code)); }
-};
+  try {
+    await signInWithEmailAndPassword(auth, email, pwd);
+  } catch(e) {
+    console.error('[Admin Login Error]', e);
+    showErr(err, fireErr(e.code || e.message));
+  } finally {
+    setBtn('login-btn','login-label',false,'Login करें');
+  }
+}
 
+async function doGoogleLoginHandler() {
+  const err = document.getElementById('login-err');
+  if (err) err.classList.remove('show');
+  try {
+    await signInWithPopup(auth, gProvider);
+  } catch(e) {
+    console.error('[Google Login Error]', e);
+    if (e.code !== 'auth/popup-closed-by-user' && err) {
+      showErr(err, fireErr(e.code || e.message));
+    }
+  }
+}
+
+window.doLogin = doLoginHandler;
+window.doGoogleLogin = doGoogleLoginHandler;
 window.doLogout = async () => { await signOut(auth); };
+
+// Bind click events on DOM Content Loaded
+document.addEventListener('DOMContentLoaded', () => {
+  const loginBtn = document.getElementById('login-btn');
+  if (loginBtn) loginBtn.addEventListener('click', doLoginHandler);
+  const googleBtn = document.querySelector('.btn-google');
+  if (googleBtn) googleBtn.addEventListener('click', doGoogleLoginHandler);
+});
 
 // ════════════════════════════════════════
 // REAL-TIME LISTENERS
