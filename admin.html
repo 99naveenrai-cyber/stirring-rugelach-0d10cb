@@ -250,6 +250,7 @@ body{padding-bottom:65px}
   }
 
 </style>
+<script src="ncert_curriculum_data.js"></script>
 </head>
 <body>
 <div id="global-loader"><div class="spinner"></div></div>
@@ -3642,6 +3643,48 @@ window.onLcStreamChange = () => {
   updateLcSubjectOptions();
 };
 
+function updateLcChapterOptions() {
+  const c = document.getElementById('lc-class').value;
+  const s = document.getElementById('lc-stream').value;
+  const subj = document.getElementById('lc-subject').value;
+  const select = document.getElementById('lc-chapter');
+  if (!select) return;
+  select.innerHTML = '';
+  
+  if (!c || !subj) {
+    select.innerHTML = '<option value="">Select class & subject first...</option>';
+    return;
+  }
+
+  const curr = window.NCERT_CURRICULUM_2026_27 || {};
+  const classData = curr[c] || {};
+  let chapList = [];
+
+  const subjSlug = subj.toLowerCase().replace(/\s+/g, '-');
+  if (c === '11' || c === '12') {
+    if (subjSlug === 'english' && classData.commonSubjects?.english) {
+      chapList = classData.commonSubjects.english;
+    } else {
+      const streamData = classData.streams?.[s] || {};
+      chapList = streamData.subjects?.[subjSlug] || [];
+    }
+  } else {
+    chapList = classData[subjSlug] || [];
+  }
+
+  if (chapList.length === 0) {
+    chapList = ['Ch 1: General Fundamentals', 'Ch 2: Core Concepts', 'Ch 3: Advanced Topics', 'Ch 4: Revision & PYQs'];
+  }
+
+  chapList.forEach(ch => {
+    const opt = document.createElement('option');
+    opt.value = ch;
+    opt.textContent = ch;
+    select.appendChild(opt);
+  });
+}
+window.updateLcChapterOptions = updateLcChapterOptions;
+
 function updateLcSubjectOptions() {
   const c = document.getElementById('lc-class').value;
   const s = document.getElementById('lc-stream').value;
@@ -3665,6 +3708,7 @@ window.saveLiveSession = async () => {
   const classNum = document.getElementById('lc-class').value;
   const stream = document.getElementById('lc-stream').value;
   const subject = document.getElementById('lc-subject').value;
+  const chapter = document.getElementById('lc-chapter')?.value || '';
   const date = document.getElementById('lc-date').value;
   const time = document.getElementById('lc-time').value;
   const price = Number(document.getElementById('lc-price').value) || 0;
@@ -3683,6 +3727,7 @@ window.saveLiveSession = async () => {
       classNum,
       stream: (classNum === '11' || classNum === '12') ? stream : '',
       subject,
+      chapter,
       date,
       time,
       price: Math.round(price * 100) // paise

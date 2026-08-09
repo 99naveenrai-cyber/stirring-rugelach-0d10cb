@@ -3935,6 +3935,7 @@ function validateLiveSession(data) {
   const classNum = String(data.classNum || '').trim();
   const stream   = String(data.stream   || '').trim().toLowerCase();
   const subject  = String(data.subject  || '').trim();
+  const chapter  = String(data.chapter  || '').trim();
   const date     = String(data.date     || '').trim();
   const time     = String(data.time     || '').trim();
   const price    = Number(data.price) || 0;
@@ -3951,7 +3952,7 @@ function validateLiveSession(data) {
     throw new HttpsError('invalid-argument', 'Time must be HH:MM.');
   if (price < 0 || price > 100000000)
     throw new HttpsError('invalid-argument', 'Invalid price.');
-  return { classNum, stream, subject, date, time, price };
+  return { classNum, stream, subject, chapter, date, time, price };
 }
 
 // Admin: create or update a live session (no YouTube URL at planning time)
@@ -3964,6 +3965,7 @@ exports.adminSaveLiveClass = onCall(callableOptions({ region: 'asia-south1' }), 
     classNum: v.classNum,
     stream:   v.stream,
     subject:  v.subject,
+    chapter:  v.chapter,
     date:     v.date,
     time:     v.time,
     pricePaise: v.price,
@@ -4189,4 +4191,34 @@ exports.getPlayerAccess = onCall(callableOptions({ region: 'asia-south1' }), asy
   if (session.status === 'ended' && !isAdmin) throw new HttpsError('failed-precondition', 'This session has ended.');
   if (!session.youtubeVideoId) throw new HttpsError('failed-precondition', 'Stream not started yet. Please try again in a moment.');
   return { youtubeVideoId: session.youtubeVideoId, status: session.status, isAdmin };
+});
+
+// Student: Register interest / request an unplanned live class chapter
+exports.registerUnplannedLiveClassInterest = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  const auth = requireAuth(request);
+  const classNum = String(request.data?.classNum || '').trim();
+  const stream   = String(request.data?.stream   || '').trim();
+  const subject  = String(request.data?.subject  || '').trim();
+  const chapter  = String(request.data?.chapter  || '').trim();
+  const email    = String(request.data?.email    || auth.token?.email || '').trim();
+  const name     = String(request.data?.name     || auth.token?.name  || '').trim();
+
+  if (!classNum || !subject || !chapter) {
+    throw new HttpsError('invalid-argument', 'classNum, subject, and chapter are required.');
+  }
+
+  const requestId = `${auth.uid}_${classNum}_${subject}_${chapter}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+  await db.collection('liveClassRequests').doc(requestId).set({
+    uid: auth.uid,
+    email,
+    name,
+    classNum,
+    stream,
+    subject,
+    chapter,
+    requestedAt: FieldValue.serverTimestamp()
+  }, { merge: true });
+
+  logger.info("Unplanned Live Class Interest Registered", { uid: auth.uid, email, classNum, subject, chapter });
+  return { registered: true, requestId };
 });

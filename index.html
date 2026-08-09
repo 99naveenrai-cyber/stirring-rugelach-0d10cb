@@ -741,6 +741,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 }
 
 </style>
+<script src="ncert_curriculum_data.js"></script>
 </head>
 <body>
 
@@ -1290,14 +1291,30 @@ function renderStep4Chapters() {
   const title = document.getElementById('lc-step4-title');
   if (title) title.textContent = `Chapters & Revision (${_navSubject})`;
   
-  const key = (_navClass === '11' || _navClass === '12') ? `${_navClass}-${_navStream}-${_navSubject}` : `${_navClass}-${_navSubject}`;
-  const chapters = NCERT_SYLLABUS[key] || [
-    '🔁 Revision & Important PYQs',
-    'Ch 1: Introduction & Fundamentals',
-    'Ch 2: Core Concepts & Principles',
-    'Ch 3: Advanced Topics & Case Studies',
-    'Ch 4: Practice Problems & Sample Papers'
-  ];
+  const curr = window.NCERT_CURRICULUM_2026_27 || {};
+  const classData = curr[_navClass] || {};
+  let chapters = [];
+
+  const subjSlug = _navSubject.toLowerCase().replace(/\s+/g, '-');
+  if (_navClass === '11' || _navClass === '12') {
+    if (subjSlug === 'english' && classData.commonSubjects?.english) {
+      chapters = classData.commonSubjects.english;
+    } else {
+      const streamData = classData.streams?.[_navStream] || {};
+      chapters = streamData.subjects?.[subjSlug] || [];
+    }
+  } else {
+    chapters = classData[subjSlug] || [];
+  }
+
+  if (chapters.length === 0) {
+    chapters = ['Ch 1: General Fundamentals', 'Ch 2: Core Concepts', 'Ch 3: Advanced Topics', 'Ch 4: Practice Problems & Sample Papers'];
+  }
+
+  // Prepend Revision Tab
+  if (!chapters.includes('🔁 Revision & Important PYQs')) {
+    chapters = ['🔁 Revision & Important PYQs', ...chapters];
+  }
 
   const list = document.getElementById('lc-chapter-list');
   if (!list) return;
@@ -1322,33 +1339,41 @@ function checkSessionAndShowCard(chap) {
   if (!card) return;
   card.style.display = 'block';
 
-  // Check if session is planned/live in admin for this class & subject
-  const sess = _livePlannedSessions.find(s => s.classNum === _navClass && s.subject === _navSubject && (s.stream || '') === (_navClass==='11'||_navClass==='12'?_navStream:''));
+  // Check if session is planned/live in admin for this class, subject & chapter
+  const sess = _livePlannedSessions.find(s => 
+    s.classNum === _navClass && 
+    s.subject === _navSubject && 
+    (s.stream || '') === (_navClass==='11'||_navClass==='12'?_navStream:'') &&
+    (!s.chapter || s.chapter === chap || chap.includes(s.chapter))
+  ) || _livePlannedSessions.find(s => s.classNum === _navClass && s.subject === _navSubject);
 
   if (sess) {
     _selectedSessionDoc = sess;
-    card.style.background = 'rgba(255,255,255,0.95)';
+    const isPaid = (sess.pricePaise || 0) > 0;
+    card.style.background = 'rgba(255,255,255,0.98)';
     card.style.borderColor = 'rgba(30,58,138,0.25)';
-    card.style.boxShadow = '0 10px 30px rgba(30,58,138,0.12)';
+    card.style.boxShadow = '0 10px 30px rgba(30,58,138,0.15)';
     card.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
-        <span style="font-weight:800;color:#1e3a8a;font-size:.95rem">${sess.subject} — ${chap}</span>
+        <span style="font-weight:800;color:#1e3a8a;font-size:.95rem">Class ${_navClass} ${_navSubject}</span>
         <span style="font-size:.7rem;font-weight:900;padding:4px 10px;border-radius:99px;background:${sess.status === 'live' ? '#ef4444' : '#1d4ed8'};color:#fff">${sess.status === 'live' ? '🔴 LIVE NOW' : '📅 PLANNED'}</span>
       </div>
-      <div style="font-size:.85rem;color:#475569;margin-bottom:.9rem;background:rgba(30,58,138,0.05);padding:8px 12px;border-radius:10px;line-height:1.5">
+      <div style="font-size:.85rem;color:#334155;margin-bottom:.8rem;background:#f8fafc;padding:10px 14px;border-radius:10px;line-height:1.6;border:1px solid #e2e8f0">
+        <strong>📖 Chapter:</strong> ${chap}<br>
         <strong>📅 Date:</strong> ${sess.date}<br>
         <strong>⏰ Time:</strong> ${sess.time}<br>
-        <strong>💰 Price:</strong> ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}
+        <strong>💰 Price:</strong> ${isPaid ? '₹'+(sess.pricePaise/100) : 'FREE (मुफ्त)'}
       </div>
-      <button onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:44px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.92rem;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,0.35)">
-        🚀 Join Live Stream
+      <button onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:46px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.95rem;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,0.35)">
+        ${isPaid ? '🛒 Enroll / Buy Now (₹'+(sess.pricePaise/100)+')' : '🚀 Register & Join Stream'}
       </button>
+      <div id="lc-reg-status" style="margin-top:.4rem;font-size:.75rem;text-align:center"></div>
     `;
   } else {
     _selectedSessionDoc = null;
-    card.style.background = 'rgba(254,243,199,0.7)';
-    card.style.borderColor = 'rgba(245,158,11,0.3)';
-    card.style.boxShadow = '0 10px 30px rgba(245,158,11,0.1)';
+    card.style.background = 'rgba(254,243,199,0.85)';
+    card.style.borderColor = 'rgba(245,158,11,0.35)';
+    card.style.boxShadow = '0 10px 30px rgba(245,158,11,0.12)';
     
     const targetInfo = `Class ${_navClass}th ${_navSubject} (${chap})`;
     const waText = encodeURIComponent(`Hello Mentor, please schedule a Live Class for ${targetInfo}!`);
@@ -1357,16 +1382,50 @@ function checkSessionAndShowCard(chap) {
       <div style="text-align:center">
         <div style="font-size:1.8rem;margin-bottom:.2rem">🏫 📖</div>
         <div style="font-weight:900;font-size:1.02rem;color:#b45309;margin-bottom:.3rem">No Live Class Scheduled Right Now</div>
-        <p style="font-size:.8rem;color:#64748b;margin-bottom:.9rem;line-height:1.4">
-          No live stream is planned for <strong>${targetInfo}</strong> at this moment.
+        <p style="font-size:.8rem;color:#64748b;margin-bottom:.8rem;line-height:1.4">
+          No live stream is planned for <strong>${targetInfo}</strong> at this moment. Register your interest below!
         </p>
-        <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:44px;background:#25D366;color:#fff;border-radius:12px;font-weight:800;font-size:.9rem;text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.35)">
-          📱 WhatsApp Your Mentor
-        </a>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
+          <button onclick="registerUnplannedInterest('${chap}')" id="lc-req-btn" style="min-height:44px;background:#1e3a8a;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:.82rem;cursor:pointer;box-shadow:0 4px 12px rgba(30,58,138,0.3)">
+            📝 Register Interest
+          </button>
+          <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:.3rem;min-height:44px;background:#25D366;color:#fff;border-radius:10px;font-weight:800;font-size:.82rem;text-decoration:none;box-shadow:0 4px 12px rgba(37,211,102,0.3)">
+            📱 WhatsApp Mentor
+          </a>
+        </div>
+        <div id="lc-req-status" style="margin-top:.5rem;font-size:.78rem;font-weight:700"></div>
       </div>
     `;
   }
 }
+
+window.registerUnplannedInterest = async (chap) => {
+  if (!currentUser) { showLogin(); return; }
+  const btn = document.getElementById('lc-req-btn');
+  const statusEl = document.getElementById('lc-req-status');
+  if (btn) { btn.disabled = true; btn.textContent = 'Registering...'; }
+
+  try {
+    await registerUnplannedLiveClassInterestFn({
+      classNum: _navClass,
+      stream: _navStream || '',
+      subject: _navSubject,
+      chapter: chap,
+      email: currentUser.email || '',
+      name: currentUser.displayName || ''
+    });
+    if (statusEl) {
+      statusEl.style.color = '#15803d';
+      statusEl.innerHTML = '✅ Interest Registered! Data collected & confirmation email alert sent to mentor.';
+    }
+    if (btn) { btn.textContent = '✅ Registered!'; btn.style.background = '#15803d'; }
+    showToast('✅ Registration collected! Mentor notified.', 'success');
+  } catch (err) {
+    if (statusEl) { statusEl.style.color = '#dc2626'; statusEl.textContent = err?.message || 'Failed to register interest.'; }
+    if (btn) { btn.disabled = false; btn.textContent = '📝 Register Interest'; }
+  }
+};
+
 
 window.joinSelectedLiveSession = async () => {
   if (!currentUser) { showLogin(); return; }
