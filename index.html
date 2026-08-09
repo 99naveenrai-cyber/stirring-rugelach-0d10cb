@@ -687,22 +687,50 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 #live-quiz-overlay {
   position: fixed;
   z-index: 99999;
-  background: rgba(15, 23, 42, 0.88) !important;
+  background: rgba(15, 23, 42, 0.92) !important;
   border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
   border-radius: 16px !important;
   padding: 1rem 1.25rem !important;
   color: #ffffff !important;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7) !important;
   backdrop-filter: none !important;
-  max-width: 480px;
-  width: 92%;
+  box-sizing: border-box !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Positions */
-#live-quiz-overlay.pos-center { top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; bottom: auto !important; right: auto !important; }
-#live-quiz-overlay.pos-left   { bottom: 24px !important; left: 24px !important; right: auto !important; top: auto !important; transform: none !important; }
-#live-quiz-overlay.pos-right  { bottom: 24px !important; right: 24px !important; left: auto !important; top: auto !important; transform: none !important; }
+/* 🎯 Center Position (Default): 90% Screen Width */
+#live-quiz-overlay,
+#live-quiz-overlay.pos-center {
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  bottom: auto !important;
+  right: auto !important;
+  width: 90% !important;
+  max-width: 90vw !important;
+}
+
+/* 🎯 Far Left Position: 50% Screen Width on Laptop, Mobile, Tablet */
+#live-quiz-overlay.pos-left {
+  top: 50% !important;
+  left: 12px !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translateY(-50%) !important;
+  width: 50% !important;
+  max-width: 50vw !important;
+}
+
+/* 🎯 Far Right Position: 50% Screen Width on Laptop, Mobile, Tablet */
+#live-quiz-overlay.pos-right {
+  top: 50% !important;
+  right: 12px !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: translateY(-50%) !important;
+  width: 50% !important;
+  max-width: 50vw !important;
+}
 
 .dramatic-confetti-particle {
   position: fixed;
