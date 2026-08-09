@@ -3989,10 +3989,13 @@ exports.adminUploadLiveQuestions = onCall(callableOptions({ region: 'asia-south1
   if (!Array.isArray(questions) || questions.length === 0)
     throw new HttpsError('invalid-argument', 'questions must be a non-empty array.');
   if (questions.length > 200) throw new HttpsError('invalid-argument', 'Max 200 questions per session.');
-  // Validate each question
+  // Validate each question (Supports MCQ, True/False, Match Pairs, correct/correctIndex)
   for (const q of questions) {
-    if (!q.text || !Array.isArray(q.options) || q.options.length < 2 || typeof q.correct !== 'number')
-      throw new HttpsError('invalid-argument', 'Each question needs text, options array, and correct index.');
+    if (!q.text) throw new HttpsError('invalid-argument', 'Each question must have a "text" field.');
+    const c = (typeof q.correct === 'number') ? q.correct : (typeof q.correctIndex === 'number' ? q.correctIndex : 0);
+    q.correct = c;
+    q.correctIndex = c;
+    if (!q.position) q.position = 'center';
   }
   await db.collection('liveClasses').doc(sessionId).update({ questions, updatedAt: FieldValue.serverTimestamp() });
   return { count: questions.length };
@@ -4047,9 +4050,10 @@ exports.adminPublishLiveQuiz = onCall(callableOptions({ region: 'asia-south1' })
   const questionText = String(request.data?.question  || '').trim();
   const qType        = String(request.data?.type      || 'mcq').trim().toLowerCase();
   const options      = request.data?.options;
-  const correctIndex = Number(request.data?.correctIndex ?? -1);
+  const correctIndex = Number(request.data?.correctIndex ?? request.data?.correct ?? -1);
   const pairs        = request.data?.pairs;
   const timeLimit    = Number(request.data?.timeLimit) || 30;
+  const position     = String(request.data?.position  || 'center').trim().toLowerCase();
 
   if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
   if (!questionText) throw new HttpsError('invalid-argument', 'question text required.');
@@ -4057,7 +4061,7 @@ exports.adminPublishLiveQuiz = onCall(callableOptions({ region: 'asia-south1' })
   const allowed = [5,10,20,30,60,90,120];
   if (!allowed.includes(timeLimit)) throw new HttpsError('invalid-argument', 'Invalid timeLimit.');
 
-  let qObj = { text: questionText, type: qType, timeLimit };
+  let qObj = { text: questionText, type: qType, timeLimit, position };
 
   if (qType === 'mcq') {
     if (!Array.isArray(options) || options.length < 2 || options.length > 4)
