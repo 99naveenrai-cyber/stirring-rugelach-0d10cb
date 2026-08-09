@@ -742,6 +742,7 @@ body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area
 
 </style>
 <script src="ncert_curriculum_data.js"></script>
+<script src="curriculum-access.js"></script>
 </head>
 <body>
 
@@ -1273,16 +1274,8 @@ function renderStep3Subjects() {
   const streamLabel = (_navStream === 'humanities' || _navStream === 'arts') ? 'Arts/Humanities' : (_navStream ? _navStream.toUpperCase() : '');
   if (title) title.textContent = `Select Subject (Class ${_navClass}th${_navClass==='11'||_navClass==='12'?' - '+streamLabel:''})`;
   
-  let subjects = [];
-  if (_navClass === '11' || _navClass === '12') {
-    const s = _navStream || 'science';
-    if (s === 'science') subjects = ['Mathematics', 'Physics', 'Chemistry', 'English'];
-    else if (s === 'commerce') subjects = ['Accountancy', 'Business Studies', 'Economics', 'English'];
-    else if (s === 'humanities' || s === 'arts') subjects = ['Political Science', 'History', 'Geography', 'Hindi Core', 'English'];
-    else subjects = ['Mathematics', 'Physics', 'Chemistry', 'English'];
-  } else {
-    subjects = ['Mathematics', 'Science', 'English', 'Social Science'];
-  }
+  let subjects = (window.IdeaKDCCurriculum?.getSubjects(_navClass, _navStream || 'science') || []).map(item => item.title);
+  if (!subjects.length) subjects = ['Mathematics', 'Science', 'English', 'Social Science'];
 
   const list = document.getElementById('lc-subject-list');
   if (!list) return;
@@ -1311,23 +1304,9 @@ function renderStep4Chapters() {
   const title = document.getElementById('lc-step4-title');
   if (title) title.textContent = `Chapters & Revision (${_navSubject})`;
   
-  const curr = window.NCERT_CURRICULUM_2026_27 || {};
-  const classData = curr[_navClass] || {};
-  let chapters = [];
-
   const subjSlug = _navSubject.toLowerCase().replace(/[\s_]+/g, '-');
   const streamSlug = (_navStream === 'arts' ? 'humanities' : _navStream) || 'science';
-
-  if (_navClass === '11' || _navClass === '12') {
-    if (subjSlug === 'english') {
-      chapters = classData['english'] || [];
-    } else {
-      const key = `${streamSlug}-${subjSlug}`;
-      chapters = classData[key] || [];
-    }
-  } else {
-    chapters = classData[subjSlug] || [];
-  }
+  let chapters = (window.IdeaKDCCurriculum?.getChapters(_navClass, subjSlug, streamSlug) || []).map(item => item.title);
 
   if (!Array.isArray(chapters) || chapters.length === 0) {
     chapters = ['Ch 1: General Fundamentals', 'Ch 2: Core Concepts', 'Ch 3: Advanced Topics', 'Ch 4: Practice Problems & Sample Papers'];

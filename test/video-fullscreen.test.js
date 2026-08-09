@@ -51,9 +51,9 @@ test("rewinding re-arms timed questions without resetting awarded score", () => 
   assert.doesNotMatch(source, /rearmTimedPopupQuestionsAfterRewind[\s\S]{0,600}correctThisSession\.delete/);
   assert.match(source, /rearmTimedPopupQuestionsAfterRewind\(activeLessonQuiz, time, previousTime\)/);
 
-  const functionStart = source.indexOf("function rearmTimedPopupQuestionsAfterRewind");
-  const functionEnd = source.indexOf("\n}\n\nfunction maybeShowTimedPopupQuiz", functionStart) + 2;
-  const resolver = new Function(`${source.slice(functionStart, functionEnd)}; return rearmTimedPopupQuestionsAfterRewind;`)();
+  const functionMatch = source.match(/(function rearmTimedPopupQuestionsAfterRewind[\s\S]*?\r?\n})\r?\n\r?\nfunction maybeShowTimedPopupQuiz/);
+  assert.ok(functionMatch, "rewind helper can be extracted with LF or CRLF line endings");
+  const resolver = new Function(`${functionMatch[1]}; return rearmTimedPopupQuestionsAfterRewind;`)();
   const state = {
     quizData: { popupQuiz: { timestamps: [
       { questionId: "q1", timeSeconds: 20 },

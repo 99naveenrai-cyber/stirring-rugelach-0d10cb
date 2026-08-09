@@ -335,6 +335,7 @@ window.NCERT_CURRICULUM_2026_27 = {
   }
 };
 </script>
+<script src="curriculum-access.js"></script>
 </head>
 <body>
 <!-- global-loader removed for instant load -->
@@ -1145,14 +1146,6 @@ async function doGoogleLoginHandler() {
 window.doLogin = doLoginHandler;
 window.doGoogleLogin = doGoogleLoginHandler;
 window.doLogout = async () => { await signOut(auth); };
-
-// Bind click events on DOM Content Loaded
-document.addEventListener('DOMContentLoaded', () => {
-  const loginBtn = document.getElementById('login-btn');
-  if (loginBtn) loginBtn.addEventListener('click', doLoginHandler);
-  const googleBtn = document.querySelector('.btn-google');
-  if (googleBtn) googleBtn.addEventListener('click', doGoogleLoginHandler);
-});
 
 // ════════════════════════════════════════
 // REAL-TIME LISTENERS
@@ -3769,6 +3762,7 @@ window.onLcClassChange = () => {
   const c = document.getElementById('lc-class').value;
   const wrap = document.getElementById('lc-stream-wrap');
   if (wrap) wrap.style.display = (c === '11' || c === '12') ? 'block' : 'none';
+  if (c !== '11' && c !== '12') document.getElementById('lc-stream').value = '';
   updateLcSubjectOptions();
 };
 
@@ -3792,7 +3786,8 @@ function updateLcSubjectOptions() {
     return;
   }
   const key = (c === '11' || c === '12') ? `${c}-${s}` : c;
-  const list = LIVE_SUBJECTS_MAP[key] || ['Mathematics','Science','English','Social Science'];
+  const resolved = window.IdeaKDCCurriculum?.getSubjects(c, s) || [];
+  const list = resolved.length ? resolved.map(item => item.title) : (LIVE_SUBJECTS_MAP[key] || ['Mathematics','Science','English','Social Science']);
   list.forEach(subj => {
     const opt = document.createElement('option');
     opt.value = subj;
@@ -3815,23 +3810,9 @@ function updateLcChapterOptions() {
     return;
   }
 
-  const curr = window.NCERT_CURRICULUM_2026_27 || {};
-  const classData = curr[c] || {};
-  let chapList = [];
-
   const subjSlug = subj.toLowerCase().replace(/[\s_]+/g, '-');
   const streamSlug = (s === 'arts' ? 'humanities' : s) || 'science';
-
-  if (c === '11' || c === '12') {
-    if (subjSlug === 'english') {
-      chapList = classData['english'] || [];
-    } else {
-      const key = `${streamSlug}-${subjSlug}`;
-      chapList = classData[key] || [];
-    }
-  } else {
-    chapList = classData[subjSlug] || [];
-  }
+  let chapList = (window.IdeaKDCCurriculum?.getChapters(c, subjSlug, streamSlug) || []).map(item => item.title);
 
   if (!Array.isArray(chapList) || chapList.length === 0) {
     chapList = ['Ch 1: General Fundamentals', 'Ch 2: Core Concepts', 'Ch 3: Advanced Topics', 'Ch 4: Revision & PYQs'];
@@ -3845,25 +3826,6 @@ function updateLcChapterOptions() {
   });
 }
 window.updateLcChapterOptions = updateLcChapterOptions;
-
-function updateLcSubjectOptions() {
-  const c = document.getElementById('lc-class').value;
-  const s = document.getElementById('lc-stream').value;
-  const select = document.getElementById('lc-subject');
-  select.innerHTML = '';
-  if (!c) {
-    select.innerHTML = '<option value="">Select class first...</option>';
-    return;
-  }
-  const key = (c === '11' || c === '12') ? `${c}-${s}` : c;
-  const list = LIVE_SUBJECTS_MAP[key] || [];
-  list.forEach(subj => {
-    const opt = document.createElement('option');
-    opt.value = subj;
-    opt.textContent = subj;
-    select.appendChild(opt);
-  });
-}
 
 window.goLiveStream = async () => {
   if (!selectedLiveSession) return showToast('कृपया पहले Left Session List से session select करें।', 'error');
