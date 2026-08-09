@@ -688,9 +688,15 @@ body{padding-bottom:65px}
               </select>
             </div>
           </div>
-          <div class="form-group">
-            <label>Subject</label>
-            <select id="lc-subject"><option value="">Select class first...</option></select>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-weight:700;font-size:.78rem">Subject</label>
+              <select id="lc-subject" onchange="onLcSubjectChange()"><option value="">Select class first...</option></select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-weight:700;font-size:.78rem">Chapter</label>
+              <select id="lc-chapter"><option value="">Select subject first...</option></select>
+            </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
             <div class="form-group">
@@ -3630,18 +3636,40 @@ let selectedLiveSession = null;
 
 window.onLcClassChange = () => {
   const c = document.getElementById('lc-class').value;
-  const streamWrap = document.getElementById('lc-stream-wrap');
-  if (c === '11' || c === '12') {
-    streamWrap.style.display = 'block';
-  } else {
-    streamWrap.style.display = 'none';
-  }
+  const wrap = document.getElementById('lc-stream-wrap');
+  if (wrap) wrap.style.display = (c === '11' || c === '12') ? 'block' : 'none';
   updateLcSubjectOptions();
 };
 
 window.onLcStreamChange = () => {
   updateLcSubjectOptions();
 };
+
+window.onLcSubjectChange = () => {
+  updateLcChapterOptions();
+};
+
+function updateLcSubjectOptions() {
+  const c = document.getElementById('lc-class').value;
+  const s = document.getElementById('lc-stream').value;
+  const select = document.getElementById('lc-subject');
+  if (!select) return;
+  select.innerHTML = '';
+  if (!c) {
+    select.innerHTML = '<option value="">Select class first...</option>';
+    updateLcChapterOptions();
+    return;
+  }
+  const key = (c === '11' || c === '12') ? `${c}-${s}` : c;
+  const list = LIVE_SUBJECTS_MAP[key] || ['Mathematics','Science','English','Social Science'];
+  list.forEach(subj => {
+    const opt = document.createElement('option');
+    opt.value = subj;
+    opt.textContent = subj;
+    select.appendChild(opt);
+  });
+  updateLcChapterOptions();
+}
 
 function updateLcChapterOptions() {
   const c = document.getElementById('lc-class').value;
@@ -3767,7 +3795,7 @@ window.loadAdminLiveSessions = async () => {
       const isLive = sess.status === 'live';
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong>Class ${sess.classNum}${sess.stream ? ' ('+sess.stream+')' : ''} — ${sess.subject}</strong>
+          <strong>Class ${sess.classNum}${sess.stream ? ' ('+sess.stream+')' : ''} — ${sess.subject}${sess.chapter ? ' ('+sess.chapter+')' : ''}</strong>
           <div style="display:flex;align-items:center;gap:.4rem">
             <span style="font-size:.7rem;padding:2px 6px;border-radius:4px;background:${isLive?'#feb2b2':'#edf2f7'};color:${isLive?'#9b2c2c':'#4a5568'};font-weight:800">${(sess.status||'planned').toUpperCase()}</span>
             <button onclick="event.stopPropagation();deleteLiveClassSession('${sess.sessionId}')" style="background:none;border:none;color:#e53e3e;font-size:.8rem;cursor:pointer;padding:2px" title="Delete Session">🗑️</button>
@@ -3854,7 +3882,7 @@ window.loadAdminLiveSessions = async () => {
       const isLive = sess.status === 'live';
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong>Class ${sess.classNum}${sess.stream ? ' ('+sess.stream+')' : ''} — ${sess.subject}</strong>
+          <strong>Class ${sess.classNum}${sess.stream ? ' ('+sess.stream+')' : ''} — ${sess.subject}${sess.chapter ? ' ('+sess.chapter+')' : ''}</strong>
           <div style="display:flex;align-items:center;gap:.35rem">
             <span style="font-size:.68rem;padding:2px 6px;border-radius:4px;background:${isLive?'#feb2b2':'#edf2f7'};color:${isLive?'#9b2c2c':'#4a5568'};font-weight:800">${(sess.status||'planned').toUpperCase()}</span>
             <button onclick="event.stopPropagation();window.cancelPlannedClass('${sess.sessionId}')" style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;border-radius:6px;padding:3px 8px;font-size:.7rem;font-weight:800;cursor:pointer" title="Cancel/Delete Class">
