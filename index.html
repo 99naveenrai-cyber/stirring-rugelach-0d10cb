@@ -1082,6 +1082,219 @@ body.academic-menu-open{overflow:hidden}
     .study-resources-grid { grid-template-columns: 1fr; }
   }
 
+
+  /* ── STAGE 6 — LIVE CLASS DISCOVERY STYLES ── */
+  .live-discovery-section {
+    background: #0f172a;
+    color: #ffffff;
+    padding: clamp(2.2rem, 5vw, 4.2rem) clamp(1rem, 3.5vw, 2.5rem);
+    border-bottom: 1px solid #1e293b;
+  }
+  .live-discovery-inner {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+  }
+  .live-discovery-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .live-discovery-head h2 {
+    color: #ffffff;
+  }
+  .live-discovery-head p {
+    max-width: 600px;
+    color: #94a3b8;
+    line-height: 1.6;
+    font-size: .88rem;
+  }
+  .live-discovery-tabs {
+    display: flex;
+    gap: .6rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #334155;
+    padding-bottom: .6rem;
+  }
+  .ld-tab-btn {
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 99px;
+    padding: 6px 16px;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    transition: all .15s;
+  }
+  .ld-tab-btn.active {
+    background: #1769ff;
+    color: #ffffff;
+    border-color: #1769ff;
+  }
+  .ld-tab-badge {
+    background: rgba(255,255,255,0.2);
+    border-radius: 99px;
+    padding: 1px 7px;
+    font-size: .72rem;
+  }
+  .live-discovery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 1.25rem;
+  }
+  .live-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 1.3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .2s, border-color .2s;
+  }
+  .live-card:hover {
+    transform: translateY(-3px);
+    border-color: #38bdf8;
+  }
+  .live-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .8rem;
+  }
+  .live-badge-now {
+    background: #ef4444;
+    color: #ffffff;
+    font-size: .68rem;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .live-pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: #ffffff;
+    border-radius: 50%;
+    animation: livePulse 1.2s infinite;
+  }
+  @keyframes livePulse {
+    0% { transform: scale(0.9); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.5; }
+    100% { transform: scale(0.9); opacity: 1; }
+  }
+  .live-badge-scheduled {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 99px;
+  }
+  .live-card-class {
+    font-size: .75rem;
+    font-weight: 700;
+    color: #38bdf8;
+    margin-bottom: .3rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .live-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin-bottom: .4rem;
+    line-height: 1.35;
+  }
+  .live-card-chapter {
+    font-size: .82rem;
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+  }
+  .live-card-time {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .78rem;
+    color: #94a3b8;
+    margin-bottom: 1.1rem;
+  }
+  .live-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+    padding-top: .8rem;
+    border-top: 1px solid #334155;
+  }
+  .live-price-tag {
+    font-size: .92rem;
+    font-weight: 800;
+    color: #4ade80;
+  }
+  .btn-join-live {
+    background: #ef4444;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-join-live:hover {
+    background: #dc2626;
+  }
+  .btn-enroll-live {
+    background: #1769ff;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-enroll-live:hover {
+    background: #0d52d4;
+  }
+  .live-empty-state {
+    background: #1e293b;
+    border: 1px dashed #334155;
+    border-radius: 16px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    grid-column: 1 / -1;
+  }
+  .live-empty-state h3 {
+    font-size: 1.1rem;
+    color: #f8fafc;
+    margin-bottom: .4rem;
+  }
+  .live-empty-state p {
+    font-size: .85rem;
+    color: #94a3b8;
+    margin-bottom: 1.2rem;
+  }
+
+  @media (max-width: 768px) {
+    .live-discovery-head { display: block; }
+    .live-discovery-head p { margin-top: .4rem; }
+    .live-discovery-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .live-discovery-grid { grid-template-columns: 1fr; }
+  }
+
 </style>
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
@@ -1191,6 +1404,42 @@ body.academic-menu-open{overflow:hidden}
           <p>अपनी परीक्षा तैयारी के लिए कक्षा और विषय अनुसार Notes, MCQ Practice, Question Papers, Revision Guides और Live Classes का उपयोग करें।</p>
         </div>
         <div class="study-resources-grid" id="study-resources-grid"></div>
+      </div>
+    </section>
+
+    
+    <!-- STAGE 6 — LIVE CLASS DISCOVERY SECTION -->
+    <section class="live-discovery-section" id="live-discovery-section" aria-labelledby="live-discovery-title">
+      <div class="live-discovery-inner">
+        <div class="live-discovery-head">
+          <div>
+            <div class="section-eyebrow" style="color:#38bdf8">Real-time Learning</div>
+            <h2 class="section-title" id="live-discovery-title">🔴 Live Classes & Schedule / लाइव क्लासेज</h2>
+          </div>
+          <p>लाइव कक्षाओं में भाग लें, रियल-टाइम Quiz overlay के उत्तर दें और शिक्षकों के साथ सीधे सीखें।</p>
+        </div>
+
+        <div class="live-discovery-tabs" role="tablist" aria-label="Live class schedules">
+          <button type="button" class="ld-tab-btn active" id="ld-tab-all" onclick="filterLiveDiscovery('all', this)">
+            <span>सभी Classes</span>
+            <span class="ld-tab-badge" id="ld-count-all">0</span>
+          </button>
+          <button type="button" class="ld-tab-btn" id="ld-tab-live" onclick="filterLiveDiscovery('live', this)">
+            <span class="live-pulse-dot"></span>
+            <span>Live Now</span>
+            <span class="ld-tab-badge" id="ld-count-live">0</span>
+          </button>
+          <button type="button" class="ld-tab-btn" id="ld-tab-today" onclick="filterLiveDiscovery('today', this)">
+            <span>📅 Today</span>
+            <span class="ld-tab-badge" id="ld-count-today">0</span>
+          </button>
+          <button type="button" class="ld-tab-btn" id="ld-tab-upcoming" onclick="filterLiveDiscovery('upcoming', this)">
+            <span>⏳ Upcoming</span>
+            <span class="ld-tab-badge" id="ld-count-upcoming">0</span>
+          </button>
+        </div>
+
+        <div class="live-discovery-grid" id="live-discovery-grid"></div>
       </div>
     </section>
 
@@ -2232,6 +2481,112 @@ function exitLiveStream() {
 }
 
 </script>
+
+// ════════════════════════════════════════
+// STAGE 6 — LIVE CLASS DISCOVERY RENDERER
+// ════════════════════════════════════════
+let _activeLiveDiscoveryFilter = 'all';
+
+function getTodayDateStr() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function categorizeLiveSessions(sessions) {
+  const todayStr = getTodayDateStr();
+  const list = Array.isArray(sessions) ? sessions : [];
+  
+  const liveNow = list.filter(s => s.status === 'live');
+  const today = list.filter(s => s.status === 'planned' && s.date === todayStr);
+  const upcoming = list.filter(s => s.status === 'planned' && s.date !== todayStr);
+  
+  return { liveNow, today, upcoming, all: list };
+}
+
+function filterLiveDiscovery(filterType, btnEl) {
+  _activeLiveDiscoveryFilter = filterType;
+  const container = document.querySelector('.live-discovery-tabs');
+  if (container) {
+    container.querySelectorAll('.ld-tab-btn').forEach(b => b.classList.remove('active'));
+  }
+  if (btnEl) btnEl.classList.add('active');
+  renderLiveDiscoveryGrid();
+}
+
+function renderLiveDiscoveryGrid() {
+  const grid = document.getElementById('live-discovery-grid');
+  if (!grid) return;
+
+  const categorized = categorizeLiveSessions(window._livePlannedSessions || []);
+
+  // Update counts
+  const countAll = document.getElementById('ld-count-all');
+  const countLive = document.getElementById('ld-count-live');
+  const countToday = document.getElementById('ld-count-today');
+  const countUpcoming = document.getElementById('ld-count-upcoming');
+
+  if (countAll) countAll.textContent = categorized.all.length;
+  if (countLive) countLive.textContent = categorized.liveNow.length;
+  if (countToday) countToday.textContent = categorized.today.length;
+  if (countUpcoming) countUpcoming.textContent = categorized.upcoming.length;
+
+  let displayList = categorized.all;
+  if (_activeLiveDiscoveryFilter === 'live') displayList = categorized.liveNow;
+  if (_activeLiveDiscoveryFilter === 'today') displayList = categorized.today;
+  if (_activeLiveDiscoveryFilter === 'upcoming') displayList = categorized.upcoming;
+
+  if (displayList.length === 0) {
+    grid.innerHTML = `
+      <div class="live-empty-state">
+        <h3>📅 कोई Live Class उपलब्ध नहीं है</h3>
+        <p>इस श्रेणी में अभी कोई लाइव क्लास शेड्यूल्ड नहीं है। विषय अनुसार क्लास देखने या डिमांड दर्ज करने के लिए नीचे बटन दबाएं।</p>
+        <button type="button" class="btn-enroll-live" onclick="openClassLiveNavigation()">📚 Browse Class Schedule / Request Session</button>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = displayList.map(session => {
+    const isLive = session.status === 'live';
+    const priceText = (session.pricePaise || 0) === 0 ? 'FREE' : `₹${Math.round(session.pricePaise / 100)}`;
+    const classLabel = `Class ${session.classNum || ''} ${session.stream ? '| ' + session.stream.toUpperCase() : ''}`;
+    const badgeHtml = isLive 
+      ? `<span class="live-badge-now"><span class="live-pulse-dot"></span> LIVE NOW</span>`
+      : `<span class="live-badge-scheduled">📅 ${session.date || ''} at ${session.time || ''}</span>`;
+    
+    const btnHtml = isLive
+      ? `<button type="button" class="btn-join-live" onclick="if(typeof joinSelectedLiveSession === 'function'){joinSelectedLiveSession('${session.sessionId}')}else{openClassLiveNavigation();}">▶ Join Live Stream</button>`
+      : `<button type="button" class="btn-enroll-live" onclick="openClassLiveNavigation()">📝 Enroll / Class Details</button>`;
+
+    return `
+      <article class="live-card">
+        <div>
+          <div class="live-card-head">
+            <span class="live-card-class">${classLabel}</span>
+            ${badgeHtml}
+          </div>
+          <h3 class="live-card-title">${session.subject || 'Live Session'}</h3>
+          <p class="live-card-chapter">${session.chapter || 'Interactive Live Learning Session'}</p>
+          <div class="live-card-time">
+            <span>⏰ ${session.date || ''} | ${session.time || ''}</span>
+          </div>
+        </div>
+        <div class="live-card-footer">
+          <span class="live-price-tag">${priceText}</span>
+          ${btnHtml}
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+window.filterLiveDiscovery = filterLiveDiscovery;
+window.renderLiveDiscoveryGrid = renderLiveDiscoveryGrid;
+window.categorizeLiveSessions = categorizeLiveSessions;
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword,
