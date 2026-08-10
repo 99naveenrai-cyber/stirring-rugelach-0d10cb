@@ -1932,13 +1932,14 @@ html, body {
     const l = document.getElementById('global-loader');
     if (!l) return;
     l.classList.add('hide');
-    setTimeout(function() { if (l) l.style.display = 'none'; }, 400);
+    setTimeout(function() { if (l) l.style.display = 'none'; }, 300);
   };
-  setTimeout(window.hideLoader, 800);
-  if (document.readyState === 'complete') {
-    window.hideLoader();
+  setTimeout(window.hideLoader, 300);
+  if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    setTimeout(window.hideLoader, 50);
   } else {
-    window.addEventListener('load', window.hideLoader, { once: true });
+    document.addEventListener('DOMContentLoaded', function() { setTimeout(window.hideLoader, 50); }, { once: true });
+    window.addEventListener('load', function() { setTimeout(window.hideLoader, 50); }, { once: true });
   }
 </script>
 <div class="toast" id="toast"></div>
@@ -4340,6 +4341,8 @@ async function loadCourses() {
   try {
     const result = await getPublicCourseCatalogueFn({});
     allCourses = Array.isArray(result.data?.courses) ? result.data.courses : [];
+    window._allCoursesData = allCourses;
+    _globalSearchIndex = null;
     allContentRaw = [];
   } catch(e) {
     console.error('[IdeaKDC catalogue] sanitized catalogue load failed', e.code || e.message);
@@ -5072,84 +5075,96 @@ async function openCourseOrPayment(courseId) {
 
 async function renderCourses() {
   const grid = document.getElementById('courses-grid');
+  if (!grid) return;
   if (!allCourses.length) {
     grid.innerHTML = '<div style="color:var(--muted);font-size:.88rem;padding:1rem">Courses जल्द आएंगे!</div>';
     return;
   }
-  const accessList = await Promise.all(allCourses.map(c => getCourseAccess(c.id, c)));
-  const accessByCourse = new Map(allCourses.map((c, idx) => [c.id, accessList[idx]]));
 
-  grid.innerHTML = allCourses.map((c, courseIndex) => {
-    const courseAccess = accessByCourse.get(c.id) || { access: false, free: false };
-    const canOpen = courseAccess.access === true;
-    const courseIsFree = isCourseExplicitlyFree(c) || courseAccess.free === true;
-    const buttonLabel = canOpen ? 'Open Course' : 'Buy Course';
-    const buttonAction = canOpen ? 'open' : 'buy';
-    const videos = c.videos || [];
-    const contentType = getCourseContentType(c);
-    const videoCount = getCourseVideoCount(c);
-    const thumbnailBadge = contentType === 'playlist'
-      ? { text: 'Playlist', className: 'playlist' }
-      : { text: 'Video', className: '' };
-    const accessBadge = canOpen
-      ? { text: courseAccess.free ? 'Free' : 'Purchased', className: courseAccess.free ? 'free' : 'open' }
-      : { text: 'Locked', className: 'locked' };
-    const faqId = `home-faq-${safeDomId(c.id)}`;
-    const faqBtnId = `home-faq-btn-${safeDomId(c.id)}`;
-    const faqHtml = normalizedFaqs(c).length ? `
-      <button type="button" id="${faqBtnId}" class="course-details-btn" aria-expanded="false" aria-controls="${faqId}" onclick="toggleCourseCardFaq('${faqId}', '${faqBtnId}')">Questions &amp; Answers</button>
-      <div id="${faqId}" class="course-card-faq" hidden>${renderFaqAccordion(c, { id: `${faqId}-inner` })}</div>` : '';
-    const videoRows = videos.map((v, i) => `
-      <div class="playlist-item">
-        ${renderThumbFrame({ src: getLessonThumbnail(v), candidates: getLessonThumbnailCandidates(v, c), alt: `${v.title} thumbnail`, mini: true, fallback: '▶', courseId: c.id, lessonId: v.contentId || v.lessonId || '', lessonIndex: i + 1 })}
-        <div class="playlist-num">${i+1}</div>
-        <div class="playlist-info">
-          <div class="playlist-title">${v.title}</div>
-          <div class="playlist-dur">⏱ ${v.dur || '—'}</div>
-        </div>
-        <div class="playlist-lock">${canOpen ? '✅' : (v.isFree ? '🆓' : '🔒')}</div>
-      </div>`).join('');
-
-    return `
-    <div class="course-card">
-      <div class="course-thumb">
-        ${renderThumbFrame({
-          src: getCourseThumbnail(c),
-          alt: `${c.name} course thumbnail`,
-          courseId: c.id,
-          badge: thumbnailBadge,
-          secondaryBadge: accessBadge,
-          eager: courseIndex === 0,
-          fallback: c.emoji || '📚'
-        })}
-      </div>
-      <div class="course-body">
-        <div class="course-tag">${c.tag||'Course'}</div>
-        <div class="course-name">${c.name}</div>
-        <div class="course-desc">${c.desc||''}</div>
-        ${videos.length ? `
-        <div class="playlist-preview">
-          <div class="playlist-header">
-            <span>📋 Course Content</span>
-            <span class="playlist-count">${videoCount} Videos</span>
+  // Fast synchronous initial render (0ms delay)
+  const buildCardsHtml = (accessByCourseMap = null) => {
+    return allCourses.map((c, courseIndex) => {
+      const courseAccess = accessByCourseMap ? (accessByCourseMap.get(c.id) || { access: false, free: false }) : null;
+      const courseIsFree = isCourseExplicitlyFree(c) || (courseAccess && courseAccess.free === true);
+      const canOpen = courseAccess ? (courseAccess.access === true) : (courseIsFree || isCurrentUserAdmin());
+      const buttonLabel = canOpen ? 'Open Course' : 'Buy Course';
+      const buttonAction = canOpen ? 'open' : 'buy';
+      const videos = c.videos || [];
+      const contentType = getCourseContentType(c);
+      const videoCount = getCourseVideoCount(c);
+      const thumbnailBadge = contentType === 'playlist'
+        ? { text: 'Playlist', className: 'playlist' }
+        : { text: 'Video', className: '' };
+      const accessBadge = canOpen
+        ? { text: (courseAccess && courseAccess.free) || courseIsFree ? 'Free' : 'Purchased', className: (courseAccess && courseAccess.free) || courseIsFree ? 'free' : 'open' }
+        : { text: 'Locked', className: 'locked' };
+      const faqId = `home-faq-${safeDomId(c.id)}`;
+      const faqBtnId = `home-faq-btn-${safeDomId(c.id)}`;
+      const faqHtml = normalizedFaqs(c).length ? `
+        <button type="button" id="${faqBtnId}" class="course-details-btn" aria-expanded="false" aria-controls="${faqId}" onclick="toggleCourseCardFaq('${faqId}', '${faqBtnId}')">Questions &amp; Answers</button>
+        <div id="${faqId}" class="course-card-faq" hidden>${renderFaqAccordion(c, { id: `${faqId}-inner` })}</div>` : '';
+      const videoRows = videos.map((v, i) => `
+        <div class="playlist-item">
+          ${renderThumbFrame({ src: getLessonThumbnail(v), candidates: getLessonThumbnailCandidates(v, c), alt: `${v.title} thumbnail`, mini: true, fallback: '▶', courseId: c.id, lessonId: v.contentId || v.lessonId || '', lessonIndex: i + 1 })}
+          <div class="playlist-num">${i+1}</div>
+          <div class="playlist-info">
+            <div class="playlist-title">${v.title}</div>
+            <div class="playlist-dur">⏱ ${v.dur || '—'}</div>
           </div>
-          <div class="playlist-list">${videoRows}</div>
-          ${canOpen ? '' : `
-            <div class="playlist-unlock-overlay">
-              <button type="button" class="unlock-msg js-course-action" data-course-id="${escapeHtml(c.id)}" data-action="buy">
-                🔐 Locked catalogue — thumbnails और titles visible हैं, access purchase के बाद खुलेगा
-              </button>
-            </div>`}
-        </div>` : '<div style="color:var(--muted);font-size:.8rem;padding:.5rem 0">Videos जल्द आएंगी।</div>'}
-        ${faqHtml}
-        <div class="course-footer-btns">
-          <div class="course-price">${courseIsFree ? 'Free' : `₹${(c.price||0).toLocaleString('en-IN')} <span>एक बार</span>`}</div>
-          <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(c.id)}" data-action="${buttonAction}">${buttonLabel}</button>
+          <div class="playlist-lock">${canOpen ? '✅' : (v.isFree ? '🆓' : '🔒')}</div>
+        </div>`).join('');
+
+      return `
+      <div class="course-card">
+        <div class="course-thumb">
+          ${renderThumbFrame({
+            src: getCourseThumbnail(c),
+            alt: `${c.name} course thumbnail`,
+            courseId: c.id,
+            badge: thumbnailBadge,
+            secondaryBadge: accessBadge,
+            eager: courseIndex === 0,
+            fallback: c.emoji || '📚'
+          })}
         </div>
-      </div>
-    </div>`;
-  }).join('');
-  observeRevealTargets(grid);
+        <div class="course-body">
+          <div class="course-tag">${c.tag||'Course'}</div>
+          <div class="course-name">${c.name}</div>
+          <div class="course-desc">${c.desc||''}</div>
+          ${videos.length ? `
+          <div class="playlist-preview">
+            <div class="playlist-header">
+              <span>📋 Course Content</span>
+              <span class="playlist-count">${videoCount} Videos</span>
+            </div>
+            <div class="playlist-list">${videoRows}</div>
+            ${canOpen ? '' : `
+              <div class="playlist-unlock-overlay">
+                <button type="button" class="unlock-msg js-course-action" data-course-id="${escapeHtml(c.id)}" data-action="buy">
+                  🔐 Locked catalogue — thumbnails और titles visible हैं, access purchase के बाद खुलेगा
+                </button>
+              </div>`}
+          </div>` : '<div style="color:var(--muted);font-size:.8rem;padding:.5rem 0">Videos जल्द आएंगी।</div>'}
+          ${faqHtml}
+          <div class="course-footer-btns">
+            <div class="course-price">${courseIsFree ? 'Free' : `₹${(c.price||0).toLocaleString('en-IN')} <span>एक बार</span>`}</div>
+            <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(c.id)}" data-action="${buttonAction}">${buttonLabel}</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  // Immediate synchronous draw
+  grid.innerHTML = buildCardsHtml(null);
+
+  // Background non-blocking access update
+  Promise.all(allCourses.map(c => getCourseAccess(c.id, c)))
+    .then(accessList => {
+      const accessByCourseMap = new Map(allCourses.map((c, idx) => [c.id, accessList[idx]]));
+      grid.innerHTML = buildCardsHtml(accessByCourseMap);
+    })
+    .catch(err => console.warn('[IdeaKDC course access bg sync]', err?.message || err));
 }
 
 function groupCoursesForCatalogue(courses) {
