@@ -869,6 +869,219 @@ body.academic-menu-open{overflow:hidden}
   animation: upwardConfettiFastThenSlow var(--cdur, 3s) cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
 }
 
+
+  /* ── STAGE 5 — STUDY RESOURCES SECTION STYLES ── */
+  .study-resources-section {
+    background: #ffffff;
+    border-bottom: 1px solid #dde5f1;
+    padding: clamp(2rem, 4.5vw, 4rem) clamp(1rem, 3.5vw, 2.5rem);
+  }
+  .study-resources-inner {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+  }
+  .study-resources-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.6rem;
+  }
+  .study-resources-head p {
+    max-width: 600px;
+    color: #59657a;
+    line-height: 1.6;
+    font-size: .88rem;
+  }
+  .study-resources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.25rem;
+  }
+  .study-resource-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+  }
+  .study-resource-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(23, 105, 255, 0.08);
+    border-color: #1769ff;
+  }
+  .study-resource-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .75rem;
+  }
+  .study-resource-icon {
+    font-size: 1.6rem;
+  }
+  .study-resource-tag {
+    font-size: .68rem;
+    font-weight: 700;
+    color: #1769ff;
+    background: #ebf3ff;
+    padding: 3px 8px;
+    border-radius: 99px;
+  }
+  .study-resource-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: .4rem;
+  }
+  .study-resource-desc {
+    font-size: .8rem;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 1.1rem;
+    flex-grow: 1;
+  }
+  .study-resource-action {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+    text-align: center;
+  }
+  .study-resource-action:hover {
+    background: #1769ff;
+    color: #ffffff;
+    border-color: #1769ff;
+  }
+
+  /* Modal Picker */
+  .study-resource-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .study-resource-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+  }
+  .study-resource-modal-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    z-index: 10001;
+  }
+  .study-resource-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #64748b;
+  }
+  .study-resource-modal-header {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    margin-bottom: 1.2rem;
+  }
+  .study-resource-modal-icon {
+    font-size: 2rem;
+  }
+  .study-resource-modal-header h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .study-resource-modal-header p {
+    font-size: .78rem;
+    color: #64748b;
+  }
+  .study-resource-modal-body .form-group {
+    margin-bottom: 1rem;
+  }
+  .study-resource-modal-body label {
+    display: block;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: .3rem;
+  }
+  .study-resource-modal-body select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: .88rem;
+    background: #fff;
+  }
+  .study-resource-status-banner {
+    background: #fff8e6;
+    border: 1px solid #ffe082;
+    border-radius: 10px;
+    padding: .8rem;
+    margin-top: .8rem;
+  }
+  .srm-status-badge {
+    font-size: .72rem;
+    font-weight: 800;
+    color: #b45309;
+    margin-bottom: .3rem;
+  }
+  .study-resource-status-banner p {
+    font-size: .78rem;
+    color: #78350f;
+    margin-bottom: .6rem;
+  }
+  .srm-btn-request {
+    background: #d97706;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: .76rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .srm-btn-primary {
+    width: 100%;
+    padding: 10px;
+    background: #1769ff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  @media (max-width: 768px) {
+    .study-resources-head { display: block; }
+    .study-resources-head p { margin-top: .4rem; }
+    .study-resources-grid { grid-template-columns: 1fr; }
+  }
+
 </style>
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
@@ -964,6 +1177,20 @@ body.academic-menu-open{overflow:hidden}
           <a href="/class-11/" data-academic-path="/class-11/">Class 11 Learning</a>
           <a href="/class-12/" data-academic-path="/class-12/">Class 12 Learning</a>
         </nav>
+      </div>
+    </section>
+
+    <!-- STAGE 5 — STUDY RESOURCES SECTION -->
+    <section class="study-resources-section" id="study-resources-section" aria-labelledby="study-resources-title">
+      <div class="study-resources-inner">
+        <div class="study-resources-head">
+          <div>
+            <div class="section-eyebrow">Academic Resources</div>
+            <h2 class="section-title" id="study-resources-title">📚 Study Resources / अध्ययन सामग्री</h2>
+          </div>
+          <p>अपनी परीक्षा तैयारी के लिए कक्षा और विषय अनुसार Notes, MCQ Practice, Question Papers, Revision Guides और Live Classes का उपयोग करें।</p>
+        </div>
+        <div class="study-resources-grid" id="study-resources-grid"></div>
       </div>
     </section>
 

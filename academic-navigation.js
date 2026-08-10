@@ -40,6 +40,156 @@
     }
   ];
 
+  
+  const studyResourceCategories = [
+    { id: 'notes', label: 'Notes', tag: 'Handwritten & Digital', icon: '📝', description: 'Chapter-wise detailed study notes and quick key point summaries.', action: 'resource', resourceType: 'notes' },
+    { id: 'practice-test', label: 'Practice Papers', tag: 'Sample & Model Papers', icon: '📄', description: 'Subject practice test papers with solution keys and marking schemes.', action: 'resource', resourceType: 'practice-test' },
+    { id: 'important-questions', label: 'Important Questions', tag: 'High-Weightage', icon: '❓', description: 'Curated list of high-probability exam questions with answer hints.', action: 'resource', resourceType: 'important-questions' },
+    { id: 'mcq', label: 'MCQ Practice', tag: 'Interactive Quizzes', icon: '🎯', description: 'Objective practice questions with real-time scoring and instant feedback.', action: 'resource', resourceType: 'mcq' },
+    { id: 'revision', label: 'Chapter-wise Revision', tag: 'Quick Summary', icon: '🔁', description: 'Fast-track revision guides covering core concepts before tests.', action: 'resource', resourceType: 'revision' },
+    { id: 'formulas', label: 'Formula Sheets', tag: 'Maths & Science', icon: '📐', description: 'Consolidated formula cheat-sheets for rapid problem solving.', action: 'resource', resourceType: 'formulas' },
+    { id: 'pyq', label: 'Previous Year Questions', tag: 'Exam Archives', icon: '📜', description: 'Previous year board and competitive exam question papers.', action: 'resource', resourceType: 'pyq' },
+    { id: 'live-classes', label: 'Live Classes', tag: 'Interactive Sessions', icon: '🔴', description: 'Join scheduled live classes with interactive quiz popup overlays.', action: 'live' }
+  ];
+
+  function renderStudyResources(host, closeMenus) {
+    if (!host) return;
+    const grid = createElement('div', 'study-resources-grid');
+    studyResourceCategories.forEach(item => {
+      const card = createElement('article', 'study-resource-card');
+      const head = createElement('div', 'study-resource-head');
+      const icon = createElement('span', 'study-resource-icon', item.icon);
+      const tag  = createElement('span', 'study-resource-tag', item.tag);
+      head.append(icon, tag);
+
+      const title = createElement('h3', 'study-resource-title', item.label);
+      const desc  = createElement('p', 'study-resource-desc', item.description);
+
+      const actionBtn = createElement('button', 'study-resource-action', 'अध्ययन करें');
+      actionBtn.type = 'button';
+      actionBtn.addEventListener('click', () => {
+        if (typeof closeMenus === 'function') closeMenus();
+        if (item.action === 'live') {
+          const liveTab = document.getElementById('tab-live');
+          if (liveTab) liveTab.click();
+          const target = document.getElementById('live-classes') || document.getElementById('tab-live');
+          if (target) target.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+        openStudyResourcePicker(item);
+      });
+
+      card.append(head, title, desc, actionBtn);
+      grid.append(card);
+    });
+    host.replaceChildren(grid);
+  }
+
+  function openStudyResourcePicker(resourceItem) {
+    let modal = document.getElementById('study-resource-picker-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'study-resource-picker-modal';
+      modal.className = 'study-resource-modal';
+      modal.innerHTML = `
+        <div class="study-resource-modal-overlay"></div>
+        <div class="study-resource-modal-card" role="dialog" aria-modal="true" aria-labelledby="srm-title">
+          <button type="button" class="study-resource-modal-close" aria-label="Close">&times;</button>
+          <div class="study-resource-modal-header">
+            <span class="study-resource-modal-icon" id="srm-icon">📝</span>
+            <div>
+              <h3 id="srm-title">Choose Class & Subject</h3>
+              <p id="srm-subtitle">Select class to view resources</p>
+            </div>
+          </div>
+          <div class="study-resource-modal-body">
+            <div class="form-group">
+              <label>Select Class</label>
+              <select id="srm-class-select">
+                <option value="6">Class 6</option>
+                <option value="7">Class 7</option>
+                <option value="8">Class 8</option>
+                <option value="9">Class 9</option>
+                <option value="10" selected>Class 10</option>
+                <option value="11">Class 11</option>
+                <option value="12">Class 12</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Select Subject</label>
+              <select id="srm-subject-select">
+                <option value="science">Science / Physics</option>
+                <option value="mathematics">Mathematics</option>
+                <option value="english">English</option>
+                <option value="social-science">Social Science</option>
+              </select>
+            </div>
+            <div id="srm-status-banner" class="study-resource-status-banner" style="display:none">
+              <div class="srm-status-badge">⏱️ Content Preparation</div>
+              <p>This resource set is being prepared by IdeaKDC teachers and will be live shortly.</p>
+              <button type="button" id="srm-request-btn" class="srm-btn-request">🔔 Request This Resource</button>
+            </div>
+          </div>
+          <div class="study-resource-modal-footer">
+            <button type="button" id="srm-submit-btn" class="srm-btn-primary">View Resource</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.querySelector('.study-resource-modal-overlay').addEventListener('click', () => { modal.style.display = 'none'; });
+      modal.querySelector('.study-resource-modal-close').addEventListener('click', () => { modal.style.display = 'none'; });
+    }
+
+    const titleEl = modal.querySelector('#srm-title');
+    const iconEl = modal.querySelector('#srm-icon');
+    const subtitleEl = modal.querySelector('#srm-subtitle');
+    const submitBtn = modal.querySelector('#srm-submit-btn');
+    const statusBanner = modal.querySelector('#srm-status-banner');
+    const requestBtn = modal.querySelector('#srm-request-btn');
+
+    if (titleEl) titleEl.textContent = `${resourceItem.label} Selection`;
+    if (iconEl) iconEl.textContent = resourceItem.icon;
+    if (subtitleEl) subtitleEl.textContent = resourceItem.description;
+    if (statusBanner) statusBanner.style.display = 'none';
+
+    submitBtn.onclick = () => {
+      const classId = modal.querySelector('#srm-class-select').value;
+      const subjectId = modal.querySelector('#srm-subject-select').value;
+      const path = `/${['class', classId].join('-')}/${subjectId}/${resourceItem.resourceType}/`;
+      
+      // Check if global AcademicPages exists
+      if (window.IdeaKDCAcademicPages && typeof window.IdeaKDCAcademicPages.parseAcademicPath === 'function') {
+        const route = window.IdeaKDCAcademicPages.parseAcademicPath(path);
+        if (route) {
+          modal.style.display = 'none';
+          if (typeof window.IdeaKDCRenderAcademicPage === 'function') {
+            window.IdeaKDCRenderAcademicPage(path);
+          } else {
+            window.location.hash = `#academic-${classId}-${subjectId}`;
+          }
+          return;
+        }
+      }
+      
+      // Fallback placeholder state if not directly indexable
+      if (statusBanner) {
+        statusBanner.style.display = 'block';
+      }
+    };
+
+    if (requestBtn) {
+      requestBtn.onclick = () => {
+        requestBtn.textContent = '✓ Request Recorded!';
+        requestBtn.disabled = true;
+        requestBtn.style.opacity = '0.8';
+        setTimeout(() => { modal.style.display = 'none'; }, 1200);
+      };
+    }
+
+    modal.style.display = 'flex';
+  }
+
   const discoveryGroups = [
     {
       id: 'school-discovery',
@@ -255,6 +405,7 @@
     renderDesktop(desktopHost, closeMenus);
     renderMobile(mobileHost, closeMenus);
     renderDiscovery(document.getElementById('academic-discovery'), closeMenus);
+    renderStudyResources(document.getElementById('study-resources-grid'), closeMenus);
     mobileDrawer.querySelectorAll('.academic-mobile-utility button').forEach(button => {
       button.addEventListener('click', closeMenus);
     });
@@ -277,7 +428,7 @@
     });
   }
 
-  const api = { categories, discoveryGroups, courseMatchesFilter, inferredStream, init };
+  const api = { categories, discoveryGroups, studyResourceCategories, openStudyResourcePicker, renderStudyResources, courseMatchesFilter, inferredStream, init };
   global.IdeaKDCAcademicNavigation = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document !== 'undefined') {

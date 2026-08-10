@@ -11,7 +11,9 @@
     'important-questions': 'Important Questions',
     revision: 'Revision',
     formulas: 'Formula Sheet',
-    'practice-test': 'Practice Test'
+    'practice-test': 'Practice Test',
+    pyq: 'Previous Year Questions',
+    'live-classes': 'Live Classes'
   });
   const SENIOR_STREAMS = Object.freeze(['science', 'commerce', 'humanities']);
   const BASE_URL = 'https://betalaunch.ideakdc.in';

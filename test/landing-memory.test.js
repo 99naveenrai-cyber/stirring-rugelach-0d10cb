@@ -38,7 +38,7 @@ test('uploaded landing animations are scoped to the isolated content', () => {
 });
 
 test('homepage contains only the supplied landing and course list', () => {
-  const homePage = indexSource.match(/<div class="page active" id="page-home">([\s\S]*?)<!--[^]*?PAGE: ALL COURSES CATALOGUE/)?.[1] || '';
+  const homePage = indexSource.match(/<div class="page active" id="page-home">([\s\S]*?)<div class="page" id="page-catalogue">/)?.[1] || '';
   assert.match(homePage, /id="uploaded-landing-host"[\s\S]*?id="courses"/);
   assert.doesNotMatch(homePage, /cinematic-hero|home-hero|trust-strip|benefit-section|method-section|story-section|home-footer/);
   assert.doesNotMatch(indexSource, /initCinematicHero|goToSlide|hero-carousel/);
