@@ -1927,6 +1927,20 @@ html, body {
 <body>
 
 <div id="global-loader"><div class="spinner"></div></div>
+<script>
+  window.hideLoader = function hideLoader() {
+    const l = document.getElementById('global-loader');
+    if (!l) return;
+    l.classList.add('hide');
+    setTimeout(function() { if (l) l.style.display = 'none'; }, 400);
+  };
+  setTimeout(window.hideLoader, 800);
+  if (document.readyState === 'complete') {
+    window.hideLoader();
+  } else {
+    window.addEventListener('load', window.hideLoader, { once: true });
+  }
+</script>
 <div class="toast" id="toast"></div>
 
 <!-- ══ NAV ══ -->
