@@ -218,11 +218,15 @@
     },
     {
       id: 'competitive-discovery',
-      label: 'Competitive Exams',
-      description: 'BPSC preparation',
+      label: 'Competitive & Entrance Exams',
+      description: 'BPSC, UPSC, JEE Mains, JEE Advanced & NEET',
       items: [
-        { label: 'BPSC Prelims', description: 'Prelims learning path', action: 'courses', filter: { track: 'bpsc', topic: 'BPSC Prelims' } },
-        { label: 'BPSC Mains', description: 'Mains learning path', action: 'courses', filter: { track: 'bpsc', topic: 'BPSC Mains' } }
+        { label: 'BPSC (Bihar PSC)', description: 'State PSC learning path', action: 'courses', filter: { track: 'bpsc' } },
+        { label: 'UPSC CSE (Civil Services)', description: 'IAS/IPS learning path', action: 'courses', filter: { track: 'upsc' } },
+        { label: 'UPPCS (UP PSC)', description: 'State PSC learning path', action: 'courses', filter: { track: 'uppcs' } },
+        { label: 'JEE Mains', description: 'Engineering Entrance', action: 'courses', filter: { track: 'jee-mains' } },
+        { label: 'JEE Advanced', description: 'IIT Entrance Prep', action: 'courses', filter: { track: 'jee-advanced' } },
+        { label: 'NEET UG', description: 'Medical Entrance Prep', action: 'courses', filter: { track: 'neet' } }
       ]
     }
   ];

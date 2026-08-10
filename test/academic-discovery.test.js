@@ -13,7 +13,10 @@ test('Stage 2 discovery exposes school, senior-secondary and BPSC paths', () => 
   assert.deepEqual(groups['school-discovery'].items.map(item => item.filter.classNum), ['5', '6', '7', '8', '9', '10']);
   assert.equal(groups['senior-discovery'].items.length, 6);
   assert.deepEqual(new Set(groups['senior-discovery'].items.map(item => item.filter.stream)), new Set(['science', 'commerce', 'humanities']));
-  assert.deepEqual(groups['competitive-discovery'].items.map(item => item.label), ['BPSC Prelims', 'BPSC Mains']);
+  assert.ok(groups['competitive-discovery'].items.map(item => item.label).includes('BPSC (Bihar PSC)'));
+  assert.ok(groups['competitive-discovery'].items.map(item => item.label).includes('UPSC CSE (Civil Services)'));
+  assert.ok(groups['competitive-discovery'].items.map(item => item.label).includes('JEE Mains'));
+  assert.ok(groups['competitive-discovery'].items.map(item => item.label).includes('NEET UG'));
 });
 
 test('course filters use existing classNum, stream and subject fields', () => {
