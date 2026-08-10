@@ -1640,6 +1640,108 @@ body.academic-menu-open{overflow:hidden}
     .related-links-grid { grid-template-columns: 1fr; }
   }
 
+
+  /* ── STAGE 17 — COMPETITIVE EXAMS HUB STYLES ── */
+  .competitive-exams-section {
+    background: #0f172a;
+    color: #ffffff;
+    padding: clamp(2.2rem, 5vw, 4.2rem) clamp(1rem, 3.5vw, 2.5rem);
+    border-bottom: 1px solid #1e293b;
+  }
+  .comp-inner {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+  }
+  .comp-head {
+    margin-bottom: 1.8rem;
+  }
+  .comp-tabs {
+    display: flex;
+    gap: .5rem;
+    overflow-x: auto;
+    padding-bottom: .8rem;
+    margin-bottom: 1.5rem;
+    scrollbar-width: none;
+  }
+  .comp-tabs::-webkit-scrollbar { display: none; }
+  .comp-tab-btn {
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    padding: .5rem 1.1rem;
+    border-radius: 99px;
+    font-size: .84rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .15s;
+  }
+  .comp-tab-btn.active, .comp-tab-btn:hover {
+    background: #38bdf8;
+    color: #0f172a;
+    border-color: #38bdf8;
+  }
+  .comp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+  .comp-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 1.3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .2s, border-color .2s;
+  }
+  .comp-card:hover {
+    transform: translateY(-3px);
+    border-color: #38bdf8;
+  }
+  .comp-card-badge {
+    display: inline-block;
+    font-size: .68rem;
+    font-weight: 800;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    padding: 3px 9px;
+    border-radius: 99px;
+    margin-bottom: .6rem;
+  }
+  .comp-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: .3rem;
+  }
+  .comp-card-sub {
+    font-size: .8rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+  }
+  .comp-sec-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+  .comp-sec-item {
+    font-size: .82rem;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  @media (max-width: 768px) {
+    .comp-grid { grid-template-columns: 1fr; }
+  }
+
 </style>
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
@@ -1655,6 +1757,7 @@ body.academic-menu-open{overflow:hidden}
 <script src="academic-performance.js" defer></script>
 <script src="academic-quality-rules.js"></script>
 <script src="academic-bilingual.js"></script>
+<script src="academic-competitive-exams.js"></script>
 </head>
 <body>
 
@@ -1751,6 +1854,20 @@ body.academic-menu-open{overflow:hidden}
     
     <!-- STAGE 8 — RESULTS & TESTIMONIALS SECTION -->
     <!-- VERIFIED DATA INSERTION POINT: Replace items in academic-social-proof.js -->
+    
+    <!-- STAGE 17 — COMPETITIVE EXAMS HUB -->
+    <section class="competitive-exams-section" id="academic-competitive-exams" aria-labelledby="comp-title">
+      <div class="comp-inner">
+        <div class="comp-head">
+          <div class="section-eyebrow" style="color:#38bdf8">Competitive Preparation</div>
+          <h2 class="section-title" id="comp-title" style="color:#ffffff">🏆 Competitive & Entrance Exam Hub / प्रतियोगी परीक्षा केंद्र</h2>
+          <p style="color:#94a3b8;font-size:.88rem;margin-top:.4rem">BPSC, UPSC, UPPCS, JEE Mains, JEE Advanced & NEET परीक्षा तैयारी के लिए समर्पित स्टडी मटेरियल और मॉक टेस्ट।</p>
+        </div>
+        <div class="comp-tabs" id="comp-tabs-list"></div>
+        <div class="comp-grid" id="comp-exam-grid"></div>
+      </div>
+    </section>
+
     <section class="academic-social-proof-section" id="academic-social-proof" aria-labelledby="social-proof-title">
       <div class="social-proof-inner">
         <div class="social-proof-head">
@@ -3151,6 +3268,53 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', renderSocialProofSection);
 } else {
   renderSocialProofSection();
+}
+
+
+// ════════════════════════════════════════
+// STAGE 17 — COMPETITIVE EXAMS RENDERER
+// ════════════════════════════════════════
+function renderCompetitiveExamsSection(selectedId = 'all') {
+  const tabsContainer = document.getElementById('comp-tabs-list');
+  const gridContainer = document.getElementById('comp-exam-grid');
+  if (!gridContainer || !window.IdeaKDCAcademicCompetitiveExams) return;
+
+  const exams = window.IdeaKDCAcademicCompetitiveExams.getCompetitiveExams();
+
+  if (tabsContainer && tabsContainer.children.length === 0) {
+    const tabButtons = [`<button type="button" class="comp-tab-btn ${selectedId === 'all' ? 'active' : ''}" onclick="renderCompetitiveExamsSection('all')">All Exams</button>`];
+    exams.forEach(ex => {
+      tabButtons.push(`<button type="button" class="comp-tab-btn ${selectedId === ex.id ? 'active' : ''}" onclick="renderCompetitiveExamsSection('${ex.id}')">${ex.name}</button>`);
+    });
+    tabsContainer.innerHTML = tabButtons.join('');
+  } else if (tabsContainer) {
+    Array.from(tabsContainer.children).forEach(btn => {
+      const isMatch = (selectedId === 'all' && btn.textContent.includes('All')) || btn.textContent.includes(selectedId);
+      btn.classList.toggle('active', isMatch);
+    });
+  }
+
+  const filtered = selectedId === 'all' ? exams : exams.filter(e => e.id === selectedId);
+
+  gridContainer.innerHTML = filtered.map(ex => `
+    <article class="comp-card">
+      <div>
+        <span class="comp-card-badge">${ex.badge}</span>
+        <h3 class="comp-card-title">${ex.name}</h3>
+        <p class="comp-card-sub">${ex.subtitle}</p>
+        <ul class="comp-sec-list">
+          ${ex.sections.map(s => `<li class="comp-sec-item"><span>${s.icon}</span> <span>${s.title}</span></li>`).join('')}
+        </ul>
+      </div>
+      <button type="button" class="header-action-btn primary" style="width:100%;margin-top:.8rem;justify-content:center" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('${ex.name}')}else{location.hash='courses'}">Explore ${ex.name}</button>
+    </article>
+  `).join('');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => renderCompetitiveExamsSection('all'));
+} else {
+  renderCompetitiveExamsSection('all');
 }
 
 <script type="module">
