@@ -1295,12 +1295,116 @@ body.academic-menu-open{overflow:hidden}
     .live-discovery-grid { grid-template-columns: 1fr; }
   }
 
+
+  /* ── STAGE 7 — ACADEMIC SEARCH STYLES ── */
+  .nav-search-container {
+    position: relative;
+    max-width: 380px;
+    width: 100%;
+    margin: 0 .8rem;
+  }
+  .nav-search-input-wrap {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 99px;
+    padding: 4px 12px;
+    transition: all .2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .nav-search-input-wrap:focus-within {
+    border-color: #1769ff;
+    box-shadow: 0 0 0 3px rgba(23, 105, 255, 0.15);
+  }
+  .nav-search-icon {
+    font-size: .85rem;
+    color: #64748b;
+    margin-right: .4rem;
+  }
+  .nav-search-input-wrap input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: .82rem;
+    font-family: 'Inter', sans-serif;
+    color: #0f172a;
+  }
+  .nav-search-clear {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0 4px;
+  }
+  .nav-search-clear:hover { color: #0f172a; }
+
+  /* Dropdown Drawer */
+  .nav-search-results-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15);
+    max-height: 380px;
+    overflow-y: auto;
+    z-index: 99999;
+    padding: .5rem;
+  }
+  .search-result-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s;
+    text-decoration: none;
+    color: inherit;
+  }
+  .search-result-item:hover, .search-result-item.selected {
+    background: #ebf3ff;
+  }
+  .search-result-title {
+    font-size: .85rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .search-result-subtitle {
+    font-size: .74rem;
+    color: #64748b;
+  }
+  .search-result-cat {
+    font-size: .66rem;
+    font-weight: 700;
+    background: #e2e8f0;
+    color: #475569;
+    padding: 2px 7px;
+    border-radius: 99px;
+  }
+  .search-no-results {
+    padding: 1.2rem;
+    text-align: center;
+    font-size: .82rem;
+    color: #64748b;
+  }
+
+  @media (max-width: 768px) {
+    .nav-search-container { max-width: 100%; margin: .4rem 0; }
+  }
+
 </style>
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
 <script src="live-event-sync.js"></script>
 <script src="academic-navigation.js" defer></script>
 <script src="academic-pages.js"></script>
+<script src="academic-search.js"></script>
 </head>
 <body>
 
@@ -2586,6 +2690,144 @@ function renderLiveDiscoveryGrid() {
 window.filterLiveDiscovery = filterLiveDiscovery;
 window.renderLiveDiscoveryGrid = renderLiveDiscoveryGrid;
 window.categorizeLiveSessions = categorizeLiveSessions;
+
+
+// ════════════════════════════════════════
+// STAGE 7 — ACADEMIC SEARCH INITIALIZER
+// ════════════════════════════════════════
+let _globalSearchIndex = null;
+let _selectedSearchIndex = -1;
+
+function getSearchIndex() {
+  if (_globalSearchIndex) return _globalSearchIndex;
+  const curriculum = window.IdeaKDCNavCurriculum || window.IdeaKDCCurriculumAccess || null;
+  const courses = window._allCoursesData || [];
+  const resources = window.IdeaKDCAcademicNavigation?.studyResourceCategories || [];
+  if (window.IdeaKDCAcademicSearch) {
+    _globalSearchIndex = window.IdeaKDCAcademicSearch.buildSearchIndex(curriculum, courses, resources);
+  } else {
+    _globalSearchIndex = [];
+  }
+  return _globalSearchIndex;
+}
+
+function initGlobalAcademicSearch() {
+  const input = document.getElementById('global-academic-search');
+  const clearBtn = document.getElementById('nav-search-clear-btn');
+  const dropdown = document.getElementById('nav-search-results');
+  if (!input || !dropdown) return;
+
+  function performSearch() {
+    const q = input.value.trim();
+    if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+    if (!q || q.length < 2) {
+      dropdown.style.display = 'none';
+      _selectedSearchIndex = -1;
+      return;
+    }
+
+    const index = getSearchIndex();
+    const results = window.IdeaKDCAcademicSearch ? window.IdeaKDCAcademicSearch.search(q, index, 7) : [];
+
+    if (results.length === 0) {
+      dropdown.innerHTML = '<div class="search-no-results">कोई परिणाम नहीं मिला (No topic matching search)</div>';
+      dropdown.style.display = 'block';
+      return;
+    }
+
+    _selectedSearchIndex = -1;
+    dropdown.innerHTML = results.map((item, idx) => `
+      <div class="search-result-item" data-idx="${idx}" onclick="handleSearchResultClick(${idx})">
+        <div>
+          <div class="search-result-title">${item.title}</div>
+          <div class="search-result-subtitle">${item.subtitle}</div>
+        </div>
+        <span class="search-result-cat">${item.category}</span>
+      </div>
+    `).join('');
+    dropdown.style.display = 'block';
+    window._lastSearchResults = results;
+  }
+
+  input.addEventListener('input', performSearch);
+  input.addEventListener('focus', performSearch);
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      clearBtn.style.display = 'none';
+      dropdown.style.display = 'none';
+      input.focus();
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    const container = document.getElementById('nav-search-container');
+    if (container && !container.contains(e.target)) {
+      dropdown.style.display = 'none';
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const items = dropdown.querySelectorAll('.search-result-item');
+    if (!items.length || dropdown.style.display === 'none') return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      _selectedSearchIndex = Math.min(_selectedSearchIndex + 1, items.length - 1);
+      updateSelectedSearchItem(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      _selectedSearchIndex = Math.max(_selectedSearchIndex - 1, 0);
+      updateSelectedSearchItem(items);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (_selectedSearchIndex >= 0 && _selectedSearchIndex < items.length) {
+        handleSearchResultClick(_selectedSearchIndex);
+      } else if (items.length > 0) {
+        handleSearchResultClick(0);
+      }
+    } else if (e.key === 'Escape') {
+      dropdown.style.display = 'none';
+    }
+  });
+}
+
+function updateSelectedSearchItem(items) {
+  items.forEach((it, idx) => {
+    it.classList.toggle('selected', idx === _selectedSearchIndex);
+  });
+}
+
+function handleSearchResultClick(idx) {
+  const results = window._lastSearchResults || [];
+  const item = results[idx];
+  const dropdown = document.getElementById('nav-search-results');
+  if (dropdown) dropdown.style.display = 'none';
+
+  if (!item) return;
+
+  if (item.action === 'route' && item.path) {
+    if (typeof window.IdeaKDCRenderAcademicPage === 'function') {
+      window.IdeaKDCRenderAcademicPage(item.path);
+    } else {
+      window.location.hash = `#academic-${item.path.replace(/\//g, '')}`;
+    }
+  } else if (item.action === 'bpsc') {
+    const navTab = document.getElementById('btab-content') || document.getElementById('tab-courses');
+    if (navTab) navTab.click();
+  } else if (item.action === 'resource' && window.IdeaKDCAcademicNavigation) {
+    const resourceObj = window.IdeaKDCAcademicNavigation.studyResourceCategories.find(r => r.resourceType === item.resourceType || r.id === item.resourceType);
+    if (resourceObj) window.IdeaKDCAcademicNavigation.openStudyResourcePicker(resourceObj);
+  }
+}
+
+window.handleSearchResultClick = handleSearchResultClick;
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initGlobalAcademicSearch);
+} else {
+  initGlobalAcademicSearch();
+}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
