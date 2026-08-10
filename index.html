@@ -1398,6 +1398,97 @@ body.academic-menu-open{overflow:hidden}
     .nav-search-container { max-width: 100%; margin: .4rem 0; }
   }
 
+
+  /* ── STAGE 8 — RESULTS & TESTIMONIALS STYLES ── */
+  .academic-social-proof-section {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: clamp(2.2rem, 5vw, 4.2rem) clamp(1rem, 3.5vw, 2.5rem);
+  }
+  .social-proof-inner {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+  }
+  .social-proof-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.8rem;
+  }
+  .social-proof-head p {
+    max-width: 600px;
+    color: #64748b;
+    line-height: 1.6;
+    font-size: .88rem;
+  }
+  .social-proof-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+  .proof-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .proof-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+  }
+  .proof-dev-badge {
+    display: inline-block;
+    font-size: .65rem;
+    font-weight: 700;
+    color: #b45309;
+    background: #fff8e6;
+    border: 1px solid #fde68a;
+    padding: 2px 8px;
+    border-radius: 99px;
+    margin-bottom: .6rem;
+  }
+  .proof-exam-badge {
+    font-size: .72rem;
+    font-weight: 800;
+    color: #1769ff;
+    background: #ebf3ff;
+    padding: 3px 9px;
+    border-radius: 99px;
+  }
+  .proof-student-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: .4rem;
+    margin-bottom: .2rem;
+  }
+  .proof-score {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #16a34a;
+    font-family: 'Syne', sans-serif;
+  }
+  .proof-quote {
+    font-size: .85rem;
+    color: #475569;
+    line-height: 1.6;
+    font-style: italic;
+    margin: .6rem 0 1rem;
+    flex-grow: 1;
+  }
+
+  @media (max-width: 768px) {
+    .social-proof-head { display: block; }
+    .social-proof-head p { margin-top: .4rem; }
+    .social-proof-grid { grid-template-columns: 1fr; }
+  }
+
 </style>
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
@@ -1405,6 +1496,7 @@ body.academic-menu-open{overflow:hidden}
 <script src="academic-navigation.js" defer></script>
 <script src="academic-pages.js"></script>
 <script src="academic-search.js"></script>
+<script src="academic-social-proof.js"></script>
 </head>
 <body>
 
@@ -1498,6 +1590,22 @@ body.academic-menu-open{overflow:hidden}
     </section>
 
     <!-- STAGE 5 — STUDY RESOURCES SECTION -->
+    
+    <!-- STAGE 8 — RESULTS & TESTIMONIALS SECTION -->
+    <!-- VERIFIED DATA INSERTION POINT: Replace items in academic-social-proof.js -->
+    <section class="academic-social-proof-section" id="academic-social-proof" aria-labelledby="social-proof-title">
+      <div class="social-proof-inner">
+        <div class="social-proof-head">
+          <div>
+            <div class="section-eyebrow">Student Success</div>
+            <h2 class="section-title" id="social-proof-title">🏆 Results & Student Feedback / परिणाम और अनुभव</h2>
+          </div>
+          <p>IdeaKDC विद्यार्थियों के परीक्षा प्रदर्शन, बोर्ड परिणाम और वास्तविक अनुभव।</p>
+        </div>
+        <div class="social-proof-grid" id="social-proof-grid"></div>
+      </div>
+    </section>
+
     <section class="study-resources-section" id="study-resources-section" aria-labelledby="study-resources-title">
       <div class="study-resources-inner">
         <div class="study-resources-head">
@@ -2827,6 +2935,64 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initGlobalAcademicSearch);
 } else {
   initGlobalAcademicSearch();
+}
+
+
+// ════════════════════════════════════════
+// STAGE 8 — SOCIAL PROOF RENDERER
+// ════════════════════════════════════════
+function renderSocialProofSection() {
+  const container = document.getElementById('social-proof-grid');
+  if (!container || !window.IdeaKDCSocialProof) return;
+
+  const results = window.IdeaKDCSocialProof.getVerifiedResults();
+  const testimonials = window.IdeaKDCSocialProof.getVerifiedTestimonials();
+
+  const combined = [];
+
+  results.forEach(res => {
+    combined.push(`
+      <article class="proof-card">
+        <div>
+          ${!res.verified ? '<div class="proof-dev-badge">🛠️ Developer Placeholder</div>' : ''}
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span class="proof-exam-badge">${res.exam}</span>
+            <span style="font-size:.72rem;color:#64748b">${res.year || ''}</span>
+          </div>
+          <h3 class="proof-student-name">${res.studentName}</h3>
+          <div class="proof-score">${res.score}</div>
+          <div style="font-size:.78rem;color:#64748b;margin-top:.2rem">${res.rank || ''}</div>
+        </div>
+      </article>
+    `);
+  });
+
+  testimonials.forEach(t => {
+    combined.push(`
+      <article class="proof-card">
+        <div>
+          ${!t.verified ? '<div class="proof-dev-badge">🛠️ Developer Placeholder</div>' : ''}
+          <span class="proof-exam-badge">${t.classOrExam}</span>
+          <h3 class="proof-student-name">${t.studentName}</h3>
+          <p class="proof-quote">"${t.quote}"</p>
+        </div>
+      </article>
+    `);
+  });
+
+  if (combined.length === 0) {
+    const sec = document.getElementById('academic-social-proof');
+    if (sec) sec.style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = combined.join('');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', renderSocialProofSection);
+} else {
+  renderSocialProofSection();
 }
 
 <script type="module">
