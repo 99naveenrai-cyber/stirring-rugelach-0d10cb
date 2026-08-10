@@ -15,10 +15,11 @@ test('academic navigation exposes the approved Stage 1 taxonomy', () => {
     'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'
   ]);
   assert.deepEqual(byId['senior-secondary'].groups.map(group => group.label), ['Science', 'Commerce', 'Humanities']);
-  assert.ok(byId.bpsc.groups[0].items.map(item => item.label).includes('BPSC Prelims'));
-  assert.ok(byId.bpsc.groups[0].items.map(item => item.label).includes('UPSC CSE (Civil Services)'));
-  assert.ok(byId.bpsc.groups[0].items.map(item => item.label).includes('JEE Mains (Engineering)'));
-  assert.ok(byId.bpsc.groups[0].items.map(item => item.label).includes('NEET UG (Medical)'));
+  const allCompLabels = byId.bpsc.groups.flatMap(g => g.items).map(item => item.label);
+  assert.ok(allCompLabels.includes('BPSC Prelims'));
+  assert.ok(allCompLabels.includes('Prelims'));
+  assert.ok(allCompLabels.includes('Biology'));
+  assert.ok(allCompLabels.includes('Mathematics'));
   assert.deepEqual(byId['live-learning'].groups[0].items.map(item => item.label), ['Live Classes', 'Upcoming Classes']);
 });
 

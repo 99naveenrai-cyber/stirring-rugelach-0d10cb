@@ -1829,6 +1829,81 @@ img, video, iframe, canvas, svg {
   }
 }
 
+
+/* ══════════════════════════════════════════════════════════
+   GLOBAL UNIVERSAL RESPONSIVE & MOBILE VIEWPORT CONTAINMENT
+   ══════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  box-sizing: border-box !important;
+}
+
+html, body {
+  width: 100% !important;
+  max-width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+}
+
+.home-shell, .page, main, section, div, header, nav, footer, article {
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+.uploaded-landing-host {
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+.academic-mobile-drawer {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  left: 0 !important;
+  right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.bottom-nav {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  left: 0 !important;
+  right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+  .site-header .site-nav {
+    padding: 0 0.75rem !important;
+    width: 100% !important;
+  }
+  .academic-discovery-inner,
+  .comp-inner,
+  .social-proof-inner,
+  .study-resources-inner,
+  .courses-section,
+  .footer-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0.85rem !important;
+    padding-right: 0.85rem !important;
+    margin: 0 auto !important;
+  }
+  .courses-grid,
+  .comp-grid,
+  .social-proof-grid,
+  .study-resources-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+    width: 100% !important;
+  }
+  .discovery-card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+    gap: 0.55rem !important;
+    width: 100% !important;
+  }
+}
+
 </style>
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
@@ -3056,8 +3131,6 @@ function exitLiveStream() {
   stopLiveEventSynchronization();
   hideLiveQuizOverlay();
 }
-
-</script>
 
 // ════════════════════════════════════════
 // STAGE 6 — LIVE CLASS DISCOVERY RENDERER

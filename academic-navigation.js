@@ -1,7 +1,7 @@
 (function academicNavigationModule(global) {
   'use strict';
 
-  const categories = [
+    const categories = [
     {
       id: 'school',
       label: 'School Preparation',
@@ -21,14 +21,59 @@
     },
     {
       id: 'bpsc',
-      label: 'BPSC, UPSC, JEE & NEET',
-      groups: [{
-        label: 'Preparation',
-        items: [
-          'BPSC Prelims', 'BPSC Mains', 'Bihar Special', 'Current Affairs', 'Practice Questions',
-          'UPSC CSE (Civil Services)', 'UPPCS (UP PSC)', 'JEE Mains (Engineering)', 'JEE Advanced (IIT)', 'NEET UG (Medical)'
-        ].map(label => ({ label, action: 'courses', filter: { track: 'bpsc', topic: label } }))
-      }]
+      label: 'Competitive Exams',
+      groups: [
+        {
+          label: 'UPSC',
+          items: [
+            { label: 'Prelims', action: 'courses', filter: { track: 'upsc', topic: 'Prelims' } },
+            { label: 'Mains', action: 'courses', filter: { track: 'upsc', topic: 'Mains' } },
+            { label: 'Optional', action: 'courses', filter: { track: 'upsc', topic: 'Optional' } },
+            { label: 'Current Affairs', action: 'courses', filter: { track: 'upsc', topic: 'Current Affairs' } },
+            { label: 'Test Series', action: 'courses', filter: { track: 'upsc', topic: 'Test Series' } }
+          ]
+        },
+        {
+          label: 'BPSC',
+          items: [
+            { label: 'BPSC Prelims', action: 'courses', filter: { track: 'bpsc', topic: 'BPSC Prelims' } },
+            { label: 'BPSC Mains', action: 'courses', filter: { track: 'bpsc', topic: 'BPSC Mains' } },
+            { label: 'Bihar Special', action: 'courses', filter: { track: 'bpsc', topic: 'Bihar Special' } },
+            { label: 'Current Affairs', action: 'courses', filter: { track: 'bpsc', topic: 'Current Affairs' } },
+            { label: 'Practice Questions', action: 'courses', filter: { track: 'bpsc', topic: 'Practice Questions' } }
+          ]
+        },
+        {
+          label: 'NEET',
+          items: [
+            { label: 'Physics', action: 'courses', filter: { track: 'neet', topic: 'Physics' } },
+            { label: 'Chemistry', action: 'courses', filter: { track: 'neet', topic: 'Chemistry' } },
+            { label: 'Biology', action: 'courses', filter: { track: 'neet', topic: 'Biology' } },
+            { label: 'Mock Tests', action: 'courses', filter: { track: 'neet', topic: 'Mock Tests' } },
+            { label: 'Previous Year Questions', action: 'courses', filter: { track: 'neet', topic: 'PYQ' } }
+          ]
+        },
+        {
+          label: 'JEE Main',
+          items: [
+            { label: 'Physics', action: 'courses', filter: { track: 'jee-mains', topic: 'Physics' } },
+            { label: 'Chemistry', action: 'courses', filter: { track: 'jee-mains', topic: 'Chemistry' } },
+            { label: 'Mathematics', action: 'courses', filter: { track: 'jee-mains', topic: 'Mathematics' } },
+            { label: 'Mock Tests', action: 'courses', filter: { track: 'jee-mains', topic: 'Mock Tests' } },
+            { label: 'PYQs', action: 'courses', filter: { track: 'jee-mains', topic: 'PYQ' } }
+          ]
+        },
+        {
+          label: 'JEE Advanced',
+          items: [
+            { label: 'Physics', action: 'courses', filter: { track: 'jee-advanced', topic: 'Physics' } },
+            { label: 'Chemistry', action: 'courses', filter: { track: 'jee-advanced', topic: 'Chemistry' } },
+            { label: 'Mathematics', action: 'courses', filter: { track: 'jee-advanced', topic: 'Mathematics' } },
+            { label: 'Advanced Problems', action: 'courses', filter: { track: 'jee-advanced', topic: 'Advanced Problems' } },
+            { label: 'PYQs', action: 'courses', filter: { track: 'jee-advanced', topic: 'PYQ' } }
+          ]
+        }
+      ]
     },
     {
       id: 'live-learning',
