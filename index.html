@@ -1561,6 +1561,83 @@ body.academic-menu-open{overflow:hidden}
     .footer-grid { grid-template-columns: 1fr; }
   }
 
+
+  /* ── STAGE 10 — BREADCRUMBS & RELATED CONTENT STYLES ── */
+  .academic-breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .4rem;
+    padding: .8rem 0;
+    margin-bottom: 1.2rem;
+    font-size: .82rem;
+    color: #64748b;
+  }
+  .breadcrumb-item {
+    color: #475569;
+    text-decoration: none;
+    transition: color .15s;
+  }
+  .breadcrumb-item:hover {
+    color: #1769ff;
+  }
+  .breadcrumb-separator {
+    color: #94a3b8;
+    font-size: .75rem;
+  }
+  .breadcrumb-current {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  /* Related Content Section */
+  .related-content-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 2.2rem;
+  }
+  .related-content-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .related-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: .8rem;
+  }
+  .related-link-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: .8rem 1rem;
+    font-size: .84rem;
+    font-weight: 700;
+    color: #1e293b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all .15s;
+  }
+  .related-link-card:hover {
+    border-color: #1769ff;
+    color: #1769ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(23, 105, 255, 0.08);
+  }
+
+  @media (max-width: 768px) {
+    .related-links-grid { grid-template-columns: 1fr; }
+  }
+
 </style>
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
@@ -1569,6 +1646,7 @@ body.academic-menu-open{overflow:hidden}
 <script src="academic-pages.js"></script>
 <script src="academic-search.js"></script>
 <script src="academic-social-proof.js"></script>
+<script src="academic-breadcrumbs.js"></script>
 </head>
 <body>
 
