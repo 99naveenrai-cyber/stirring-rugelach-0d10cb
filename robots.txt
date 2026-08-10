@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://betalaunch.ideakdc.in/sitemap.xml
