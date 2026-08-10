@@ -1489,6 +1489,78 @@ body.academic-menu-open{overflow:hidden}
     .social-proof-grid { grid-template-columns: 1fr; }
   }
 
+
+  /* ── STAGE 9 — SEO INTERNAL-LINKING FOOTER STYLES ── */
+  .site-footer {
+    background: #0b1329;
+    color: #94a3b8;
+    border-top: 2px solid #1e293b;
+    padding: clamp(2.5rem, 5vw, 4.5rem) clamp(1rem, 3.5vw, 2.5rem) 2rem;
+    font-size: .84rem;
+  }
+  .footer-inner {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  .footer-col-title {
+    font-family: 'Syne', sans-serif;
+    font-size: .95rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 1.1rem;
+    letter-spacing: .3px;
+  }
+  .footer-links-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+  }
+  .footer-link {
+    color: #94a3b8;
+    text-decoration: none;
+    transition: color .15s;
+  }
+  .footer-link:hover {
+    color: #38bdf8;
+  }
+  .footer-brand-summary {
+    max-width: 320px;
+  }
+  .footer-brand-summary p {
+    font-size: .8rem;
+    line-height: 1.6;
+    margin-top: .6rem;
+    color: #64748b;
+  }
+  .footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1.8rem;
+    border-top: 1px solid #1e293b;
+    font-size: .78rem;
+    color: #64748b;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .footer-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+    .footer-bottom { flex-direction: column; text-align: center; }
+  }
+  @media (max-width: 480px) {
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+
 </style>
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
@@ -8623,6 +8695,86 @@ pageHistory = ['home'];
   @keyframes glowGreen{0%{box-shadow:0 0 5px #22c55e}50%{box-shadow:0 0 30px #22c55e}100%{box-shadow:0 0 25px #22c55e}}
   @keyframes shakeRed{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 </style>
+
+
+<!-- STAGE 9 — SEO INTERNAL-LINKING FOOTER -->
+<footer class="site-footer" id="site-footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <!-- Col 1: Brand & Identity -->
+      <div class="footer-brand-summary">
+        <div class="logo-word" style="font-size:1.3rem"><span class="logo-idea" style="color:#ffffff">idea</span><span class="logo-kdc" style="color:#38bdf8">KDC</span></div>
+        <p>Creating Thoughtful Minds. Structured learning for School (Classes 5–10), Senior Secondary (Classes 11–12 Science, Commerce & Humanities) and BPSC Exam preparation.</p>
+      </div>
+
+      <!-- Col 2: School Classes -->
+      <div>
+        <h3 class="footer-col-title">School Classes</h3>
+        <ul class="footer-links-list">
+          <li><a href="/class-5/" class="footer-link" data-academic-path="/class-5/">Class 5 Learning</a></li>
+          <li><a href="/class-6/" class="footer-link" data-academic-path="/class-6/">Class 6 Learning</a></li>
+          <li><a href="/class-7/" class="footer-link" data-academic-path="/class-7/">Class 7 Learning</a></li>
+          <li><a href="/class-8/" class="footer-link" data-academic-path="/class-8/">Class 8 Learning</a></li>
+          <li><a href="/class-9/" class="footer-link" data-academic-path="/class-9/">Class 9 Learning</a></li>
+          <li><a href="/class-10/" class="footer-link" data-academic-path="/class-10/">Class 10 Learning</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 3: Class 11-12 Streams -->
+      <div>
+        <h3 class="footer-col-title">Class 11–12 Streams</h3>
+        <ul class="footer-links-list">
+          <li><a href="/class-11/science/" class="footer-link" data-academic-path="/class-11/science/">Science (Class 11–12)</a></li>
+          <li><a href="/class-11/commerce/" class="footer-link" data-academic-path="/class-11/commerce/">Commerce (Class 11–12)</a></li>
+          <li><a href="/class-11/humanities/" class="footer-link" data-academic-path="/class-11/humanities/">Humanities (Class 11–12)</a></li>
+          <li><a href="/class-12/science/" class="footer-link" data-academic-path="/class-12/science/">Class 12 Board Prep</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 4: Popular Subjects -->
+      <div>
+        <h3 class="footer-col-title">Popular Subjects</h3>
+        <ul class="footer-links-list">
+          <li><a href="/class-10/mathematics/" class="footer-link" data-academic-path="/class-10/mathematics/">Mathematics</a></li>
+          <li><a href="/class-10/science/" class="footer-link" data-academic-path="/class-10/science/">Science & Physics</a></li>
+          <li><a href="/class-11/chemistry/" class="footer-link" data-academic-path="/class-11/chemistry/">Chemistry</a></li>
+          <li><a href="/class-11/biology/" class="footer-link" data-academic-path="/class-11/biology/">Biology</a></li>
+          <li><a href="/class-10/english/" class="footer-link" data-academic-path="/class-10/english/">English & Grammar</a></li>
+          <li><a href="/class-10/social-science/" class="footer-link" data-academic-path="/class-10/social-science/">Social Science</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 5: BPSC Preparation -->
+      <div>
+        <h3 class="footer-col-title">BPSC Preparation</h3>
+        <ul class="footer-links-list">
+          <li><a href="#courses" class="footer-link" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('BPSC Prelims')}">BPSC Prelims</a></li>
+          <li><a href="#courses" class="footer-link" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('BPSC Mains')}">BPSC Mains</a></li>
+          <li><a href="#courses" class="footer-link" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('Bihar Special')}">Bihar Special</a></li>
+          <li><a href="#courses" class="footer-link" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('Current Affairs')}">Current Affairs</a></li>
+          <li><a href="#courses" class="footer-link" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('Practice Questions')}">Practice Questions</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 6: IdeaKDC Platform -->
+      <div>
+        <h3 class="footer-col-title">IdeaKDC Platform</h3>
+        <ul class="footer-links-list">
+          <li><a href="terms.html" class="footer-link">About & Terms</a></li>
+          <li><a href="contact.html" class="footer-link">Contact Support</a></li>
+          <li><a href="#login" class="footer-link" onclick="navLogin()">Student Login</a></li>
+          <li><a href="#welcome" class="footer-link" onclick="navRegister()">New Student Registration</a></li>
+          <li><a href="#dashboard" class="footer-link" onclick="navDashboard()">Student Partner Program</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div>© 2026 IdeaKDC – Creating Thoughtful Minds. All rights reserved.</div>
+      <div>Designed for School, Senior Secondary & Competitive Exam Readiness.</div>
+    </div>
+  </div>
+</footer>
 
 </body>
 </html>
