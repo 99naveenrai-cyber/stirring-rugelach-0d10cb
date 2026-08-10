@@ -21,10 +21,13 @@
     },
     {
       id: 'bpsc',
-      label: 'BPSC',
+      label: 'BPSC, UPSC, JEE & NEET',
       groups: [{
         label: 'Preparation',
-        items: ['BPSC Prelims', 'BPSC Mains', 'Bihar Special', 'Current Affairs', 'Practice Questions'].map(label => ({ label, action: 'courses', filter: { track: 'bpsc', topic: label } }))
+        items: [
+          'BPSC Prelims', 'BPSC Mains', 'Bihar Special', 'Current Affairs', 'Practice Questions',
+          'UPSC CSE (Civil Services)', 'UPPCS (UP PSC)', 'JEE Mains (Engineering)', 'JEE Advanced (IIT)', 'NEET UG (Medical)'
+        ].map(label => ({ label, action: 'courses', filter: { track: 'bpsc', topic: label } }))
       }]
     },
     {

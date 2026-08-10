@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b1f4d'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='30' fill='%23ffd365'%3EIK%3C/text%3E%3C/svg%3E">
-<title>IdeaKDC | School, Class 11–12 &amp; BPSC Learning</title>
-<meta name="description" content="Explore IdeaKDC courses, live classes and quiz practice for school students, Class 11–12 streams and BPSC preparation.">
+<title>IdeaKDC | School, Class 11–12, BPSC, UPSC, JEE &amp; NEET Learning</title>
+<meta name="description" content="Explore IdeaKDC courses, live classes and quiz practice for school, Class 11–12, BPSC, UPSC, UPPCS, JEE Mains, JEE Advanced &amp; NEET preparation.">
 <link rel="canonical" href="https://betalaunch.ideakdc.in/">
 <meta property="og:title" content="IdeaKDC | Creating Thoughtful Minds">
-<meta property="og:description" content="Class-wise learning, live classes and quiz practice for school, senior secondary and BPSC learners.">
+<meta property="og:description" content="Class-wise learning, live classes and quiz practice for school, senior secondary, BPSC, UPSC, UPPCS, JEE &amp; NEET learners.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://betalaunch.ideakdc.in/">
 <meta name="robots" content="index,follow">
@@ -1741,6 +1741,77 @@ body.academic-menu-open{overflow:hidden}
   @media (max-width: 768px) {
     .comp-grid { grid-template-columns: 1fr; }
   }
+
+
+/* ════════════════════════════════════════
+   UNIVERSAL RESPONSIVE MOBILE OPTIMIZATION
+   ════════════════════════════════════════ */
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+  width: 100%;
+}
+* {
+  max-width: 100%;
+}
+img, video, iframe, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+@media (max-width: 768px) {
+  nav {
+    padding: 0 0.75rem !important;
+  }
+  .logo-word {
+    font-size: 1.15rem !important;
+    padding: 4px 7px !important;
+  }
+  .logo-slogan {
+    font-size: 0.56rem !important;
+  }
+  .courses-grid, .comp-grid, .social-proof-grid, .study-resources-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+  .discovery-card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+  .academic-discovery-section, .courses-section, .study-resources-section, .competitive-exams-section {
+    padding: 2rem 0.75rem !important;
+  }
+  .section-title {
+    font-size: clamp(1.3rem, 5vw, 1.8rem) !important;
+  }
+  .comp-tabs {
+    flex-wrap: wrap !important;
+    gap: 0.35rem !important;
+  }
+  .comp-tab-btn {
+    padding: 6px 10px !important;
+    font-size: 0.75rem !important;
+  }
+}
+@media (max-width: 480px) {
+  :root {
+    --nav-h: 60px;
+  }
+  .btn-nav {
+    font-size: 0.68rem !important;
+    padding: 6px 9px !important;
+  }
+  .discovery-card {
+    min-height: 95px !important;
+    padding: 0.65rem !important;
+  }
+  .discovery-card-title {
+    font-size: 0.82rem !important;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+}
 
 </style>
 <script src="ncert_curriculum_data.js"></script>
@@ -8957,7 +9028,7 @@ pageHistory = ['home'];
       <!-- Col 1: Brand & Identity -->
       <div class="footer-brand-summary">
         <div class="logo-word" style="font-size:1.3rem"><span class="logo-idea" style="color:#ffffff">idea</span><span class="logo-kdc" style="color:#38bdf8">KDC</span></div>
-        <p>Creating Thoughtful Minds. Structured learning for School (Classes 5–10), Senior Secondary (Classes 11–12 Science, Commerce & Humanities) and BPSC Exam preparation.</p>
+        <p>Creating Thoughtful Minds. Structured learning for School (Classes 5–10), Senior Secondary (Classes 11–12 Science, Commerce & Humanities), BPSC, UPSC, UPPCS, JEE Mains, JEE Advanced & NEET preparation.</p>
       </div>
 
       <!-- Col 2: School Classes -->
@@ -8997,15 +9068,16 @@ pageHistory = ['home'];
         </ul>
       </div>
 
-      <!-- Col 5: BPSC Preparation -->
+      <!-- Col 5: Competitive & Entrance Exams -->
       <div>
-        <h3 class="footer-col-title">BPSC Preparation</h3>
+        <h3 class="footer-col-title">BPSC Preparation & Entrance Exams (UPSC, JEE, NEET)</h3>
         <ul class="footer-links-list">
-          <li><a href="#courses" class="footer-link" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('BPSC Prelims')}">BPSC Prelims</a></li>
-          <li><a href="#courses" class="footer-link" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('BPSC Mains')}">BPSC Mains</a></li>
-          <li><a href="#courses" class="footer-link" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('Bihar Special')}">Bihar Special</a></li>
-          <li><a href="#courses" class="footer-link" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('Current Affairs')}">Current Affairs</a></li>
-          <li><a href="#courses" class="footer-link" onclick="if(window.filterCatalogueByTopic){filterCatalogueByTopic('Practice Questions')}">Practice Questions</a></li>
+          <li><a href="#academic-competitive-exams" class="footer-link">BPSC (Bihar PSC)</a></li>
+          <li><a href="#academic-competitive-exams" class="footer-link">UPSC CSE (Civil Services)</a></li>
+          <li><a href="#academic-competitive-exams" class="footer-link">UPPCS (UP PSC)</a></li>
+          <li><a href="#academic-competitive-exams" class="footer-link">JEE Mains (Engineering)</a></li>
+          <li><a href="#academic-competitive-exams" class="footer-link">JEE Advanced (IIT)</a></li>
+          <li><a href="#academic-competitive-exams" class="footer-link">NEET UG (Medical)</a></li>
         </ul>
       </div>
 

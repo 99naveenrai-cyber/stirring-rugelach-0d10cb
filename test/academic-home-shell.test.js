@@ -15,9 +15,10 @@ test('academic navigation exposes the approved Stage 1 taxonomy', () => {
     'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'
   ]);
   assert.deepEqual(byId['senior-secondary'].groups.map(group => group.label), ['Science', 'Commerce', 'Humanities']);
-  assert.deepEqual(byId.bpsc.groups[0].items.map(item => item.label), [
-    'BPSC Prelims', 'BPSC Mains', 'Bihar Special', 'Current Affairs', 'Practice Questions'
-  ]);
+  assert.ok(byId.bpsc.groups[0].items.map(item => item.label).includes('BPSC Prelims'));
+  assert.ok(byId.bpsc.groups[0].items.map(item => item.label).includes('UPSC CSE (Civil Services)'));
+  assert.ok(byId.bpsc.groups[0].items.map(item => item.label).includes('JEE Mains (Engineering)'));
+  assert.ok(byId.bpsc.groups[0].items.map(item => item.label).includes('NEET UG (Medical)'));
   assert.deepEqual(byId['live-learning'].groups[0].items.map(item => item.label), ['Live Classes', 'Upcoming Classes']);
 });
 

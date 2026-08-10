@@ -56,22 +56,25 @@
       });
     }
 
-    // 2. BPSC Competitive Exam Topics
-    const bpscTopics = [
-      { title: 'BPSC Prelims', desc: 'General Studies & CSAT' },
-      { title: 'BPSC Mains', desc: 'General Studies 1, 2 & Essay' },
-      { title: 'Bihar Special', desc: 'Bihar History, Geography & Economy' },
-      { title: 'Current Affairs', desc: 'National & Bihar Current Affairs' },
-      { title: 'Practice Questions', desc: 'BPSC Model Test & PYQs' }
+    // 2. Competitive & Entrance Exam Topics (BPSC, UPSC, UPPCS, JEE Mains, JEE Advanced, NEET)
+    const competitiveTopics = [
+      { title: 'BPSC Prelims', desc: 'General Studies & CSAT', cat: 'BPSC', id: 'bpsc' },
+      { title: 'BPSC Mains', desc: 'General Studies 1, 2 & Essay', cat: 'BPSC', id: 'bpsc' },
+      { title: 'Bihar Special', desc: 'Bihar History, Geography & Economy', cat: 'BPSC', id: 'bpsc' },
+      { title: 'UPSC CSE (Civil Services)', desc: 'IAS/IPS Prelims, Mains & CSAT', cat: 'UPSC', id: 'upsc' },
+      { title: 'UPPCS (UP PSC)', desc: 'UP Public Service Commission GS', cat: 'UPPCS', id: 'uppcs' },
+      { title: 'JEE Mains', desc: 'Engineering Physics, Chemistry & Maths', cat: 'JEE Mains', id: 'jee-mains' },
+      { title: 'JEE Advanced', desc: 'IIT Entrance Problem Solving & PYQs', cat: 'JEE Advanced', id: 'jee-advanced' },
+      { title: 'NEET UG', desc: 'Medical Entrance Biology, Physics & Chemistry', cat: 'NEET', id: 'neet' }
     ];
 
-    bpscTopics.forEach(b => {
+    competitiveTopics.forEach(b => {
       index.push({
         type: 'bpsc',
         title: b.title,
-        subtitle: `BPSC Prep | ${b.desc}`,
-        category: 'BPSC',
-        keywords: `bpsc bihar ${b.title} ${b.desc}`,
+        subtitle: `Competitive Exam | ${b.desc}`,
+        category: b.cat,
+        keywords: `${b.title} ${b.desc} ${b.id} ${b.cat} exam preparation upsc jee neet bpsc uppcs`,
         action: 'bpsc',
         topic: b.title
       });
