@@ -151,4 +151,3 @@
   global.IdeaKDCAcademicSearch = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
-
