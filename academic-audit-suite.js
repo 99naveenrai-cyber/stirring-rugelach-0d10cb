@@ -57,7 +57,7 @@
     // 5. Bilingual Support Check
     try {
       const biMod = global.IdeaKDCAcademicBilingual || (typeof module !== 'undefined' && require('./academic-bilingual.js'));
-      const biTitle = biMod.getBilingualTitle('Light', 'à¤ªà¥à¤°à¤•à¤¾à¤¶', 'bilingual');
+      const biTitle = biMod.getBilingualTitle('Light', 'प्रकाश', 'bilingual');
       recordCheck('Bilingual Hindi-English Architecture', biTitle.includes('/'), `Title: ${biTitle}`);
     } catch (e) {
       recordCheck('Bilingual Hindi-English Architecture', false, e.message);
@@ -82,4 +82,3 @@
   global.IdeaKDCAcademicAuditSuite = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
-
