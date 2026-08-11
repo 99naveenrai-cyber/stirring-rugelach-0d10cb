@@ -18,7 +18,7 @@
     { stage: 14, name: 'Performance Optimization & Preconnect Hints', status: 'COMPLETE' },
     { stage: 15, name: 'Content Quality & LaTeX Accuracy Rules', status: 'COMPLETE' },
     { stage: 16, name: 'Bilingual Hindi-English Architecture', status: 'COMPLETE' },
-    { stage: 17, name: 'Competitive & Entrance Exam Hubs (BPSC, UPSC, UPPCS, JEE, NEET)', status: 'COMPLETE' },
+    { stage: 17, name: 'Competitive & Entrance Exam Hubs (BPSC, UPSC, UPPCS, SSC, JEE, NEET)', status: 'COMPLETE' },
     { stage: 18, name: 'Analytics & Conversion Event Tracking', status: 'COMPLETE' },
     { stage: 19, name: 'Automated Platform Audit & Verification Suite', status: 'COMPLETE' },
     { stage: 20, name: 'Final Launch Readiness & Sign-Off', status: 'COMPLETE' }
@@ -52,3 +52,4 @@
   global.IdeaKDCAcademicLaunchSignoff = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
+
