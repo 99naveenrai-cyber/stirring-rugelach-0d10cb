@@ -56,9 +56,8 @@ test('academic destinations reuse the current catalogue and live-class flows', (
 
 test('homepage hero provides the approved bilingual actions without fictional metrics', () => {
   assert.match(landingSource, /IdeaKDC/);
-  assert.match(landingSource, /à¤¸à¤®à¤à¥‹, practice à¤•à¤°à¥‹/);
+  assert.match(landingSource, /समझो, practice करो/);
   assert.match(landingSource, /New Student/);
-  assert.match(landingSource, /à¤¸à¤­à¥€ Courses à¤¦à¥‡à¤–à¥‡à¤‚/);
+  assert.match(landingSource, /सभी Courses देखें/);
   assert.doesNotMatch(landingSource, /\b\d+[kK]\b|happy learners|rating|results/i);
 });
-
