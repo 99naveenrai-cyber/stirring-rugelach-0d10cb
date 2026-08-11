@@ -8,7 +8,7 @@ const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const navigationSource = fs.readFileSync(path.join(root, 'academic-navigation.js'), 'utf8');
 const navigation = require(path.join(root, 'academic-navigation.js'));
 
-test('Stage 2 discovery exposes school, senior-secondary and BPSC paths', () => {
+test('Stage 2 discovery exposes school, senior-secondary and competitive paths', () => {
   const groups = Object.fromEntries(navigation.discoveryGroups.map(group => [group.id, group]));
   assert.deepEqual(groups['school-discovery'].items.map(item => item.filter.classNum), ['5', '6', '7', '8', '9', '10']);
   assert.equal(groups['senior-discovery'].items.length, 6);
@@ -17,6 +17,7 @@ test('Stage 2 discovery exposes school, senior-secondary and BPSC paths', () => 
   assert.ok(groups['competitive-discovery'].items.map(item => item.label).includes('UPSC CSE (Civil Services)'));
   assert.ok(groups['competitive-discovery'].items.map(item => item.label).includes('JEE Mains'));
   assert.ok(groups['competitive-discovery'].items.map(item => item.label).includes('NEET UG'));
+  assert.ok(groups['competitive-discovery'].items.map(item => item.label).includes('SSC'));
 });
 
 test('course filters use existing classNum, stream and subject fields', () => {
@@ -52,14 +53,24 @@ test('discovery renders into the homepage and filters only catalogue presentatio
   assert.doesNotMatch(navigationSource, /(?:addDoc|setDoc|updateDoc|deleteDoc|httpsCallable)/);
 });
 
+test('SSC filters match only SSC-labelled catalogue records', () => {
+  const cgl = { classNum: 'SSC', subject: 'Quantitative Aptitude', name: 'SSC CGL Foundation' };
+  const school = { classNum: '10', subject: 'Mathematics', name: 'Board Foundation' };
+  assert.equal(navigation.courseMatchesFilter(cgl, { track: 'ssc' }), true);
+  assert.equal(navigation.courseMatchesFilter(school, { track: 'ssc' }), false);
+});
+
 test('class learning shortcuts remain contained on narrow mobile screens', () => {
   assert.match(indexSource, /class="academic-route-shortcuts"/);
   assert.match(indexSource, /@media\(max-width:480px\)\{\.academic-route-shortcuts\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}\}/);
-  assert.match(indexSource, /\.academic-route-shortcuts a\{[^}]*min-width:0;[^}]*max-width:100%;[^}]*overflow-wrap:anywhere/);
+  assert.match(indexSource, /\.academic-route-shortcuts\{[^}]*height:auto;[^}]*position:static;[^}]*align-items:stretch/);
+  assert.match(indexSource, /\.academic-route-shortcuts a\{[^}]*min-width:0;[^}]*min-height:44px;[^}]*max-width:100%;[^}]*overflow-wrap:anywhere/);
+  assert.match(indexSource, /@media\(max-width:900px\)\{body\.has-bottom-nav\{padding-bottom:calc\(var\(--bottom-nav-height\) \+ env\(safe-area-inset-bottom\) \+ 20px\)\}\}/);
 });
 
 test('empty filtered paths provide a working return to the full catalogue', () => {
-  assert.match(indexSource, /इस learning path में अभी कोई active course नहीं मिला।/);
+  assert.match(indexSource, /à¤‡à¤¸ learning path à¤®à¥‡à¤‚ à¤…à¤­à¥€ à¤•à¥‹à¤ˆ active course à¤¨à¤¹à¥€à¤‚ à¤®à¤¿à¤²à¤¾à¥¤/);
   assert.match(indexSource, /onclick="showAllCourses\(\)"/);
   assert.match(indexSource, /activeAcademicFilter = null/);
 });
+
