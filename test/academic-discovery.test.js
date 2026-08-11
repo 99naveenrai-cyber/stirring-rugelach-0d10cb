@@ -69,8 +69,7 @@ test('class learning shortcuts remain contained on narrow mobile screens', () =>
 });
 
 test('empty filtered paths provide a working return to the full catalogue', () => {
-  assert.match(indexSource, /à¤‡à¤¸ learning path à¤®à¥‡à¤‚ à¤…à¤­à¥€ à¤•à¥‹à¤ˆ active course à¤¨à¤¹à¥€à¤‚ à¤®à¤¿à¤²à¤¾à¥¤/);
+  assert.match(indexSource, /इस learning path में अभी कोई active course नहीं मिला।/);
   assert.match(indexSource, /onclick="showAllCourses\(\)"/);
   assert.match(indexSource, /activeAcademicFilter = null/);
 });
-
