@@ -47,4 +47,3 @@ test('JEE and NEET exam details contain subjects and NCERT line-by-line practice
   assert.ok(neet);
   assert.ok(neet.sections.some(s => s.title.includes('NCERT Line-by-Line')));
 });
-
