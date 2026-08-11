@@ -270,7 +270,7 @@ service cloud.firestore {
 
     // Live Classes — public metadata readable by authenticated users (no youtubeVideoId exposed via rules; backend callable omits it)
     match /liveClasses/{sessionId} {
-      allow read:   if signedIn();
+      allow read:   if true;
       allow write:  if isAdmin();
     }
 

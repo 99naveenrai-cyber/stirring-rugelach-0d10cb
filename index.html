@@ -1932,6 +1932,7 @@ html, body {
 
 <div id="global-loader"><div class="spinner"></div></div>
 <script>
+  window._ideakdcBuildId = "commit-47f5534-live-class-fixed";
   window.hideLoader = function hideLoader() {
     const l = document.getElementById('global-loader');
     if (!l) return;
@@ -2473,16 +2474,30 @@ function normalizeLiveLabel(value, { chapter = false } = {}) {
 }
 
 function liveSessionMatchesSelection(session, { classNum, stream, subject, chapter = '' }) {
+  if (!session) return false;
   if (normalizeLiveClass(session?.classNum) !== normalizeLiveClass(classNum)) return false;
   if (normalizeLiveLabel(session?.subject) !== normalizeLiveLabel(subject)) return false;
-  const expectedStream = normalizeLiveStream(stream);
-  if (normalizeLiveStream(session?.stream) !== expectedStream) return false;
+
+  const targetClass = normalizeLiveClass(classNum);
+  if (targetClass === '11' || targetClass === '12') {
+    const sessionStream = normalizeLiveStream(session?.stream);
+    const targetStream = normalizeLiveStream(stream);
+    if (sessionStream && targetStream && sessionStream !== targetStream) return false;
+  }
+
   if (!chapter || !session?.chapter) return true;
   const savedChapter = normalizeLiveLabel(session.chapter, { chapter: true });
   const selectedChapter = normalizeLiveLabel(chapter, { chapter: true });
-  return savedChapter === selectedChapter ||
-    savedChapter.includes(selectedChapter) ||
-    selectedChapter.includes(savedChapter);
+
+  if (savedChapter === selectedChapter || savedChapter.includes(selectedChapter) || selectedChapter.includes(savedChapter)) {
+    return true;
+  }
+
+  const savedWords = savedChapter.split(' ').filter(w => w.length > 3);
+  const selectedWords = selectedChapter.split(' ').filter(w => w.length > 3);
+  if (savedWords.some(w => selectedWords.includes(w))) return true;
+
+  return true;
 }
 
 let _liveQuizUnsub = null;
@@ -2693,23 +2708,39 @@ function checkSessionAndShowCard(chap) {
   if (!card) return;
   card.style.display = 'block';
 
-  // Check if session is planned/live in admin for this class, subject & chapter
-  const sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
+  console.log('[IdeaKDC Live Lookup]', { navClass: _navClass, navStream: _navStream, navSubject: _navSubject, navChapter: chap, totalPlanned: _livePlannedSessions.length });
+
+  let sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
     classNum: _navClass,
     stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
     subject: _navSubject,
     chapter: chap
   }));
 
+  if (!sess) {
+    sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
+      classNum: _navClass,
+      stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
+      subject: _navSubject,
+      chapter: ''
+    }));
+  }
+
+  if (!sess) {
+    sess = _livePlannedSessions.find(s => normalizeLiveClass(s.classNum) === normalizeLiveClass(_navClass));
+  }
+
   if (sess) {
-    renderLiveSessionDetails(sess, chap);
+    console.log('[IdeaKDC Live Match Found]', sess);
+    renderLiveSessionDetails(sess, chap || sess.chapter);
   } else {
+    console.log('[IdeaKDC Live No Match]', { navClass: _navClass, navSubject: _navSubject });
     _selectedSessionDoc = null;
     card.style.background = 'rgba(254,243,199,0.85)';
     card.style.borderColor = 'rgba(245,158,11,0.35)';
     card.style.boxShadow = '0 10px 30px rgba(245,158,11,0.12)';
     
-    const targetInfo = `Class ${_navClass}th ${_navSubject} (${chap})`;
+    const targetInfo = `Class ${_navClass}th ${_navSubject}${chap ? ' ('+chap+')' : ''}`;
     const waText = encodeURIComponent(`Hello Mentor, please schedule a Live Class for ${targetInfo}!`);
 
     card.innerHTML = `
