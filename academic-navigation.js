@@ -12,7 +12,7 @@
     },
     {
       id: 'senior-secondary',
-      label: 'Class 11â€“12',
+      label: 'Class 11–12',
       groups: [
         { label: 'Science', items: ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English'].map(label => ({ label, action: 'courses', filter: { classes: ['11', '12'], stream: 'science', subject: label } })) },
         { label: 'Commerce', items: ['Accountancy', 'Economics', 'Business Studies', 'English'].map(label => ({ label, action: 'courses', filter: { classes: ['11', '12'], stream: 'commerce', subject: label } })) },
@@ -100,14 +100,14 @@
 
   
   const studyResourceCategories = [
-    { id: 'notes', label: 'Notes', tag: 'Handwritten & Digital', icon: 'ðŸ“', description: 'Chapter-wise detailed study notes and quick key point summaries.', action: 'resource', resourceType: 'notes' },
-    { id: 'practice-test', label: 'Practice Papers', tag: 'Sample & Model Papers', icon: 'ðŸ“„', description: 'Subject practice test papers with solution keys and marking schemes.', action: 'resource', resourceType: 'practice-test' },
-    { id: 'important-questions', label: 'Important Questions', tag: 'High-Weightage', icon: 'â“', description: 'Curated list of high-probability exam questions with answer hints.', action: 'resource', resourceType: 'important-questions' },
-    { id: 'mcq', label: 'MCQ Practice', tag: 'Interactive Quizzes', icon: 'ðŸŽ¯', description: 'Objective practice questions with real-time scoring and instant feedback.', action: 'resource', resourceType: 'mcq' },
-    { id: 'revision', label: 'Chapter-wise Revision', tag: 'Quick Summary', icon: 'ðŸ”', description: 'Fast-track revision guides covering core concepts before tests.', action: 'resource', resourceType: 'revision' },
-    { id: 'formulas', label: 'Formula Sheets', tag: 'Maths & Science', icon: 'ðŸ“', description: 'Consolidated formula cheat-sheets for rapid problem solving.', action: 'resource', resourceType: 'formulas' },
-    { id: 'pyq', label: 'Previous Year Questions', tag: 'Exam Archives', icon: 'ðŸ“œ', description: 'Previous year board and competitive exam question papers.', action: 'resource', resourceType: 'pyq' },
-    { id: 'live-classes', label: 'Live Classes', tag: 'Interactive Sessions', icon: 'ðŸ”´', description: 'Join scheduled live classes with interactive quiz popup overlays.', action: 'live' }
+    { id: 'notes', label: 'Notes', tag: 'Handwritten & Digital', icon: '📝', description: 'Chapter-wise detailed study notes and quick key point summaries.', action: 'resource', resourceType: 'notes' },
+    { id: 'practice-test', label: 'Practice Papers', tag: 'Sample & Model Papers', icon: '📄', description: 'Subject practice test papers with solution keys and marking schemes.', action: 'resource', resourceType: 'practice-test' },
+    { id: 'important-questions', label: 'Important Questions', tag: 'High-Weightage', icon: '❓', description: 'Curated list of high-probability exam questions with answer hints.', action: 'resource', resourceType: 'important-questions' },
+    { id: 'mcq', label: 'MCQ Practice', tag: 'Interactive Quizzes', icon: '🎯', description: 'Objective practice questions with real-time scoring and instant feedback.', action: 'resource', resourceType: 'mcq' },
+    { id: 'revision', label: 'Chapter-wise Revision', tag: 'Quick Summary', icon: '🔁', description: 'Fast-track revision guides covering core concepts before tests.', action: 'resource', resourceType: 'revision' },
+    { id: 'formulas', label: 'Formula Sheets', tag: 'Maths & Science', icon: '📐', description: 'Consolidated formula cheat-sheets for rapid problem solving.', action: 'resource', resourceType: 'formulas' },
+    { id: 'pyq', label: 'Previous Year Questions', tag: 'Exam Archives', icon: '📜', description: 'Previous year board and competitive exam question papers.', action: 'resource', resourceType: 'pyq' },
+    { id: 'live-classes', label: 'Live Classes', tag: 'Interactive Sessions', icon: '🔴', description: 'Join scheduled live classes with interactive quiz popup overlays.', action: 'live' }
   ];
 
   function renderStudyResources(host, closeMenus) {
@@ -123,7 +123,7 @@
       const title = createElement('h3', 'study-resource-title', item.label);
       const desc  = createElement('p', 'study-resource-desc', item.description);
 
-      const actionBtn = createElement('button', 'study-resource-action', 'à¤…à¤§à¥à¤¯à¤¯à¤¨ à¤•à¤°à¥‡à¤‚');
+      const actionBtn = createElement('button', 'study-resource-action', 'अध्ययन करें');
       actionBtn.type = 'button';
       actionBtn.addEventListener('click', () => {
         if (typeof closeMenus === 'function') closeMenus();
@@ -154,7 +154,7 @@
         <div class="study-resource-modal-card" role="dialog" aria-modal="true" aria-labelledby="srm-title">
           <button type="button" class="study-resource-modal-close" aria-label="Close">&times;</button>
           <div class="study-resource-modal-header">
-            <span class="study-resource-modal-icon" id="srm-icon">ðŸ“</span>
+            <span class="study-resource-modal-icon" id="srm-icon">📝</span>
             <div>
               <h3 id="srm-title">Choose Class & Subject</h3>
               <p id="srm-subtitle">Select class to view resources</p>
@@ -183,9 +183,9 @@
               </select>
             </div>
             <div id="srm-status-banner" class="study-resource-status-banner" style="display:none">
-              <div class="srm-status-badge">â±ï¸ Content Preparation</div>
+              <div class="srm-status-badge">⏱️ Content Preparation</div>
               <p>This resource set is being prepared by IdeaKDC teachers and will be live shortly.</p>
-              <button type="button" id="srm-request-btn" class="srm-btn-request">ðŸ”” Request This Resource</button>
+              <button type="button" id="srm-request-btn" class="srm-btn-request">🔔 Request This Resource</button>
             </div>
           </div>
           <div class="study-resource-modal-footer">
@@ -238,7 +238,7 @@
 
     if (requestBtn) {
       requestBtn.onclick = () => {
-        requestBtn.textContent = 'âœ“ Request Recorded!';
+        requestBtn.textContent = '✓ Request Recorded!';
         requestBtn.disabled = true;
         requestBtn.style.opacity = '0.8';
         setTimeout(() => { modal.style.display = 'none'; }, 1200);
@@ -252,10 +252,10 @@
     {
       id: 'school-discovery',
       label: 'School',
-      description: 'Class 5 à¤¸à¥‡ Class 10 à¤¤à¤•',
+      description: 'Class 5 से Class 10 तक',
       items: ['5', '6', '7', '8', '9', '10'].map(classNum => ({
         label: `Class ${classNum}`,
-        description: 'Subjects à¤”à¤° available courses',
+        description: 'Subjects और available courses',
         action: 'courses',
         filter: { classNum }
       }))
@@ -263,7 +263,7 @@
     {
       id: 'senior-discovery',
       label: 'Senior Secondary',
-      description: 'Class 11â€“12 streams',
+      description: 'Class 11–12 streams',
       items: ['11', '12'].flatMap(classNum => ['science', 'commerce', 'humanities'].map(stream => ({
         label: `Class ${classNum} ${stream[0].toUpperCase()}${stream.slice(1)}`,
         description: `${stream[0].toUpperCase()}${stream.slice(1)} learning path`,
@@ -375,7 +375,7 @@
         button.type = 'button';
         button.append(createElement('strong', 'discovery-card-title', item.label));
         button.append(createElement('span', 'discovery-card-copy', item.description));
-        button.append(createElement('span', 'discovery-card-arrow', 'Explore â†’'));
+        button.append(createElement('span', 'discovery-card-arrow', 'Explore →'));
         button.addEventListener('click', () => runAction(item, group, closeMenus));
         grid.append(button);
       });
@@ -512,4 +512,3 @@
     else init();
   }
 })(typeof window !== 'undefined' ? window : globalThis);
-
