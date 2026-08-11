@@ -4150,7 +4150,7 @@ exports.cashfreeWebhook = onRequest({
 // ══════════════════════════════════════════════
 
 const LIVE_CLASS_NUMBERS = ['6','7','8','9','10','11','12'];
-const LIVE_CLASS_STREAMS = ['science','commerce','arts'];
+const LIVE_CLASS_STREAMS = ['science','commerce','arts','humanities'];
 const LIVE_CLASS_SUBJECTS = {
   '6':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
   '7':  ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
@@ -4159,10 +4159,12 @@ const LIVE_CLASS_SUBJECTS = {
   '10': ['Mathematics','Science','English','Hindi','Social Science','Sanskrit'],
   '11-science':  ['Physics','Chemistry','Mathematics','Biology','Computer Science','English'],
   '11-commerce': ['Accountancy','Business Studies','Economics','Mathematics','English'],
-  '11-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi'],
+  '11-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi','Hindi Core'],
+  '11-humanities': ['History','Geography','Political Science','Economics','Psychology','English','Hindi','Hindi Core'],
   '12-science':  ['Physics','Chemistry','Mathematics','Biology','Computer Science','English'],
   '12-commerce': ['Accountancy','Business Studies','Economics','Mathematics','English'],
-  '12-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi'],
+  '12-arts':     ['History','Geography','Political Science','Economics','Psychology','English','Hindi','Hindi Core'],
+  '12-humanities': ['History','Geography','Political Science','Economics','Psychology','English','Hindi','Hindi Core'],
 };
 
 function liveSubjectKey(classNum, stream) {
