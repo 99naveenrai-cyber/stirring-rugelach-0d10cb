@@ -8,7 +8,7 @@ const indexSource = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8
 test('index.html contains Stage 9 SEO internal-linking footer with required sections', () => {
   assert.match(indexSource, /id="site-footer"/);
   assert.match(indexSource, /School Classes/);
-  assert.match(indexSource, /Class 11â€“12/);
+  assert.match(indexSource, /Class 11–12/);
   assert.match(indexSource, /Popular Subjects/);
   assert.match(indexSource, /Competitive Exams \(BPSC, UPSC, SSC, JEE, NEET\)/);
   assert.match(indexSource, /SSC \(Staff Selection Commission\)/);
@@ -22,4 +22,3 @@ test('footer internal links map cleanly to valid indexable academic routes and a
   assert.match(indexSource, /href="\/class-11\/commerce\/"/);
   assert.match(indexSource, /Student Partner Program/);
 });
-
