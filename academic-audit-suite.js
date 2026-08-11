@@ -57,7 +57,7 @@
     // 5. Bilingual Support Check
     try {
       const biMod = global.IdeaKDCAcademicBilingual || (typeof module !== 'undefined' && require('./academic-bilingual.js'));
-      const biTitle = biMod.getBilingualTitle('Light', 'प्रकाश', 'bilingual');
+      const biTitle = biMod.getBilingualTitle('Light', 'à¤ªà¥à¤°à¤•à¤¾à¤¶', 'bilingual');
       recordCheck('Bilingual Hindi-English Architecture', biTitle.includes('/'), `Title: ${biTitle}`);
     } catch (e) {
       recordCheck('Bilingual Hindi-English Architecture', false, e.message);
@@ -67,7 +67,7 @@
     try {
       const compMod = global.IdeaKDCAcademicCompetitiveExams || (typeof module !== 'undefined' && require('./academic-competitive-exams.js'));
       const list = compMod.getCompetitiveExams();
-      recordCheck('Competitive Exam Hubs (BPSC, UPSC, UPPCS, JEE, NEET)', list.length === 6, `Configured ${list.length} hubs.`);
+      recordCheck('Competitive Exam Hubs (BPSC, UPSC, UPPCS, SSC, JEE, NEET)', list.length === 7, `Configured ${list.length} hubs.`);
     } catch (e) {
       recordCheck('Competitive Exam Hubs', false, e.message);
     }
@@ -82,3 +82,4 @@
   global.IdeaKDCAcademicAuditSuite = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
+
