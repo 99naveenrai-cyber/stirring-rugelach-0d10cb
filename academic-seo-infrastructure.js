@@ -16,7 +16,7 @@
       name: 'IdeaKDC',
       url: BASE_DOMAIN,
       logo: `${BASE_DOMAIN}/icon.png`,
-      description: 'IdeaKDC EdTech Platform – Creating Thoughtful Minds for School, Senior Secondary & BPSC Exams.',
+      description: 'IdeaKDC EdTech Platform â€“ Creating Thoughtful Minds for School, Senior Secondary, BPSC & SSC Exams.',
       sameAs: []
     };
   }
@@ -99,3 +99,4 @@
   global.IdeaKDCAcademicSeoInfra = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
+
