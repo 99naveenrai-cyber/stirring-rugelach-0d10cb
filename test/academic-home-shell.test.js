@@ -20,6 +20,8 @@ test('academic navigation exposes the approved Stage 1 taxonomy', () => {
   assert.ok(allCompLabels.includes('Prelims'));
   assert.ok(allCompLabels.includes('Biology'));
   assert.ok(allCompLabels.includes('Mathematics'));
+  assert.ok(allCompLabels.includes('SSC CGL'));
+  assert.ok(allCompLabels.includes('SSC CHSL'));
   assert.deepEqual(byId['live-learning'].groups[0].items.map(item => item.label), ['Live Classes', 'Upcoming Classes']);
 });
 
@@ -54,8 +56,9 @@ test('academic destinations reuse the current catalogue and live-class flows', (
 
 test('homepage hero provides the approved bilingual actions without fictional metrics', () => {
   assert.match(landingSource, /IdeaKDC/);
-  assert.match(landingSource, /समझो, practice करो/);
+  assert.match(landingSource, /à¤¸à¤®à¤à¥‹, practice à¤•à¤°à¥‹/);
   assert.match(landingSource, /New Student/);
-  assert.match(landingSource, /सभी Courses देखें/);
+  assert.match(landingSource, /à¤¸à¤­à¥€ Courses à¤¦à¥‡à¤–à¥‡à¤‚/);
   assert.doesNotMatch(landingSource, /\b\d+[kK]\b|happy learners|rating|results/i);
 });
+
