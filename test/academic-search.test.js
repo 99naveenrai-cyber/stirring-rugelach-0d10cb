@@ -34,6 +34,9 @@ test('Stage 7 buildSearchIndex indexes classes, subjects, chapters, BPSC, resour
   const bpscItem = index.find(item => item.type === 'bpsc' && item.title === 'BPSC Prelims');
   assert.ok(bpscItem);
 
+  const sscItem = index.find(item => item.type === 'bpsc' && item.title === 'SSC');
+  assert.ok(sscItem);
+
   const resourceItem = index.find(item => item.type === 'resource' && item.title === 'Notes');
   assert.ok(resourceItem);
 
@@ -70,3 +73,4 @@ test('academic search returns relevant ranked results for query tokens', () => {
   const emptyQuery = academicSearch.search('', index);
   assert.equal(emptyQuery.length, 0);
 });
+
