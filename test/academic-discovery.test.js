@@ -52,6 +52,12 @@ test('discovery renders into the homepage and filters only catalogue presentatio
   assert.doesNotMatch(navigationSource, /(?:addDoc|setDoc|updateDoc|deleteDoc|httpsCallable)/);
 });
 
+test('class learning shortcuts remain contained on narrow mobile screens', () => {
+  assert.match(indexSource, /class="academic-route-shortcuts"/);
+  assert.match(indexSource, /@media\(max-width:480px\)\{\.academic-route-shortcuts\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}\}/);
+  assert.match(indexSource, /\.academic-route-shortcuts a\{[^}]*min-width:0;[^}]*max-width:100%;[^}]*overflow-wrap:anywhere/);
+});
+
 test('empty filtered paths provide a working return to the full catalogue', () => {
   assert.match(indexSource, /इस learning path में अभी कोई active course नहीं मिला।/);
   assert.match(indexSource, /onclick="showAllCourses\(\)"/);
