@@ -70,14 +70,25 @@ test("Classes 11 and 12 resolve distinct stream subjects and chapter lists", () 
 });
 
 test("planned live sessions stay scoped to the selected class, stream, subject and chapter", () => {
-  assert.match(publicSource, /s\.classNum === _navClass/);
-  assert.match(publicSource, /s\.subject === _navSubject/);
-  assert.match(publicSource, /normalizeLiveStream\(s\.stream\) === normalizeLiveStream/);
-  assert.match(publicSource, /!s\.chapter \|\| s\.chapter === chap/);
-  assert.doesNotMatch(
-    publicSource,
-    /\|\| _livePlannedSessions\.find\(s => s\.classNum === _navClass && s\.subject === _navSubject\)/
-  );
+  assert.match(publicSource, /function liveSessionMatchesSelection\(session,/);
+  assert.match(publicSource, /normalizeLiveClass\(session\?\.classNum\) !== normalizeLiveClass\(classNum\)/);
+  assert.match(publicSource, /normalizeLiveLabel\(session\?\.subject\) !== normalizeLiveLabel\(subject\)/);
+  assert.match(publicSource, /normalizeLiveLabel\(session\.chapter, \{ chapter: true \}\)/);
+  assert.match(publicSource, /liveSessionMatchesSelection\(s, \{[\s\S]*?classNum: _navClass,[\s\S]*?subject: _navSubject,[\s\S]*?chapter: chap/);
+});
+
+test("legacy chapter labels still resolve the Class 10 trigonometry plan", () => {
+  assert.match(publicSource, /replace\(\/\^\(\?:chapter\|ch\\\.\?\)\\s\*\\d\+/);
+  assert.match(publicSource, /savedChapter === selectedChapter/);
+  assert.match(publicSource, /savedChapter\.includes\(selectedChapter\)/);
+  assert.match(publicSource, /selectedChapter\.includes\(savedChapter\)/);
+});
+
+test("public live schedule retries transient callable failures without erasing valid sessions", () => {
+  assert.match(publicSource, /for \(let attempt = 1; attempt <= 3; attempt\+\+\)/);
+  assert.match(publicSource, /if \(attempt < 3\) await new Promise/);
+  assert.doesNotMatch(publicSource, /catch \(error\) \{[\s\S]{0,240}_livePlannedSessions = \[\]/);
+  assert.match(publicSource, /Retry Live Schedule/);
 });
 
 test("Humanities stream aliases and Hindi Core remain backend-compatible", () => {
