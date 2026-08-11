@@ -2443,6 +2443,12 @@ let _navStream = 'science';
 let _navSubject = '';
 let _navChapter = '';
 let _selectedSessionDoc = null;
+
+function normalizeLiveStream(value) {
+  const stream = String(value || '').trim().toLowerCase();
+  return stream === 'arts' ? 'humanities' : stream;
+}
+
 let _liveQuizUnsub = null;
 let _liveQuizTimerInt = null;
 let _livePlayer = null;
@@ -2646,12 +2652,12 @@ function checkSessionAndShowCard(chap) {
   card.style.display = 'block';
 
   // Check if session is planned/live in admin for this class, subject & chapter
-  const sess = _livePlannedSessions.find(s => 
-    s.classNum === _navClass && 
-    s.subject === _navSubject && 
-    (s.stream || '') === (_navClass==='11'||_navClass==='12'?_navStream:'') &&
+  const sess = _livePlannedSessions.find(s =>
+    s.classNum === _navClass &&
+    s.subject === _navSubject &&
+    normalizeLiveStream(s.stream) === normalizeLiveStream(_navClass==='11'||_navClass==='12'?_navStream:'') &&
     (!s.chapter || s.chapter === chap || chap.includes(s.chapter))
-  ) || _livePlannedSessions.find(s => s.classNum === _navClass && s.subject === _navSubject);
+  );
 
   if (sess) {
     _selectedSessionDoc = sess;
