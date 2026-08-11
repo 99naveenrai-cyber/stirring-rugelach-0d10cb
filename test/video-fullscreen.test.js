@@ -82,6 +82,12 @@ test("user Play taps fullscreen the correct quiz workspace before loading video"
   assert.match(source, /onclick="\$\{canPlayLesson \? `playLessonInFullscreen\(\$\{i\}\)`/);
 });
 
+test("standalone video actions remain independently tappable", () => {
+  assert.match(source, /\.standalone-ready>\.lesson-action-row\{position:absolute;/);
+  assert.match(source, /\.standalone-ready>\.lesson-action-row \.btn-enroll\{position:static;/);
+  assert.doesNotMatch(source, /\.standalone-ready \.btn-enroll\{position:absolute;/);
+});
+
 test("timed popup quiz enters and exits with controlled slow transitions", () => {
   assert.match(source, /transition:opacity 820ms[\s\S]*transform 880ms[\s\S]*filter 760ms/);
   assert.match(source, /\.popup-quiz-layer\.closing/);
