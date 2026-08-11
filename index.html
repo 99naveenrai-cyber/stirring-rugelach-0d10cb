@@ -2443,10 +2443,46 @@ let _navStream = 'science';
 let _navSubject = '';
 let _navChapter = '';
 let _selectedSessionDoc = null;
+let _liveSessionsLoadPromise = null;
+let _liveSessionsLoadError = '';
 
 function normalizeLiveStream(value) {
   const stream = String(value || '').trim().toLowerCase();
   return stream === 'arts' ? 'humanities' : stream;
+}
+
+function normalizeLiveClass(value) {
+  return String(value || '').match(/\d+/)?.[0] || '';
+}
+
+function normalizeLiveLabel(value, { chapter = false } = {}) {
+  let label = String(value || '')
+    .normalize('NFKC')
+    .trim()
+    .toLowerCase()
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\s+/g, ' ');
+  if (chapter) {
+    label = label
+      .replace(/^(?:chapter|ch\.?)\s*\d+\s*[:.)-]?\s*/i, '')
+      .replace(/^\d+\s*[:.)-]\s*/, '');
+  }
+  label = label.replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  if (!chapter && (label === 'math' || label === 'maths')) return 'mathematics';
+  return label;
+}
+
+function liveSessionMatchesSelection(session, { classNum, stream, subject, chapter = '' }) {
+  if (normalizeLiveClass(session?.classNum) !== normalizeLiveClass(classNum)) return false;
+  if (normalizeLiveLabel(session?.subject) !== normalizeLiveLabel(subject)) return false;
+  const expectedStream = normalizeLiveStream(stream);
+  if (normalizeLiveStream(session?.stream) !== expectedStream) return false;
+  if (!chapter || !session?.chapter) return true;
+  const savedChapter = normalizeLiveLabel(session.chapter, { chapter: true });
+  const selectedChapter = normalizeLiveLabel(chapter, { chapter: true });
+  return savedChapter === selectedChapter ||
+    savedChapter.includes(selectedChapter) ||
+    selectedChapter.includes(savedChapter);
 }
 
 let _liveQuizUnsub = null;
@@ -2533,8 +2569,8 @@ function renderStep1Classes() {
   
   classes.forEach(c => {
     const btn = document.createElement('button');
-    const hasLive = _livePlannedSessions.some(s => s.classNum === c && s.status === 'live');
-    const hasPlan = _livePlannedSessions.some(s => s.classNum === c && s.status === 'planned');
+    const hasLive = _livePlannedSessions.some(s => normalizeLiveClass(s.classNum) === normalizeLiveClass(c) && s.status === 'live');
+    const hasPlan = _livePlannedSessions.some(s => normalizeLiveClass(s.classNum) === normalizeLiveClass(c) && s.status === 'planned');
 
     let cls = 'lc-navy-btn';
     if (hasLive) cls += ' live';
@@ -2585,8 +2621,13 @@ function renderStep3Subjects() {
   list.innerHTML = '';
 
   subjects.forEach(subj => {
-    const hasLive = _livePlannedSessions.some(s => s.classNum === _navClass && s.subject === subj && (s.status === 'live'));
-    const hasPlan = _livePlannedSessions.some(s => s.classNum === _navClass && s.subject === subj && (s.status === 'planned'));
+    const selection = {
+      classNum: _navClass,
+      stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
+      subject: subj
+    };
+    const hasLive = _livePlannedSessions.some(s => liveSessionMatchesSelection(s, selection) && s.status === 'live');
+    const hasPlan = _livePlannedSessions.some(s => liveSessionMatchesSelection(s, selection) && s.status === 'planned');
 
     const item = document.createElement('div');
     item.className = 'lc-chapter-item';
@@ -2597,11 +2638,7 @@ function renderStep3Subjects() {
     item.onclick = () => {
       _navSubject = subj;
       const plannedSession = _livePlannedSessions.find(session =>
-        session.classNum === _navClass &&
-        session.subject === subj &&
-        normalizeLiveStream(session.stream) === normalizeLiveStream(
-          _navClass === '11' || _navClass === '12' ? _navStream : ''
-        )
+        liveSessionMatchesSelection(session, selection)
       );
       _currentStep = 4;
       renderNavyStepNavigation();
@@ -2657,12 +2694,12 @@ function checkSessionAndShowCard(chap) {
   card.style.display = 'block';
 
   // Check if session is planned/live in admin for this class, subject & chapter
-  const sess = _livePlannedSessions.find(s =>
-    s.classNum === _navClass &&
-    s.subject === _navSubject &&
-    normalizeLiveStream(s.stream) === normalizeLiveStream(_navClass==='11'||_navClass==='12'?_navStream:'') &&
-    (!s.chapter || s.chapter === chap || chap.includes(s.chapter))
-  );
+  const sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
+    classNum: _navClass,
+    stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
+    subject: _navSubject,
+    chapter: chap
+  }));
 
   if (sess) {
     renderLiveSessionDetails(sess, chap);
@@ -3236,18 +3273,31 @@ function categorizeLiveSessions(sessions) {
 }
 
 async function loadPublicLiveSessions() {
-  try {
-    const result = await getPlannedLiveSessionsFn({});
-    const sessions = Array.isArray(result.data?.sessions) ? result.data.sessions : [];
-    _livePlannedSessions = sessions;
-    window._livePlannedSessions = sessions;
-  } catch (error) {
-    console.warn('[Live sessions fetch error]', error?.code || error?.message || error);
-    _livePlannedSessions = [];
-    window._livePlannedSessions = [];
-  }
-  renderLiveDiscoveryGrid();
-  return _livePlannedSessions;
+  if (_liveSessionsLoadPromise) return _liveSessionsLoadPromise;
+  _liveSessionsLoadPromise = (async () => {
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const result = await getPlannedLiveSessionsFn({});
+        const sessions = Array.isArray(result.data?.sessions) ? result.data.sessions : [];
+        _livePlannedSessions = sessions;
+        window._livePlannedSessions = sessions;
+        _liveSessionsLoadError = '';
+        renderLiveDiscoveryGrid();
+        return sessions;
+      } catch (error) {
+        lastError = error;
+        if (attempt < 3) await new Promise(resolve => setTimeout(resolve, attempt * 400));
+      }
+    }
+    _liveSessionsLoadError = lastError?.code || lastError?.message || 'Live schedule could not be loaded.';
+    console.warn('[Live sessions fetch error]', _liveSessionsLoadError);
+    renderLiveDiscoveryGrid();
+    return _livePlannedSessions;
+  })().finally(() => {
+    _liveSessionsLoadPromise = null;
+  });
+  return _liveSessionsLoadPromise;
 }
 
 function filterLiveDiscovery(filterType, btnEl) {
@@ -3281,6 +3331,17 @@ function renderLiveDiscoveryGrid() {
   if (_activeLiveDiscoveryFilter === 'live') displayList = categorized.liveNow;
   if (_activeLiveDiscoveryFilter === 'today') displayList = categorized.today;
   if (_activeLiveDiscoveryFilter === 'upcoming') displayList = categorized.upcoming;
+
+  if (displayList.length === 0 && _liveSessionsLoadError) {
+    grid.innerHTML = `
+      <div class="live-empty-state">
+        <h3>Live class schedule load नहीं हुआ</h3>
+        <p>Network connection के कारण schedule नहीं खुला। दोबारा कोशिश करें।</p>
+        <button type="button" class="btn-enroll-live" onclick="loadPublicLiveSessions()">Retry Live Schedule</button>
+      </div>
+    `;
+    return;
+  }
 
   if (displayList.length === 0) {
     grid.innerHTML = `
