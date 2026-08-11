@@ -2,10 +2,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const competitiveModule = require('../academic-competitive-exams.js');
 
-test('Stage 17 competitive exams exposes BPSC, UPSC, UPPCS, JEE Mains, JEE Advanced, and NEET', () => {
+test('Stage 17 competitive exams exposes BPSC, UPSC, UPPCS, JEE, NEET, and SSC', () => {
   const list = competitiveModule.getCompetitiveExams();
   assert.equal(Array.isArray(list), true);
-  assert.equal(list.length, 6);
+  assert.equal(list.length, 7);
 
   const ids = list.map(e => e.id);
   assert.ok(ids.includes('bpsc'));
@@ -14,6 +14,18 @@ test('Stage 17 competitive exams exposes BPSC, UPSC, UPPCS, JEE Mains, JEE Advan
   assert.ok(ids.includes('jee-mains'));
   assert.ok(ids.includes('jee-advanced'));
   assert.ok(ids.includes('neet'));
+  assert.ok(ids.includes('ssc'));
+});
+
+test('SSC exam details contain the main Staff Selection Commission paths', () => {
+  const ssc = competitiveModule.getExamDetails('ssc');
+  assert.ok(ssc);
+  assert.equal(ssc.name, 'SSC');
+  const sectionTitles = ssc.sections.map(section => section.title);
+  assert.ok(sectionTitles.includes('SSC CGL'));
+  assert.ok(sectionTitles.includes('SSC CHSL'));
+  assert.ok(sectionTitles.includes('SSC MTS'));
+  assert.ok(sectionTitles.includes('SSC CPO & GD'));
 });
 
 test('BPSC exam details contains Prelims, Mains, Bihar Special & Current Affairs', () => {
@@ -35,3 +47,4 @@ test('JEE and NEET exam details contain subjects and NCERT line-by-line practice
   assert.ok(neet);
   assert.ok(neet.sections.some(s => s.title.includes('NCERT Line-by-Line')));
 });
+
