@@ -73,4 +73,3 @@ test('academic search returns relevant ranked results for query tokens', () => {
   const emptyQuery = academicSearch.search('', index);
   assert.equal(emptyQuery.length, 0);
 });
-
