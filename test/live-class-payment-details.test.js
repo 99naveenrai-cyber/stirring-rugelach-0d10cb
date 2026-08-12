@@ -32,6 +32,25 @@ test("planned live sessions populate public discovery during startup", () => {
   assert.match(publicSource, /openPlannedLiveSession\('\$\{safeSessionId\}'\)/);
 });
 
+test("classic live-class UI uses the Firebase module callable bridge", () => {
+  assert.match(publicSource, /window\._ideaKdcLiveCallables = Object\.freeze\(\{/);
+  assert.match(publicSource, /window\._ideaKdcLiveCallables\.getPlannedSessions\(\{\}\)/);
+  assert.match(publicSource, /window\._ideaKdcLiveCallables\.registerForLiveClass\(\{ sessionId: sess\.sessionId \}\)/);
+  assert.match(publicSource, /window\._ideaKdcLiveCallables\.createCashfreeOrder\(\{ sessionId: sess\.sessionId \}\)/);
+  assert.match(publicSource, /window\._ideaKdcLiveCallables\.confirmRegistration\(\{ sessionId: sess\.sessionId, orderId \}\)/);
+  assert.match(publicSource, /window\._ideaKdcLiveCallables\.getPlayerAccess\(\{ sessionId: sess\.sessionId \}\)/);
+  assert.doesNotMatch(publicSource, /const result = await getPlannedLiveSessionsFn\(\{\}\)/);
+});
+
+test("live details and payment use an explicit module runtime bridge", () => {
+  assert.match(publicSource, /window\.escapeHtml = escapeHtml/);
+  assert.match(publicSource, /window\._ideaKdcLiveRuntime = Object\.freeze\(\{/);
+  assert.match(publicSource, /registerInterest: \(payload\) => registerUnplannedLiveClassInterestFn\(payload\)/);
+  assert.match(publicSource, /openCashfreeCheckout: async \(paymentSessionId\)/);
+  assert.match(publicSource, /verifyPayment: \(payload\) => verifyCashfreePaymentFn\(payload\)/);
+  assert.doesNotMatch(publicSource, /window\.joinSelectedLiveSession = async \(\) => \{\s*if \(!currentUser\)/);
+});
+
 test("public live details appear before the payment action", () => {
   const detailsStart = publicSource.indexOf("function renderLiveSessionDetails");
   const joinButton = publicSource.indexOf('onclick="joinSelectedLiveSession()"', detailsStart);
@@ -46,7 +65,7 @@ test("public live details appear before the payment action", () => {
 });
 
 test("paid live checkout uses an exact server-priced session order", () => {
-  assert.match(publicSource, /createLiveClassCashfreeOrderFn\(\{ sessionId: sess\.sessionId \}\)/);
+  assert.match(publicSource, /window\._ideaKdcLiveCallables\.createCashfreeOrder\(\{ sessionId: sess\.sessionId \}\)/);
   assert.doesNotMatch(publicSource, /customPricePaise/);
   assert.match(functionsSource, /exports\.createLiveClassCashfreeOrder/);
   assert.match(functionsSource, /findLiveClassPaymentOffering\(sessionId\)/);

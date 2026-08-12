@@ -2493,11 +2493,7 @@ function liveSessionMatchesSelection(session, { classNum, stream, subject, chapt
     return true;
   }
 
-  const savedWords = savedChapter.split(' ').filter(w => w.length > 3);
-  const selectedWords = selectedChapter.split(' ').filter(w => w.length > 3);
-  if (savedWords.some(w => selectedWords.includes(w))) return true;
-
-  return true;
+  return false;
 }
 
 let _liveQuizUnsub = null;
@@ -2708,33 +2704,16 @@ function checkSessionAndShowCard(chap) {
   if (!card) return;
   card.style.display = 'block';
 
-  console.log('[IdeaKDC Live Lookup]', { navClass: _navClass, navStream: _navStream, navSubject: _navSubject, navChapter: chap, totalPlanned: _livePlannedSessions.length });
-
-  let sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
+  const sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
     classNum: _navClass,
     stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
     subject: _navSubject,
     chapter: chap
   }));
 
-  if (!sess) {
-    sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
-      classNum: _navClass,
-      stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
-      subject: _navSubject,
-      chapter: ''
-    }));
-  }
-
-  if (!sess) {
-    sess = _livePlannedSessions.find(s => normalizeLiveClass(s.classNum) === normalizeLiveClass(_navClass));
-  }
-
   if (sess) {
-    console.log('[IdeaKDC Live Match Found]', sess);
     renderLiveSessionDetails(sess, chap || sess.chapter);
   } else {
-    console.log('[IdeaKDC Live No Match]', { navClass: _navClass, navSubject: _navSubject });
     _selectedSessionDoc = null;
     card.style.background = 'rgba(254,243,199,0.85)';
     card.style.borderColor = 'rgba(245,158,11,0.35)';
@@ -2808,7 +2787,7 @@ function renderLiveSessionDetails(sess, chapterLabel = '') {
 window.openPlannedLiveSession = async (sessionId) => {
   await window.showLive();
   const session = _livePlannedSessions.find(item => item.sessionId === String(sessionId || ''));
-  if (!session) return showToast('This live class is no longer available.', 'error');
+  if (!session) return window._ideaKdcLiveRuntime?.showToast('This live class is no longer available.', 'error');
   _navClass = session.classNum || _navClass;
   _navStream = normalizeLiveStream(session.stream || '');
   _navSubject = session.subject || '';
@@ -2819,26 +2798,28 @@ window.openPlannedLiveSession = async (sessionId) => {
 };
 
 window.registerUnplannedInterest = async (chap) => {
-  if (!currentUser) { showLogin(); return; }
+  const runtime = window._ideaKdcLiveRuntime;
+  if (!runtime?.isSignedIn()) { runtime?.showLogin(); return; }
   const btn = document.getElementById('lc-req-btn');
   const statusEl = document.getElementById('lc-req-status');
   if (btn) { btn.disabled = true; btn.textContent = 'Registering...'; }
 
   try {
-    await registerUnplannedLiveClassInterestFn({
+    const user = runtime.currentUserProfile();
+    await runtime.registerInterest({
       classNum: _navClass,
       stream: _navStream || '',
       subject: _navSubject,
       chapter: chap,
-      email: currentUser.email || '',
-      name: currentUser.displayName || ''
+      email: user.email,
+      name: user.displayName
     });
     if (statusEl) {
       statusEl.style.color = '#15803d';
       statusEl.innerHTML = '✅ Interest Registered! Data collected & confirmation email alert sent to mentor.';
     }
     if (btn) { btn.textContent = '✅ Registered!'; btn.style.background = '#15803d'; }
-    showToast('✅ Registration collected! Mentor notified.', 'success');
+    runtime.showToast('✅ Registration collected! Mentor notified.', 'success');
   } catch (err) {
     if (statusEl) { statusEl.style.color = '#dc2626'; statusEl.textContent = err?.message || 'Failed to register interest.'; }
     if (btn) { btn.disabled = false; btn.textContent = '📝 Register Interest'; }
@@ -2847,7 +2828,8 @@ window.registerUnplannedInterest = async (chap) => {
 
 
 window.joinSelectedLiveSession = async () => {
-  if (!currentUser) { showLogin(); return; }
+  const runtime = window._ideaKdcLiveRuntime;
+  if (!runtime?.isSignedIn()) { runtime?.showLogin(); return; }
   if (!_selectedSessionDoc) return;
   const sess = _selectedSessionDoc;
   const btn = document.getElementById('lc-join-btn');
@@ -2856,30 +2838,29 @@ window.joinSelectedLiveSession = async () => {
 
   try {
     // 1. Register or initiate payment
-    const regRes = await registerForLiveClassFn({ sessionId: sess.sessionId });
+    const regRes = await window._ideaKdcLiveCallables.registerForLiveClass({ sessionId: sess.sessionId });
 
     if (regRes.data?.requiresPayment) {
       // The backend reads the exact live-session price; the browser never supplies it.
       btn.textContent = 'Creating secure TEST payment...';
-      const orderRes = await createLiveClassCashfreeOrderFn({ sessionId: sess.sessionId });
+      const orderRes = await window._ideaKdcLiveCallables.createCashfreeOrder({ sessionId: sess.sessionId });
       const paymentSessionId = orderRes.data?.payment_session_id;
       const orderId = orderRes.data?.order_id;
       if (!paymentSessionId || !orderId) throw new Error('Missing Cashfree live-class checkout data.');
 
-      const cashfree = await getCashfreeCheckout();
-      await cashfree.checkout({ paymentSessionId, redirectTarget: '_modal' });
+      await runtime.openCashfreeCheckout(paymentSessionId);
       btn.textContent = 'Verifying payment...';
-      const verification = await verifyCashfreePaymentFn({ orderId });
+      const verification = await runtime.verifyPayment({ orderId });
       const payment = verification.data || {};
       if (!(payment.verified || payment.status === 'paid')) {
         const message = payment.status === 'pending'
           ? 'Payment is still pending. Please do not pay again; check shortly.'
           : (payment.message || 'Payment was not completed.');
-        showToast(message, payment.status === 'pending' ? 'info' : 'error');
+        runtime.showToast(message, payment.status === 'pending' ? 'info' : 'error');
         return;
       }
-      await confirmLiveClassRegistrationFn({ sessionId: sess.sessionId, orderId });
-      showToast('Payment successful. Your live class seat is reserved.', 'success');
+      await window._ideaKdcLiveCallables.confirmRegistration({ sessionId: sess.sessionId, orderId });
+      runtime.showToast('Payment successful. Your live class seat is reserved.', 'success');
     }
 
     if (sess.status !== 'live') {
@@ -2893,11 +2874,11 @@ window.joinSelectedLiveSession = async () => {
 
     // 2. Get stream access (YouTube Video ID)
     btn.textContent = 'Opening Live Stream...';
-    const accessRes = await getPlayerAccessFn({ sessionId: sess.sessionId });
+    const accessRes = await window._ideaKdcLiveCallables.getPlayerAccess({ sessionId: sess.sessionId });
     const ytId = accessRes.data?.youtubeVideoId;
     
     if (!ytId) {
-      showToast('Stream is not live yet. Admin will start streaming shortly.', 'info');
+      runtime.showToast('Stream is not live yet. Admin will start streaming shortly.', 'info');
       btn.disabled = false;
       btn.textContent = '🚀 Join Live Stream';
       return;
@@ -2907,7 +2888,7 @@ window.joinSelectedLiveSession = async () => {
     closeLiveModal();
     openLiveStreamPage(ytId, sess.sessionId);
   } catch (err) {
-    showToast(err?.message || 'Could not join live stream.', 'error');
+    runtime.showToast(err?.message || 'Could not join live stream.', 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = '🚀 Join Live Stream';
@@ -3309,7 +3290,7 @@ async function loadPublicLiveSessions() {
     let lastError = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        const result = await getPlannedLiveSessionsFn({});
+        const result = await window._ideaKdcLiveCallables.getPlannedSessions({});
         const sessions = Array.isArray(result.data?.sessions) ? result.data.sessions : [];
         _livePlannedSessions = sessions;
         window._livePlannedSessions = sessions;
@@ -3717,7 +3698,31 @@ const registerForLiveClassFn = httpsCallable(functions, 'registerForLiveClass');
 const createLiveClassCashfreeOrderFn = httpsCallable(functions, 'createLiveClassCashfreeOrder');
 const confirmLiveClassRegistrationFn = httpsCallable(functions, 'confirmLiveClassRegistration');
 const getPlayerAccessFn = httpsCallable(functions, 'getPlayerAccess');
+const registerUnplannedLiveClassInterestFn = httpsCallable(functions, 'registerUnplannedLiveClassInterest');
 const recordLiveQuizSyncFn = httpsCallable(functions, 'recordLiveQuizSync');
+window._ideaKdcLiveCallables = Object.freeze({
+  getPlannedSessions: (payload = {}) => getPlannedLiveSessionsFn(payload),
+  registerForLiveClass: (payload) => registerForLiveClassFn(payload),
+  createCashfreeOrder: (payload) => createLiveClassCashfreeOrderFn(payload),
+  confirmRegistration: (payload) => confirmLiveClassRegistrationFn(payload),
+  getPlayerAccess: (payload) => getPlayerAccessFn(payload)
+});
+window.escapeHtml = escapeHtml;
+window._ideaKdcLiveRuntime = Object.freeze({
+  isSignedIn: () => Boolean(currentUser),
+  currentUserProfile: () => ({
+    email: currentUser?.email || '',
+    displayName: currentUser?.displayName || ''
+  }),
+  showLogin: () => showLogin(),
+  showToast: (message, type = '') => showToast(message, type),
+  registerInterest: (payload) => registerUnplannedLiveClassInterestFn(payload),
+  openCashfreeCheckout: async (paymentSessionId) => {
+    const cashfree = await getCashfreeCheckout();
+    return cashfree.checkout({ paymentSessionId, redirectTarget: '_modal' });
+  },
+  verifyPayment: (payload) => verifyCashfreePaymentFn(payload)
+});
 const gProvider = new GoogleAuthProvider();
 window._ideaKdcLiveFirebase = { db, doc, collection, onSnapshot };
 window._recordLiveQuizSync = (payload) => recordLiveQuizSyncFn(payload);

@@ -75,6 +75,8 @@ test("planned live sessions stay scoped to the selected class, stream, subject a
   assert.match(publicSource, /normalizeLiveLabel\(session\?\.subject\) !== normalizeLiveLabel\(subject\)/);
   assert.match(publicSource, /normalizeLiveLabel\(session\.chapter, \{ chapter: true \}\)/);
   assert.match(publicSource, /liveSessionMatchesSelection\(s, \{[\s\S]*?classNum: _navClass,[\s\S]*?subject: _navSubject,[\s\S]*?chapter: chap/);
+  assert.doesNotMatch(publicSource, /find\(s => normalizeLiveClass\(s\.classNum\) === normalizeLiveClass\(_navClass\)\)/);
+  assert.doesNotMatch(publicSource, /savedWords\.some/);
 });
 
 test("legacy chapter labels still resolve the Class 10 trigonometry plan", () => {
