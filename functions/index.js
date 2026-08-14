@@ -66,6 +66,8 @@ const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const SAFE_RESOURCE_ID_PATTERN = /^[^/\\\u0000-\u001F]{1,180}$/;
 const REFERRAL_MEMBER_STATUSES = Object.freeze(["active", "banned", "closed"]);
 const QUIZ_SESSION_ID_PATTERN = /^[A-Za-z0-9_-]{8,180}$/;
+const STUDENT_SESSION_VALUE_PATTERN = /^[A-Za-z0-9_-]{16,180}$/;
+const STUDENT_SESSION_LEASE_MS = 12 * 60 * 1000;
 
 function callableOptions(options = {}) {
   return {
@@ -1046,6 +1048,111 @@ function safeQuizAnswerKey(value = "") {
   return String(value || "").replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || "question";
 }
 
+function studentSessionRef(uid) {
+  return db.collection("studentActiveSessions").doc(uid);
+}
+
+function studentSessionHash(value, scope) {
+  return crypto.createHash("sha256").update(`${scope}:${value}`).digest("hex");
+}
+
+function requestIpHash(request) {
+  const forwarded = String(request.rawRequest?.headers?.["x-forwarded-for"] || "").split(",")[0].trim();
+  const ip = forwarded || String(request.rawRequest?.ip || "").trim();
+  return ip ? studentSessionHash(ip, "ip") : "";
+}
+
+async function assertActiveStudentSession(request, rawSessionToken) {
+  const auth = requireAuth(request);
+  if (isAdminAuth(auth)) return true;
+  const sessionToken = validatedText(rawSessionToken, "sessionToken", {
+    required: true,
+    maxLength: 180,
+    pattern: STUDENT_SESSION_VALUE_PATTERN
+  });
+  const snapshot = await studentSessionRef(auth.uid).get();
+  const session = snapshot.exists ? snapshot.data() || {} : {};
+  const leaseExpiresAt = timestampMillis(session.leaseExpiresAt);
+  const tokenMatches = session.tokenHash === studentSessionHash(sessionToken, "session");
+  if (session.active !== true || !tokenMatches || leaseExpiresAt <= Date.now()) {
+    throw new HttpsError("permission-denied", "This student session is not active on this device.");
+  }
+  return true;
+}
+
+exports.claimStudentSession = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["deviceId", "sessionToken"],
+    requiredKeys: ["deviceId", "sessionToken"],
+    maxBytes: 1024
+  });
+  enforceCallableRateLimit(request, "claim-student-session", 30, 60 * 1000);
+  if (isAdminAuth(auth)) return { active: true, admin: true };
+  const deviceId = validatedText(data.deviceId, "deviceId", {
+    required: true,
+    maxLength: 180,
+    pattern: STUDENT_SESSION_VALUE_PATTERN
+  });
+  const sessionToken = validatedText(data.sessionToken, "sessionToken", {
+    required: true,
+    maxLength: 180,
+    pattern: STUDENT_SESSION_VALUE_PATTERN
+  });
+  const tokenHash = studentSessionHash(sessionToken, "session");
+  const deviceHash = studentSessionHash(deviceId, "device");
+  const ipHash = requestIpHash(request);
+  const ref = studentSessionRef(auth.uid);
+  const now = Timestamp.now();
+  const leaseExpiresAt = Timestamp.fromMillis(now.toMillis() + STUDENT_SESSION_LEASE_MS);
+
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    const existing = snapshot.exists ? snapshot.data() || {} : {};
+    const existingLeaseActive = existing.active === true && timestampMillis(existing.leaseExpiresAt) > now.toMillis();
+    const sameSession = existing.tokenHash === tokenHash && existing.deviceHash === deviceHash;
+    if (existingLeaseActive && !sameSession) {
+      throw new HttpsError("already-exists", "This account is already open on another device or browser.");
+    }
+    transaction.set(ref, {
+      uid: auth.uid,
+      active: true,
+      tokenHash,
+      deviceHash,
+      ipHash,
+      leaseExpiresAt,
+      lastSeenAt: now,
+      createdAt: existing.createdAt || now
+    }, { merge: true });
+  });
+  return { active: true, leaseExpiresAt: leaseExpiresAt.toMillis() };
+});
+
+exports.releaseStudentSession = onCall(callableOptions({ region: "asia-south1" }), async (request) => {
+  const auth = requireAuth(request);
+  const data = validatedCallableData(request, {
+    allowedKeys: ["sessionToken"],
+    requiredKeys: ["sessionToken"],
+    maxBytes: 512
+  });
+  enforceCallableRateLimit(request, "release-student-session", 20, 60 * 1000);
+  if (isAdminAuth(auth)) return { released: true, admin: true };
+  const sessionToken = validatedText(data.sessionToken, "sessionToken", {
+    required: true,
+    maxLength: 180,
+    pattern: STUDENT_SESSION_VALUE_PATTERN
+  });
+  const tokenHash = studentSessionHash(sessionToken, "session");
+  const ref = studentSessionRef(auth.uid);
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    if (!snapshot.exists || snapshot.data()?.tokenHash !== tokenHash) return;
+    const now = Timestamp.now();
+    transaction.set(ref, { active: false, releasedAt: now, leaseExpiresAt: now, lastSeenAt: now }, { merge: true });
+  });
+  return { released: true };
+});
+
 function quizScoreSessionRef(uid, clientSessionId) {
   const safeSessionId = validatedText(clientSessionId, "quizSessionId", {
     required: true,
@@ -1527,7 +1634,7 @@ exports.getAuthorizedLessonVideo = onCall(callableOptions({
   region: "asia-south1"
 }), async (request) => {
   const data = validatedCallableData(request, {
-    allowedKeys: ["courseId", "lessonId"],
+    allowedKeys: ["courseId", "lessonId", "sessionToken"],
     requiredKeys: ["courseId", "lessonId"],
     maxBytes: 1024
   });
@@ -1558,6 +1665,9 @@ exports.getAuthorizedLessonVideo = onCall(callableOptions({
   const fullVideoId = sourceType === "youtube" ? extractYouTubeVideoId(sourceValue) : "";
   const nativeVideoUrl = sourceType === "native" ? String(sourceValue).trim() : "";
 
+  if (access && !canUsePublicLesson && !isAdminAuth(request.auth)) {
+    await assertActiveStudentSession(request, data.sessionToken);
+  }
   if (access || canUsePublicLesson) {
     if (!fullVideoId && !nativeVideoUrl) {
       throw new HttpsError("failed-precondition", "Playable video is not configured for this lesson.");
@@ -1586,7 +1696,7 @@ exports.getAuthorizedLessonQuiz = onCall(callableOptions({
   region: "asia-south1"
 }), async (request) => {
   const data = validatedCallableData(request, {
-    allowedKeys: ["courseId", "lessonId", "mode"],
+    allowedKeys: ["courseId", "lessonId", "mode", "sessionToken"],
     requiredKeys: ["courseId", "lessonId"],
     maxBytes: 1024
   });
@@ -1608,6 +1718,9 @@ exports.getAuthorizedLessonQuiz = onCall(callableOptions({
   const access = await hasCourseAccess(uid, courseId, request.auth);
   const canUsePublicLesson = lessonPlayableWithoutPurchase(lesson, docs, lessonIndex);
   if (!access && !canUsePublicLesson) throw new HttpsError("permission-denied", "This lesson is locked.");
+  if (access && !canUsePublicLesson && !isAdminAuth(request.auth)) {
+    await assertActiveStudentSession(request, data.sessionToken);
+  }
 
   const config = publicQuizConfig(lesson.quizConfig || {});
   const modeConfig = mode === "popup" ? config.popupQuiz : config.separateQuiz;

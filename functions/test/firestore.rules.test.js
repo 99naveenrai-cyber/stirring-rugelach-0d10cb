@@ -215,6 +215,15 @@ test("admin can write a validated separate quiz and invalid fields are rejected"
   }, adminToken, ["unexpectedAnswerExport", "updatedAt"]));
 });
 
+test("active student session leases are backend-only", async () => {
+  await expectDenied(writeDocument(`studentActiveSessions/${studentUid}`, {
+    active: true,
+    tokenHash: "student-controlled-token"
+  }, studentToken));
+  await expectDenied(readDocument(`studentActiveSessions/${studentUid}`, studentToken));
+  await expectDenied(readDocument(`studentActiveSessions/${otherStudentUid}`, studentToken));
+});
+
 test("students cannot write backend-owned quiz score or ranking records", async () => {
   await expectDenied(writeDocument("quizScoreSessions/fake-session", {
     uid: studentUid,

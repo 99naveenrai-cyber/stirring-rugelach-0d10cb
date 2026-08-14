@@ -761,6 +761,10 @@ body.academic-menu-open{overflow:hidden}
 .form-group input:focus{outline:none;border-color:var(--accent)}
 .auth-toggle{text-align:center;margin-top:1rem;font-size:.82rem;color:var(--muted)}
 .auth-toggle a{color:var(--accent);cursor:pointer;font-weight:600}
+.student-pin-overlay{position:fixed;inset:0;z-index:24000;display:none;place-items:center;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));background:rgba(9,18,43,.58);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);opacity:0;transition:opacity .24s ease}
+.student-pin-overlay.open{display:grid;opacity:1}.student-pin-dialog{width:min(100%,430px);max-height:calc(100dvh - 32px);overflow:auto;background:linear-gradient(145deg,#fff,#f3f7ff);border:1px solid #b9c9ea;border-radius:12px;padding:1.15rem;box-shadow:0 24px 64px rgba(15,35,79,.28);transform:translateY(12px) scale(.98);transition:transform .26s ease}.student-pin-overlay.open .student-pin-dialog{transform:none}
+.student-pin-dialog h2{margin:0;color:#10275b;font-size:clamp(1.18rem,4vw,1.45rem)}.student-pin-dialog p{margin:.5rem 0 .9rem;color:#52627f;font-size:.86rem;line-height:1.55}.student-pin-fields{display:grid;gap:.7rem}.student-pin-fields label{display:grid;gap:.3rem;color:#24365c;font-size:.78rem;font-weight:800}.student-pin-fields input{width:100%;min-height:48px;border:1px solid #b9c7df;border-radius:8px;padding:.65rem .75rem;font:inherit;background:#fff}.student-pin-actions{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:1rem}.student-pin-actions button{min-height:46px;border-radius:8px;border:1px solid #b8c8e6;background:#fff;color:#17326a;font-weight:850;cursor:pointer}.student-pin-actions .primary{background:#2347b7;border-color:#2347b7;color:#fff}.student-pin-status{min-height:1.25rem;margin-top:.7rem;font-size:.78rem;font-weight:750;color:#475569}.student-pin-status.error{color:#b91c1c}.student-pin-status.success{color:#15803d}
+@media(max-width:420px){.student-pin-actions{grid-template-columns:1fr}.student-pin-dialog{padding:1rem}}
 /* Student Finance Support */
 .referral-page{width:min(100%,980px);margin:0 auto;padding:clamp(1rem,3vw,2rem) 1rem calc(var(--bottom-nav-height) + 28px)}
 .referral-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.72fr);gap:1rem;align-items:start}
@@ -2232,10 +2236,11 @@ html, body {
         <input type="email" id="login-email" placeholder="apna@email.com">
       </div>
       <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="login-pwd" placeholder="Password">
+        <label>Password or 5-digit PIN</label>
+        <input type="password" id="login-pwd" placeholder="Password / 5-digit PIN" autocomplete="current-password">
       </div>
       <button class="submit-btn" id="login-btn" onclick="doLogin()"><span>Login करें</span></button>
+      <div class="auth-toggle"><a onclick="openForgotStudentPin()">Forgot password / PIN?</a></div>
       <div class="auth-divider">या</div>
       <button class="btn-google" onclick="doGoogleAuth()">
         <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
@@ -2244,6 +2249,16 @@ html, body {
       <div class="auth-toggle">पहली बार? <a onclick="startConvoReg(null)">Register करें</a></div>
     </div>
   </div>
+</div>
+
+<div class="student-pin-overlay" id="student-pin-overlay" aria-hidden="true">
+  <section class="student-pin-dialog" role="dialog" aria-modal="true" aria-labelledby="student-pin-title">
+    <h2 id="student-pin-title">Create 5-digit PIN</h2>
+    <p id="student-pin-copy">अपना account सुरक्षित रखने के लिए पाँच अंकों का PIN बनाएँ।</p>
+    <div class="student-pin-fields" id="student-pin-fields"></div>
+    <div class="student-pin-status" id="student-pin-status" aria-live="polite"></div>
+    <div class="student-pin-actions" id="student-pin-actions"></div>
+  </section>
 </div>
 
 <!-- ════════════════════════════════════════
@@ -3800,7 +3815,8 @@ if (document.readyState === 'loading') {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword,
-         signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged, updateProfile }
+         signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged, updateProfile,
+         EmailAuthProvider, linkWithCredential, updatePassword, sendPasswordResetEmail, sendEmailVerification }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection,
          getDocs, query, where, orderBy, serverTimestamp, writeBatch, onSnapshot }
@@ -3846,6 +3862,8 @@ const getPlayerAccessFn = httpsCallable(functions, 'getPlayerAccess');
 const registerUnplannedLiveClassInterestFn = httpsCallable(functions, 'registerUnplannedLiveClassInterest');
 const recordLiveQuizSyncFn = httpsCallable(functions, 'recordLiveQuizSync');
 const updateLiveClassPresenceFn = httpsCallable(functions, 'updateLiveClassPresence');
+const claimStudentSessionFn = httpsCallable(functions, 'claimStudentSession');
+const releaseStudentSessionFn = httpsCallable(functions, 'releaseStudentSession');
 window._ideaKdcLiveCallables = Object.freeze({
   getPlannedSessions: (payload = {}) => getPlannedLiveSessionsFn(payload),
   registerForLiveClass: (payload) => registerForLiveClassFn(payload),
@@ -3893,6 +3911,11 @@ let selectedCourse  = null;
 let pageHistory     = [];
 let pendingCourseId = null; // course to unlock after registration
 let lastCashfreeOrderId = '';
+let activeStudentSessionToken = '';
+let activeStudentSessionPromise = null;
+let studentSessionHeartbeat = null;
+const STUDENT_DEVICE_ID_KEY = 'ideakdcStudentDeviceId';
+const STUDENT_SESSION_TOKEN_KEY = 'ideakdcStudentSessionToken';
 
 // Conversational registration state
 let convoData  = { name:'', classNum:'', whatsapp:'', state:'', city:'', pincode:'', regType:'' };
@@ -3972,9 +3995,80 @@ async function handleAdminSeparateQuizPreview(user) {
 // ════════════════════════════════════════
 // AUTH STATE
 // ════════════════════════════════════════
+function randomStudentSessionValue() {
+  return window.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2)}_${Math.random().toString(36).slice(2)}`;
+}
+
+function persistentStudentSessionValue(key) {
+  let value = '';
+  try { value = localStorage.getItem(key) || ''; } catch (_) {}
+  if (!/^[A-Za-z0-9_-]{16,180}$/.test(value)) {
+    value = randomStudentSessionValue().replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 180);
+    try { localStorage.setItem(key, value); } catch (_) {}
+  }
+  return value;
+}
+
+function clearStudentSessionHeartbeat() {
+  if (studentSessionHeartbeat) window.clearInterval(studentSessionHeartbeat);
+  studentSessionHeartbeat = null;
+}
+
+async function claimActiveStudentSession(user, options = {}) {
+  if (!user || ADMIN_EMAILS.includes(String(user.email || '').toLowerCase())) {
+    activeStudentSessionToken = '';
+    return { active: true, admin: Boolean(user) };
+  }
+  const deviceId = persistentStudentSessionValue(STUDENT_DEVICE_ID_KEY);
+  const sessionToken = persistentStudentSessionValue(STUDENT_SESSION_TOKEN_KEY);
+  const result = await claimStudentSessionFn({ deviceId, sessionToken });
+  activeStudentSessionToken = sessionToken;
+  if (!options.silent) {
+    clearStudentSessionHeartbeat();
+    studentSessionHeartbeat = window.setInterval(() => {
+      if (!auth.currentUser || !activeStudentSessionToken) return;
+      claimStudentSessionFn({ deviceId, sessionToken }).catch(handleStudentSessionLoss);
+    }, 4 * 60 * 1000);
+  }
+  return result.data || { active: true };
+}
+
+async function ensureActiveStudentSession() {
+  if (!currentUser || isCurrentUserAdmin()) return '';
+  if (!activeStudentSessionPromise) {
+    activeStudentSessionPromise = claimActiveStudentSession(currentUser)
+      .finally(() => { activeStudentSessionPromise = null; });
+  }
+  await activeStudentSessionPromise;
+  return activeStudentSessionToken;
+}
+
+async function callProtectedLessonFunction(callable, payload) {
+  const sessionToken = await ensureActiveStudentSession();
+  return callable({ ...payload, ...(sessionToken ? { sessionToken } : {}) });
+}
+
+async function handleStudentSessionLoss(error) {
+  const code = String(error?.code || '');
+  if (!code.includes('already-exists') && !code.includes('permission-denied') && !code.includes('failed-precondition')) return;
+  clearStudentSessionHeartbeat();
+  activeStudentSessionToken = '';
+  currentUser = null;
+  currentUserData = null;
+  await signOut(auth).catch(() => {});
+  window.showStudentSessionConflict();
+}
+
 onAuthStateChanged(auth, async (user) => {
   let profilePromise = Promise.resolve();
   if (user) {
+    try {
+      await claimActiveStudentSession(user);
+    } catch (error) {
+      await handleStudentSessionLoss(error);
+      if (auth.currentUser) await signOut(auth).catch(() => {});
+      return;
+    }
     clearAccessState({ keepPendingCourse: true });
     currentUser = user;
     updateNav(true);
@@ -6264,6 +6358,139 @@ function renderConvoStep() {
   }
 }
 
+function studentPinPassword(value) {
+  const pin = String(value || '').trim();
+  return /^\d{5}$/.test(pin) ? `K${pin}` : pin;
+}
+
+function studentAccountEmail() {
+  return String(currentUser?.email || currentUserData?.email || '').trim().toLowerCase();
+}
+
+function setStudentPinStatus(message = '', type = '') {
+  const status = document.getElementById('student-pin-status');
+  if (!status) return;
+  status.textContent = message;
+  status.className = `student-pin-status${type ? ` ${type}` : ''}`;
+}
+
+function openStudentPinDialog({ title, copy, fields = '', actions = '' }) {
+  document.getElementById('student-pin-title').textContent = title;
+  document.getElementById('student-pin-copy').textContent = copy;
+  document.getElementById('student-pin-fields').innerHTML = fields;
+  document.getElementById('student-pin-actions').innerHTML = actions;
+  setStudentPinStatus('');
+  const overlay = document.getElementById('student-pin-overlay');
+  overlay.style.display = 'grid';
+  overlay.setAttribute('aria-hidden', 'false');
+  requestAnimationFrame(() => overlay.classList.add('open'));
+}
+
+window.closeStudentPinDialog = () => {
+  const overlay = document.getElementById('student-pin-overlay');
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden', 'true');
+  window.setTimeout(() => { overlay.style.display = 'none'; }, 240);
+};
+
+window.showStudentSessionConflict = () => {
+  openStudentPinDialog({
+    title: 'Account already open',
+    copy: 'यह student account किसी दूसरे device या browser में active है। वहाँ Logout करें, फिर यहाँ Login करें।',
+    actions: '<button type="button" class="primary" onclick="closeStudentPinDialog();showLogin()">Login page</button>'
+  });
+};
+
+window.openStudentEmailProfile = async () => {
+  window.closeStudentPinDialog();
+  if (!currentUser) { showLogin(); return; }
+  await showDashboard();
+  showStudentProfileEditor();
+};
+
+window.openCreateStudentPin = () => {
+  if (!currentUser) { showLogin(); return; }
+  const email = studentAccountEmail();
+  if (!email) {
+    openStudentPinDialog({
+      title: 'पहले Email जोड़ें',
+      copy: 'Dashboard में Edit Profile खोलकर अपना email जोड़ें। उसके बाद 5-digit PIN बनाया और भूलने पर recover किया जा सकेगा।',
+      actions: '<button type="button" class="primary" onclick="openStudentEmailProfile()">Edit Profile</button><button type="button" onclick="closeStudentPinDialog()">अभी नहीं</button>'
+    });
+    return;
+  }
+  openStudentPinDialog({
+    title: 'Create 5-digit PIN',
+    copy: `${email} के लिए पाँच अंकों का PIN बनाएँ। Existing account password भी काम करता रहेगा।`,
+    fields: `<label>Email<input type="email" value="${escapeHtml(email)}" readonly></label><label>5-digit PIN<input id="student-pin-value" type="password" inputmode="numeric" autocomplete="new-password" maxlength="5" pattern="[0-9]{5}" placeholder="•••••"></label><label>Confirm PIN<input id="student-pin-confirm" type="password" inputmode="numeric" autocomplete="new-password" maxlength="5" pattern="[0-9]{5}" placeholder="•••••"></label>`,
+    actions: '<button type="button" class="primary" onclick="saveStudentPin()">Save PIN</button><button type="button" onclick="closeStudentPinDialog()">अभी नहीं</button>'
+  });
+  window.setTimeout(() => document.getElementById('student-pin-value')?.focus(), 100);
+};
+
+window.saveStudentPin = async () => {
+  const pin = String(document.getElementById('student-pin-value')?.value || '').replace(/\D/g, '').slice(0, 5);
+  const confirmPin = String(document.getElementById('student-pin-confirm')?.value || '').replace(/\D/g, '').slice(0, 5);
+  const email = studentAccountEmail();
+  if (!currentUser || !email) { setStudentPinStatus('पहले Dashboard में email जोड़ें।', 'error'); return; }
+  if (!/^\d{5}$/.test(pin)) { setStudentPinStatus('PIN में ठीक पाँच numbers होने चाहिए।', 'error'); return; }
+  if (pin !== confirmPin) { setStudentPinStatus('दोनों PIN समान नहीं हैं।', 'error'); return; }
+  setStudentPinStatus('PIN सुरक्षित हो रहा है…');
+  try {
+    const authPassword = studentPinPassword(pin);
+    const hasPasswordProvider = currentUser.providerData.some(provider => provider.providerId === 'password');
+    if (hasPasswordProvider) {
+      await updatePassword(currentUser, authPassword);
+    } else {
+      await linkWithCredential(currentUser, EmailAuthProvider.credential(email, authPassword));
+    }
+    await setDoc(doc(db, 'users', currentUser.uid), { email, updatedAt: serverTimestamp() }, { merge: true });
+    currentUserData = { ...(currentUserData || {}), email };
+    if (!currentUser.emailVerified) await sendEmailVerification(currentUser).catch(() => {});
+    try { localStorage.setItem(`ideakdcPinPrompted:${currentUser.uid}`, '1'); } catch (_) {}
+    setStudentPinStatus(currentUser.emailVerified ? '5-digit PIN ready है।' : 'PIN ready है। Email verification link भी भेजा गया है।', 'success');
+    window.setTimeout(window.closeStudentPinDialog, 1100);
+  } catch (error) {
+    const code = String(error?.code || '');
+    const message = code.includes('requires-recent-login')
+      ? 'Security के लिए फिर Login करके PIN बनाएँ।'
+      : code.includes('email-already-in-use') || code.includes('credential-already-in-use')
+        ? 'यह email किसी दूसरे account से जुड़ा है। अपना सही email use करें।'
+        : firebaseErrMsg(code);
+    setStudentPinStatus(message, 'error');
+  }
+};
+
+window.openForgotStudentPin = () => {
+  const email = String(document.getElementById('login-email')?.value || studentAccountEmail()).trim().toLowerCase();
+  openStudentPinDialog({
+    title: 'Forgot password / PIN',
+    copy: 'Registered email पर secure recovery link भेजा जाएगा। Email account में नहीं जुड़ा है तो पहले Dashboard के Edit Profile में email जोड़ें और PIN बनाएँ।',
+    fields: `<label>Registered Email<input id="student-reset-email" type="email" autocomplete="email" value="${escapeHtml(email)}" placeholder="apna@email.com"></label>`,
+    actions: '<button type="button" class="primary" onclick="sendStudentPasswordRecovery()">Send recovery link</button><button type="button" onclick="closeStudentPinDialog()">Cancel</button>'
+  });
+};
+
+window.sendStudentPasswordRecovery = async () => {
+  const email = String(document.getElementById('student-reset-email')?.value || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setStudentPinStatus('Valid email लिखें।', 'error'); return; }
+  setStudentPinStatus('Recovery email भेजा जा रहा है…');
+  try {
+    await sendPasswordResetEmail(auth, email, { url: `${window.location.origin}/?passwordReset=complete` });
+    setStudentPinStatus('Email भेज दिया गया। Inbox और Spam folder देखें।', 'success');
+  } catch (error) {
+    setStudentPinStatus(firebaseErrMsg(error?.code), 'error');
+  }
+};
+
+function offerStudentPinAfterRegistration(user) {
+  if (!user || user.providerData.some(provider => provider.providerId === 'password')) return;
+  let prompted = false;
+  try { prompted = localStorage.getItem(`ideakdcPinPrompted:${user.uid}`) === '1'; } catch (_) {}
+  if (prompted) return;
+  window.setTimeout(window.openCreateStudentPin, 450);
+}
+
 window.chooseStudentRegistration = async (mode) => {
   if (mode === 'google') {
     convoData = { name:'', classNum:'', whatsapp:'', state:'', city:'', pincode:'', regType:'google', registrationSource:'google' };
@@ -6372,6 +6599,8 @@ window.convoBack = () => {
     convoStep = 0;
     renderConvoStep();
   } else {
+    clearStudentSessionHeartbeat();
+    activeStudentSessionToken = '';
     goBack();
   }
 };
@@ -6520,6 +6749,7 @@ async function saveUserProfileLegacyState() {
 async function handlePostRegistration(user) {
   currentUser = user;
   updateNav(true);
+  offerStudentPinAfterRegistration(user);
 
   if (await resumePendingLiveInterestAfterRegistration()) return;
   if (await resumePendingCourseAfterLogin()) return;
@@ -6536,6 +6766,8 @@ window.doGoogleAuth = async () => {
   try {
     const result = await signInWithPopup(auth, gProvider);
     const user   = result.user;
+    currentUser = user;
+    await ensureActiveStudentSession();
     const snap   = await getDoc(doc(db, 'users', user.uid));
     if (!snap.exists()) {
       await setDoc(doc(db, 'users', user.uid), {
@@ -6568,8 +6800,9 @@ window.doLogin = async () => {
   if (!email || !pwd) { err.textContent='Email और password डालें।'; err.classList.add('show'); return; }
   setBtnLoading('login-btn', null, true, 'Login हो रहा है...');
   try {
-    const cred = await signInWithEmailAndPassword(auth, email, pwd);
+    const cred = await signInWithEmailAndPassword(auth, email, studentPinPassword(pwd));
     currentUser = cred.user;
+    await ensureActiveStudentSession();
     showToast('Login हो गया! 👋', 'success');
     if (await resumePendingCourseAfterLogin()) return;
     await showDashboard();
@@ -6582,6 +6815,10 @@ window.doLogin = async () => {
 
 window.doLogout = async () => {
   clearAccessState();
+  clearStudentSessionHeartbeat();
+  const token = activeStudentSessionToken;
+  if (token) await releaseStudentSessionFn({ sessionToken: token }).catch(() => {});
+  activeStudentSessionToken = '';
   await signOut(auth);
   navHome();
   showToast('Logout हो गया।');
@@ -7289,23 +7526,27 @@ window.showStudentProfileEditor = () => {
   const content = document.getElementById('dash-content');
   const profile = currentUserData || {};
   const avatar = studentAvatarProfile(profile);
-  content.innerHTML = `<section class="profile-editor"><div style="display:flex;align-items:center;gap:.7rem"><div class="student-avatar" style="--avatar-bg:${avatar.color}">${avatar.glyph}</div><div><strong>Student Profile</strong><div class="student-profile-meta">Your academic avatar is selected automatically.</div></div></div><label>Name<input id="student-profile-name" type="text" maxlength="120" value="${escapeHtml(currentUser?.displayName || profile.name || '')}" autocomplete="name"></label><label>Gender<select id="student-profile-gender"><option value="">Select gently…</option><option value="male" ${profile.gender === 'male' ? 'selected' : ''}>Male</option><option value="female" ${profile.gender === 'female' ? 'selected' : ''}>Female</option></select></label><label>WhatsApp contact<input id="student-profile-whatsapp" type="tel" inputmode="numeric" maxlength="10" value="${escapeHtml(profile.whatsapp || profile.mobile || profile.phone || '')}" placeholder="10-digit WhatsApp number"></label><button class="btn-enroll" type="button" onclick="saveStudentProfile()">Save Profile</button><div id="student-profile-save-status" class="profile-save-status" aria-live="polite"></div></section>`;
+  const authEmail = String(currentUser?.email || '');
+  const profileEmail = authEmail || String(profile.email || '');
+  content.innerHTML = `<section class="profile-editor"><div style="display:flex;align-items:center;gap:.7rem"><div class="student-avatar" style="--avatar-bg:${avatar.color}">${avatar.glyph}</div><div><strong>Student Profile</strong><div class="student-profile-meta">Your academic avatar is selected automatically.</div></div></div><label>Name<input id="student-profile-name" type="text" maxlength="120" value="${escapeHtml(currentUser?.displayName || profile.name || '')}" autocomplete="name"></label><label>Email<input id="student-profile-email" type="email" maxlength="254" value="${escapeHtml(profileEmail)}" autocomplete="email" ${authEmail ? 'readonly' : ''}></label><label>Gender<select id="student-profile-gender"><option value="">Select gently…</option><option value="male" ${profile.gender === 'male' ? 'selected' : ''}>Male</option><option value="female" ${profile.gender === 'female' ? 'selected' : ''}>Female</option></select></label><label>WhatsApp contact<input id="student-profile-whatsapp" type="tel" inputmode="numeric" maxlength="10" value="${escapeHtml(profile.whatsapp || profile.mobile || profile.phone || '')}" placeholder="10-digit WhatsApp number"></label><button class="btn-enroll" type="button" onclick="saveStudentProfile()">Save Profile</button><div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem"><button class="btn-nav" type="button" onclick="openCreateStudentPin()">Create / Change 5-digit PIN</button><button class="btn-nav" type="button" onclick="openForgotStudentPin()">Forgot password / PIN</button></div><div id="student-profile-save-status" class="profile-save-status" aria-live="polite"></div></section>`;
 };
 
 window.saveStudentProfile = async () => {
   const status = document.getElementById('student-profile-save-status');
   const name = String(document.getElementById('student-profile-name')?.value || '').trim();
+  const email = String(document.getElementById('student-profile-email')?.value || '').trim().toLowerCase();
   const gender = String(document.getElementById('student-profile-gender')?.value || '');
   const whatsapp = normalizeIndianMobile(document.getElementById('student-profile-whatsapp')?.value || '');
   if (!isValidStudentName(name)) { status.textContent = 'Please enter a valid student name.'; status.style.color = '#b91c1c'; return; }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { status.textContent = 'Please enter a valid email.'; status.style.color = '#b91c1c'; return; }
   if (!['male','female'].includes(gender)) { status.textContent = 'Please select Male or Female.'; status.style.color = '#b91c1c'; return; }
   if (!/^[6-9]\d{9}$/.test(whatsapp)) { status.textContent = 'Please enter a valid 10-digit WhatsApp number.'; status.style.color = '#b91c1c'; return; }
   const avatar = studentAvatarProfile({ gender, avatarId: '' });
   status.textContent = 'Saving…'; status.style.color = '#475569';
   try {
-    await setDoc(doc(db, 'users', currentUser.uid), { name, gender, whatsapp, avatarId: avatar.avatarId, updatedAt: serverTimestamp() }, { merge: true });
+    await setDoc(doc(db, 'users', currentUser.uid), { name, email, gender, whatsapp, avatarId: avatar.avatarId, updatedAt: serverTimestamp() }, { merge: true });
     await updateProfile(currentUser, { displayName: name }).catch(() => {});
-    currentUserData = { ...(currentUserData || {}), name, gender, whatsapp, avatarId: avatar.avatarId };
+    currentUserData = { ...(currentUserData || {}), name, email, gender, whatsapp, avatarId: avatar.avatarId };
     renderStudentProfileStrip();
     status.textContent = 'Profile saved successfully.'; status.style.color = '#15803d';
     window.setTimeout(showStudentProfileEditor, 500);
@@ -8567,7 +8808,7 @@ function triggerQuizMilestone(container, count, forceResult = false) {
 }
 
 async function loadLessonQuiz(course, lesson, mode) {
-  const result = await getAuthorizedLessonQuizFn({
+  const result = await callProtectedLessonFunction(getAuthorizedLessonQuizFn, {
     courseId: course.id,
     lessonId: lesson.contentId || lesson.lessonId || '',
     mode
@@ -9420,7 +9661,7 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
     const origin = encodeURIComponent(window.location.origin);
     let resolvedLesson;
     try {
-      const result = await getAuthorizedLessonVideoFn({
+      const result = await callProtectedLessonFunction(getAuthorizedLessonVideoFn, {
         courseId: course.id,
         lessonId: v.contentId || v.lessonId || ''
       });

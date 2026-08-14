@@ -82,7 +82,7 @@ test("shared paid courses require the receiver's exact-course purchase", () => {
   assert.match(accessBlock, /docExists\s*&&\s*accessValue\s*===\s*true/);
   assert.doesNotMatch(accessBlock, /adminPreview=1/);
   assert.match(playerBlock, /const allowed = getLessonAccessRule\(course, startIdx, access\)\.canPlay === true/);
-  assert.match(playerBlock, /getAuthorizedLessonVideoFn\(\{[\s\S]*?courseId: course\.id,[\s\S]*?lessonId:/);
+  assert.match(playerBlock, /callProtectedLessonFunction\(getAuthorizedLessonVideoFn, \{[\s\S]*?courseId: course\.id,[\s\S]*?lessonId:/);
   assert.match(playerBlock, /This paid lesson is locked\. Purchase this course to watch the full video\./);
 });
 
