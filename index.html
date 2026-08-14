@@ -5672,10 +5672,6 @@ window.startCashfreeCheckout = async () => {
     startConvoReg(selectedCourse.id);
     return;
   }
-    pushPage('login');
-    pushHistory();
-    return;
-  }
 
   setBtnLoading('cashfree-pay-btn', 'cashfree-pay-label', true, 'Creating TEST order...');
   try {
@@ -5770,11 +5766,6 @@ window.startConvoReg = (courseId) => {
   pushPage('convo');
   pushHistory();
   window.scrollTo(0, 0);
-  renderConvoStep();
-};
-  convoStep = 0;
-  pushPage('convo');
-  pushHistory();
   renderConvoStep();
 };
 

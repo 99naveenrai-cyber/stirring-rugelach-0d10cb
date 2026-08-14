@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
 const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -45,6 +46,15 @@ test('existing utility and account actions remain available', () => {
   assert.match(indexSource, /id="bn-live"/);
   assert.match(indexSource, /id="bn-dash"/);
   assert.match(indexSource, /id="bn-referral"/);
+});
+
+test('public Firebase module parses and exports student entry points', () => {
+  const moduleMatch = indexSource.match(/<script type="module">([\s\S]*?)<\/script>/);
+  assert.ok(moduleMatch, 'public Firebase module script is present');
+  new vm.SourceTextModule(moduleMatch[1]);
+  assert.match(moduleMatch[1], /window\.showLogin\s*=\s*\(\)\s*=>/);
+  assert.match(moduleMatch[1], /window\.startConvoReg\s*=\s*\(courseId\)\s*=>/);
+  assert.match(moduleMatch[1], /window\.showReferralSupport\s*=\s*async\s*\(\)\s*=>/);
 });
 
 test('academic destinations reuse the current catalogue and live-class flows', () => {
