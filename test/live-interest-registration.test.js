@@ -21,6 +21,7 @@ test("unregistered live interest opens the existing two-method registration", ()
 });
 
 test("live interest context survives registration and restores the same selection", () => {
+  assert.doesNotMatch(publicSource, /renderStep2Streams\(\)/);
   assert.match(publicSource, /const PENDING_LIVE_INTEREST_KEY = 'ideakdcPendingLiveInterest'/);
   assert.match(publicSource, /classNum: String\(_navClass \|\| ''\)\.trim\(\)/);
   assert.match(publicSource, /subject: String\(_navSubject \|\| ''\)\.trim\(\)/);
