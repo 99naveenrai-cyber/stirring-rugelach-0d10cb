@@ -46,11 +46,20 @@ test("shared links use stable content identifiers without playback or payment da
   assert.doesNotMatch(pwaScript, /youtubeVideoId|payment_session_id|cashfree_order_id|idToken/);
   assert.match(publicHtml, /function renderShareButton/);
   assert.match(publicHtml, />Share<\/button>/);
-  assert.match(publicHtml, /background:linear-gradient\(135deg,#dc2626,#b91c1c\)/);
+  assert.match(publicHtml, /background:linear-gradient\(145deg,#ff4d4d 0%,#dc2626 52%,#8b0000 100%\)/);
   assert.match(publicHtml, /border-radius:50%/);
   assert.match(publicHtml, /kind: 'course'/);
   assert.match(publicHtml, /kind: 'lesson'/);
   assert.match(publicHtml, /kind: 'live'/);
+});
+
+test("course and live surfaces render one share action without preview duplicates", () => {
+  const homeRenderer = publicHtml.slice(publicHtml.indexOf("async function renderCourses"), publicHtml.indexOf("function groupCoursesForCatalogue"));
+  const catalogueRenderer = publicHtml.slice(publicHtml.indexOf("async function renderCatalogueContent"), publicHtml.indexOf("async function getPurchasedCoursesForCurrentUser"));
+  const courseHeader = publicHtml.slice(publicHtml.indexOf("function renderCourseViewerHeader"), publicHtml.indexOf("function normalizeDescriptionText"));
+  assert.equal((homeRenderer.match(/renderShareButton\(/g) || []).length, 1);
+  assert.equal((catalogueRenderer.match(/renderShareButton\(/g) || []).length, 1);
+  assert.doesNotMatch(courseHeader, /renderShareButton\(/);
 });
 
 test("shared live and lesson routes return to existing access-controlled flows", () => {

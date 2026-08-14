@@ -57,8 +57,8 @@ nav{background:linear-gradient(100deg,rgba(255,253,248,.96),rgba(246,249,255,.94
 .pwa-install-btn{width:38px;height:38px;border-radius:10px;font-size:1.05rem}
 .pwa-install-mobile{display:none}
 .pwa-install-btn:hover,.content-share-btn:hover{transform:translateY(-1px);box-shadow:0 9px 20px rgba(16,24,47,.13);background:#eef4ff}
-.content-share-btn{width:50px;min-width:50px;height:50px;padding:0;border:1px solid #ff9b9b;border-radius:50%;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-size:.65rem;font-weight:900;letter-spacing:0;margin-left:auto;position:relative;z-index:3;box-shadow:0 0 0 1px rgba(255,255,255,.34) inset,0 0 13px rgba(239,68,68,.62),0 6px 14px rgba(127,29,29,.22)}
-.content-share-btn:hover{background:linear-gradient(135deg,#ef4444,#c81e1e);color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.42) inset,0 0 18px rgba(239,68,68,.78),0 8px 18px rgba(127,29,29,.28)}
+.content-share-btn{width:50px;min-width:50px;height:50px;padding:0;border:1px solid #ff9b9b;border-radius:50%;background:linear-gradient(145deg,#ff4d4d 0%,#dc2626 52%,#8b0000 100%);color:#fff;font-size:.65rem;font-weight:900;letter-spacing:0;margin-left:auto;position:relative;z-index:3;box-shadow:0 0 0 1px rgba(255,255,255,.34) inset,0 0 13px rgba(239,68,68,.62),0 6px 14px rgba(127,29,29,.22)}
+.content-share-btn:hover{background:linear-gradient(145deg,#ff6666 0%,#ef3030 52%,#9f0808 100%);color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.42) inset,0 0 18px rgba(239,68,68,.78),0 8px 18px rgba(127,29,29,.28)}
 .content-share-btn:active{transform:scale(.96)}
 .content-share-btn.compact{width:44px;min-width:44px;height:44px;padding:0;font-size:.58rem;margin-left:.35rem}
 .share-row{display:flex;align-items:center;gap:.45rem;min-width:0}
@@ -5474,7 +5474,6 @@ async function renderCourses() {
             <div class="playlist-title">${v.title}</div>
             <div class="playlist-dur">⏱ ${v.dur || '—'}</div>
           </div>
-          ${renderShareButton({ kind: 'lesson', title: v.title || c.name, courseId: c.id, lessonId: v.contentId || v.lessonId || '', compact: true })}
           <div class="playlist-lock">${canOpen ? '✅' : (v.isFree ? '🆓' : '🔒')}</div>
         </div>`).join('');
 
@@ -5635,7 +5634,6 @@ async function renderCatalogueContent() {
                       <div class="playlist-title">${escapeHtml(lesson.title || 'Untitled lesson')}</div>
                       <div class="playlist-dur">${escapeHtml(lessonDuration(lesson) || lessonKind)}</div>
                     </div>
-                    ${renderShareButton({ kind: 'lesson', title: lesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '', compact: true })}
                     <div class="playlist-lock" aria-label="${canOpen ? 'Purchased lesson' : isFreeLesson ? 'Free lesson' : 'Locked lesson'}">
                       ${canOpen ? '✅' : isFreeLesson ? '🆓' : '🔒'}
                     </div>
@@ -7650,7 +7648,7 @@ function buildLessonGroups(course) {
 function renderCourseViewerHeader(course, access) {
   const titleOnlyHeader = document.getElementById('course-viewer-header');
   if (!titleOnlyHeader) return;
-  titleOnlyHeader.innerHTML = `<div class="share-row"><h1 class="course-viewer-title">${escapeHtml(course.name || 'IdeaKDC Course')}</h1>${renderShareButton({ kind: 'course', title: course.name || 'IdeaKDC Course', courseId: course.id })}</div>`;
+  titleOnlyHeader.innerHTML = `<h1 class="course-viewer-title">${escapeHtml(course.name || 'IdeaKDC Course')}</h1>`;
   return;
   const videos = course.videos || [];
   const duration = totalCourseDuration(videos);
