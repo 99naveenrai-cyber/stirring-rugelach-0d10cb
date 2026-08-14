@@ -5663,7 +5663,10 @@ window.startCashfreeCheckout = async () => {
   if (!selectedCourse) return showToast('Invalid course. Please choose the course again.', 'error');
   if (!currentUser) {
     pendingCourseId = selectedCourse.id;
-    showToast('Login required before payment.', 'error');
+    showToast('Payment ke liye Registration / Login zaroori hai.', 'info');
+    startConvoReg(selectedCourse.id);
+    return;
+  }
     pushPage('login');
     pushHistory();
     return;
