@@ -83,3 +83,13 @@ test("verified live payment grants only the exact session registration", () => {
   assert.match(publicSource, /if \(data\.liveSessionId\) \{[\s\S]*confirmLiveClassRegistrationFn\([\s\S]*openPlannedLiveSession/);
 });
 
+test("paid live registration shows a share celebration only after verified exact-session registration", () => {
+  assert.match(publicSource, /if \(registration\.data\?\.registered === true\) \{\s*showPaidLiveRegistrationCelebration\(sess, orderId\)/);
+  assert.match(publicSource, /const registration = await confirmLiveClassRegistrationFn\(\{ sessionId: data\.liveSessionId, orderId \}\)/);
+  assert.match(publicSource, /showPaidLiveRegistrationCelebration\(liveSession, orderId\)/);
+  assert.match(publicSource, /Congratulations!/);
+  assert.match(publicSource, /Share your friends, it&\#8217;s life saving, really!|Share your friends, it&rsquo;s life saving, really!/);
+  assert.match(publicSource, /live-share-confetti-piece/);
+  assert.match(publicSource, /renderShareButton\(\{ kind: 'live', title, liveSessionId: sessionId \}\)/);
+});
+

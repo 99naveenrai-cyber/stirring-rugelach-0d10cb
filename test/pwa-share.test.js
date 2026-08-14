@@ -62,6 +62,14 @@ test("course and live surfaces render one share action without preview duplicate
   assert.doesNotMatch(courseHeader, /renderShareButton\(/);
 });
 
+test("planned live class keeps sharing available from discovery through registration details", () => {
+  const discovery = publicHtml.slice(publicHtml.indexOf("function renderLiveDiscoveryGrid"), publicHtml.indexOf("window.filterLiveDiscovery"));
+  const details = publicHtml.slice(publicHtml.indexOf("function renderLiveSessionDetails"), publicHtml.indexOf("window.openPlannedLiveSession"));
+  assert.equal((discovery.match(/renderShareButton\(/g) || []).length, 1);
+  assert.equal((details.match(/renderShareButton\(/g) || []).length, 1);
+  assert.match(details, /joinSelectedLiveSession\(\)/);
+});
+
 test("shared live and lesson routes return to existing access-controlled flows", () => {
   assert.match(publicHtml, /async function handleSharedViewRoute/);
   assert.match(publicHtml, /await window\.openPlannedLiveSession\(liveSessionId\)/);

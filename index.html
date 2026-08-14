@@ -66,6 +66,21 @@ nav{background:linear-gradient(100deg,rgba(255,253,248,.96),rgba(246,249,255,.94
 .playlist-share-wrap{position:relative}
 .playlist-share-wrap>.pl-item{padding-right:4.5rem}
 .playlist-share-wrap>.content-share-btn{position:absolute;right:.62rem;bottom:.62rem;margin:0}
+.live-share-celebration{position:fixed;inset:0;z-index:26000;display:grid;place-items:center;padding:calc(18px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));background:rgba(10,16,38,.46);opacity:0;visibility:hidden;transition:opacity .42s ease,visibility .42s ease;overflow:hidden}
+.live-share-celebration.is-visible{opacity:1;visibility:visible}
+.live-share-celebration-panel{position:relative;z-index:2;width:min(92vw,520px);padding:clamp(1.25rem,4vw,2rem);border:1px solid rgba(255,190,190,.78);border-radius:18px;background:linear-gradient(145deg,#ff4858 0%,#d81734 48%,#790d2b 100%);color:#fff;text-align:center;box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 0 24px rgba(255,46,87,.7),0 22px 60px rgba(70,4,25,.4);transform:translateY(20px) scale(.96);transition:transform .5s cubic-bezier(.2,.82,.22,1)}
+.live-share-celebration.is-visible .live-share-celebration-panel{transform:translateY(0) scale(1)}
+.live-share-celebration-title{font:900 clamp(1.45rem,6vw,2.25rem)/1.08 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;color:#fff;margin:0 0 .65rem;text-shadow:0 0 16px rgba(255,255,255,.36)}
+.live-share-celebration-copy{font:800 clamp(1rem,4vw,1.32rem)/1.45 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;color:#fff;margin:0 auto 1rem;max-width:24rem}
+.live-share-celebration-class{font-size:.78rem;color:#ffe8ed;margin:0 0 1rem}
+.live-share-celebration-actions{display:flex;align-items:center;justify-content:center;gap:.75rem}
+.live-share-celebration-actions .content-share-btn{margin:0;width:58px;min-width:58px;height:58px}
+.live-share-later{min-height:44px;padding:.65rem 1rem;border:1px solid rgba(255,255,255,.58);border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font-weight:850;cursor:pointer;backdrop-filter:blur(6px)}
+.live-share-confetti{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.live-share-confetti-piece{position:absolute;left:var(--x);bottom:-24px;width:var(--size);height:calc(var(--size)*1.8);border-radius:3px;background:var(--color);box-shadow:0 0 8px var(--color);animation:liveShareConfettiUp var(--duration) cubic-bezier(.15,.72,.28,1) var(--delay) forwards}
+@keyframes liveShareConfettiUp{0%{transform:translate3d(0,0,0) rotate(0);opacity:0}8%{opacity:1}100%{transform:translate3d(var(--drift),-115vh,0) rotate(var(--spin));opacity:0}}
+@media(max-height:520px) and (orientation:landscape){.live-share-celebration-panel{padding:1rem 1.25rem}.live-share-celebration-title{font-size:1.35rem}.live-share-celebration-copy{font-size:.92rem;margin-bottom:.65rem}.live-share-celebration-class{margin-bottom:.65rem}}
+@media(prefers-reduced-motion:reduce){.live-share-celebration,.live-share-celebration-panel{transition-duration:1ms}.live-share-confetti-piece{animation-duration:1ms!important}}
 @media(max-width:720px){.pwa-install-btn{width:36px;height:36px}.content-share-btn{min-height:32px}.nav-right>.pwa-install-btn{display:flex}}
 
 /* ── BOTTOM NAV ── */
@@ -2988,7 +3003,10 @@ window.joinSelectedLiveSession = async () => {
         runtime.showToast(message, payment.status === 'pending' ? 'info' : 'error');
         return;
       }
-      await window._ideaKdcLiveCallables.confirmRegistration({ sessionId: sess.sessionId, orderId });
+      const registration = await window._ideaKdcLiveCallables.confirmRegistration({ sessionId: sess.sessionId, orderId });
+      if (registration.data?.registered === true) {
+        showPaidLiveRegistrationCelebration(sess, orderId);
+      }
       runtime.showToast('Payment successful. Your live class seat is reserved.', 'success');
     }
 
@@ -5994,9 +6012,13 @@ async function verifyCashfreeOrder(orderId) {
     if (data.verified || data.status === 'paid') {
       showToast(message, 'success');
       if (data.liveSessionId) {
-        await confirmLiveClassRegistrationFn({ sessionId: data.liveSessionId, orderId });
+        const registration = await confirmLiveClassRegistrationFn({ sessionId: data.liveSessionId, orderId });
         await loadPublicLiveSessions();
         await window.openPlannedLiveSession(data.liveSessionId);
+        if (registration.data?.registered === true) {
+          const liveSession = (_livePlannedSessions || []).find(item => item.sessionId === data.liveSessionId) || { sessionId: data.liveSessionId };
+          showPaidLiveRegistrationCelebration(liveSession, orderId);
+        }
       } else {
         await loadCourses();
         const paidCourseId = data.courseId || selectedCourse?.id || '';
@@ -7957,6 +7979,71 @@ function safeDomId(value = '') {
 function renderShareButton({ kind = 'lesson', title = 'IdeaKDC Learning', courseId = '', lessonId = '', liveSessionId = '', compact = false } = {}) {
   return `<button type="button" class="content-share-btn js-content-share${compact ? ' compact' : ''}" aria-label="Share ${escapeHtml(title)}" title="Share link" data-share-kind="${escapeHtml(kind)}" data-share-title="${escapeHtml(title)}" data-share-course="${escapeHtml(courseId)}" data-share-lesson="${escapeHtml(lessonId)}" data-share-live="${escapeHtml(liveSessionId)}">Share</button>`;
 }
+
+function paidLiveCelebrationKey(sessionId, orderId) {
+  return `ideakdcPaidLiveCelebration:${String(sessionId || '')}:${String(orderId || '')}`;
+}
+
+function addPaidLiveCelebrationConfetti(container) {
+  const colors = ['#ffffff', '#ffe066', '#7dd3fc', '#86efac', '#f9a8d4', '#c4b5fd'];
+  const fragment = document.createDocumentFragment();
+  for (let index = 0; index < 76; index += 1) {
+    const piece = document.createElement('i');
+    piece.className = 'live-share-confetti-piece';
+    piece.style.setProperty('--x', `${Math.random() * 100}%`);
+    piece.style.setProperty('--size', `${5 + Math.random() * 7}px`);
+    piece.style.setProperty('--color', colors[index % colors.length]);
+    piece.style.setProperty('--duration', `${2.8 + Math.random() * 1.8}s`);
+    piece.style.setProperty('--delay', `${Math.random() * .65}s`);
+    piece.style.setProperty('--drift', `${-90 + Math.random() * 180}px`);
+    piece.style.setProperty('--spin', `${360 + Math.random() * 720}deg`);
+    fragment.appendChild(piece);
+  }
+  container.replaceChildren(fragment);
+  window.setTimeout(() => container.replaceChildren(), 5200);
+}
+
+function closePaidLiveRegistrationCelebration() {
+  const overlay = document.getElementById('paid-live-share-celebration');
+  if (!overlay) return;
+  overlay.classList.remove('is-visible');
+  window.setTimeout(() => overlay.remove(), 450);
+}
+
+function showPaidLiveRegistrationCelebration(session = {}, orderId = '') {
+  const sessionId = String(session.sessionId || '');
+  const storageKey = paidLiveCelebrationKey(sessionId, orderId);
+  try {
+    if (sessionStorage.getItem(storageKey) === 'shown') return;
+    sessionStorage.setItem(storageKey, 'shown');
+  } catch (_) {}
+
+  closePaidLiveRegistrationCelebration();
+  const title = `${session.subject || 'Live Class'}${session.chapter ? ` - ${session.chapter}` : ''}`;
+  const overlay = document.createElement('div');
+  overlay.id = 'paid-live-share-celebration';
+  overlay.className = 'live-share-celebration';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'paid-live-share-title');
+  overlay.innerHTML = `
+    <div class="live-share-confetti" aria-hidden="true"></div>
+    <section class="live-share-celebration-panel">
+      <h2 class="live-share-celebration-title" id="paid-live-share-title">Congratulations!</h2>
+      <p class="live-share-celebration-copy">Share your friends, it&rsquo;s life saving, really!</p>
+      <p class="live-share-celebration-class">${escapeHtml(title)}</p>
+      <div class="live-share-celebration-actions">
+        ${renderShareButton({ kind: 'live', title, liveSessionId: sessionId })}
+        <button type="button" class="live-share-later" onclick="closePaidLiveRegistrationCelebration()">Later</button>
+      </div>
+    </section>`;
+  document.body.appendChild(overlay);
+  addPaidLiveCelebrationConfetti(overlay.querySelector('.live-share-confetti'));
+  window.requestAnimationFrame(() => overlay.classList.add('is-visible'));
+  overlay.querySelector('.content-share-btn')?.focus({ preventScroll: true });
+}
+
+window.closePaidLiveRegistrationCelebration = closePaidLiveRegistrationCelebration;
 
 document.addEventListener('click', event => {
   const button = event.target.closest('.js-content-share');
