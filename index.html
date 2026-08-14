@@ -68,19 +68,26 @@ nav{background:linear-gradient(100deg,rgba(255,253,248,.96),rgba(246,249,255,.94
 .playlist-share-wrap>.content-share-btn{position:absolute;right:.62rem;bottom:.62rem;margin:0}
 .live-share-celebration{position:fixed;inset:0;z-index:26000;display:grid;place-items:center;padding:calc(18px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));background:rgba(10,16,38,.46);opacity:0;visibility:hidden;transition:opacity .42s ease,visibility .42s ease;overflow:hidden}
 .live-share-celebration.is-visible{opacity:1;visibility:visible}
-.live-share-celebration-panel{position:relative;z-index:2;width:min(92vw,520px);padding:clamp(1.25rem,4vw,2rem);border:1px solid rgba(255,190,190,.78);border-radius:18px;background:linear-gradient(145deg,#ff4858 0%,#d81734 48%,#790d2b 100%);color:#fff;text-align:center;box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 0 24px rgba(255,46,87,.7),0 22px 60px rgba(70,4,25,.4);transform:translateY(20px) scale(.96);transition:transform .5s cubic-bezier(.2,.82,.22,1)}
+.live-share-celebration-panel{position:relative;z-index:2;width:min(92vw,520px);padding:clamp(1.25rem,4vw,2rem);border:1px solid rgba(253,224,71,.88);border-radius:22px;background:linear-gradient(145deg,#14b8a6 0%,#0f766e 42%,#312e81 100%);color:#fff;text-align:center;box-shadow:0 0 0 1px rgba(255,255,255,.22) inset,0 0 25px rgba(250,204,21,.56),0 24px 64px rgba(15,23,42,.42);transform:translateY(20px) scale(.96);transition:transform .5s cubic-bezier(.2,.82,.22,1);overflow:hidden}
 .live-share-celebration.is-visible .live-share-celebration-panel{transform:translateY(0) scale(1)}
 .live-share-celebration-title{font:900 clamp(1.45rem,6vw,2.25rem)/1.08 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;color:#fff;margin:0 0 .65rem;text-shadow:0 0 16px rgba(255,255,255,.36)}
-.live-share-celebration-copy{font:800 clamp(1rem,4vw,1.32rem)/1.45 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;color:#fff;margin:0 auto 1rem;max-width:24rem}
-.live-share-celebration-class{font-size:.78rem;color:#ffe8ed;margin:0 0 1rem}
+.live-share-smile{display:block;font-size:clamp(3.2rem,15vw,5.3rem);line-height:1;margin:0 auto .35rem;filter:drop-shadow(0 10px 14px rgba(15,23,42,.28));animation:liveWelcomeSmile .9s cubic-bezier(.2,.8,.2,1) both}
+.live-share-meet{display:flex;justify-content:center;flex-wrap:wrap;gap:.16em;margin:0 auto .8rem;min-height:1.65em;font:700 clamp(1.08rem,4.7vw,1.5rem)/1.35 "Segoe Print","Comic Sans MS",cursive;color:#fff7cc;text-shadow:0 2px 10px rgba(15,23,42,.32)}
+.live-share-meet span{opacity:0;transform:translateY(8px);animation:liveWelcomeWord .42s ease-out forwards}
+.live-share-meet span:nth-child(1){animation-delay:.55s}.live-share-meet span:nth-child(2){animation-delay:1s}.live-share-meet span:nth-child(3){animation-delay:1.45s}.live-share-meet span:nth-child(4){animation-delay:1.9s}.live-share-meet span:nth-child(5){animation-delay:2.35s}
+.live-share-celebration-copy{font:italic 900 clamp(1rem,4vw,1.3rem)/1.35 Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;color:#172554;background:linear-gradient(135deg,#fef08a,#fde68a);border:1px solid rgba(255,255,255,.72);border-radius:12px;padding:.72rem .9rem;margin:0 auto 1rem;max-width:25rem;box-shadow:0 8px 22px rgba(15,23,42,.18),0 0 16px rgba(254,240,138,.38);opacity:0;transform:scale(.78);animation:liveWelcomeMessage .48s cubic-bezier(.18,1.35,.32,1) 2.9s forwards}
+.live-share-celebration-class{font-size:.78rem;color:#dffdf7;margin:0 0 1rem}
 .live-share-celebration-actions{display:flex;align-items:center;justify-content:center;gap:.75rem}
 .live-share-celebration-actions .content-share-btn{margin:0;width:58px;min-width:58px;height:58px}
 .live-share-later{min-height:44px;padding:.65rem 1rem;border:1px solid rgba(255,255,255,.58);border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font-weight:850;cursor:pointer;backdrop-filter:blur(6px)}
 .live-share-confetti{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
 .live-share-confetti-piece{position:absolute;left:var(--x);bottom:-24px;width:var(--size);height:calc(var(--size)*1.8);border-radius:3px;background:var(--color);box-shadow:0 0 8px var(--color);animation:liveShareConfettiUp var(--duration) cubic-bezier(.15,.72,.28,1) var(--delay) forwards}
 @keyframes liveShareConfettiUp{0%{transform:translate3d(0,0,0) rotate(0);opacity:0}8%{opacity:1}100%{transform:translate3d(var(--drift),-115vh,0) rotate(var(--spin));opacity:0}}
+@keyframes liveWelcomeSmile{0%{opacity:0;transform:translateY(14px) scale(.7) rotate(-7deg)}65%{opacity:1;transform:translateY(-3px) scale(1.08) rotate(3deg)}100%{opacity:1;transform:none}}
+@keyframes liveWelcomeWord{to{opacity:1;transform:translateY(0)}}
+@keyframes liveWelcomeMessage{0%{opacity:0;transform:scale(.78)}72%{opacity:1;transform:scale(1.045)}100%{opacity:1;transform:scale(1)}}
 @media(max-height:520px) and (orientation:landscape){.live-share-celebration-panel{padding:1rem 1.25rem}.live-share-celebration-title{font-size:1.35rem}.live-share-celebration-copy{font-size:.92rem;margin-bottom:.65rem}.live-share-celebration-class{margin-bottom:.65rem}}
-@media(prefers-reduced-motion:reduce){.live-share-celebration,.live-share-celebration-panel{transition-duration:1ms}.live-share-confetti-piece{animation-duration:1ms!important}}
+@media(prefers-reduced-motion:reduce){.live-share-celebration,.live-share-celebration-panel{transition-duration:1ms}.live-share-confetti-piece{animation-duration:1ms!important}.live-share-smile,.live-share-meet span,.live-share-celebration-copy{animation-duration:1ms!important;animation-delay:0ms!important;opacity:1;transform:none}}
 @media(max-width:720px){.pwa-install-btn{width:36px;height:36px}.content-share-btn{min-height:32px}.nav-right>.pwa-install-btn{display:flex}}
 
 /* ── BOTTOM NAV ── */
@@ -8029,8 +8036,10 @@ function showPaidLiveRegistrationCelebration(session = {}, orderId = '') {
   overlay.innerHTML = `
     <div class="live-share-confetti" aria-hidden="true"></div>
     <section class="live-share-celebration-panel">
+      <span class="live-share-smile" aria-hidden="true">😊</span>
       <h2 class="live-share-celebration-title" id="paid-live-share-title">Congratulations!</h2>
-      <p class="live-share-celebration-copy">Share your friends, it&rsquo;s life saving, really!</p>
+      <p class="live-share-meet" aria-label="Let’s meet in the lesson"><span aria-hidden="true">Let&rsquo;s</span><span aria-hidden="true">meet</span><span aria-hidden="true">in</span><span aria-hidden="true">the</span><span aria-hidden="true">lesson</span></p>
+      <p class="live-share-celebration-copy">Share with friends, it&rsquo;s mind saving</p>
       <p class="live-share-celebration-class">${escapeHtml(title)}</p>
       <div class="live-share-celebration-actions">
         ${renderShareButton({ kind: 'live', title, liveSessionId: sessionId })}

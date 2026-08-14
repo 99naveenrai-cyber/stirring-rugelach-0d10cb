@@ -88,7 +88,11 @@ test("paid live registration shows a share celebration only after verified exact
   assert.match(publicSource, /const registration = await confirmLiveClassRegistrationFn\(\{ sessionId: data\.liveSessionId, orderId \}\)/);
   assert.match(publicSource, /showPaidLiveRegistrationCelebration\(liveSession, orderId\)/);
   assert.match(publicSource, /Congratulations!/);
-  assert.match(publicSource, /Share your friends, it&\#8217;s life saving, really!|Share your friends, it&rsquo;s life saving, really!/);
+  assert.match(publicSource, /live-share-smile[\s\S]*😊/);
+  assert.match(publicSource, /Let&rsquo;s<\/span><span aria-hidden="true">meet<\/span><span aria-hidden="true">in<\/span><span aria-hidden="true">the<\/span><span aria-hidden="true">lesson/);
+  assert.match(publicSource, /Share with friends, it&rsquo;s mind saving/);
+  assert.match(publicSource, /animation-delay:2\.35s/);
+  assert.match(publicSource, /liveWelcomeMessage/);
   assert.match(publicSource, /live-share-confetti-piece/);
   assert.match(publicSource, /renderShareButton\(\{ kind: 'live', title, liveSessionId: sessionId \}\)/);
 });
