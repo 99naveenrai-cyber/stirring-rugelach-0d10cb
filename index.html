@@ -2450,6 +2450,7 @@ let _navStream = 'science';
 let _navSubject = '';
 let _navChapter = '';
 let _selectedSessionDoc = null;
+const PENDING_LIVE_INTEREST_KEY = 'ideakdcPendingLiveInterest';
 let _liveSessionsLoadPromise = null;
 let _liveSessionsLoadError = '';
 
@@ -2827,11 +2828,73 @@ window.openPlannedLiveSession = async (sessionId) => {
   }
 };
 
-window.registerUnplannedInterest = async (chap) => {
-  const runtime = window._ideaKdcLiveRuntime;
-  if (!runtime?.isSignedIn()) { runtime?.showLogin(); return; }
+function setLiveInterestStatus(registered, message = '') {
   const btn = document.getElementById('lc-req-btn');
   const statusEl = document.getElementById('lc-req-status');
+  if (registered) {
+    if (statusEl) {
+      statusEl.style.color = '#15803d';
+      statusEl.textContent = 'Interest Registered';
+    }
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Interest Registered';
+      btn.style.background = '#15803d';
+    }
+    return;
+  }
+  if (statusEl) {
+    statusEl.style.color = '#dc2626';
+    statusEl.textContent = message || 'Failed to register interest.';
+  }
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Register Interest';
+  }
+}
+
+function pendingLiveInterestPayload(chapter) {
+  return {
+    classNum: String(_navClass || '').trim(),
+    stream: String(_navStream || '').trim(),
+    subject: String(_navSubject || '').trim(),
+    chapter: String(chapter || _navChapter || '').trim(),
+    savedAt: Date.now()
+  };
+}
+
+function savePendingLiveInterest(payload) {
+  try {
+    sessionStorage.setItem(PENDING_LIVE_INTEREST_KEY, JSON.stringify(payload));
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+window.restoreUnplannedLiveInterestContext = async (payload, result = {}) => {
+  _navClass = String(payload?.classNum || _navClass);
+  _navStream = normalizeLiveStream(payload?.stream || '');
+  _navSubject = String(payload?.subject || '');
+  _navChapter = String(payload?.chapter || '');
+  _currentStep = 4;
+  await window.showLive();
+  renderNavyStepNavigation();
+  checkSessionAndShowCard(_navChapter);
+  if (result.registered) setLiveInterestStatus(true);
+  else if (result.error) setLiveInterestStatus(false, result.error);
+};
+
+window.registerUnplannedInterest = async (chap) => {
+  const runtime = window._ideaKdcLiveRuntime;
+  if (!runtime?.isSignedIn()) {
+    const pending = pendingLiveInterestPayload(chap);
+    savePendingLiveInterest(pending);
+    window.closeLiveModal();
+    window.startConvoReg(null);
+    return;
+  }
+  const btn = document.getElementById('lc-req-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Registering...'; }
 
   try {
@@ -2844,15 +2907,10 @@ window.registerUnplannedInterest = async (chap) => {
       email: user.email,
       name: user.displayName
     });
-    if (statusEl) {
-      statusEl.style.color = '#15803d';
-      statusEl.innerHTML = '✅ Interest Registered! Data collected & confirmation email alert sent to mentor.';
-    }
-    if (btn) { btn.textContent = '✅ Registered!'; btn.style.background = '#15803d'; }
+    setLiveInterestStatus(true);
     runtime.showToast('✅ Registration collected! Mentor notified.', 'success');
   } catch (err) {
-    if (statusEl) { statusEl.style.color = '#dc2626'; statusEl.textContent = err?.message || 'Failed to register interest.'; }
-    if (btn) { btn.disabled = false; btn.textContent = '📝 Register Interest'; }
+    setLiveInterestStatus(false, err?.message || 'Failed to register interest.');
   }
 };
 
@@ -5548,6 +5606,40 @@ async function resumePendingCourseAfterLogin() {
   return true;
 }
 
+async function resumePendingLiveInterestAfterRegistration() {
+  if (!currentUser) return false;
+  const pending = safeSessionGet('ideakdcPendingLiveInterest');
+  if (!pending) return false;
+
+  const payload = {
+    classNum: String(pending.classNum || '').trim(),
+    stream: String(pending.stream || '').trim(),
+    subject: String(pending.subject || '').trim(),
+    chapter: String(pending.chapter || '').trim()
+  };
+  if (!payload.classNum || !payload.subject || !payload.chapter) {
+    safeSessionRemove('ideakdcPendingLiveInterest');
+    return false;
+  }
+
+  try {
+    const profile = window._ideaKdcLiveRuntime?.currentUserProfile?.() || {};
+    await registerUnplannedLiveClassInterestFn({
+      ...payload,
+      email: profile.email || currentUser.email || '',
+      name: profile.displayName || currentUserData?.name || currentUser.displayName || ''
+    });
+    safeSessionRemove('ideakdcPendingLiveInterest');
+    await window.restoreUnplannedLiveInterestContext?.(payload, { registered: true });
+    showToast('Interest Registered', 'success');
+  } catch (error) {
+    await window.restoreUnplannedLiveInterestContext?.(payload, {
+      error: error?.message || 'Registration saved, but interest could not be registered. Please tap Register Interest again.'
+    });
+  }
+  return true;
+}
+
 // ════════════════════════════════════════
 // ENROLL FLOW
 // ════════════════════════════════════════
@@ -6337,6 +6429,7 @@ async function handlePostRegistration(user) {
   currentUser = user;
   updateNav(true);
 
+  if (await resumePendingLiveInterestAfterRegistration()) return;
   if (await resumePendingCourseAfterLogin()) return;
 
   document.getElementById('welcome-title').textContent = 'IdeaKDC में आपका स्वागत है';
