@@ -45,6 +45,8 @@ test("shared links use stable content identifiers without playback or payment da
   assert.match(pwaScript, /searchParams\.set\('liveSessionId'/);
   assert.doesNotMatch(pwaScript, /youtubeVideoId|payment_session_id|cashfree_order_id|idToken/);
   assert.match(publicHtml, /function renderShareButton/);
+  assert.match(publicHtml, />Share<\/button>/);
+  assert.match(publicHtml, /background:linear-gradient\(135deg,#dc2626,#b91c1c\)/);
   assert.match(publicHtml, /kind: 'course'/);
   assert.match(publicHtml, /kind: 'lesson'/);
   assert.match(publicHtml, /kind: 'live'/);
