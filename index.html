@@ -4502,7 +4502,12 @@ function updateNav(loggedIn) {
   if (logoutBtn) logoutBtn.style.display = loggedIn ? 'flex' : 'none';
 }
 
-window.showLogin = () => { pushPage('login'); pushHistory(); };
+window.showLogin = () => {
+  clearCourseRoute();
+  pushPage('login');
+  pushHistory();
+  window.scrollTo(0, 0);
+};
 
 // Calm homepage reveal animation
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -5761,6 +5766,13 @@ window.startConvoReg = (courseId) => {
     regType: 'form'
   };
   convoStep = 0;
+  clearCourseRoute();
+  pushPage('convo');
+  pushHistory();
+  window.scrollTo(0, 0);
+  renderConvoStep();
+};
+  convoStep = 0;
   pushPage('convo');
   pushHistory();
   renderConvoStep();
@@ -6288,11 +6300,16 @@ async function claimPendingReferralAttribution() {
 }
 
 window.showReferralSupport = async () => {
-  if (!currentUser) { showLogin(); return; }
+  if (!currentUser) {
+    if (typeof showToast === 'function') showToast('Student Partner Program ke liye Registration / Login karein.', 'info');
+    startConvoReg(null);
+    return;
+  }
   clearCourseRoute();
   setNav('bn-referral');
   pushPage('referral');
   pushHistory();
+  window.scrollTo(0, 0);
   await renderReferralSupport();
 };
 
