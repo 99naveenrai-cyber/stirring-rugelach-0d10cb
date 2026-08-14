@@ -2510,6 +2510,8 @@ let _liveStreamClock = null;
 let _liveSyncManager = null;
 let _activeLiveQuizEvent = null;
 let _liveScoreSessionId = null;
+let _livePresenceTimer = null;
+let _activeLivePresenceSessionId = '';
 const _recordedLiveSyncStates = new Set();
 
 window.showLive = async () => {
@@ -2994,6 +2996,7 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
   _liveScoreSessionId = window.createQuizSessionId?.('live') || null;
   iframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
   page.style.display = 'block';
+  startLiveClassPresence(sessionId);
 
   const firebase = window._ideaKdcLiveFirebase;
   if (!firebase || !window.IdeaKDCLiveSync) {
@@ -3117,6 +3120,34 @@ function stopLiveEventSynchronization() {
   _liveSyncManager = null;
   _liveStreamClock = null;
   _activeLiveQuizEvent = null;
+}
+
+function sendLiveClassPresence(sessionId, state) {
+  if (!sessionId || !window._ideaKdcLiveRuntime?.updatePresence) return Promise.resolve();
+  return window._ideaKdcLiveRuntime.updatePresence({ sessionId, state }).catch(error => {
+    if (state === 'online') console.warn('[Live presence] update skipped.', error?.code || error?.message || error);
+  });
+}
+
+function startLiveClassPresence(sessionId) {
+  clearInterval(_livePresenceTimer);
+  if (_activeLivePresenceSessionId && _activeLivePresenceSessionId !== sessionId) {
+    void sendLiveClassPresence(_activeLivePresenceSessionId, 'offline');
+  }
+  _activeLivePresenceSessionId = String(sessionId || '');
+  if (!_activeLivePresenceSessionId) return;
+  void sendLiveClassPresence(_activeLivePresenceSessionId, 'online');
+  _livePresenceTimer = setInterval(() => {
+    if (_activeLivePresenceSessionId) void sendLiveClassPresence(_activeLivePresenceSessionId, 'online');
+  }, 45000);
+}
+
+function stopLiveClassPresence() {
+  clearInterval(_livePresenceTimer);
+  _livePresenceTimer = null;
+  const sessionId = _activeLivePresenceSessionId;
+  _activeLivePresenceSessionId = '';
+  if (sessionId) void sendLiveClassPresence(sessionId, 'offline');
 }
 
 function launchDramaticUpwardConfetti() {
@@ -3343,6 +3374,7 @@ function exitLiveStream() {
   if (page) page.style.display = 'none';
   window.finalizeQuizSession?.(_liveScoreSessionId);
   _liveScoreSessionId = null;
+  stopLiveClassPresence();
   stopLiveEventSynchronization();
   hideLiveQuizOverlay();
 }
@@ -3787,6 +3819,7 @@ const confirmLiveClassRegistrationFn = httpsCallable(functions, 'confirmLiveClas
 const getPlayerAccessFn = httpsCallable(functions, 'getPlayerAccess');
 const registerUnplannedLiveClassInterestFn = httpsCallable(functions, 'registerUnplannedLiveClassInterest');
 const recordLiveQuizSyncFn = httpsCallable(functions, 'recordLiveQuizSync');
+const updateLiveClassPresenceFn = httpsCallable(functions, 'updateLiveClassPresence');
 window._ideaKdcLiveCallables = Object.freeze({
   getPlannedSessions: (payload = {}) => getPlannedLiveSessionsFn(payload),
   registerForLiveClass: (payload) => registerForLiveClassFn(payload),
@@ -3804,6 +3837,7 @@ window._ideaKdcLiveRuntime = Object.freeze({
   showLogin: () => showLogin(),
   showToast: (message, type = '') => showToast(message, type),
   registerInterest: (payload) => registerUnplannedLiveClassInterestFn(payload),
+  updatePresence: (payload) => updateLiveClassPresenceFn(payload),
   openCashfreeCheckout: async (paymentSessionId) => {
     const cashfree = await getCashfreeCheckout();
     return cashfree.checkout({ paymentSessionId, redirectTarget: '_modal' });
@@ -4523,6 +4557,7 @@ window.addEventListener('popstate', (event) => {
 function pushHistory() { window.history.pushState({}, '', window.location.href); }
 
 window.addEventListener('pagehide', () => {
+  stopLiveClassPresence();
   if (isVideoPageActive()) stopAndUnloadActiveLessonVideo();
 });
 

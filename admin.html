@@ -242,11 +242,35 @@ body{padding-bottom:65px}
   .admin-nav-item.active{border-color:#1e3a8a;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#ffffff;box-shadow:0 4px 14px rgba(37,99,235,0.35)}
   .admin-nav-item.live-item{border-color:#ef4444;color:#dc2626;background:#fff5f5}
   .admin-nav-item.live-item.active{border-color:#dc2626;background:linear-gradient(135deg,#dc2626,#ef4444);color:#ffffff;box-shadow:0 4px 14px rgba(239,68,68,0.35)}
+  .live-audience-toolbar{display:flex;align-items:center;justify-content:space-between;gap:.65rem;flex-wrap:wrap;margin-bottom:.75rem}
+  .live-audience-tabs,.live-audience-view{display:flex;gap:.35rem;flex-wrap:wrap}
+  .live-audience-tab{min-height:40px;padding:.48rem .78rem;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;color:#334155;font-weight:800;font-size:.76rem;cursor:pointer}
+  .live-audience-tab.active{border-color:#1d4ed8;background:#1e3a8a;color:#fff}
+  .live-audience-session{min-height:40px;min-width:min(100%,260px);border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:.45rem .65rem;color:#0f172a;font-weight:700}
+  .live-audience-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem;margin-bottom:.75rem}
+  .live-audience-stat{border:1px solid #dbe5f0;border-radius:8px;background:#f8fbff;padding:.6rem;text-align:center}
+  .live-audience-stat strong{display:block;color:#1e3a8a;font-size:1.15rem}
+  .live-audience-stat span{color:#64748b;font-size:.7rem;font-weight:700}
+  .live-audience-table-wrap{width:100%;overflow:auto;border:1px solid #e2e8f0;border-radius:8px;background:#fff}
+  .live-audience-table{width:100%;border-collapse:collapse;min-width:880px;font-size:.74rem}
+  .live-audience-table th{position:sticky;top:0;background:#eff6ff;color:#1e3a8a;text-align:left;padding:.55rem;border-bottom:1px solid #bfdbfe;white-space:nowrap}
+  .live-audience-table td{padding:.55rem;border-bottom:1px solid #edf2f7;vertical-align:top;color:#334155}
+  .live-audience-table tr:last-child td{border-bottom:none}
+  .live-presence-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15);margin-right:.35rem}
+  .live-student-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.6rem}
+  .live-student-card{border:1px solid #bfdbfe;border-radius:8px;background:linear-gradient(145deg,#eff6ff,#fff);padding:.7rem;display:flex;gap:.55rem;align-items:flex-start}
+  .live-student-card input{width:18px;height:18px;margin-top:2px;accent-color:#1d4ed8}
+  .live-student-card-name{font-weight:900;color:#0f172a;overflow-wrap:anywhere}
+  .live-student-card-meta{font-size:.7rem;color:#64748b;line-height:1.45;margin-top:.16rem}
 
   @media (max-width: 640px) {
     .top-header-nav { display: none !important; }
     .admin-sub-nav { padding: .4rem .6rem; gap: .3rem; }
     .admin-nav-item { padding: .4rem .65rem; font-size: .74rem; }
+    .live-audience-summary{grid-template-columns:1fr}
+    .live-audience-tabs,.live-audience-view{width:100%;display:grid;grid-template-columns:1fr 1fr}
+    .live-audience-tab{width:100%}
+    .live-audience-session{width:100%}
   }
 
 
@@ -747,6 +771,30 @@ window.NCERT_CURRICULUM_2026_27 = {
   <!-- ══ PANEL: LIVE CLASSES ══ -->
   <div class="panel" id="panel-live">
     <div class="panel-title" style="color:var(--red,#c53030)">🔴 Live Class Manager</div>
+    <div class="form-card" id="live-audience-card" style="margin-bottom:1rem">
+      <div class="form-card-title">👥 Live Class Students</div>
+      <div class="live-audience-toolbar">
+        <div class="live-audience-tabs" role="tablist" aria-label="Live class students">
+          <button type="button" class="live-audience-tab active" id="live-audience-tab-registered" onclick="switchLiveAudienceTab('registered')">Registered Students</button>
+          <button type="button" class="live-audience-tab" id="live-audience-tab-interests" onclick="switchLiveAudienceTab('interests')">Live Interests</button>
+          <button type="button" class="live-audience-tab" id="live-audience-tab-now" onclick="switchLiveAudienceTab('now')">Live Now</button>
+        </div>
+        <select id="live-audience-session-filter" class="live-audience-session" onchange="loadAdminLiveAudience(this.value)" aria-label="Filter students by live session">
+          <option value="">All live sessions</option>
+        </select>
+      </div>
+      <div class="live-audience-summary" aria-live="polite">
+        <div class="live-audience-stat"><strong id="live-registered-count">0</strong><span>Registered</span></div>
+        <div class="live-audience-stat"><strong id="live-interest-count">0</strong><span>Interested</span></div>
+        <div class="live-audience-stat"><strong id="live-now-count">0</strong><span>Live now</span></div>
+      </div>
+      <div id="live-audience-now-controls" class="live-audience-view" style="display:none;margin-bottom:.65rem">
+        <button type="button" class="live-audience-tab active" id="live-audience-view-all" onclick="setLiveAudienceView('all')">All Students</button>
+        <button type="button" class="live-audience-tab" id="live-audience-view-selected" onclick="setLiveAudienceView('selected')">Selected Students</button>
+      </div>
+      <div id="live-audience-status" role="status" style="font-size:.76rem;color:#64748b;margin-bottom:.45rem">Select Live Class to see students.</div>
+      <div id="live-audience-content"></div>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem" id="lc-grid">
       <!-- LEFT: Plan & Session List -->
       <div>
@@ -1089,6 +1137,7 @@ const adminDeleteLiveClassFn = httpsCallable(functions, 'adminDeleteLiveClass');
 const adminPublishLiveQuizFn = httpsCallable(functions, 'adminPublishLiveQuiz');
 const adminClearLiveQuizFn = httpsCallable(functions, 'adminClearLiveQuiz');
 const adminListLiveSessionsFn = httpsCallable(functions, 'adminListLiveSessions');
+const adminListLiveAudienceFn = httpsCallable(functions, 'adminListLiveAudience');
 const adminUploadPreflightFn = httpsCallable(functions, 'adminUploadPreflight');
 const repairProtectedCourseThumbnailsFn = httpsCallable(functions, 'repairProtectedCourseThumbnails');
 const diagnoseCourseThumbnailsFn = httpsCallable(functions, 'diagnoseCourseThumbnails');
@@ -1119,6 +1168,11 @@ let enrollTab   = 'pending';
 let classFilter = 'all';
 let allReferralMembers = [];
 let selectedReferralMember = null;
+let adminLiveSessions = [];
+let liveAudienceData = { registered: [], interests: [], liveNow: [] };
+let liveAudienceTab = 'registered';
+let liveAudienceView = 'all';
+let liveAudienceRefreshTimer = null;
 
 // ════════════════════════════════════════
 // AUTH
@@ -3754,7 +3808,10 @@ window.switchPanel = (name, el) => {
 
   if (name === 'upload' && typeof resetUploadState === 'function') resetUploadState();
   if (name === 'finance' && typeof loadReferralSettings === 'function') Promise.all([loadReferralSettings(), loadFinanceMembers()]);
-  if (name === 'live' && typeof window.loadAdminLiveSessions === 'function') window.loadAdminLiveSessions();
+  if (name === 'live' && typeof window.loadAdminLiveSessions === 'function') {
+    window.loadAdminLiveSessions();
+    window.loadAdminLiveAudience?.(document.getElementById('live-audience-session-filter')?.value || '');
+  }
 };
 
 // ════════════════════════════════════════
@@ -3806,6 +3863,243 @@ let selectedLiveSession = null;
 let liveTeacherPlayer = null;
 let liveTeacherClock = null;
 let liveTeacherDebugTimer = null;
+
+function liveAudienceText(value, fallback = '-') {
+  const text = String(value ?? '').trim();
+  return text || fallback;
+}
+
+function liveAudienceDate(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function updateLiveAudienceSessionOptions(sessions = adminLiveSessions) {
+  const select = document.getElementById('live-audience-session-filter');
+  if (!select) return;
+  const current = select.value;
+  select.replaceChildren();
+  const all = document.createElement('option');
+  all.value = '';
+  all.textContent = 'All live sessions';
+  select.appendChild(all);
+  sessions.forEach(session => {
+    const option = document.createElement('option');
+    option.value = session.sessionId;
+    option.textContent = `Class ${liveAudienceText(session.classNum, '')} · ${liveAudienceText(session.subject, '')} · ${liveAudienceText(session.chapter, 'Live class')} (${liveAudienceText(session.status, 'planned')})`;
+    select.appendChild(option);
+  });
+  if ([...select.options].some(option => option.value === current)) select.value = current;
+}
+
+function createAudienceTable(columns, rows) {
+  const wrap = document.createElement('div');
+  wrap.className = 'live-audience-table-wrap';
+  const table = document.createElement('table');
+  table.className = 'live-audience-table';
+  const head = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  columns.forEach(column => {
+    const th = document.createElement('th');
+    th.textContent = column.label;
+    headRow.appendChild(th);
+  });
+  head.appendChild(headRow);
+  table.appendChild(head);
+  const body = document.createElement('tbody');
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    columns.forEach(column => {
+      const td = document.createElement('td');
+      const value = column.value(row);
+      if (value instanceof Node) td.appendChild(value);
+      else td.textContent = liveAudienceText(value);
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+  table.appendChild(body);
+  wrap.appendChild(table);
+  return wrap;
+}
+
+function audienceStudentCell(row) {
+  const box = document.createElement('div');
+  const name = document.createElement('strong');
+  name.textContent = liveAudienceText(row.name, 'Student');
+  const uid = document.createElement('div');
+  uid.style.cssText = 'font-size:.66rem;color:#94a3b8;margin-top:2px';
+  uid.textContent = `ID: ${liveAudienceText(row.uid)}`;
+  box.append(name, uid);
+  return box;
+}
+
+function audienceContactCell(row) {
+  const box = document.createElement('div');
+  const email = document.createElement('div');
+  const phone = document.createElement('div');
+  email.textContent = liveAudienceText(row.email);
+  phone.textContent = liveAudienceText(row.whatsapp);
+  box.append(email, phone);
+  return box;
+}
+
+function audienceClassCell(row) {
+  const box = document.createElement('div');
+  const title = document.createElement('strong');
+  title.textContent = `Class ${liveAudienceText(row.classNum, row.studentClass || '-')}`;
+  const subject = document.createElement('div');
+  subject.textContent = [row.stream, row.subject, row.chapter].filter(Boolean).join(' · ') || '-';
+  box.append(title, subject);
+  return box;
+}
+
+function renderRegisteredAudience(rows) {
+  return createAudienceTable([
+    { label: 'Student', value: audienceStudentCell },
+    { label: 'Email / WhatsApp', value: audienceContactCell },
+    { label: 'Student profile', value: row => [row.studentClass && `Class ${row.studentClass}`, row.city, row.state].filter(Boolean).join(' · ') },
+    { label: 'Live class', value: audienceClassCell },
+    { label: 'Access', value: row => `${row.access ? 'Confirmed' : 'Inactive'}${row.paidPaise ? ` · ₹${row.paidPaise / 100}` : ' · Free'}` },
+    { label: 'Registered', value: row => liveAudienceDate(row.joinedAt) }
+  ], rows);
+}
+
+function renderInterestAudience(rows) {
+  return createAudienceTable([
+    { label: 'Student', value: audienceStudentCell },
+    { label: 'Email / WhatsApp', value: audienceContactCell },
+    { label: 'Student profile', value: row => [row.studentClass && `Class ${row.studentClass}`, row.city, row.state].filter(Boolean).join(' · ') },
+    { label: 'Requested class', value: audienceClassCell },
+    { label: 'Interest registered', value: row => liveAudienceDate(row.requestedAt) }
+  ], rows);
+}
+
+function liveAudienceSelectionKey() {
+  const sessionId = document.getElementById('live-audience-session-filter')?.value || 'all';
+  return `ideakdcLiveStudentSelection:${sessionId}`;
+}
+
+function selectedLiveAudienceIds() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(liveAudienceSelectionKey()) || '[]');
+    return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+  } catch (_) {
+    return new Set();
+  }
+}
+
+window.toggleLiveStudentSelection = (uid, checked) => {
+  const selected = selectedLiveAudienceIds();
+  if (checked) selected.add(String(uid));
+  else selected.delete(String(uid));
+  localStorage.setItem(liveAudienceSelectionKey(), JSON.stringify([...selected]));
+  if (liveAudienceView === 'selected') renderLiveAudienceContent();
+};
+
+function renderLiveNowAudience(rows) {
+  const selected = selectedLiveAudienceIds();
+  const visibleRows = liveAudienceView === 'selected' ? rows.filter(row => selected.has(String(row.uid))) : rows;
+  const grid = document.createElement('div');
+  grid.className = 'live-student-card-grid';
+  visibleRows.forEach(row => {
+    const card = document.createElement('label');
+    card.className = 'live-student-card';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = selected.has(String(row.uid));
+    checkbox.setAttribute('aria-label', `Select ${liveAudienceText(row.name, 'student')}`);
+    checkbox.addEventListener('change', () => window.toggleLiveStudentSelection(row.uid, checkbox.checked));
+    const details = document.createElement('div');
+    const name = document.createElement('div');
+    name.className = 'live-student-card-name';
+    name.textContent = liveAudienceText(row.name, 'Student');
+    const meta = document.createElement('div');
+    meta.className = 'live-student-card-meta';
+    meta.textContent = `${liveAudienceText(row.subject)} · ${liveAudienceText(row.chapter)} · Last seen ${liveAudienceDate(row.lastSeenAt)}`;
+    details.append(name, meta);
+    card.append(checkbox, details);
+    grid.appendChild(card);
+  });
+  return grid;
+}
+
+function renderLiveAudienceContent() {
+  const host = document.getElementById('live-audience-content');
+  const controls = document.getElementById('live-audience-now-controls');
+  if (!host) return;
+  host.replaceChildren();
+  controls.style.display = liveAudienceTab === 'now' ? 'flex' : 'none';
+  const rows = liveAudienceTab === 'interests'
+    ? liveAudienceData.interests
+    : liveAudienceTab === 'now' ? liveAudienceData.liveNow : liveAudienceData.registered;
+  if (!rows.length) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'padding:1rem;text-align:center;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px';
+    empty.textContent = liveAudienceTab === 'now'
+      ? (liveAudienceView === 'selected' ? 'No selected live students.' : 'No students are live in this session right now.')
+      : liveAudienceTab === 'interests' ? 'No live-class interests found.' : 'No registered students found.';
+    host.appendChild(empty);
+    return;
+  }
+  host.appendChild(liveAudienceTab === 'registered'
+    ? renderRegisteredAudience(rows)
+    : liveAudienceTab === 'interests' ? renderInterestAudience(rows) : renderLiveNowAudience(rows));
+}
+
+window.switchLiveAudienceTab = tab => {
+  liveAudienceTab = ['registered', 'interests', 'now'].includes(tab) ? tab : 'registered';
+  document.querySelectorAll('[id^="live-audience-tab-"]').forEach(button => button.classList.remove('active'));
+  document.getElementById(`live-audience-tab-${liveAudienceTab}`)?.classList.add('active');
+  renderLiveAudienceContent();
+};
+
+window.setLiveAudienceView = view => {
+  liveAudienceView = view === 'selected' ? 'selected' : 'all';
+  document.getElementById('live-audience-view-all')?.classList.toggle('active', liveAudienceView === 'all');
+  document.getElementById('live-audience-view-selected')?.classList.toggle('active', liveAudienceView === 'selected');
+  renderLiveAudienceContent();
+};
+
+function scheduleLiveAudienceRefresh() {
+  clearInterval(liveAudienceRefreshTimer);
+  liveAudienceRefreshTimer = null;
+  const sessionId = document.getElementById('live-audience-session-filter')?.value || '';
+  if (!sessionId) return;
+  liveAudienceRefreshTimer = setInterval(() => {
+    if (document.getElementById('panel-live')?.classList.contains('active')) window.loadAdminLiveAudience(sessionId, { quiet: true });
+  }, 20000);
+}
+
+window.loadAdminLiveAudience = async (sessionId = '', options = {}) => {
+  const status = document.getElementById('live-audience-status');
+  const select = document.getElementById('live-audience-session-filter');
+  const normalizedSessionId = String(sessionId || '').trim();
+  if (select && select.value !== normalizedSessionId && [...select.options].some(option => option.value === normalizedSessionId)) {
+    select.value = normalizedSessionId;
+  }
+  if (status && !options.quiet) status.textContent = 'Loading live-class students...';
+  try {
+    const result = await adminListLiveAudienceFn(normalizedSessionId ? { sessionId: normalizedSessionId } : {});
+    liveAudienceData = {
+      registered: result.data?.registered || [],
+      interests: result.data?.interests || [],
+      liveNow: result.data?.liveNow || []
+    };
+    document.getElementById('live-registered-count').textContent = String(liveAudienceData.registered.length);
+    document.getElementById('live-interest-count').textContent = String(liveAudienceData.interests.length);
+    document.getElementById('live-now-count').textContent = String(liveAudienceData.liveNow.length);
+    if (status) status.textContent = normalizedSessionId
+      ? `Showing the selected live class · refreshed ${new Date().toLocaleTimeString('en-IN')}`
+      : `Showing all available live-class records · refreshed ${new Date().toLocaleTimeString('en-IN')}`;
+    renderLiveAudienceContent();
+    scheduleLiveAudienceRefresh();
+  } catch (error) {
+    if (status) status.textContent = error?.message || 'Could not load live-class students.';
+    if (!options.quiet) showToast(error?.message || 'Could not load live-class students.', 'error');
+  }
+};
 
 window.onLiveSyncOffsetChange = () => {
   const customWrap = document.getElementById('lc-sync-custom-wrap');
@@ -4045,6 +4339,8 @@ window.loadAdminLiveSessions = async () => {
   try {
     const res = await adminListLiveSessionsFn({});
     const sessions = res.data?.sessions || [];
+    adminLiveSessions = sessions;
+    updateLiveAudienceSessionOptions(sessions);
     if (sessions.length === 0) {
       container.innerHTML = '<div style="color:#aaa;font-size:.8rem">No planned sessions yet.</div>';
       return;
@@ -4101,6 +4397,9 @@ window.watchAdminLivePreview = (sessionId) => {
 
 window.selectLiveSession = (sess) => {
   selectedLiveSession = sess;
+  const audienceFilter = document.getElementById('live-audience-session-filter');
+  if (audienceFilter) audienceFilter.value = sess.sessionId;
+  window.loadAdminLiveAudience?.(sess.sessionId);
   document.querySelectorAll('.lc-session-card-item').forEach(c => {
     c.style.borderColor = '#e2e8f0';
     c.style.background = '#fff';
@@ -4134,6 +4433,8 @@ window.loadAdminLiveSessions = async () => {
   try {
     const res = await adminListLiveSessionsFn({});
     const sessions = res.data?.sessions || [];
+    adminLiveSessions = sessions;
+    updateLiveAudienceSessionOptions(sessions);
     if (sessions.length === 0) {
       container.innerHTML = '<div style="color:#aaa;font-size:.8rem">No planned sessions yet.</div>';
       return;

@@ -4720,6 +4720,178 @@ exports.adminListLiveSessions = onCall(callableOptions({ region: 'asia-south1' }
   return { sessions };
 });
 
+function liveAudienceIso(value) {
+  return value?.toDate?.()?.toISOString?.() || null;
+}
+
+async function loadLiveAudienceProfiles(uids) {
+  const profiles = new Map();
+  const ids = [...new Set(uids.filter(Boolean))].slice(0, 1000);
+  for (let offset = 0; offset < ids.length; offset += 100) {
+    const batchIds = ids.slice(offset, offset + 100);
+    const snapshots = await db.getAll(...batchIds.map(uid => db.collection('users').doc(uid)));
+    snapshots.forEach(snapshot => {
+      if (!snapshot.exists) return;
+      const data = snapshot.data() || {};
+      profiles.set(snapshot.id, {
+        name: String(data.name || data.displayName || '').slice(0, 120),
+        email: String(data.email || '').slice(0, 180),
+        whatsapp: String(data.whatsapp || data.mobile || '').slice(0, 20),
+        classNum: String(data.classNum || data.class || '').slice(0, 20),
+        state: String(data.state || '').slice(0, 80),
+        city: String(data.city || '').slice(0, 80)
+      });
+    });
+  }
+  return profiles;
+}
+
+// Admin: organized registered, interested, and currently present live-class students.
+exports.adminListLiveAudience = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  enforceCallableRateLimit(request, 'admin-list-live-audience', 30, 60 * 1000);
+  const requestedSessionId = validatedResourceId(request.data?.sessionId, 'sessionId', false);
+
+  let sessionDocs = [];
+  if (requestedSessionId) {
+    const sessionSnap = await db.collection('liveClasses').doc(requestedSessionId).get();
+    if (!sessionSnap.exists) throw new HttpsError('not-found', 'Live session not found.');
+    sessionDocs = [sessionSnap];
+  } else {
+    const sessionsSnap = await db.collection('liveClasses').get();
+    sessionDocs = sessionsSnap.docs
+      .sort((a, b) => String(b.data()?.date || '').localeCompare(String(a.data()?.date || '')))
+      .slice(0, 100);
+  }
+
+  const sessionRows = sessionDocs.map(snapshot => ({ sessionId: snapshot.id, ...(snapshot.data() || {}) }));
+  const sessionById = new Map(sessionRows.map(row => [row.sessionId, row]));
+  const [registrationGroups, presenceGroups, interestSnap] = await Promise.all([
+    Promise.all(sessionRows.map(async session => ({
+      sessionId: session.sessionId,
+      snapshot: await db.collection('liveRegistrations').doc(session.sessionId).collection('students').limit(500).get()
+    }))),
+    Promise.all(sessionRows.map(async session => ({
+      sessionId: session.sessionId,
+      snapshot: await db.collection('livePresence').doc(session.sessionId).collection('students').limit(500).get()
+    }))),
+    db.collection('liveClassRequests').limit(500).get()
+  ]);
+
+  const registrationRecords = registrationGroups.flatMap(group => group.snapshot.docs.map(snapshot => ({
+    uid: snapshot.id,
+    sessionId: group.sessionId,
+    ...(snapshot.data() || {})
+  })));
+  const presenceRecords = presenceGroups.flatMap(group => group.snapshot.docs.map(snapshot => ({
+    uid: snapshot.id,
+    sessionId: group.sessionId,
+    ...(snapshot.data() || {})
+  })));
+  const interestRecords = interestSnap.docs.map(snapshot => ({ requestId: snapshot.id, ...(snapshot.data() || {}) }));
+  const profiles = await loadLiveAudienceProfiles([
+    ...registrationRecords.map(row => row.uid),
+    ...presenceRecords.map(row => row.uid),
+    ...interestRecords.map(row => row.uid)
+  ]);
+  const serverNowMs = Date.now();
+  const activeWindowMs = 150 * 1000;
+  const presenceByKey = new Map(presenceRecords.map(row => [`${row.sessionId}:${row.uid}`, row]));
+
+  const registered = registrationRecords.map(row => {
+    const session = sessionById.get(row.sessionId) || {};
+    const profile = profiles.get(row.uid) || {};
+    const presence = presenceByKey.get(`${row.sessionId}:${row.uid}`) || {};
+    const lastSeenMs = presence.lastSeen?.toMillis?.() || 0;
+    return {
+      uid: row.uid,
+      sessionId: row.sessionId,
+      name: profile.name || String(row.name || '').slice(0, 120),
+      email: profile.email || String(row.email || '').slice(0, 180),
+      whatsapp: profile.whatsapp || '',
+      studentClass: profile.classNum || '',
+      state: profile.state || '',
+      city: profile.city || '',
+      classNum: String(session.classNum || ''),
+      stream: String(session.stream || ''),
+      subject: String(session.subject || ''),
+      chapter: String(session.chapter || ''),
+      sessionStatus: String(session.status || ''),
+      access: row.access === true,
+      paidPaise: Number(row.paidPaise || 0),
+      joinedAt: liveAudienceIso(row.joinedAt || row.paidAt),
+      lastSeenAt: liveAudienceIso(presence.lastSeen),
+      liveNow: presence.state === 'online' && lastSeenMs >= serverNowMs - activeWindowMs
+    };
+  });
+
+  const interests = interestRecords.map(row => {
+    const profile = profiles.get(row.uid) || {};
+    return {
+      requestId: row.requestId,
+      uid: String(row.uid || ''),
+      name: profile.name || String(row.name || '').slice(0, 120),
+      email: profile.email || String(row.email || '').slice(0, 180),
+      whatsapp: profile.whatsapp || '',
+      studentClass: profile.classNum || '',
+      state: profile.state || '',
+      city: profile.city || '',
+      classNum: String(row.classNum || ''),
+      stream: String(row.stream || ''),
+      subject: String(row.subject || ''),
+      chapter: String(row.chapter || ''),
+      requestedAt: liveAudienceIso(row.requestedAt)
+    };
+  });
+
+  return {
+    registered,
+    interests,
+    liveNow: registered.filter(row => row.liveNow),
+    serverNow: new Date(serverNowMs).toISOString(),
+    activeWindowSeconds: activeWindowMs / 1000
+  };
+});
+
+// Student: maintain short-lived presence only after exact live-session access is verified.
+exports.updateLiveClassPresence = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  const auth = requireAuth(request);
+  enforceCallableRateLimit(request, 'update-live-class-presence', 6, 60 * 1000);
+  const sessionId = validatedResourceId(request.data?.sessionId, 'sessionId');
+  const state = validatedText(request.data?.state, 'state', {
+    required: true,
+    maxLength: 12,
+    pattern: /^(online|offline)$/
+  });
+  if (isAdminAuth(auth)) return { ok: true, adminPreview: true };
+
+  const [sessionSnap, registrationSnap] = await Promise.all([
+    db.collection('liveClasses').doc(sessionId).get(),
+    db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid).get()
+  ]);
+  if (!sessionSnap.exists) throw new HttpsError('not-found', 'Live session not found.');
+  if (!registrationSnap.exists || registrationSnap.data()?.access === false) {
+    throw new HttpsError('permission-denied', 'Live session access is required.');
+  }
+  if (state === 'online' && sessionSnap.data()?.status !== 'live') {
+    throw new HttpsError('failed-precondition', 'This session is not live.');
+  }
+
+  const presenceRef = db.collection('livePresence').doc(sessionId).collection('students').doc(auth.uid);
+  await db.runTransaction(async transaction => {
+    const presenceSnap = await transaction.get(presenceRef);
+    const update = {
+      uid: auth.uid,
+      sessionId,
+      state,
+      lastSeen: FieldValue.serverTimestamp()
+    };
+    if (!presenceSnap.exists) update.joinedAt = FieldValue.serverTimestamp();
+    transaction.set(presenceRef, update, { merge: true });
+  });
+  return { ok: true, state };
+});
+
 // Public: list planned + live sessions for students (no youtubeVideoId exposed)
 exports.getPlannedLiveSessions = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
   const snap = await db.collection('liveClasses').where('status', 'in', ['planned','live']).get();
