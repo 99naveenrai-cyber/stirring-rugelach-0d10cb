@@ -57,6 +57,27 @@ test('public Firebase module parses and exports student entry points', () => {
   assert.match(moduleMatch[1], /window\.showReferralSupport\s*=\s*async\s*\(\)\s*=>/);
 });
 
+test('new student registration offers Google and details-only routes', () => {
+  assert.match(indexSource, /chooseStudentRegistration\('google'\)/);
+  assert.match(indexSource, /chooseStudentRegistration\('details'\)/);
+  assert.match(indexSource, /Google से Sign in/);
+  assert.match(indexSource, /बिना Google details भरें/);
+  assert.match(indexSource, /convoSteps = \['name', 'class', 'whatsapp', 'state', 'city', 'pincode'\]/);
+  assert.match(indexSource, /mode === 'google'[\s\S]*?window\.doGoogleAuth\(\)/);
+  assert.match(indexSource, /signInAnonymously\(auth\)/);
+});
+
+test('registration uses native mobile keyboards and saves the complete profile', () => {
+  assert.match(indexSource, /id="ci-whatsapp" type="tel" inputmode="numeric" pattern="\[0-9\]\*"\s+autocomplete="tel-national" enterkeyhint="next" maxlength="10"/);
+  assert.match(indexSource, /id="ci-pincode" type="tel" inputmode="numeric" pattern="\[0-9\]\*"\s+autocomplete="postal-code" enterkeyhint="done" maxlength="6"/);
+  assert.match(indexSource, /String\(input\?\.value \|\| ''\)\.replace\(\/\\D\/g, ''\)/);
+  for (const field of ['whatsapp', 'state', 'city', 'pincode']) {
+    assert.match(indexSource, new RegExp(`${field}: payload\\.${field}`));
+  }
+  assert.match(indexSource, /convoData\.registrationSource\s*=\s*'details-without-google'/);
+  assert.match(indexSource, /detailsRegistrationAuthInFlight/);
+});
+
 test('academic destinations reuse the current catalogue and live-class flows', () => {
   assert.match(navigationSource, /item\.action === 'live'/);
   assert.match(navigationSource, /global\.showLive\(\)/);
