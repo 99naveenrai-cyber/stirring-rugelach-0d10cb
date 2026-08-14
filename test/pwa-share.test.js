@@ -47,6 +47,7 @@ test("shared links use stable content identifiers without playback or payment da
   assert.match(publicHtml, /function renderShareButton/);
   assert.match(publicHtml, />Share<\/button>/);
   assert.match(publicHtml, /background:linear-gradient\(135deg,#dc2626,#b91c1c\)/);
+  assert.match(publicHtml, /border-radius:50%/);
   assert.match(publicHtml, /kind: 'course'/);
   assert.match(publicHtml, /kind: 'lesson'/);
   assert.match(publicHtml, /kind: 'live'/);
