@@ -91,6 +91,8 @@ test("paid live registration shows a share celebration only after verified exact
   assert.match(publicSource, /live-share-smile[\s\S]*😊/);
   assert.match(publicSource, /Let&rsquo;s<\/span><span aria-hidden="true">meet<\/span><span aria-hidden="true">in<\/span><span aria-hidden="true">the<\/span><span aria-hidden="true">lesson/);
   assert.match(publicSource, /Share with friends, it&rsquo;s mind saving/);
+  assert.match(publicSource, /background:linear-gradient\(135deg,#e0f7ff,#bae6fd 54%,#dbeafe\)/);
+  assert.match(publicSource, /background:linear-gradient\(90deg,#172554 0%,#1e3a8a 48%,#075985 100%\)/);
   assert.match(publicSource, /animation-delay:2\.35s/);
   assert.match(publicSource, /liveWelcomeMessage/);
   assert.match(publicSource, /live-share-confetti-piece/);
