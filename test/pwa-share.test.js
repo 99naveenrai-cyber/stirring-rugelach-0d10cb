@@ -70,6 +70,22 @@ test("shared live and lesson routes return to existing access-controlled flows",
   assert.match(publicHtml, /const desiredRule = getLessonAccessRule\(course, desiredIdx, access\)/);
 });
 
+test("shared paid courses require the receiver's exact-course purchase", () => {
+  const accessStart = publicHtml.indexOf("async function getCourseAccess");
+  const accessEnd = publicHtml.indexOf("function getRouteCourseId", accessStart);
+  const accessBlock = publicHtml.slice(accessStart, accessEnd);
+  const playerStart = publicHtml.indexOf("async function openVideoPlayer");
+  const playerEnd = publicHtml.indexOf("function destroyActiveLessonPlayer", playerStart);
+  const playerBlock = publicHtml.slice(playerStart, playerEnd);
+
+  assert.match(accessBlock, /doc\(db,\s*'users',\s*currentUser\.uid,\s*'purchases',\s*courseId\)/);
+  assert.match(accessBlock, /docExists\s*&&\s*accessValue\s*===\s*true/);
+  assert.doesNotMatch(accessBlock, /adminPreview=1/);
+  assert.match(playerBlock, /const allowed = getLessonAccessRule\(course, startIdx, access\)\.canPlay === true/);
+  assert.match(playerBlock, /getAuthorizedLessonVideoFn\(\{[\s\S]*?courseId: course\.id,[\s\S]*?lessonId:/);
+  assert.match(playerBlock, /This paid lesson is locked\. Purchase this course to watch the full video\./);
+});
+
 test("install and sharing runtime remains syntactically valid", () => {
   new vm.Script(pwaScript);
   for (const html of [publicHtml, adminHtml]) {

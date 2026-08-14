@@ -85,6 +85,8 @@ test("paid course access is denied by default and scoped to the exact purchase",
 
   const accessBlock = studentFunctionBlock("getCourseAccess", "async function canOpenCourseVideo");
   assert.match(accessBlock, /doc\(db,\s*'users',\s*currentUser\.uid,\s*'purchases',\s*courseId\)/);
+  assert.match(accessBlock, /docExists\s*&&\s*accessValue\s*===\s*true/);
+  assert.doesNotMatch(accessBlock, /adminPreview=1/);
   assert.doesNotMatch(accessBlock, /legacyAccessId|legacyPath|legacySnap/);
 });
 

@@ -5172,7 +5172,7 @@ async function getCourseAccess(courseId, course = null) {
     return result;
   }
 
-  if (isCurrentUserAdmin() || window.location.hash.includes('adminPreview=1') || window.location.search.includes('adminPreview=1')) {
+  if (isCurrentUserAdmin()) {
     const result = { access: true, free: false, admin: true, sourcePath: 'ADMIN_EMAILS/currentUserData', reason: 'admin-unrestricted-access' };
     debugAccessCheck({
       courseId,
