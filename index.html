@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b1f4d'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='30' fill='%23ffd365'%3EIK%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/ideakdc-app-icon.svg">
+<meta name="theme-color" content="#0b1f4d">
+<script src="/pwa-install-share.js" defer></script>
 <title>IdeaKDC | School, Class 11–12, BPSC, UPSC, SSC, JEE &amp; NEET Learning</title>
 <meta name="description" content="Explore IdeaKDC courses, live classes and quiz practice for school, Class 11–12, BPSC, UPSC, UPPCS, SSC, JEE Mains, JEE Advanced &amp; NEET preparation.">
 <link rel="canonical" href="https://betalaunch.ideakdc.in/">
@@ -49,6 +53,18 @@ nav{background:linear-gradient(100deg,rgba(255,253,248,.96),rgba(246,249,255,.94
 .btn-nav{font-size:.72rem;padding:8px 12px;border:1.5px solid rgba(16,24,47,.16);border-radius:999px;background:#fffaf3;cursor:pointer;font-family:Arial,"Noto Sans Devanagari","Noto Sans",sans-serif;font-weight:700;color:var(--deep);white-space:nowrap;letter-spacing:0;box-shadow:0 8px 20px rgba(16,24,47,.06);transition:transform .15s,box-shadow .15s,background .15s}
 .btn-nav:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(16,24,47,.1)}
 .btn-nav-primary{background:var(--deep);color:#fff8ec;border-color:var(--deep)}
+.pwa-install-btn,.content-share-btn{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;border:1px solid rgba(35,71,183,.2);background:#fff;color:#17326f;cursor:pointer;box-shadow:0 6px 16px rgba(16,24,47,.08);transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+.pwa-install-btn{width:38px;height:38px;border-radius:10px;font-size:1.05rem}
+.pwa-install-mobile{display:none}
+.pwa-install-btn:hover,.content-share-btn:hover{transform:translateY(-1px);box-shadow:0 9px 20px rgba(16,24,47,.13);background:#eef4ff}
+.content-share-btn{width:36px;height:36px;border-radius:50%;font-size:1rem;margin-left:auto;position:relative;z-index:3}
+.content-share-btn.compact{width:30px;height:30px;font-size:.85rem;margin-left:.35rem}
+.share-row{display:flex;align-items:center;gap:.45rem;min-width:0}
+.lesson-share-slot{display:flex;justify-content:flex-end;margin:.35rem 0}
+.playlist-share-wrap{position:relative}
+.playlist-share-wrap>.pl-item{padding-right:3.7rem}
+.playlist-share-wrap>.content-share-btn{position:absolute;right:.62rem;bottom:.62rem;margin:0}
+@media(max-width:720px){.pwa-install-btn{width:36px;height:36px}.content-share-btn{width:34px;height:34px}.nav-right>.pwa-install-btn{display:flex}}
 
 /* ── BOTTOM NAV ── */
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(255,250,243,.94);border-top:1px solid var(--border);z-index:200;padding:.4rem 0 calc(.4rem + env(safe-area-inset-bottom));box-shadow:0 -12px 30px rgba(16,24,47,.08);backdrop-filter:blur(16px)}
@@ -307,6 +323,7 @@ body.academic-menu-open{overflow:hidden}
 @media (max-width:900px){
   .site-header .site-nav{justify-content:space-between;padding:0 .8rem}
   .academic-nav-desktop,.site-header .nav-right{display:none}
+  .pwa-install-mobile{display:flex;margin-left:auto}
   .academic-mobile-toggle{display:flex}
 }
 @media (max-width:520px){
@@ -1964,6 +1981,7 @@ html, body {
     </button>
     <div class="academic-nav-desktop" id="academic-nav-desktop" aria-label="Academic categories"></div>
     <div class="nav-right">
+      <button class="pwa-install-btn" type="button" data-pwa-install onclick="IdeaKDCPwa.install()" aria-label="Save IdeaKDC to home screen" title="Save to Home Screen">&#8681;</button>
       <button class="btn-nav nav-secondary" style="border-color:#ef4444;color:#ef4444;font-weight:800" onclick="showLive()">🔴 Live Class</button>
       <button class="btn-nav nav-secondary" onclick="showReferralSupport()">Student Partner</button>
       <div class="nav-account-actions" id="nav-account-actions">
@@ -1971,11 +1989,13 @@ html, body {
         <button class="btn-nav" onclick="startConvoReg(null)">New Student</button>
       </div>
     </div>
+    <button class="pwa-install-btn pwa-install-mobile" type="button" data-pwa-install onclick="IdeaKDCPwa.install()" aria-label="Save IdeaKDC to home screen" title="Save to Home Screen">&#8681;</button>
     <button class="academic-mobile-toggle" id="academic-mobile-toggle" type="button" aria-expanded="false" aria-controls="academic-mobile-drawer" aria-label="Open academic menu">☰</button>
   </nav>
   <div class="academic-mobile-drawer" id="academic-mobile-drawer" hidden>
     <div id="academic-nav-mobile" aria-label="Mobile academic categories"></div>
     <div class="academic-mobile-utility">
+      <button class="btn-nav" type="button" data-pwa-install onclick="IdeaKDCPwa.install()">&#8681; Save to Home Screen</button>
       <button class="btn-nav" onclick="showLive()">🔴 Live Class</button>
       <button class="btn-nav" onclick="showAllCourses()">सभी Courses</button>
       <button class="btn-nav" onclick="showReferralSupport()">Student Partner</button>
@@ -2785,9 +2805,12 @@ function renderLiveSessionDetails(sess, chapterLabel = '') {
     <div style="font-size:.88rem;font-weight:900;color:${isPaid ? '#92400e' : '#15803d'};margin:0 0 .55rem;text-align:center">
       ${isPaid ? `Class fee: ₹${Number(sess.pricePaise || 0) / 100}` : 'FREE Live Class'}
     </div>
-    <button type="button" onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:46px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.95rem;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,0.35)">
-      ${isPaid ? `Pay ₹${Number(sess.pricePaise || 0) / 100} · Reserve Live Class` : 'Register for Free Live Class'}
-    </button>
+    <div class="share-row">
+      <button type="button" onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:46px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.95rem;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,0.35)">
+        ${isPaid ? `Pay ₹${Number(sess.pricePaise || 0) / 100} · Reserve Live Class` : 'Register for Free Live Class'}
+      </button>
+      ${renderShareButton({ kind: 'live', title: `${sess.subject || 'Live Class'} - ${sess.chapter || ''}`, liveSessionId: sess.sessionId })}
+    </div>
     <div id="lc-reg-status" role="status" style="margin-top:.45rem;font-size:.76rem;text-align:center"></div>
   `;
 }
@@ -3515,6 +3538,7 @@ function renderLiveDiscoveryGrid() {
         <div class="live-card-footer">
           <span class="live-price-tag">${priceText}</span>
           ${btnHtml}
+          ${renderShareButton({ kind: 'live', title: `${session.subject || 'Live Class'} - ${session.chapter || ''}`, liveSessionId: session.sessionId, compact: true })}
         </div>
       </article>
     `;
@@ -3970,7 +3994,7 @@ onAuthStateChanged(auth, async (user) => {
   const hasAcademicRoute = Boolean(window.IdeaKDCAcademicPages?.parseAcademicPath(window.location.pathname));
   if (hasAcademicRoute) await handleAcademicRouteFromUrl({ initial: true });
   await Promise.all([profilePromise, loadCourses()]);
-  void loadPublicLiveSessions();
+  const liveSessionsPromise = loadPublicLiveSessions();
   if (user) await claimPendingReferralAttribution();
   await handleCashfreeReturnFromUrl();
   if (user && !detailsRegistrationAuthInFlight) await completePendingRegistrationAfterAuth(user);
@@ -3978,7 +4002,8 @@ onAuthStateChanged(auth, async (user) => {
     await handleAcademicRouteFromUrl({ initial: true });
     return;
   }
-  await handleCourseRouteFromUrl();
+  const openedCourseRoute = await handleCourseRouteFromUrl();
+  if (!openedCourseRoute) await handleSharedViewRoute(liveSessionsPromise);
 });
 
 function clearAccessState(options = {}) {
@@ -5221,6 +5246,33 @@ function getRouteLessonId() {
   return (params.get('lessonId') || '').trim();
 }
 
+function getRouteLiveSessionId() {
+  const params = new URLSearchParams(window.location.search);
+  return (params.get('liveSessionId') || '').trim();
+}
+
+async function handleSharedViewRoute(liveSessionsPromise = Promise.resolve()) {
+  const params = new URLSearchParams(window.location.search);
+  const liveSessionId = getRouteLiveSessionId();
+  const view = String(params.get('view') || '').toLowerCase();
+  if (liveSessionId) {
+    await liveSessionsPromise;
+    await window.showLive();
+    await window.openPlannedLiveSession(liveSessionId);
+    return true;
+  }
+  if (view === 'live') {
+    await liveSessionsPromise;
+    await window.showLive();
+    return true;
+  }
+  if (view === 'courses') {
+    await window.showAllCourses();
+    return true;
+  }
+  return false;
+}
+
 function setCourseRoute(courseId) {
   const url = new URL(window.location.href);
   url.searchParams.set('courseId', courseId);
@@ -5420,6 +5472,7 @@ async function renderCourses() {
             <div class="playlist-title">${v.title}</div>
             <div class="playlist-dur">⏱ ${v.dur || '—'}</div>
           </div>
+          ${renderShareButton({ kind: 'lesson', title: v.title || c.name, courseId: c.id, lessonId: v.contentId || v.lessonId || '', compact: true })}
           <div class="playlist-lock">${canOpen ? '✅' : (v.isFree ? '🆓' : '🔒')}</div>
         </div>`).join('');
 
@@ -5456,6 +5509,7 @@ async function renderCourses() {
           </div>` : '<div style="color:var(--muted);font-size:.8rem;padding:.5rem 0">Videos जल्द आएंगी।</div>'}
           ${faqHtml}
           <div class="course-footer-btns">
+            ${renderShareButton({ kind: 'course', title: c.name, courseId: c.id })}
             <div class="course-price">${courseIsFree ? 'Free' : `₹${(c.price||0).toLocaleString('en-IN')} <span>एक बार</span>`}</div>
             <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(c.id)}" data-action="${buttonAction}">${buttonLabel}</button>
           </div>
@@ -5579,6 +5633,7 @@ async function renderCatalogueContent() {
                       <div class="playlist-title">${escapeHtml(lesson.title || 'Untitled lesson')}</div>
                       <div class="playlist-dur">${escapeHtml(lessonDuration(lesson) || lessonKind)}</div>
                     </div>
+                    ${renderShareButton({ kind: 'lesson', title: lesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '', compact: true })}
                     <div class="playlist-lock" aria-label="${canOpen ? 'Purchased lesson' : isFreeLesson ? 'Free lesson' : 'Locked lesson'}">
                       ${canOpen ? '✅' : isFreeLesson ? '🆓' : '🔒'}
                     </div>
@@ -5610,7 +5665,10 @@ async function renderCatalogueContent() {
                     </div>` : `
                     <div class="catalogue-meta">Lesson catalogue will appear after upload.</div>`}
                   ${faqHtml}
-                  <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(course.id)}" data-action="${action}">${label}</button>
+                  <div class="share-row">
+                    <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(course.id)}" data-action="${action}">${label}</button>
+                    ${renderShareButton({ kind: 'course', title: course.name, courseId: course.id })}
+                  </div>
                 </article>`;
             }).join('')}
           </div>
@@ -7395,7 +7453,10 @@ async function renderDashContent() {
               })}
               <h3>${course.name}</h3>
               <div class="owned-course-meta">${course.tag || 'Course'} • ${contentType === 'playlist' ? 'Playlist' : 'Single video'} • ${videoCount} videos</div>
-              <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(course.id)}" data-action="open">Open Course</button>
+              <div class="share-row">
+                <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(course.id)}" data-action="open">Open Course</button>
+                ${renderShareButton({ kind: 'course', title: course.name, courseId: course.id })}
+              </div>
             </article>`;
         }).join('')}
       </div>
@@ -7587,7 +7648,7 @@ function buildLessonGroups(course) {
 function renderCourseViewerHeader(course, access) {
   const titleOnlyHeader = document.getElementById('course-viewer-header');
   if (!titleOnlyHeader) return;
-  titleOnlyHeader.innerHTML = `<h1 class="course-viewer-title">${escapeHtml(course.name || 'IdeaKDC Course')}</h1>`;
+  titleOnlyHeader.innerHTML = `<div class="share-row"><h1 class="course-viewer-title">${escapeHtml(course.name || 'IdeaKDC Course')}</h1>${renderShareButton({ kind: 'course', title: course.name || 'IdeaKDC Course', courseId: course.id })}</div>`;
   return;
   const videos = course.videos || [];
   const duration = totalCourseDuration(videos);
@@ -7651,6 +7712,24 @@ function normalizedFaqs(course = {}) {
 function safeDomId(value = '') {
   return String(value || 'course').replace(/[^a-zA-Z0-9_-]/g, '-');
 }
+
+function renderShareButton({ kind = 'lesson', title = 'IdeaKDC Learning', courseId = '', lessonId = '', liveSessionId = '', compact = false } = {}) {
+  return `<button type="button" class="content-share-btn js-content-share${compact ? ' compact' : ''}" aria-label="Share ${escapeHtml(title)}" title="Share link" data-share-kind="${escapeHtml(kind)}" data-share-title="${escapeHtml(title)}" data-share-course="${escapeHtml(courseId)}" data-share-lesson="${escapeHtml(lessonId)}" data-share-live="${escapeHtml(liveSessionId)}">&#8599;</button>`;
+}
+
+document.addEventListener('click', event => {
+  const button = event.target.closest('.js-content-share');
+  if (!button) return;
+  event.preventDefault();
+  event.stopPropagation();
+  window.IdeaKDCPwa?.share({
+    kind: button.dataset.shareKind || 'lesson',
+    title: button.dataset.shareTitle || 'IdeaKDC Learning',
+    courseId: button.dataset.shareCourse || '',
+    lessonId: button.dataset.shareLesson || '',
+    liveSessionId: button.dataset.shareLive || ''
+  });
+});
 
 function renderFaqAccordion(course, { id = 'course-qa-section', className = 'qa-card' } = {}) {
   const faqs = normalizedFaqs(course);
@@ -7737,6 +7816,7 @@ function renderStandaloneReadyState(course, lesson, idx) {
           <button class="btn-enroll" type="button" onclick="playLessonInFullscreen(${idx})">Play Video</button>
           ${hasSeparateQuiz(lesson) ? `<button class="btn-enroll" type="button" onclick="startLessonQuiz(${idx}, 'separate')">Start Quiz</button>` : ''}
           ${hasSeparateQuiz(lesson) ? `<button class="btn-enroll" type="button" onclick="playLessonInFullscreen(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
+          ${renderShareButton({ kind: 'lesson', title: lesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '' })}
         </div>
       </div>`;
   }
@@ -7758,6 +7838,7 @@ function renderLockedPlaylistPreview(course, access) {
           const visibleLesson = safePlaylistLessonForViewer(lesson, accessRule);
           const thumbSrc = getLessonThumbnail(lesson) || getLessonThumbnail(visibleLesson) || getCourseThumbnail(course);
           return `
+            <div class="playlist-share-wrap">
             <button type="button" class="pl-item locked" onclick="showLockedLessonPrompt('${course.id}')">
               ${renderThumbFrame({ src: thumbSrc, candidates: getLessonThumbnailCandidates(lesson, course), alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '', lessonIndex: i + 1 })}
               <div class="pl-num">${i + 1}</div>
@@ -7768,7 +7849,9 @@ function renderLockedPlaylistPreview(course, access) {
                 <div class="pl-badges">${lessonStatusBadges({ course, lesson: visibleLesson, index: i, activeIdx: -1, accessRule })}</div>
               </div>
               <div class="pl-play-icon">🔒</div>
-            </button>`;
+            </button>
+            ${renderShareButton({ kind: 'lesson', title: visibleLesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '', compact: true })}
+            </div>`;
         }).join('')}
       </section>`).join('')}`;
 }
@@ -9015,6 +9098,7 @@ function renderLessonActionControls(course, lesson, idx, hasVideo = true) {
       ${separate ? `<button class="btn-enroll" type="button" onclick="startLessonQuiz(${idx}, 'separate')">Start Quiz</button>` : ''}
       ${hasVideo && separate ? `<button class="btn-enroll" type="button" onclick="playLessonInFullscreen(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
       ${popup ? `<button class="quiz-sound-toggle js-quiz-sound-toggle" type="button" onclick="toggleQuizSoundMute()">Sound: ${quizSoundMuted ? 'OFF' : 'ON'}</button>` : ''}
+      ${renderShareButton({ kind: 'lesson', title: lesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '' })}
     </div>`;
 }
 
@@ -9296,6 +9380,7 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
             const visibleLesson = safePlaylistLessonForViewer(v, accessRule);
             const thumbSrc = getLessonThumbnail(v) || getLessonThumbnail(visibleLesson) || getCourseThumbnail(course);
             return `
+              <div class="playlist-share-wrap">
               <button type="button" class="pl-item ${i===activeIdx?'playing':''} ${canPlayLesson?'':'locked'}"
                 onclick="${canPlayLesson ? `playLessonInFullscreen(${i})` : `showLockedLessonPrompt('${course.id}')`}" ${v.contentId || v.lessonId ? '' : 'disabled'}>
                 ${renderThumbFrame({ src: thumbSrc, candidates: getLessonThumbnailCandidates(v, course), alt: `${visibleLesson.title || 'Lesson'} thumbnail`, mini: true, fallback: '▶', courseId: course.id, lessonId: v.contentId || v.lessonId || '', lessonIndex: i + 1 })}
@@ -9307,7 +9392,9 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
                   <div class="pl-badges">${lessonStatusBadges({ course, lesson: visibleLesson, index: i, activeIdx, accessRule })}</div>
                 </div>
                 <div class="pl-play-icon">${canPlayLesson ? (i===activeIdx?'▶':'▷') : '🔒'}</div>
-              </button>`;
+              </button>
+              ${renderShareButton({ kind: 'lesson', title: visibleLesson.title || course.name, courseId: course.id, lessonId: v.contentId || v.lessonId || '', compact: true })}
+              </div>`;
           }).join('') : `
             <div class="course-viewer-state error">
               <strong>Playlist is empty</strong>
@@ -9489,6 +9576,10 @@ function showToast(msg, type='') {
   clearTimeout(t._t);
   t._t = setTimeout(() => t.classList.remove('show'), 3000);
 }
+
+window.addEventListener('ideakdc:pwa-message', event => {
+  showToast(event.detail?.message || 'IdeaKDC', event.detail?.type || '');
+});
 
 function setBtnLoading(btnId, labelId, loading, label) {
   const btn = document.getElementById(btnId);

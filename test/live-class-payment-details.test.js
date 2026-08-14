@@ -28,7 +28,8 @@ test("admin live-class planning captures and saves teaching details", () => {
 test("planned live sessions populate public discovery during startup", () => {
   assert.match(publicSource, /async function loadPublicLiveSessions\(\)/);
   assert.match(publicSource, /window\._livePlannedSessions = sessions/);
-  assert.match(publicSource, /Promise\.all\(\[profilePromise, loadCourses\(\)\]\);\s*void loadPublicLiveSessions\(\)/);
+  assert.match(publicSource, /Promise\.all\(\[profilePromise, loadCourses\(\)\]\);\s*const liveSessionsPromise = loadPublicLiveSessions\(\)/);
+  assert.match(publicSource, /handleSharedViewRoute\(liveSessionsPromise\)/);
   assert.match(publicSource, /openPlannedLiveSession\('\$\{safeSessionId\}'\)/);
 });
 

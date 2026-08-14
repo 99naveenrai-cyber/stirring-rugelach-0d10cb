@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">IdeaKDC</title>
+  <desc id="desc">IdeaKDC academic learning app icon</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1f4d"/>
+      <stop offset="1" stop-color="#2347b7"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <path d="M112 154c54-27 101-23 144 11 43-34 90-38 144-11v210c-54-23-101-18-144 15-43-33-90-38-144-15z" fill="#fffaf3"/>
+  <path d="M256 166v213" stroke="#c9953e" stroke-width="12"/>
+  <path d="M142 201c35-13 64-10 86 7M142 246c35-13 64-10 86 7M284 208c22-17 51-20 86-7M284 253c22-17 51-20 86-7" fill="none" stroke="#2347b7" stroke-width="12" stroke-linecap="round"/>
+  <text x="256" y="116" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="800" fill="#ffd365">ideaKDC</text>
+</svg>

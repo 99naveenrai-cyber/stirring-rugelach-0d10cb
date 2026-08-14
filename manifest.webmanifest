@@ -1,0 +1,34 @@
+{
+  "id": "/",
+  "name": "IdeaKDC - Creating Thoughtful Minds",
+  "short_name": "IdeaKDC",
+  "description": "IdeaKDC courses, live classes and interactive learning.",
+  "start_url": "/?source=installed-app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fbf6ee",
+  "theme_color": "#0b1f4d",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/assets/ideakdc-app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "All Courses",
+      "short_name": "Courses",
+      "url": "/?view=courses",
+      "icons": [{ "src": "/assets/ideakdc-app-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Live Classes",
+      "short_name": "Live",
+      "url": "/?view=live",
+      "icons": [{ "src": "/assets/ideakdc-app-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}
