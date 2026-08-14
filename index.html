@@ -2785,16 +2785,40 @@ function renderLiveSessionDetails(sess, chapterLabel = '') {
 }
 
 window.openPlannedLiveSession = async (sessionId) => {
-  await window.showLive();
+  const modal = document.getElementById('live-class-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  modal.style.opacity = '1';
+  modal.style.pointerEvents = 'auto';
+  modal.style.zIndex = '20000';
+
+  if (!_livePlannedSessions || !_livePlannedSessions.length) {
+    await loadPublicLiveSessions();
+  }
+
   const session = _livePlannedSessions.find(item => item.sessionId === String(sessionId || ''));
-  if (!session) return window._ideaKdcLiveRuntime?.showToast('This live class is no longer available.', 'error');
+  if (!session) {
+    if (typeof showToast === 'function') showToast('This live class is no longer available.', 'error');
+    return;
+  }
+
   _navClass = session.classNum || _navClass;
   _navStream = normalizeLiveStream(session.stream || '');
   _navSubject = session.subject || '';
   _navChapter = session.chapter || '';
   _currentStep = 4;
+
   renderNavyStepNavigation();
-  renderLiveSessionDetails(session, session.chapter || 'Live class');
+  _selectedSessionDoc = session;
+
+  const card = document.getElementById('lc-session-card');
+  if (card) {
+    card.style.display = 'block';
+    renderLiveSessionDetails(session, session.chapter || 'Live Class');
+    setTimeout(() => {
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+  }
 };
 
 window.registerUnplannedInterest = async (chap) => {
@@ -5720,7 +5744,19 @@ async function handleCashfreeReturnFromUrl() {
 // ════════════════════════════════════════
 window.startConvoReg = (courseId) => {
   if (courseId) pendingCourseId = courseId;
-  convoData = { name:'', classNum:'', state:'', mobile:'' };
+  convoData = {
+    name: '',
+    classNum: '10',
+    whatsapp: '',
+    parentName: '',
+    parentWhatsapp: '',
+    state: 'Bihar',
+    customState: '',
+    city: 'Patna',
+    customCity: '',
+    pincode: '',
+    regType: 'form'
+  };
   convoStep = 0;
   pushPage('convo');
   pushHistory();
@@ -5728,11 +5764,17 @@ window.startConvoReg = (courseId) => {
 };
 
 const INDIAN_STATES = [
-  'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana',
-  'Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur',
-  'Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana',
-  'Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Andaman and Nicobar Islands','Chandigarh',
-  'Dadra and Nagar Haveli and Daman and Diu','Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'
+  'Bihar', 'Uttar Pradesh', 'Jharkhand', 'Delhi', 'Maharashtra', 'West Bengal',
+  'Rajasthan', 'Madhya Pradesh', 'Punjab', 'Haryana', 'Gujarat', 'Karnataka',
+  'Tamil Nadu', 'Andhra Pradesh', 'Assam', 'Chhattisgarh', 'Goa', 'Himachal Pradesh',
+  'Kerala', 'Odisha', 'Telangana', 'Uttarakhand', 'Other (Custom)'
+];
+
+const MAJOR_INDIAN_CITIES = [
+  'Patna', 'Gaya', 'Muzaffarpur', 'Bhagalpur', 'Darbhanga', 'Varanasi', 'Lucknow',
+  'Prayagraj', 'Kanpur', 'Noida / Greater Noida', 'Kolkata', 'Ranchi', 'Dhanbad',
+  'Delhi NCR', 'Kota', 'Jaipur', 'Jodhpur', 'Mumbai', 'Pune', 'Ahmedabad', 'Bengaluru',
+  'Chennai', 'Hyderabad', 'Indore', 'Bhopal', 'Other (Custom)'
 ];
 
 function normalizeName(value) {
