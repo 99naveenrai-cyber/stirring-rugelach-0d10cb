@@ -5107,7 +5107,17 @@ exports.getPlayerAccess = onCall(callableOptions({ region: 'asia-south1' }), asy
   ]);
   if (!sessionSnap.exists) throw new HttpsError('not-found', 'Session not found.');
   const session = sessionSnap.data();
-  const registrationActive = regSnap.exists && regSnap.data()?.access !== false;
+  const isFree = (session.pricePaise || 0) === 0;
+
+  let registrationActive = regSnap.exists && regSnap.data()?.access !== false;
+
+  // Auto-register free live classes if not registered yet
+  if (!registrationActive && isFree) {
+    const regRef = db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid);
+    await regRef.set({ uid: auth.uid, email: auth.token?.email || '', access: true, joinedAt: FieldValue.serverTimestamp(), paidPaise: 0 }, { merge: true });
+    registrationActive = true;
+  }
+
   if (!isAdmin && !registrationActive) throw new HttpsError('permission-denied', 'You are not registered for this session.');
   if (session.status === 'ended' && !isAdmin) throw new HttpsError('failed-precondition', 'This session has ended.');
   if (!session.youtubeVideoId) throw new HttpsError('failed-precondition', 'Stream not started yet. Please try again in a moment.');

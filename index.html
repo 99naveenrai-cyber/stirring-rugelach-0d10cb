@@ -2540,6 +2540,33 @@ function normalizeLiveLabel(value, { chapter = false } = {}) {
   return label;
 }
 
+function isSessionLive(session) {
+  return session?.status === 'live' || session?.isLive === true || session?.active === true;
+}
+
+function isSessionFree(session) {
+  return Number(session?.pricePaise || 0) === 0 || session?.isFree === true || session?.price === 0;
+}
+
+function liveChapterMatches(savedChapterStr, targetChapterStr) {
+  if (!savedChapterStr || !targetChapterStr) return true;
+  const savedChapter = normalizeLiveLabel(savedChapterStr, { chapter: true });
+  const selectedChapter = normalizeLiveLabel(targetChapterStr, { chapter: true });
+  if (!savedChapter || !selectedChapter) return true;
+  if (savedChapter === selectedChapter || savedChapter.includes(selectedChapter) || selectedChapter.includes(savedChapter)) return true;
+  
+  const sTokens = new Set(savedChapter.split(' '));
+  const tTokens = new Set(selectedChapter.split(' '));
+  const fillers = new Set(['and', 'or', 'the', 'in', 'of', 'to', 'for', 'ch', 'chapter', 'class', 'part', '1', '2', '3', '4']);
+  for (const f of fillers) { sTokens.delete(f); tTokens.delete(f); }
+  if (sTokens.size > 0 && tTokens.size > 0) {
+    let intersection = 0;
+    for (const token of tTokens) { if (sTokens.has(token)) intersection++; }
+    if (intersection > 0 && (intersection >= Math.min(sTokens.size, tTokens.size))) return true;
+  }
+  return false;
+}
+
 function liveSessionMatchesSelection(session, { classNum, stream, subject, chapter = '' }) {
   if (!session) return false;
   if (normalizeLiveClass(session?.classNum) !== normalizeLiveClass(classNum)) return false;
@@ -2552,15 +2579,45 @@ function liveSessionMatchesSelection(session, { classNum, stream, subject, chapt
     if (sessionStream && targetStream && sessionStream !== targetStream) return false;
   }
 
-  if (!chapter || !session?.chapter) return true;
+  const chapStr = String(chapter || '').trim();
+  if (!chapStr || !session?.chapter) return true;
   const savedChapter = normalizeLiveLabel(session.chapter, { chapter: true });
-  const selectedChapter = normalizeLiveLabel(chapter, { chapter: true });
+  const selectedChapter = normalizeLiveLabel(chapStr, { chapter: true });
+  return liveChapterMatches(session.chapter, chapStr);
+}
 
-  if (savedChapter === selectedChapter || savedChapter.includes(selectedChapter) || selectedChapter.includes(savedChapter)) {
-    return true;
+function findSessionForSelection({ classNum, stream, subject, chapter = '' }) {
+  if (!_livePlannedSessions || !_livePlannedSessions.length) return null;
+  const targetClass = normalizeLiveClass(classNum);
+  const targetSubject = normalizeLiveLabel(subject);
+  const targetStream = normalizeLiveStream(stream);
+  const targetChap = String(chapter || '').trim();
+
+  // 1. Direct match (Class, Stream, Subject, Chapter)
+  if (targetChap) {
+    const exactMatch = _livePlannedSessions.find(s =>
+      normalizeLiveClass(s.classNum) === targetClass &&
+      normalizeLiveLabel(s.subject) === targetSubject &&
+      ((targetClass !== '11' && targetClass !== '12') || !s.stream || !targetStream || normalizeLiveStream(s.stream) === targetStream) &&
+      liveChapterMatches(s.chapter, targetChap)
+    );
+    if (exactMatch) return exactMatch;
   }
 
-  return false;
+  // 2. Subject-level match if no chapter is specified or if session is LIVE for that subject
+  const subjectSessions = _livePlannedSessions.filter(s =>
+    normalizeLiveClass(s.classNum) === targetClass &&
+    normalizeLiveLabel(s.subject) === targetSubject &&
+    ((targetClass !== '11' && targetClass !== '12') || !s.stream || !targetStream || normalizeLiveStream(s.stream) === targetStream)
+  );
+
+  if (!targetChap && subjectSessions.length > 0) return subjectSessions[0];
+
+  // If a session is currently LIVE for this subject, return it
+  const activeLive = subjectSessions.find(s => isSessionLive(s));
+  if (activeLive) return activeLive;
+
+  return null;
 }
 
 let _liveQuizUnsub = null;
