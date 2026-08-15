@@ -2716,14 +2716,26 @@ function renderStep3Subjects() {
     `;
     item.onclick = () => {
       _navSubject = subj;
+      const selection = {
+        classNum: _navClass,
+        stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
+        subject: subj
+      };
       const plannedSession = _livePlannedSessions.find(session =>
         liveSessionMatchesSelection(session, selection)
+      ) || _livePlannedSessions.find(session =>
+        normalizeLiveClass(session.classNum) === normalizeLiveClass(_navClass) &&
+        normalizeLiveLabel(session.subject) === normalizeLiveLabel(subj)
+      ) || _livePlannedSessions.find(session =>
+        normalizeLiveClass(session.classNum) === normalizeLiveClass(_navClass)
       );
       _currentStep = 4;
       renderNavyStepNavigation();
       if (plannedSession) {
         _navChapter = plannedSession.chapter || '';
         renderLiveSessionDetails(plannedSession, plannedSession.chapter || 'Live class');
+      } else {
+        checkSessionAndShowCard('');
       }
     };
     list.appendChild(item);
@@ -2772,15 +2784,31 @@ function checkSessionAndShowCard(chap) {
   if (!card) return;
   card.style.display = 'block';
 
-  const sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
+  // 1. Level 1: Match Class, Stream, Subject & Chapter
+  let sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
     classNum: _navClass,
     stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
     subject: _navSubject,
     chapter: chap
   }));
 
+  // 2. Level 2 (Fallback): Match Class & Subject (ignoring chapter string differences)
+  if (!sess) {
+    sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
+      classNum: _navClass,
+      stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
+      subject: _navSubject,
+      chapter: ''
+    }));
+  }
+
+  // 3. Level 3 (Fallback): Match Class (if live session exists for this class)
+  if (!sess) {
+    sess = _livePlannedSessions.find(s => normalizeLiveClass(s.classNum) === normalizeLiveClass(_navClass) && (s.status === 'live' || s.status === 'planned'));
+  }
+
   if (sess) {
-    renderLiveSessionDetails(sess, chap || sess.chapter);
+    renderLiveSessionDetails(sess, chap || sess.chapter || 'Live Class');
   } else {
     _selectedSessionDoc = null;
     card.style.background = 'rgba(254,243,199,0.85)';
