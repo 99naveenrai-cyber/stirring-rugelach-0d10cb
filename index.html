@@ -2593,29 +2593,26 @@ function findSessionForSelection({ classNum, stream, subject, chapter = '' }) {
   const targetStream = normalizeLiveStream(stream);
   const targetChap = String(chapter || '').trim();
 
-  // 1. Direct match (Class, Stream, Subject, Chapter)
-  if (targetChap) {
-    const exactMatch = _livePlannedSessions.find(s =>
-      normalizeLiveClass(s.classNum) === targetClass &&
-      normalizeLiveLabel(s.subject) === targetSubject &&
-      ((targetClass !== '11' && targetClass !== '12') || !s.stream || !targetStream || normalizeLiveStream(s.stream) === targetStream) &&
-      liveChapterMatches(s.chapter, targetChap)
-    );
-    if (exactMatch) return exactMatch;
-  }
-
-  // 2. Subject-level match if no chapter is specified or if session is LIVE for that subject
   const subjectSessions = _livePlannedSessions.filter(s =>
     normalizeLiveClass(s.classNum) === targetClass &&
     normalizeLiveLabel(s.subject) === targetSubject &&
     ((targetClass !== '11' && targetClass !== '12') || !s.stream || !targetStream || normalizeLiveStream(s.stream) === targetStream)
   );
 
-  if (!targetChap && subjectSessions.length > 0) return subjectSessions[0];
+  if (!subjectSessions.length) return null;
 
-  // If a session is currently LIVE for this subject, return it
+  // 1. If a session for this subject is currently LIVE, return it immediately
   const activeLive = subjectSessions.find(s => isSessionLive(s));
   if (activeLive) return activeLive;
+
+  // 2. Direct chapter match for planned sessions
+  if (targetChap) {
+    const exactMatch = subjectSessions.find(s => liveChapterMatches(s.chapter, targetChap));
+    if (exactMatch) return exactMatch;
+  }
+
+  // 3. Fallback to first session for subject if no specific chapter requested
+  if (!targetChap) return subjectSessions[0];
 
   return null;
 }
@@ -3102,20 +3099,6 @@ window.registerUnplannedInterest = async (chap) => {
 window.joinSelectedLiveSession = async () => {
   console.log("A1 JOIN CLICK");
   const runtime = window._ideaKdcLiveRuntime;
-  if (!runtime?.isSignedIn()) {
-    try {
-      if (window._ideaKdcLiveAuth && window._ideaKdcLiveSignInAnonymously) {
-        await window._ideaKdcLiveSignInAnonymously(window._ideaKdcLiveAuth);
-      } else {
-        runtime?.showLogin();
-        return;
-      }
-    } catch (authErr) {
-      console.warn('[Live Stream] Guest auth failed, opening login dialog:', authErr);
-      runtime?.showLogin();
-      return;
-    }
-  }
 
   const btn = document.getElementById('lc-join-btn');
   if (btn) {
@@ -3132,7 +3115,6 @@ window.joinSelectedLiveSession = async () => {
     };
 
     console.log("A2 SELECTED STATE", selectedAcademicKey);
-    console.log("A3 BEFORE REFRESH SESSION ID", _selectedSessionDoc?.sessionId);
 
     // Refresh live sessions from server
     await loadPublicLiveSessions();
@@ -3141,7 +3123,7 @@ window.joinSelectedLiveSession = async () => {
     const freshSession = findSessionForSelection(selectedAcademicKey) || _selectedSessionDoc;
     if (!freshSession) {
       console.warn("A6 FRESH MATCH FAILED");
-      runtime.showToast('No active live session found for this selection.', 'error');
+      if (runtime?.showToast) runtime.showToast('No active live session found for this selection.', 'error');
       return;
     }
 
@@ -3152,37 +3134,44 @@ window.joinSelectedLiveSession = async () => {
     console.log("A6 FRESH MATCH", freshSession);
     console.log("A7 SESSION ID", sessionId);
 
-    // Registration stage
-    console.log("A8 BEFORE REGISTRATION");
-    try {
-      const regRes = await window._ideaKdcLiveCallables.registerForLiveClass({ sessionId: sess.sessionId });
-      if (regRes.data?.requiresPayment && !isSessionFree(sess)) {
-        btn.textContent = 'Creating secure payment order...';
-        const orderRes = await window._ideaKdcLiveCallables.createCashfreeOrder({ sessionId: sess.sessionId });
-        const paymentSessionId = orderRes.data?.payment_session_id;
-        const orderId = orderRes.data?.order_id;
-        if (!paymentSessionId || !orderId) throw new Error('Missing Cashfree live-class checkout data.');
+    // If paid session and user is not signed in, require login
+    if (!isSessionFree(sess) && !runtime?.isSignedIn()) {
+      if (runtime?.showLogin) runtime.showLogin();
+      return;
+    }
 
-        await runtime.openCashfreeCheckout(paymentSessionId);
-        btn.textContent = 'Verifying payment...';
-        const verification = await runtime.verifyPayment({ orderId });
-        const payment = verification.data || {};
-        if (!(payment.verified || payment.status === 'paid')) {
-          const message = payment.status === 'pending'
-            ? 'Payment is still pending. Please do not pay again; check shortly.'
-            : (payment.message || 'Payment was not completed.');
-          runtime.showToast(message, payment.status === 'pending' ? 'info' : 'error');
-          return;
+    // Attempt registration if signed in
+    if (runtime?.isSignedIn()) {
+      try {
+        const regRes = await window._ideaKdcLiveCallables.registerForLiveClass({ sessionId: sess.sessionId });
+        if (regRes.data?.requiresPayment && !isSessionFree(sess)) {
+          btn.textContent = 'Creating secure payment order...';
+          const orderRes = await window._ideaKdcLiveCallables.createCashfreeOrder({ sessionId: sess.sessionId });
+          const paymentSessionId = orderRes.data?.payment_session_id;
+          const orderId = orderRes.data?.order_id;
+          if (!paymentSessionId || !orderId) throw new Error('Missing Cashfree live-class checkout data.');
+
+          await runtime.openCashfreeCheckout(paymentSessionId);
+          btn.textContent = 'Verifying payment...';
+          const verification = await runtime.verifyPayment({ orderId });
+          const payment = verification.data || {};
+          if (!(payment.verified || payment.status === 'paid')) {
+            const message = payment.status === 'pending'
+              ? 'Payment is still pending. Please do not pay again; check shortly.'
+              : (payment.message || 'Payment was not completed.');
+            runtime.showToast(message, payment.status === 'pending' ? 'info' : 'error');
+            return;
+          }
+          const registration = await window._ideaKdcLiveCallables.confirmRegistration({ sessionId: sess.sessionId, orderId });
+          if (registration.data?.registered === true) {
+            showPaidLiveRegistrationCelebration(sess, orderId);
+          }
+          runtime.showToast('Payment successful. Your live class seat is reserved.', 'success');
         }
-        const registration = await window._ideaKdcLiveCallables.confirmRegistration({ sessionId: sess.sessionId, orderId });
-        if (registration.data?.registered === true) {
-          showPaidLiveRegistrationCelebration(sess, orderId);
-        }
-        runtime.showToast('Payment successful. Your live class seat is reserved.', 'success');
+      } catch (regErr) {
+        console.warn("A8 REGISTRATION WARNING (Non-blocking for Free Live Stream):", regErr);
+        if (!isSessionFree(sess)) throw regErr;
       }
-    } catch (regErr) {
-      console.warn("A8 REGISTRATION WARNING (Non-blocking for Free Live Stream):", regErr);
-      if (!isSessionFree(sess)) throw regErr;
     }
 
     console.log("A9 AFTER REGISTRATION");
@@ -3191,17 +3180,14 @@ window.joinSelectedLiveSession = async () => {
     // Player Access Stage
     const accessResult = await window._ideaKdcLiveCallables.getPlayerAccess({ sessionId: sess.sessionId });
     console.log("A10 RAW ACCESS RESULT", accessResult);
-    console.log("A11 ACCESS RESULT.DATA", accessResult?.data);
 
     const payload = accessResult?.data ?? accessResult;
-    console.log("A12 PAYLOAD", payload);
-
     const rawVideoId = payload?.youtubeVideoId || sess?.youtubeVideoId;
     const videoId = extractYouTubeVideoId(rawVideoId);
 
     console.log("A13 VIDEO ID", videoId);
     if (!videoId) {
-      runtime.showToast('Stream is not live yet. Teacher will start streaming shortly.', 'info');
+      if (runtime?.showToast) runtime.showToast('Stream is not live yet. Teacher will start streaming shortly.', 'info');
       return;
     }
 
@@ -3211,7 +3197,7 @@ window.joinSelectedLiveSession = async () => {
 
   } catch (err) {
     console.error("LIVE JOIN FATAL:", err);
-    runtime.showToast(err?.message || 'Could not join live stream.', 'error');
+    if (runtime?.showToast) runtime.showToast(err?.message || 'Could not join live stream.', 'error');
   } finally {
     if (btn) {
       btn.disabled = false;

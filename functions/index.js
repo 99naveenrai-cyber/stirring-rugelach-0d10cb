@@ -5094,27 +5094,27 @@ exports.confirmLiveClassRegistration = onCall(callableOptions({ region: 'asia-so
 
 // Student: get YouTube video ID — only if registered
 exports.getPlayerAccess = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
-  const auth = requireAuth(request);
+  const auth = request.auth;
+  const uid = auth?.uid || 'guest-student';
+  const userEmail = (auth?.token?.email || '').toLowerCase();
+  const isAdmin = ADMIN_EMAILS.includes(userEmail);
+
   const sessionId = String(request.data?.sessionId || '').trim();
   if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
   
-  const userEmail = (auth.token?.email || '').toLowerCase();
-  const isAdmin = ADMIN_EMAILS.includes(userEmail);
-
-  const [sessionSnap, regSnap] = await Promise.all([
-    db.collection('liveClasses').doc(sessionId).get(),
-    db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid).get(),
-  ]);
+  const sessionSnap = await db.collection('liveClasses').doc(sessionId).get();
   if (!sessionSnap.exists) throw new HttpsError('not-found', 'Session not found.');
   const session = sessionSnap.data();
   const isFree = (session.pricePaise || 0) === 0;
 
-  let registrationActive = regSnap.exists && regSnap.data()?.access !== false;
+  let registrationActive = false;
+  if (auth?.uid) {
+    const regSnap = await db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid).get();
+    registrationActive = regSnap.exists && regSnap.data()?.access !== false;
+  }
 
-  // Auto-register free live classes if not registered yet
-  if (!registrationActive && isFree) {
-    const regRef = db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid);
-    await regRef.set({ uid: auth.uid, email: auth.token?.email || '', access: true, joinedAt: FieldValue.serverTimestamp(), paidPaise: 0 }, { merge: true });
+  // Free live classes are open to all students and guest visitors
+  if (isFree) {
     registrationActive = true;
   }
 
