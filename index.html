@@ -2756,7 +2756,6 @@ function renderStep4Chapters() {
     chapters = [...chapters];
   }
 
-  // Prepend Revision Tab
   if (!chapters.some(c => String(c).includes('Revision'))) {
     chapters.unshift('🔁 Revision & Important PYQs');
   }
@@ -2768,8 +2767,29 @@ function renderStep4Chapters() {
   chapters.forEach((chap, idx) => {
     const item = document.createElement('div');
     const isRevision = String(chap).includes('Revision');
-    item.className = 'lc-chapter-item' + (isRevision ? ' revision-tab' : '');
-    item.innerHTML = `<span>${chap}</span><span style="font-size:.7rem;opacity:.8">Select →</span>`;
+
+    const chapSelection = {
+      classNum: _navClass,
+      stream: (_navClass === '11' || _navClass === '12') ? _navStream : '',
+      subject: _navSubject,
+      chapter: chap
+    };
+
+    const hasLive = _livePlannedSessions.some(s => liveSessionMatchesSelection(s, chapSelection) && s.status === 'live');
+    const hasPlan = _livePlannedSessions.some(s => liveSessionMatchesSelection(s, chapSelection) && s.status === 'planned');
+
+    let itemClass = 'lc-chapter-item' + (isRevision ? ' revision-tab' : '');
+    if (hasLive) itemClass += ' live-chapter-active';
+
+    item.className = itemClass;
+
+    const badgeMarkup = hasLive
+      ? '<span style="font-size:.74rem;font-weight:900;color:#ef4444;background:#fee2e2;padding:3px 8px;border-radius:99px;display:inline-flex;align-items:center;gap:4px">🔴 LIVE NOW</span>'
+      : hasPlan
+        ? '<span style="font-size:.74rem;font-weight:800;color:#0284c7;background:#e0f2fe;padding:3px 8px;border-radius:99px">📅 Plan</span>'
+        : '<span style="font-size:.7rem;opacity:.8">Select →</span>';
+
+    item.innerHTML = `<span>${chap}</span>${badgeMarkup}`;
     
     item.onclick = () => {
       _navChapter = chap;
@@ -3013,16 +3033,17 @@ window.joinSelectedLiveSession = async () => {
   if (!_selectedSessionDoc) return;
   const sess = _selectedSessionDoc;
   const btn = document.getElementById('lc-join-btn');
-  btn.disabled = true;
-  btn.textContent = 'Verifying access...';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Verifying access & stream status...';
+  }
 
   try {
-    // 1. Register or initiate payment
+    // 1. Register or initiate payment if required
     const regRes = await window._ideaKdcLiveCallables.registerForLiveClass({ sessionId: sess.sessionId });
 
     if (regRes.data?.requiresPayment) {
-      // The backend reads the exact live-session price; the browser never supplies it.
-      btn.textContent = 'Creating secure TEST payment...';
+      btn.textContent = 'Creating secure payment order...';
       const orderRes = await window._ideaKdcLiveCallables.createCashfreeOrder({ sessionId: sess.sessionId });
       const paymentSessionId = orderRes.data?.payment_session_id;
       const orderId = orderRes.data?.order_id;
@@ -3046,35 +3067,35 @@ window.joinSelectedLiveSession = async () => {
       runtime.showToast('Payment successful. Your live class seat is reserved.', 'success');
     }
 
-    if (sess.status !== 'live') {
-      const statusEl = document.getElementById('lc-reg-status');
-      if (statusEl) {
-        statusEl.style.color = '#15803d';
-        statusEl.textContent = 'Registration confirmed. Join from here when the class becomes live.';
+    // 2. Query real-time stream status from server
+    if (btn) btn.textContent = 'Opening Live Stream...';
+    try {
+      const accessRes = await window._ideaKdcLiveCallables.getPlayerAccess({ sessionId: sess.sessionId });
+      const ytId = accessRes.data?.youtubeVideoId;
+      if (ytId) {
+        closeLiveModal();
+        openLiveStreamPage(ytId, sess.sessionId);
+        return;
       }
-      return;
+    } catch (accessErr) {
+      if (sess.status === 'planned' && accessErr?.code === 'failed-precondition') {
+        const statusEl = document.getElementById('lc-reg-status');
+        if (statusEl) {
+          statusEl.style.color = '#15803d';
+          statusEl.textContent = 'Registration confirmed. Join from here when the teacher starts the live stream.';
+        }
+        runtime.showToast('Registration confirmed. Teacher has not started streaming yet.', 'info');
+        return;
+      }
+      throw accessErr;
     }
-
-    // 2. Get stream access (YouTube Video ID)
-    btn.textContent = 'Opening Live Stream...';
-    const accessRes = await window._ideaKdcLiveCallables.getPlayerAccess({ sessionId: sess.sessionId });
-    const ytId = accessRes.data?.youtubeVideoId;
-    
-    if (!ytId) {
-      runtime.showToast('Stream is not live yet. Admin will start streaming shortly.', 'info');
-      btn.disabled = false;
-      btn.textContent = '🚀 Join Live Stream';
-      return;
-    }
-
-    // 3. Launch full screen stream
-    closeLiveModal();
-    openLiveStreamPage(ytId, sess.sessionId);
   } catch (err) {
     runtime.showToast(err?.message || 'Could not join live stream.', 'error');
   } finally {
-    btn.disabled = false;
-    btn.textContent = '🚀 Join Live Stream';
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🚀 Join Live Stream';
+    }
   }
 };
 
