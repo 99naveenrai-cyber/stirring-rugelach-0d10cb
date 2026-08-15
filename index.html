@@ -2804,16 +2804,17 @@ function checkSessionAndShowCard(chap) {
   if (!card) return;
   card.style.display = 'block';
 
-  // 1. Level 1: Match Class, Stream, Subject & Chapter
-  let sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
-    classNum: _navClass,
-    stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
-    subject: _navSubject,
-    chapter: chap
-  }));
+  let sess = null;
+  const chapStr = String(chap || '').trim();
 
-  // 2. Level 2 (Fallback): Match Class & Subject (ignoring chapter string differences)
-  if (!sess) {
+  if (chapStr) {
+    sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
+      classNum: _navClass,
+      stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
+      subject: _navSubject,
+      chapter: chapStr
+    }));
+  } else {
     sess = _livePlannedSessions.find(s => liveSessionMatchesSelection(s, {
       classNum: _navClass,
       stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
@@ -2822,20 +2823,15 @@ function checkSessionAndShowCard(chap) {
     }));
   }
 
-  // 3. Level 3 (Fallback): Match Class (if live session exists for this class)
-  if (!sess) {
-    sess = _livePlannedSessions.find(s => normalizeLiveClass(s.classNum) === normalizeLiveClass(_navClass) && (s.status === 'live' || s.status === 'planned'));
-  }
-
   if (sess) {
-    renderLiveSessionDetails(sess, chap || sess.chapter || 'Live Class');
+    renderLiveSessionDetails(sess, chapStr || sess.chapter || 'Live Class');
   } else {
     _selectedSessionDoc = null;
     card.style.background = 'rgba(254,243,199,0.85)';
     card.style.borderColor = 'rgba(245,158,11,0.35)';
     card.style.boxShadow = '0 10px 30px rgba(245,158,11,0.12)';
     
-    const targetInfo = `Class ${_navClass}th ${_navSubject}${chap ? ' ('+chap+')' : ''}`;
+    const targetInfo = `Class ${_navClass}th ${_navSubject}${chapStr ? ' ('+chapStr+')' : ''}`;
     const waText = encodeURIComponent(`Hello Mentor, please schedule a Live Class for ${targetInfo}!`);
 
     card.innerHTML = `
@@ -2846,7 +2842,7 @@ function checkSessionAndShowCard(chap) {
           No live stream is planned for <strong>${targetInfo}</strong> at this moment. Register your interest below!
         </p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
-          <button onclick="registerUnplannedInterest('${chap}')" id="lc-req-btn" style="min-height:44px;background:#1e3a8a;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:.82rem;cursor:pointer;box-shadow:0 4px 12px rgba(30,58,138,0.3)">
+          <button onclick="registerUnplannedInterest('${chapStr}')" id="lc-req-btn" style="min-height:44px;background:#1e3a8a;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:.82rem;cursor:pointer;box-shadow:0 4px 12px rgba(30,58,138,0.3)">
             📝 Register Interest
           </button>
           <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:.3rem;min-height:44px;background:#25D366;color:#fff;border-radius:10px;font-weight:800;font-size:.82rem;text-decoration:none;box-shadow:0 4px 12px rgba(37,211,102,0.3)">
@@ -3106,6 +3102,12 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
   const page = document.getElementById('page-live');
   const iframe = document.getElementById('live-yt-iframe');
   if (!page || !iframe) return;
+
+  closeLiveModal();
+  clearCourseRoute();
+  pushPage('live');
+  pushHistory();
+  window.scrollTo(0, 0);
 
   stopLiveEventSynchronization();
   _liveScoreSessionId = window.createQuizSessionId?.('live') || null;
