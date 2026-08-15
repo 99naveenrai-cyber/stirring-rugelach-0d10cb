@@ -3084,10 +3084,10 @@ window.registerUnplannedInterest = async (chap) => {
 
 
 window.joinSelectedLiveSession = async () => {
+  console.log("A1 JOIN CLICK");
   const runtime = window._ideaKdcLiveRuntime;
   if (!runtime?.isSignedIn()) { runtime?.showLogin(); return; }
-  if (!_selectedSessionDoc) return;
-  const sess = _selectedSessionDoc;
+
   const btn = document.getElementById('lc-join-btn');
   if (btn) {
     btn.disabled = true;
@@ -3095,62 +3095,98 @@ window.joinSelectedLiveSession = async () => {
   }
 
   try {
-    // 1. Register or initiate payment if required
-    const regRes = await window._ideaKdcLiveCallables.registerForLiveClass({ sessionId: sess.sessionId });
+    const selectedAcademicKey = {
+      classNum: _navClass,
+      stream: _navStream,
+      subject: _navSubject,
+      chapter: _navChapter
+    };
 
-    if (regRes.data?.requiresPayment) {
-      btn.textContent = 'Creating secure payment order...';
-      const orderRes = await window._ideaKdcLiveCallables.createCashfreeOrder({ sessionId: sess.sessionId });
-      const paymentSessionId = orderRes.data?.payment_session_id;
-      const orderId = orderRes.data?.order_id;
-      if (!paymentSessionId || !orderId) throw new Error('Missing Cashfree live-class checkout data.');
+    console.log("A2 SELECTED STATE", selectedAcademicKey);
+    console.log("A3 BEFORE REFRESH SESSION ID", _selectedSessionDoc?.sessionId);
 
-      await runtime.openCashfreeCheckout(paymentSessionId);
-      btn.textContent = 'Verifying payment...';
-      const verification = await runtime.verifyPayment({ orderId });
-      const payment = verification.data || {};
-      if (!(payment.verified || payment.status === 'paid')) {
-        const message = payment.status === 'pending'
-          ? 'Payment is still pending. Please do not pay again; check shortly.'
-          : (payment.message || 'Payment was not completed.');
-        runtime.showToast(message, payment.status === 'pending' ? 'info' : 'error');
-        return;
-      }
-      const registration = await window._ideaKdcLiveCallables.confirmRegistration({ sessionId: sess.sessionId, orderId });
-      if (registration.data?.registered === true) {
-        showPaidLiveRegistrationCelebration(sess, orderId);
-      }
-      runtime.showToast('Payment successful. Your live class seat is reserved.', 'success');
+    // Refresh live sessions from server
+    await loadPublicLiveSessions();
+    console.log("A4 REFRESH COMPLETE");
+
+    const freshSession = findSessionForSelection(selectedAcademicKey) || _selectedSessionDoc;
+    if (!freshSession) {
+      console.warn("A6 FRESH MATCH FAILED");
+      runtime.showToast('No active live session found for this selection.', 'error');
+      return;
     }
 
-    // 2. Query real-time stream status from server
-    if (btn) btn.textContent = 'Opening Live Stream...';
+    _selectedSessionDoc = freshSession;
+    const sess = freshSession;
+    const sessionId = sess.sessionId;
+
+    console.log("A6 FRESH MATCH", freshSession);
+    console.log("A7 SESSION ID", sessionId);
+
+    // Registration stage
+    console.log("A8 BEFORE REGISTRATION");
     try {
-      const accessRes = await window._ideaKdcLiveCallables.getPlayerAccess({ sessionId: sess.sessionId });
-      const ytId = accessRes.data?.youtubeVideoId;
-      if (ytId) {
-        closeLiveModal();
-        openLiveStreamPage(ytId, sess.sessionId);
-        return;
-      }
-    } catch (accessErr) {
-      if (sess.status === 'planned' && accessErr?.code === 'failed-precondition') {
-        const statusEl = document.getElementById('lc-reg-status');
-        if (statusEl) {
-          statusEl.style.color = '#15803d';
-          statusEl.textContent = 'Registration confirmed. Join from here when the teacher starts the live stream.';
+      const regRes = await window._ideaKdcLiveCallables.registerForLiveClass({ sessionId: sess.sessionId });
+      if (regRes.data?.requiresPayment && !isSessionFree(sess)) {
+        btn.textContent = 'Creating secure payment order...';
+        const orderRes = await window._ideaKdcLiveCallables.createCashfreeOrder({ sessionId: sess.sessionId });
+        const paymentSessionId = orderRes.data?.payment_session_id;
+        const orderId = orderRes.data?.order_id;
+        if (!paymentSessionId || !orderId) throw new Error('Missing Cashfree live-class checkout data.');
+
+        await runtime.openCashfreeCheckout(paymentSessionId);
+        btn.textContent = 'Verifying payment...';
+        const verification = await runtime.verifyPayment({ orderId });
+        const payment = verification.data || {};
+        if (!(payment.verified || payment.status === 'paid')) {
+          const message = payment.status === 'pending'
+            ? 'Payment is still pending. Please do not pay again; check shortly.'
+            : (payment.message || 'Payment was not completed.');
+          runtime.showToast(message, payment.status === 'pending' ? 'info' : 'error');
+          return;
         }
-        runtime.showToast('Registration confirmed. Teacher has not started streaming yet.', 'info');
-        return;
+        const registration = await window._ideaKdcLiveCallables.confirmRegistration({ sessionId: sess.sessionId, orderId });
+        if (registration.data?.registered === true) {
+          showPaidLiveRegistrationCelebration(sess, orderId);
+        }
+        runtime.showToast('Payment successful. Your live class seat is reserved.', 'success');
       }
-      throw accessErr;
+    } catch (regErr) {
+      console.warn("A8 REGISTRATION WARNING (Non-blocking for Free Live Stream):", regErr);
+      if (!isSessionFree(sess)) throw regErr;
     }
+
+    console.log("A9 AFTER REGISTRATION");
+    if (btn) btn.textContent = 'Opening Live Stream...';
+
+    // Player Access Stage
+    const accessResult = await window._ideaKdcLiveCallables.getPlayerAccess({ sessionId: sess.sessionId });
+    console.log("A10 RAW ACCESS RESULT", accessResult);
+    console.log("A11 ACCESS RESULT.DATA", accessResult?.data);
+
+    const payload = accessResult?.data ?? accessResult;
+    console.log("A12 PAYLOAD", payload);
+
+    const rawVideoId = payload?.youtubeVideoId || sess?.youtubeVideoId;
+    const videoId = extractYouTubeVideoId(rawVideoId);
+
+    console.log("A13 VIDEO ID", videoId);
+    if (!videoId) {
+      runtime.showToast('Stream is not live yet. Teacher will start streaming shortly.', 'info');
+      return;
+    }
+
+    console.log("A14 CALL PLAYER");
+    openLiveStreamPage(videoId, sessionId);
+    console.log("A15 PLAYER FUNCTION RETURNED");
+
   } catch (err) {
+    console.error("LIVE JOIN FATAL:", err);
     runtime.showToast(err?.message || 'Could not join live stream.', 'error');
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '🚀 Join Live Stream';
+      btn.textContent = _selectedSessionDoc && isSessionLive(_selectedSessionDoc) ? '🚀 Join Live Stream' : 'Register for Live Class';
     }
   }
 };
@@ -3159,6 +3195,12 @@ window.joinSelectedLiveSession = async () => {
 // FULL-SCREEN LIVE STREAM & QUIZ OVERLAY
 // ════════════════════════════════════════
 async function openLiveStreamPage(youtubeVideoId, sessionId) {
+  const rawId = extractYouTubeVideoId(youtubeVideoId);
+  if (!rawId) {
+    showToast('Invalid YouTube video stream ID.', 'error');
+    return;
+  }
+
   const page = document.getElementById('page-live');
   const iframe = document.getElementById('live-yt-iframe');
   if (!page || !iframe) return;
@@ -3171,7 +3213,7 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
 
   stopLiveEventSynchronization();
   _liveScoreSessionId = window.createQuizSessionId?.('live') || null;
-  iframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
+  iframe.src = `https://www.youtube.com/embed/${rawId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
   page.style.display = 'block';
   page.style.zIndex = '25000';
   startLiveClassPresence(sessionId);

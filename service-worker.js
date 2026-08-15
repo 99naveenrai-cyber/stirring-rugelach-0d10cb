@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ideakdc-shell-v1';
+const CACHE_NAME = 'ideakdc-shell-v2';
 const SHELL_FILES = [
   '/',
   '/index.html',
@@ -24,12 +24,14 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
+
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request).then(response => response || caches.match('/index.html')))
     );
     return;
   }
+
   event.respondWith(
     caches.match(event.request).then(cached => cached || fetch(event.request))
   );
