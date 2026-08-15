@@ -2894,7 +2894,7 @@ function renderLiveSessionDetails(sess, chapterLabel = '') {
     </div>
     <div class="share-row">
       <button type="button" onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:46px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.95rem;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,0.35)">
-        ${isPaid ? `Pay ₹${Number(sess.pricePaise || 0) / 100} · Reserve Live Class` : 'Register for Free Live Class'}
+        ${sess.status === 'live' ? '🚀 Join Live Stream' : isPaid ? `Pay ₹${Number(sess.pricePaise || 0) / 100} · Reserve Live Class` : 'Register for Free Live Class'}
       </button>
       ${renderShareButton({ kind: 'live', title: `${sess.subject || 'Live Class'} - ${sess.chapter || ''}`, liveSessionId: sess.sessionId })}
     </div>
@@ -3115,6 +3115,14 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
   stopLiveEventSynchronization();
   _liveScoreSessionId = window.createQuizSessionId?.('live') || null;
   iframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
+  page.style.display = 'block';
+  page.style.zIndex = '25000';
+  startLiveClassPresence(sessionId);
+
+  const firebase = window._ideaKdcLiveFirebase;
+  if (!firebase || !window.IdeaKDCLiveSync) {
+    console.warn('[Live Stream] Live quiz synchronization runtime unavailable; proceeding with video stream playback.');
+  } else {
   page.style.display = 'block';
   startLiveClassPresence(sessionId);
 
@@ -10069,7 +10077,7 @@ pageHistory = ['home'];
 <!-- ════════════════════════════════════════
      PAGE: LIVE STREAM (FULL SCREEN)
 ════════════════════════════════════════ -->
-<div id="page-live" style="position:fixed;inset:0;width:100vw;height:100vh;background:#000;z-index:999;display:none;overflow:hidden">
+<div id="page-live" style="position:fixed;inset:0;width:100vw;height:100vh;background:#000;z-index:25000;display:none;overflow:hidden">
   <!-- Fullscreen Iframe -->
   <iframe id="live-yt-iframe" style="width:100%;height:100%;border:none" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
   
