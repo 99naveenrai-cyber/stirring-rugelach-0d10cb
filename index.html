@@ -2794,6 +2794,9 @@ function renderStep4Chapters() {
     item.onclick = () => {
       _navChapter = chap;
       checkSessionAndShowCard(chap);
+      if (hasLive && _selectedSessionDoc) {
+        joinSelectedLiveSession();
+      }
     };
     list.appendChild(item);
   });
@@ -3117,7 +3120,7 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
 
   const firebase = window._ideaKdcLiveFirebase;
   if (!firebase || !window.IdeaKDCLiveSync) {
-    showToast('Live synchronization could not start. Please reopen the stream.', 'error');
+    console.warn('[Live Stream] Live quiz synchronization runtime unavailable; proceeding with video stream playback.');
     return;
   }
 
