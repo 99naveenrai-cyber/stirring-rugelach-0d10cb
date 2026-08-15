@@ -3086,7 +3086,20 @@ window.registerUnplannedInterest = async (chap) => {
 window.joinSelectedLiveSession = async () => {
   console.log("A1 JOIN CLICK");
   const runtime = window._ideaKdcLiveRuntime;
-  if (!runtime?.isSignedIn()) { runtime?.showLogin(); return; }
+  if (!runtime?.isSignedIn()) {
+    try {
+      if (window._ideaKdcLiveAuth && window._ideaKdcLiveSignInAnonymously) {
+        await window._ideaKdcLiveSignInAnonymously(window._ideaKdcLiveAuth);
+      } else {
+        runtime?.showLogin();
+        return;
+      }
+    } catch (authErr) {
+      console.warn('[Live Stream] Guest auth failed, opening login dialog:', authErr);
+      runtime?.showLogin();
+      return;
+    }
+  }
 
   const btn = document.getElementById('lc-join-btn');
   if (btn) {
@@ -4069,6 +4082,8 @@ window._ideaKdcLiveRuntime = Object.freeze({
 });
 const gProvider = new GoogleAuthProvider();
 window._ideaKdcLiveFirebase = { db, doc, collection, onSnapshot };
+window._ideaKdcLiveAuth = auth;
+window._ideaKdcLiveSignInAnonymously = signInAnonymously;
 window._recordLiveQuizSync = (payload) => recordLiveQuizSyncFn(payload);
 
 // ── STATE ──
