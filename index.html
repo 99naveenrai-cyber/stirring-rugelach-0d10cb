@@ -2862,7 +2862,6 @@ function renderStep4Chapters() {
 function checkSessionAndShowCard(chap) {
   const card = document.getElementById('lc-session-card');
   if (!card) return;
-  card.style.display = 'block';
 
   let sess = null;
   const chapStr = String(chap || '').trim();
@@ -2884,9 +2883,18 @@ function checkSessionAndShowCard(chap) {
   }
 
   if (sess) {
+    _selectedSessionDoc = sess;
+    // For LIVE + FREE sessions (or registered sessions), bypass registration card and open live stream immediately
+    if (isSessionLive(sess) && isSessionFree(sess)) {
+      closeLiveModal();
+      joinSelectedLiveSession();
+      return;
+    }
+    card.style.display = 'block';
     renderLiveSessionDetails(sess, chapStr || sess.chapter || 'Live Class');
   } else {
     _selectedSessionDoc = null;
+    card.style.display = 'block';
     card.style.background = 'rgba(254,243,199,0.85)';
     card.style.borderColor = 'rgba(245,158,11,0.35)';
     card.style.boxShadow = '0 10px 30px rgba(245,158,11,0.12)';
@@ -2960,13 +2968,6 @@ function renderLiveSessionDetails(sess, chapterLabel = '') {
 }
 
 window.openPlannedLiveSession = async (sessionId) => {
-  const modal = document.getElementById('live-class-modal');
-  if (!modal) return;
-  modal.style.display = 'flex';
-  modal.style.opacity = '1';
-  modal.style.pointerEvents = 'auto';
-  modal.style.zIndex = '20000';
-
   if (!_livePlannedSessions || !_livePlannedSessions.length) {
     await loadPublicLiveSessions();
   }
@@ -2977,6 +2978,23 @@ window.openPlannedLiveSession = async (sessionId) => {
     return;
   }
 
+  _selectedSessionDoc = session;
+
+  // Direct stream launch for active FREE live sessions
+  if (isSessionLive(session) && isSessionFree(session)) {
+    closeLiveModal();
+    joinSelectedLiveSession();
+    return;
+  }
+
+  const modal = document.getElementById('live-class-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.style.opacity = '1';
+    modal.style.pointerEvents = 'auto';
+    modal.style.zIndex = '20000';
+  }
+
   _navClass = session.classNum || _navClass;
   _navStream = normalizeLiveStream(session.stream || '');
   _navSubject = session.subject || '';
@@ -2984,7 +3002,6 @@ window.openPlannedLiveSession = async (sessionId) => {
   _currentStep = 4;
 
   renderNavyStepNavigation();
-  _selectedSessionDoc = session;
 
   const card = document.getElementById('lc-session-card');
   if (card) {
