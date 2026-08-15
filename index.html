@@ -3122,13 +3122,6 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
   const firebase = window._ideaKdcLiveFirebase;
   if (!firebase || !window.IdeaKDCLiveSync) {
     console.warn('[Live Stream] Live quiz synchronization runtime unavailable; proceeding with video stream playback.');
-  } else {
-  page.style.display = 'block';
-  startLiveClassPresence(sessionId);
-
-  const firebase = window._ideaKdcLiveFirebase;
-  if (!firebase || !window.IdeaKDCLiveSync) {
-    console.warn('[Live Stream] Live quiz synchronization runtime unavailable; proceeding with video stream playback.');
     return;
   }
 
@@ -3203,7 +3196,6 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
     _liveStreamClock.setPlayer(_livePlayer);
   } catch (error) {
     console.warn('[Live sync] YouTube media clock unavailable.', error?.message || error);
-    showToast('Live video opened, but quiz timing could not be synchronized.', 'error');
   }
 }
 
