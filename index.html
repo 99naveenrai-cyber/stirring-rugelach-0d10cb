@@ -2884,9 +2884,8 @@ function checkSessionAndShowCard(chap) {
 
   if (sess) {
     _selectedSessionDoc = sess;
-    // For LIVE + FREE sessions (or registered sessions), bypass registration card and open live stream immediately
+    // For LIVE + FREE sessions, join immediately without showing intermediate card or dropping back to home page
     if (isSessionLive(sess) && isSessionFree(sess)) {
-      closeLiveModal();
       joinSelectedLiveSession();
       return;
     }
@@ -3235,7 +3234,6 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
   const iframe = document.getElementById('live-yt-iframe');
   if (!page || !iframe) return;
 
-  closeLiveModal();
   clearCourseRoute();
   pushPage('live');
   pushHistory();
@@ -3244,6 +3242,11 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
   stopLiveEventSynchronization();
   _liveScoreSessionId = window.createQuizSessionId?.('live') || null;
   iframe.src = `https://www.youtube.com/embed/${rawId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
+  page.style.display = 'block';
+  page.style.zIndex = '25000';
+
+  closeLiveModal();
+  startLiveClassPresence(sessionId);
   page.style.display = 'block';
   page.style.zIndex = '25000';
   startLiveClassPresence(sessionId);
