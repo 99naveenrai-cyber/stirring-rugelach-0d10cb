@@ -2606,6 +2606,61 @@ function clearCourseRoute() {
 }
 window.clearCourseRoute = clearCourseRoute;
 
+function showToast(msg, type = '') {
+  try {
+    if (window._ideaKdcLiveRuntime?.showToast) {
+      window._ideaKdcLiveRuntime.showToast(msg, type);
+      return;
+    }
+    let toast = document.getElementById('global-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'global-toast';
+      toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:99px;font-size:14px;font-weight:700;z-index:999999;box-shadow:0 4px 12px rgba(0,0,0,0.25);transition:opacity 0.3s ease';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = String(msg || '');
+    toast.style.opacity = '1';
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+  } catch(e) {
+    console.warn('[showToast guard]', e);
+  }
+}
+window.showToast = showToast;
+
+function showPage(id) {
+  try {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('page-' + id);
+    if (target) target.classList.add('active');
+  } catch(e) {
+    console.warn('[showPage guard]', e);
+  }
+}
+window.showPage = showPage;
+
+let pageHistory = ['home'];
+function pushPage(id) {
+  try {
+    pageHistory.push(id);
+    showPage(id);
+  } catch(e) {
+    console.warn('[pushPage guard]', e);
+  }
+}
+window.pushPage = pushPage;
+
+function pushHistory() {
+  try {
+    window.history.pushState({}, '', window.location.href);
+  } catch(e) {
+    console.warn('[pushHistory guard]', e);
+  }
+}
+window.pushHistory = pushHistory;
+
+
 
 
 
@@ -3283,9 +3338,9 @@ window.joinSelectedLiveSession = async () => {
 // ════════════════════════════════════════
 async function openLiveStreamPage(youtubeVideoId, sessionId) {
   console.log("A9 openLiveStreamPage called", { youtubeVideoId, sessionId });
-  const rawId = extractYouTubeVideoId(youtubeVideoId);
+  const rawId = typeof extractYouTubeVideoId === 'function' ? extractYouTubeVideoId(youtubeVideoId) : String(youtubeVideoId || '').trim();
   if (!rawId) {
-    showToast('Invalid YouTube video stream ID.', 'error');
+    if (typeof showToast === 'function') showToast('Invalid YouTube video stream ID.', 'error');
     return;
   }
 
@@ -3296,18 +3351,21 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
     return;
   }
 
-  if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
-  pushPage('live');
-  pushHistory();
-  window.scrollTo(0, 0);
-
-  stopLiveEventSynchronization();
-  _liveScoreSessionId = window.createQuizSessionId?.('live') || null;
-  iframe.src = `https://www.youtube.com/embed/${rawId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
-  console.log("A10 iframe.src assigned", iframe.src);
-
+  // Display page immediately before any route or history calls
   page.style.display = 'block';
   page.style.zIndex = '25000';
+  page.classList.add('active');
+
+  if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
+  if (typeof pushPage === "function") { try { pushPage('live'); } catch(_) {} }
+  if (typeof pushHistory === "function") { try { pushHistory(); } catch(_) {} }
+  try { window.scrollTo(0, 0); } catch(_) {}
+
+  if (typeof stopLiveEventSynchronization === "function") { try { stopLiveEventSynchronization(); } catch(_) {} }
+  try { _liveScoreSessionId = window.createQuizSessionId?.('live') || null; } catch(_) {}
+
+  iframe.src = `https://www.youtube.com/embed/${rawId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
+  console.log("A10 iframe.src assigned", iframe.src);
 
   setTimeout(() => {
     const pageEl = document.getElementById('page-live');
@@ -3322,89 +3380,42 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
     });
   }, 100);
 
-  closeLiveModal();
-  startLiveClassPresence(sessionId);
-  page.style.display = 'block';
-  page.style.zIndex = '25000';
-  startLiveClassPresence(sessionId);
-
+  if (typeof closeLiveModal === "function") { try { closeLiveModal(); } catch(_) {} }
+  if (typeof startLiveClassPresence === "function") { try { startLiveClassPresence(sessionId); } catch(_) {} }
   const firebase = window._ideaKdcLiveFirebase;
-  if (!firebase || !window.IdeaKDCLiveSync) {
-    console.warn('[Live Stream] Live quiz synchronization runtime unavailable; proceeding with video stream playback.');
-    return;
-  }
-
-  _liveStreamClock = new window.IdeaKDCLiveSync.LiveStreamClock();
-  _liveSyncManager = new window.IdeaKDCLiveSync.LiveEventSyncManager({
-    sessionId,
-    clock: _liveStreamClock,
-    missThresholdSeconds: 5,
-    pollIntervalMs: 125,
-    onDisplay: (event, timing) => {
-      _activeLiveQuizEvent = event;
-      showLiveQuizOverlay(event.payload || event.question || {});
-      recordLiveQuizSyncState(sessionId, event, 'displayed', timing);
-    },
-    onStateChange: ({ event, status, details, player }) => {
-      updateStudentLiveSyncDebug(event, status, details, player);
-      if (event && status === 'missed') recordLiveQuizSyncState(sessionId, event, 'missed', details, player);
-    }
-  });
-
-  const unsubscribers = [];
-  let liveStateActive = null;
-  unsubscribers.push(firebase.onSnapshot(firebase.collection(firebase.db, 'liveQuizState', sessionId, 'events'), (snapshot) => {
-    snapshot.docChanges().forEach((change) => {
-      const event = { eventId: change.doc.id, ...change.doc.data() };
-      if (change.type === 'removed' || event.status === 'cancelled') {
-        _liveSyncManager?.queue?.remove(event.eventId);
-        if (_activeLiveQuizEvent?.eventId === event.eventId) hideLiveQuizOverlay();
-        return;
-      }
-      if (liveStateActive === false) return;
-      _liveSyncManager?.ingest(event);
-    });
-  }, (error) => {
-    console.warn('[Live sync] Event subscription unavailable.', error?.code || error?.message || error);
-  }));
-  unsubscribers.push(firebase.onSnapshot(firebase.doc(firebase.db, 'liveQuizState', sessionId), (snapshot) => {
-    const state = snapshot.data();
-    liveStateActive = state?.active === true;
-    if (!state?.active) {
-      _liveSyncManager?.queue?.clear?.();
-      if (_activeLiveQuizEvent) hideLiveQuizOverlay();
-      return;
-    }
-    if (!state.activeEventId && Number.isFinite(Number(state.streamTime)) && state.question) {
-      _liveSyncManager?.ingest({
-        eventId: `legacy-${sessionId}-${Number(state.streamTime).toFixed(3)}`,
+  if (firebase && window.IdeaKDCLiveSync) {
+    try {
+      _liveStreamClock = new window.IdeaKDCLiveSync.LiveStreamClock();
+      _liveSyncManager = new window.IdeaKDCLiveSync.LiveEventSyncManager({
         sessionId,
-        payload: state.question,
-        streamTime: Number(state.streamTime),
-        offsetMs: Number(state.offsetMs) || 0,
-        targetStreamTime: Number(state.targetStreamTime),
-        status: 'published',
-        version: 1
+        clock: _liveStreamClock,
+        missThresholdSeconds: 5,
+        pollIntervalMs: 125,
+        onDisplay: (event, timing) => {
+          if (event.type === 'quiz' && event.payload) {
+            _activeLiveQuizEvent = event;
+            updateStudentLiveSyncDebug(event, 'displayed', timing);
+            renderLiveQuizEventOverlay(event);
+          }
+        }
       });
+      const unsubscribers = [];
+      unsubscribers.push(firebase.onSnapshot(firebase.collection(firebase.db, 'liveQuizState', sessionId, 'events'), (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          const event = { eventId: change.doc.id, ...change.doc.data() };
+          if (change.type === 'removed' || event.status === 'cancelled') {
+            _liveSyncManager?.cancel?.(event.eventId);
+          } else {
+            _liveSyncManager?.ingest?.(event);
+          }
+        });
+      }, (error) => {
+        console.warn('[Live sync] Event subscription unavailable.', error?.code || error?.message || error);
+      }));
+      _liveQuizUnsub = () => unsubscribers.forEach(unsub => unsub?.());
+    } catch(e) {
+      console.warn('[Live sync init guard]', e);
     }
-  }));
-  _liveQuizUnsub = () => unsubscribers.forEach((unsubscribe) => unsubscribe?.());
-
-  try {
-    await window.IdeaKDCLiveSync.loadYouTubeIframeApi();
-    _livePlayer = new YT.Player(iframe, {
-      events: {
-        onReady: (event) => {
-          _livePlayer = event.target;
-          _liveStreamClock.setPlayer(event.target);
-          _liveSyncManager?.start();
-        },
-        onStateChange: () => _liveSyncManager?.tick()
-      }
-    });
-    _liveStreamClock.setPlayer(_livePlayer);
-  } catch (error) {
-    console.warn('[Live sync] YouTube media clock unavailable.', error?.message || error);
   }
 }
 
