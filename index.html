@@ -3382,6 +3382,7 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
 
   if (typeof closeLiveModal === "function") { try { closeLiveModal(); } catch(_) {} }
   if (typeof startLiveClassPresence === "function") { try { startLiveClassPresence(sessionId); } catch(_) {} }
+  setupStudentLiveQuizListener(sessionId);
   const firebase = window._ideaKdcLiveFirebase;
   if (firebase && window.IdeaKDCLiveSync) {
     try {
@@ -3454,6 +3455,83 @@ function recordLiveQuizSyncState(sessionId, event, state, details = {}, player =
   }).catch((error) => console.warn('[Live sync] Diagnostic save skipped.', error?.code || error?.message || error));
 }
 
+
+function setupStudentLiveQuizListener(sessionId) {
+  if (_liveQuizUnsub) {
+    try { _liveQuizUnsub(); } catch(_) {}
+    _liveQuizUnsub = null;
+  }
+  if (!sessionId) return;
+
+  const getFirebase = () => window._ideaKdcLiveFirebase || window._ideaKdcLiveRuntime?.firebase;
+  
+  const initListeners = (fb) => {
+    if (!fb || !fb.db || !fb.onSnapshot) return false;
+    try {
+      const unsubscribers = [];
+      
+      // 1. Listen to events collection for sync timeline
+      unsubscribers.push(fb.onSnapshot(fb.collection(fb.db, 'liveQuizState', sessionId, 'events'), (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          const event = { eventId: change.doc.id, ...change.doc.data() };
+          if (change.type === 'removed' || event.status === 'cancelled') {
+            _liveSyncManager?.cancel?.(event.eventId);
+          } else {
+            _liveSyncManager?.ingest?.(event);
+            // Also display directly if sync manager is not active
+            if (!_liveSyncManager && event.payload) {
+              renderLiveQuizEventOverlay(event);
+            }
+          }
+        });
+      }, (error) => {
+        console.warn('[Live quiz events listener warning]', error?.code || error?.message || error);
+      }));
+
+      // 2. Listen to active liveQuizState document for immediate active question delivery (late joiners & direct publish)
+      unsubscribers.push(fb.onSnapshot(fb.doc(fb.db, 'liveQuizState', sessionId), (snapshot) => {
+        const state = snapshot.data();
+        if (state && state.active === true && (state.question || state.payload)) {
+          const activeQ = state.question || state.payload;
+          _activeLiveQuizEvent = { sessionId, eventId: state.activeEventId || 'active-doc', payload: activeQ };
+          renderLiveQuizEventOverlay(activeQ);
+        } else if (state && state.active === false) {
+          hideLiveQuizOverlay();
+        }
+      }, (error) => {
+        console.warn('[Live quiz doc listener warning]', error?.code || error?.message || error);
+      }));
+
+      _liveQuizUnsub = () => unsubscribers.forEach(unsub => { try { unsub?.(); } catch(_) {} });
+      console.log('✅ Student live quiz listener attached for session:', sessionId);
+      return true;
+    } catch(err) {
+      console.warn('[Live quiz listener attach error]', err);
+      return false;
+    }
+  };
+
+  const fb = getFirebase();
+  if (fb) {
+    initListeners(fb);
+  } else {
+    // Retry polling until Firebase module finishes loading
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      const currentFb = getFirebase();
+      if (currentFb) {
+        clearInterval(interval);
+        initListeners(currentFb);
+      } else if (attempts > 20) {
+        clearInterval(interval);
+        console.warn('[Live quiz listener] Firebase module load timeout');
+      }
+    }, 250);
+  }
+}
+window.setupStudentLiveQuizListener = setupStudentLiveQuizListener;
+
 function stopLiveEventSynchronization() {
   if (_liveQuizUnsub) { _liveQuizUnsub(); _liveQuizUnsub = null; }
   _liveSyncManager?.stop?.();
@@ -3519,6 +3597,28 @@ function launchDramaticUpwardConfetti() {
     setTimeout(() => p.remove(), (duration + delay + 0.5) * 1000);
   }
 }
+
+
+function renderLiveQuizEventOverlay(event) {
+  try {
+    if (!event) return;
+    const q = event.payload || event.question || event;
+    if (!q || (!q.text && !q.question)) return;
+    const normalizedQ = {
+      text: q.text || q.question || '',
+      type: (q.type || 'mcq').toLowerCase(),
+      options: Array.isArray(q.options) ? q.options : [],
+      correctIndex: typeof q.correctIndex === 'number' ? q.correctIndex : (typeof q.correct === 'number' ? q.correct : 0),
+      pairs: Array.isArray(q.pairs) ? q.pairs : [],
+      timeLimit: Number(q.timeLimit) || 30,
+      position: q.position || 'center'
+    };
+    showLiveQuizOverlay(normalizedQ);
+  } catch (err) {
+    console.warn('[renderLiveQuizEventOverlay guard]', err);
+  }
+}
+window.renderLiveQuizEventOverlay = renderLiveQuizEventOverlay;
 
 function showLiveQuizOverlay(q) {
   const overlay = document.getElementById('live-quiz-overlay');
