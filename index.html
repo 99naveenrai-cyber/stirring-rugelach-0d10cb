@@ -3129,8 +3129,14 @@ window.registerUnplannedInterest = async (chap) => {
 
 
 window.joinSelectedLiveSession = async () => {
-  console.log("A1 JOIN CLICK");
+  console.log("A1 Join clicked");
   const runtime = window._ideaKdcLiveRuntime;
+
+  const initialSession = _selectedSessionDoc;
+  console.log("A2 selected session", initialSession);
+
+  const initialSessionId = initialSession?.sessionId || initialSession?.id || "";
+  console.log("A3 sessionId", initialSessionId);
 
   const btn = document.getElementById('lc-join-btn');
   if (btn) {
@@ -3146,15 +3152,15 @@ window.joinSelectedLiveSession = async () => {
       chapter: _navChapter
     };
 
-    console.log("A2 SELECTED STATE", selectedAcademicKey);
-
     // Refresh live sessions from server
     await loadPublicLiveSessions();
-    console.log("A4 REFRESH COMPLETE");
+    console.log("A4 refresh complete");
 
     const freshSession = findSessionForSelection(selectedAcademicKey) || _selectedSessionDoc;
+    const isMatched = Boolean(freshSession && (freshSession.sessionId === initialSessionId || freshSession.id === initialSessionId || freshSession.sessionId));
+    console.log("A5 fresh session match", isMatched, freshSession);
+
     if (!freshSession) {
-      console.warn("A6 FRESH MATCH FAILED");
       if (runtime?.showToast) runtime.showToast('No active live session found for this selection.', 'error');
       return;
     }
@@ -3163,14 +3169,14 @@ window.joinSelectedLiveSession = async () => {
     const sess = freshSession;
     const sessionId = sess.sessionId;
 
-    console.log("A6 FRESH MATCH", freshSession);
-    console.log("A7 SESSION ID", sessionId);
-
     // If paid session and user is not signed in, require login
     if (!isSessionFree(sess) && !runtime?.isSignedIn()) {
       if (runtime?.showLogin) runtime.showLogin();
       return;
     }
+
+    const regOrAuthPassed = isSessionFree(sess) || Boolean(runtime?.isSignedIn());
+    console.log("A6 registration/auth passed", regOrAuthPassed, { isFree: isSessionFree(sess), isSignedIn: Boolean(runtime?.isSignedIn()) });
 
     // Attempt registration if signed in
     if (runtime?.isSignedIn()) {
@@ -3201,31 +3207,34 @@ window.joinSelectedLiveSession = async () => {
           runtime.showToast('Payment successful. Your live class seat is reserved.', 'success');
         }
       } catch (regErr) {
-        console.warn("A8 REGISTRATION WARNING (Non-blocking for Free Live Stream):", regErr);
+        console.warn("A6 REGISTRATION WARNING (Non-blocking for Free Live Stream):", regErr);
         if (!isSessionFree(sess)) throw regErr;
       }
     }
 
-    console.log("A9 AFTER REGISTRATION");
     if (btn) btn.textContent = 'Opening Live Stream...';
 
     // Player Access Stage
     const accessResult = await window._ideaKdcLiveCallables.getPlayerAccess({ sessionId: sess.sessionId });
-    console.log("A10 RAW ACCESS RESULT", accessResult);
+    console.log("A7 raw getPlayerAccess response", accessResult);
 
     const payload = accessResult?.data ?? accessResult;
     const rawVideoId = payload?.youtubeVideoId || sess?.youtubeVideoId;
     const videoId = extractYouTubeVideoId(rawVideoId);
 
-    console.log("A13 VIDEO ID", videoId);
+    console.log("A8 extracted youtubeVideoId", {
+      result_youtubeVideoId: accessResult?.youtubeVideoId,
+      result_data_youtubeVideoId: accessResult?.data?.youtubeVideoId,
+      sess_youtubeVideoId: sess?.youtubeVideoId,
+      extracted: videoId
+    });
+
     if (!videoId) {
       if (runtime?.showToast) runtime.showToast('Stream is not live yet. Teacher will start streaming shortly.', 'info');
       return;
     }
 
-    console.log("A14 CALL PLAYER");
     openLiveStreamPage(videoId, sessionId);
-    console.log("A15 PLAYER FUNCTION RETURNED");
 
   } catch (err) {
     console.error("LIVE JOIN FATAL:", err);
@@ -3242,6 +3251,7 @@ window.joinSelectedLiveSession = async () => {
 // FULL-SCREEN LIVE STREAM & QUIZ OVERLAY
 // ════════════════════════════════════════
 async function openLiveStreamPage(youtubeVideoId, sessionId) {
+  console.log("A9 openLiveStreamPage called", { youtubeVideoId, sessionId });
   const rawId = extractYouTubeVideoId(youtubeVideoId);
   if (!rawId) {
     showToast('Invalid YouTube video stream ID.', 'error');
@@ -3250,7 +3260,10 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
 
   const page = document.getElementById('page-live');
   const iframe = document.getElementById('live-yt-iframe');
-  if (!page || !iframe) return;
+  if (!page || !iframe) {
+    console.error("A9 ERROR: page or iframe element missing", { page: Boolean(page), iframe: Boolean(iframe) });
+    return;
+  }
 
   clearCourseRoute();
   pushPage('live');
@@ -3260,8 +3273,23 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
   stopLiveEventSynchronization();
   _liveScoreSessionId = window.createQuizSessionId?.('live') || null;
   iframe.src = `https://www.youtube.com/embed/${rawId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
+  console.log("A10 iframe.src assigned", iframe.src);
+
   page.style.display = 'block';
   page.style.zIndex = '25000';
+
+  setTimeout(() => {
+    const pageEl = document.getElementById('page-live');
+    const inDOM = Boolean(pageEl && document.body.contains(pageEl));
+    const compStyle = pageEl ? getComputedStyle(pageEl) : {};
+    console.log("A11 page visible", {
+      inDOM,
+      display: compStyle.display,
+      visibility: compStyle.visibility,
+      opacity: compStyle.opacity,
+      zIndex: compStyle.zIndex
+    });
+  }, 100);
 
   closeLiveModal();
   startLiveClassPresence(sessionId);
