@@ -1012,12 +1012,15 @@ window.NCERT_CURRICULUM_2026_27 = {
                 </div>
               </div>
 
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem">
-                <button onclick="saveSpotQuestionToBank()" class="btn-submit" style="background:#1e3a8a;padding:.45rem .3rem;font-size:.75rem">
-                  <span>💾 Save Question to Bank</span>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-bottom:.4rem">
+                <button onclick="saveSpotQuestionToBank()" class="btn-submit" style="background:#1e3a8a;padding:.45rem .3rem;font-size:.7rem">
+                  <span>💾 Save to Bank</span>
                 </button>
-                <button onclick="publishSpotQuiz()" class="btn-submit" style="background:#2b6cb0;padding:.45rem .3rem;font-size:.75rem">
-                  <span>🚀 Publish Quiz Now</span>
+                <button onclick="publishSpotQuiz()" class="btn-submit" style="background:#2563eb;padding:.45rem .3rem;font-size:.7rem">
+                  <span>🚀 Publish Quiz</span>
+                </button>
+                <button onclick="unpublishLiveQuiz()" class="btn-submit" style="background:#dc2626;padding:.45rem .3rem;font-size:.7rem">
+                  <span>🛑 Unpublish Quiz</span>
                 </button>
               </div>
             </div>
@@ -4735,6 +4738,22 @@ window.saveSpotQuestionToBank = async () => {
     document.getElementById('lc-spot-d').value = '';
   } catch (err) {
     alert('Error saving question: ' + err?.message);
+  }
+};
+
+
+window.unpublishLiveQuiz = async () => {
+  const sessionId = document.getElementById('lc-publisher-session-select')?.value;
+  if (!sessionId) {
+    alert('Please select an active live session first.');
+    return;
+  }
+  if (!confirm('Are you sure you want to unpublish/retract the current active quiz question?')) return;
+  try {
+    await adminClearLiveQuizFn({ sessionId });
+    showToast('🛑 Quiz question unpublished!', 'info');
+  } catch (err) {
+    alert('Failed to unpublish quiz: ' + err?.message);
   }
 };
 

@@ -2629,6 +2629,17 @@ function showToast(msg, type = '') {
 }
 window.showToast = showToast;
 
+function checkLiveOrientation() {
+  const banner = document.getElementById('live-portrait-suggestion');
+  if (!banner) return;
+  const isPortrait = window.innerHeight > window.innerWidth;
+  banner.style.display = isPortrait ? 'flex' : 'none';
+}
+window.checkLiveOrientation = checkLiveOrientation;
+window.addEventListener('resize', checkLiveOrientation);
+window.addEventListener('orientationchange', checkLiveOrientation);
+
+
 function showPage(id) {
   try {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -3355,6 +3366,12 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
   page.style.display = 'block';
   page.style.zIndex = '25000';
   page.classList.add('active');
+  try { checkLiveOrientation(); } catch(_) {}
+  try {
+    if (page.requestFullscreen) { page.requestFullscreen().catch(() => {}); }
+    else if (page.webkitRequestFullscreen) { page.webkitRequestFullscreen().catch(() => {}); }
+    if (screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape').catch(() => {}); }
+  } catch(_) {}
 
   if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
   if (typeof pushPage === "function") { try { pushPage('live'); } catch(_) {} }
@@ -10394,6 +10411,10 @@ pageHistory = ['home'];
 <div id="page-live" style="position:fixed;inset:0;width:100vw;height:100vh;background:#000;z-index:25000;display:none;overflow:hidden">
   <!-- Fullscreen Iframe -->
   <iframe id="live-yt-iframe" style="width:100%;height:100%;border:none" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+  <!-- Portrait Suggestion Banner -->
+  <div id="live-portrait-suggestion" style="display:none;position:absolute;top:max(14px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:1007;background:rgba(15,23,42,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#38bdf8;border:1px solid rgba(56,189,248,0.4);border-radius:99px;padding:.45rem 1.1rem;font-size:.78rem;font-weight:800;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.5);align-items:center;gap:.4rem">
+    📱 Please Watch in Landscape Mode for the Best Experience
+  </div>
   
   <!-- Floating Back / Leave Button -->
   <button onclick="confirmLeaveLiveStream()" style="position:absolute;top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));z-index:1005;background:rgba(15,23,42,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:99px;padding:.4rem 1rem;font-weight:700;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;box-shadow:0 4px 12px rgba(0,0,0,0.4)">
