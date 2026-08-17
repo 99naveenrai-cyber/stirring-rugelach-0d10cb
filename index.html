@@ -2548,6 +2548,18 @@ function isSessionFree(session) {
   return Number(session?.pricePaise || 0) === 0 || session?.isFree === true || session?.price === 0;
 }
 
+function renderShareButton({ kind = 'lesson', title = 'IdeaKDC Learning', courseId = '', lessonId = '', liveSessionId = '', compact = false } = {}) {
+  try {
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'));
+    return `<button type="button" class="content-share-btn js-content-share${compact ? ' compact' : ''}" aria-label="Share ${esc(title)}" title="Share link" data-share-kind="${esc(kind)}" data-share-title="${esc(title)}" data-share-course="${esc(courseId)}" data-share-lesson="${esc(lessonId)}" data-share-live="${esc(liveSessionId)}">Share</button>`;
+  } catch (e) {
+    console.warn('[renderShareButton guard]', e);
+    return '';
+  }
+}
+window.renderShareButton = renderShareButton;
+
+
 function liveChapterMatches(savedChapterStr, targetChapterStr) {
   if (!savedChapterStr || !targetChapterStr) return true;
   const savedChapter = normalizeLiveLabel(savedChapterStr, { chapter: true });
@@ -2945,7 +2957,7 @@ function renderLiveSessionDetails(sess, chapterLabel = '') {
       <button type="button" onclick="joinSelectedLiveSession()" id="lc-join-btn" style="width:100%;min-height:46px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.95rem;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,0.35)">
         ${sess.status === 'live' ? '🚀 Join Live Stream' : isPaid ? `Pay ₹${Number(sess.pricePaise || 0) / 100} · Reserve Live Class` : 'Register for Free Live Class'}
       </button>
-      ${renderShareButton({ kind: 'live', title: `${sess.subject || 'Live Class'} - ${sess.chapter || ''}`, liveSessionId: sess.sessionId })}
+      ${typeof renderShareButton === "function" ? renderShareButton({ kind: 'live', title: `${sess.subject || 'Live Class'} - ${sess.chapter || ''}`, liveSessionId: sess.sessionId }) : ""}
     </div>
     <div id="lc-reg-status" role="status" style="margin-top:.45rem;font-size:.76rem;text-align:center"></div>
   `;
@@ -3769,7 +3781,7 @@ function renderLiveDiscoveryGrid() {
         <div class="live-card-footer">
           <span class="live-price-tag">${priceText}</span>
           ${btnHtml}
-          ${renderShareButton({ kind: 'live', title: `${session.subject || 'Live Class'} - ${session.chapter || ''}`, liveSessionId: session.sessionId, compact: true })}
+          ${typeof renderShareButton === "function" ? renderShareButton({ kind: 'live', title: `${session.subject || 'Live Class'} - ${session.chapter || ''}`, liveSessionId: session.sessionId, compact: true }) : ""}
         </div>
       </article>
     `;
@@ -5820,7 +5832,7 @@ async function renderCourses() {
           </div>` : '<div style="color:var(--muted);font-size:.8rem;padding:.5rem 0">Videos जल्द आएंगी।</div>'}
           ${faqHtml}
           <div class="course-footer-btns">
-            ${renderShareButton({ kind: 'course', title: c.name, courseId: c.id })}
+            ${typeof renderShareButton === "function" ? renderShareButton({ kind: 'course', title: c.name, courseId: c.id }) : ""}
             <div class="course-price">${courseIsFree ? 'Free' : `₹${(c.price||0).toLocaleString('en-IN')} <span>एक बार</span>`}</div>
             <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(c.id)}" data-action="${buttonAction}">${buttonLabel}</button>
           </div>
@@ -5977,7 +5989,7 @@ async function renderCatalogueContent() {
                   ${faqHtml}
                   <div class="share-row">
                     <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(course.id)}" data-action="${action}">${label}</button>
-                    ${renderShareButton({ kind: 'course', title: course.name, courseId: course.id })}
+                    ${typeof renderShareButton === "function" ? renderShareButton({ kind: 'course', title: course.name, courseId: course.id }) : ""}
                   </div>
                 </article>`;
             }).join('')}
@@ -7916,7 +7928,7 @@ async function renderDashContent() {
               <div class="owned-course-meta">${course.tag || 'Course'} • ${contentType === 'playlist' ? 'Playlist' : 'Single video'} • ${videoCount} videos</div>
               <div class="share-row">
                 <button class="btn-enroll js-course-action" type="button" data-course-id="${escapeHtml(course.id)}" data-action="open">Open Course</button>
-                ${renderShareButton({ kind: 'course', title: course.name, courseId: course.id })}
+                ${typeof renderShareButton === "function" ? renderShareButton({ kind: 'course', title: course.name, courseId: course.id }) : ""}
               </div>
             </article>`;
         }).join('')}
@@ -8233,7 +8245,7 @@ function showPaidLiveRegistrationCelebration(session = {}, orderId = '') {
       <p class="live-share-celebration-copy"><span>Share with friends, it&rsquo;s mind saving</span></p>
       <p class="live-share-celebration-class">${escapeHtml(title)}</p>
       <div class="live-share-celebration-actions">
-        ${renderShareButton({ kind: 'live', title, liveSessionId: sessionId })}
+        ${typeof renderShareButton === "function" ? renderShareButton({ kind: 'live', title, liveSessionId: sessionId }) : ""}
         <button type="button" class="live-share-later" onclick="closePaidLiveRegistrationCelebration()">Later</button>
       </div>
     </section>`;
@@ -8344,7 +8356,7 @@ function renderStandaloneReadyState(course, lesson, idx) {
           <button class="btn-enroll" type="button" onclick="playLessonInFullscreen(${idx})">Play Video</button>
           ${hasSeparateQuiz(lesson) ? `<button class="btn-enroll" type="button" onclick="startLessonQuiz(${idx}, 'separate')">Start Quiz</button>` : ''}
           ${hasSeparateQuiz(lesson) ? `<button class="btn-enroll" type="button" onclick="playLessonInFullscreen(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
-          ${renderShareButton({ kind: 'lesson', title: lesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '' })}
+          ${typeof renderShareButton === "function" ? renderShareButton({ kind: 'lesson', title: lesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '' }) : ""}
         </div>
       </div>`;
   }
@@ -8378,7 +8390,7 @@ function renderLockedPlaylistPreview(course, access) {
               </div>
               <div class="pl-play-icon">🔒</div>
             </button>
-            ${renderShareButton({ kind: 'lesson', title: visibleLesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '', compact: true })}
+            ${typeof renderShareButton === "function" ? renderShareButton({ kind: 'lesson', title: visibleLesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '', compact: true }) : ""}
             </div>`;
         }).join('')}
       </section>`).join('')}`;
@@ -9626,7 +9638,7 @@ function renderLessonActionControls(course, lesson, idx, hasVideo = true) {
       ${separate ? `<button class="btn-enroll" type="button" onclick="startLessonQuiz(${idx}, 'separate')">Start Quiz</button>` : ''}
       ${hasVideo && separate ? `<button class="btn-enroll" type="button" onclick="playLessonInFullscreen(${idx}, { autoplay: true, mode: 'video-quiz' })">Video + Quiz</button>` : ''}
       ${popup ? `<button class="quiz-sound-toggle js-quiz-sound-toggle" type="button" onclick="toggleQuizSoundMute()">Sound: ${quizSoundMuted ? 'OFF' : 'ON'}</button>` : ''}
-      ${renderShareButton({ kind: 'lesson', title: lesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '' })}
+      ${typeof renderShareButton === "function" ? renderShareButton({ kind: 'lesson', title: lesson.title || course.name, courseId: course.id, lessonId: lesson.contentId || lesson.lessonId || '' }) : ""}
     </div>`;
 }
 
@@ -9921,7 +9933,7 @@ async function openVideoPlayer(course, startIdx, meta = {}) {
                 </div>
                 <div class="pl-play-icon">${canPlayLesson ? (i===activeIdx?'▶':'▷') : '🔒'}</div>
               </button>
-              ${renderShareButton({ kind: 'lesson', title: visibleLesson.title || course.name, courseId: course.id, lessonId: v.contentId || v.lessonId || '', compact: true })}
+              ${typeof renderShareButton === "function" ? renderShareButton({ kind: 'lesson', title: visibleLesson.title || course.name, courseId: course.id, lessonId: v.contentId || v.lessonId || '', compact: true }) : ""}
               </div>`;
           }).join('') : `
             <div class="course-viewer-state error">
