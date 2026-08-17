@@ -2559,6 +2559,42 @@ function renderShareButton({ kind = 'lesson', title = 'IdeaKDC Learning', course
 }
 window.renderShareButton = renderShareButton;
 
+function extractYouTubeVideoId(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  if (/^[a-zA-Z0-9_-]{11}$/.test(text)) return text;
+  try {
+    const url = new URL(text);
+    const host = url.hostname.replace(/^www\./, '');
+    const pathParts = url.pathname.split('/').filter(Boolean);
+    const v = url.searchParams.get('v');
+    if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+    if (host === 'youtu.be' && pathParts[0] && /^[a-zA-Z0-9_-]{11}$/.test(pathParts[0])) return pathParts[0];
+    if ((host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com' || host === 'youtube-nocookie.com') && pathParts.length) {
+      const directKinds = ['embed', 'shorts', 'live'];
+      if (directKinds.includes(pathParts[0]) && pathParts[1] && /^[a-zA-Z0-9_-]{11}$/.test(pathParts[1])) return pathParts[1];
+      if (pathParts[0] === 'watch' && v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+    }
+  } catch(e) {}
+  const patterns = [
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\?[^#]*v=([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/live\/([a-zA-Z0-9_-]{11})/,
+    /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /[?&]v=([a-zA-Z0-9_-]{11})/
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[1];
+  }
+  return '';
+}
+window.extractYouTubeVideoId = extractYouTubeVideoId;
+
+
 
 function liveChapterMatches(savedChapterStr, targetChapterStr) {
   if (!savedChapterStr || !targetChapterStr) return true;
@@ -2714,7 +2750,7 @@ function renderStep1Classes() {
   
   classes.forEach(c => {
     const btn = document.createElement('button');
-    const hasLive = _livePlannedSessions.some(s => normalizeLiveClass(s.classNum) === normalizeLiveClass(c) && s.status === 'live');
+    const hasLive = _livePlannedSessions.some(s => normalizeLiveClass(s.classNum) === normalizeLiveClass(c) && isSessionLive(s));
     const hasPlan = _livePlannedSessions.some(s => normalizeLiveClass(s.classNum) === normalizeLiveClass(c) && s.status === 'planned');
 
     let cls = 'lc-navy-btn';
@@ -2774,8 +2810,18 @@ function renderStep3Subjects() {
       stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
       subject: subj
     };
-    const hasLive = _livePlannedSessions.some(s => liveSessionMatchesSelection(s, selection) && s.status === 'live');
-    const hasPlan = _livePlannedSessions.some(s => liveSessionMatchesSelection(s, selection) && s.status === 'planned');
+    const hasLive = _livePlannedSessions.some(s =>
+      normalizeLiveClass(s.classNum) === normalizeLiveClass(selection.classNum) &&
+      normalizeLiveLabel(s.subject) === normalizeLiveLabel(selection.subject) &&
+      ((selection.classNum !== '11' && selection.classNum !== '12') || !s.stream || !selection.stream || normalizeLiveStream(s.stream) === normalizeLiveStream(selection.stream)) &&
+      isSessionLive(s)
+    );
+    const hasPlan = _livePlannedSessions.some(s =>
+      normalizeLiveClass(s.classNum) === normalizeLiveClass(selection.classNum) &&
+      normalizeLiveLabel(s.subject) === normalizeLiveLabel(selection.subject) &&
+      ((selection.classNum !== '11' && selection.classNum !== '12') || !s.stream || !selection.stream || normalizeLiveStream(s.stream) === normalizeLiveStream(selection.stream)) &&
+      s.status === 'planned'
+    );
 
     const item = document.createElement('div');
     item.className = 'lc-chapter-item';
@@ -2828,7 +2874,7 @@ function renderStep4Chapters() {
       chapter: chap
     };
 
-    const hasLive = _livePlannedSessions.some(s => liveSessionMatchesSelection(s, chapSelection) && s.status === 'live');
+    const hasLive = _livePlannedSessions.some(s => liveSessionMatchesSelection(s, chapSelection) && isSessionLive(s));
     const hasPlan = _livePlannedSessions.some(s => liveSessionMatchesSelection(s, chapSelection) && s.status === 'planned');
 
     let itemClass = 'lc-chapter-item' + (isRevision ? ' revision-tab' : '');
@@ -2846,16 +2892,7 @@ function renderStep4Chapters() {
     
     item.onclick = () => {
       _navChapter = chap;
-      const liveSess = _livePlannedSessions.find(s =>
-        liveSessionMatchesSelection(s, chapSelection) && isSessionLive(s)
-      );
-
-      if (liveSess && isSessionFree(liveSess)) {
-        _selectedSessionDoc = liveSess;
-        joinSelectedLiveSession();
-      } else {
-        checkSessionAndShowCard(chap);
-      }
+      checkSessionAndShowCard(chap);
     };
     list.appendChild(item);
   });
@@ -2883,6 +2920,10 @@ function checkSessionAndShowCard(chap) {
       chapter: ''
     }));
   }
+
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(6px)';
+  card.style.transition = 'opacity 0.22s ease-out, transform 0.22s ease-out';
 
   if (sess) {
     _selectedSessionDoc = sess;
@@ -2917,6 +2958,15 @@ function checkSessionAndShowCard(chap) {
       </div>
     `;
   }
+
+  requestAnimationFrame(() => {
+    card.style.opacity = '1';
+    card.style.transform = 'translateY(0)';
+  });
+
+  setTimeout(() => {
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 40);
 }
 
 function renderLiveSessionDetails(sess, chapterLabel = '') {
