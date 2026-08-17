@@ -2594,6 +2594,19 @@ function extractYouTubeVideoId(value) {
 }
 window.extractYouTubeVideoId = extractYouTubeVideoId;
 
+function clearCourseRoute() {
+  try {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('courseId')) return;
+    url.searchParams.delete('courseId');
+    window.history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? `?${url.searchParams}` : '') + url.hash);
+  } catch(e) {
+    console.warn('[clearCourseRoute guard]', e);
+  }
+}
+window.clearCourseRoute = clearCourseRoute;
+
+
 
 
 function liveChapterMatches(savedChapterStr, targetChapterStr) {
@@ -3283,7 +3296,7 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
     return;
   }
 
-  clearCourseRoute();
+  if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
   pushPage('live');
   pushHistory();
   window.scrollTo(0, 0);
@@ -4565,7 +4578,7 @@ function showPage(id) {
 }
 
 window.navHome = () => {
-  clearCourseRoute();
+  if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
   pageHistory = ['home'];
   showPage('home');
   setNav('bn-home');
@@ -4574,7 +4587,7 @@ window.navHome = () => {
 window.showAllCourses = async () => {
   activeAcademicFilter = null;
   activeAcademicFilterLabel = '';
-  clearCourseRoute();
+  if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
   setNav('bn-catalogue');
   pushPage('catalogue');
   pushHistory();
@@ -4584,7 +4597,7 @@ window.showAllCourses = async () => {
 window.showAcademicCourses = async (filter, label = '') => {
   activeAcademicFilter = filter && typeof filter === 'object' ? { ...filter } : null;
   activeAcademicFilterLabel = String(label || '').trim();
-  clearCourseRoute();
+  if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
   setNav('bn-catalogue');
   pushPage('catalogue');
   pushHistory();
@@ -5001,7 +5014,7 @@ function updateNav(loggedIn) {
 }
 
 window.showLogin = () => {
-  clearCourseRoute();
+  if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
   pushPage('login');
   pushHistory();
   window.scrollTo(0, 0);
@@ -6330,7 +6343,7 @@ window.startConvoReg = (courseId) => {
   };
   convoSteps = ['choice'];
   convoStep = 0;
-  clearCourseRoute();
+  if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
   pushPage('convo');
   pushHistory();
   window.scrollTo(0, 0);
@@ -7137,7 +7150,7 @@ window.showReferralSupport = async () => {
     startConvoReg(null);
     return;
   }
-  clearCourseRoute();
+  if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
   setNav('bn-referral');
   pushPage('referral');
   pushHistory();
@@ -7728,7 +7741,7 @@ async function renderReferralSupport() {
 // ════════════════════════════════════════
 window.showDashboard = async () => {
   if (!currentUser) { showLogin(); return; }
-  clearCourseRoute();
+  if (typeof clearCourseRoute === "function") { try { clearCourseRoute(); } catch(_) {} }
   setNav('bn-dash');
   pushPage('dashboard');
   pushHistory();
