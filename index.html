@@ -2716,18 +2716,7 @@ function renderStep1Classes() {
       _navClass = c;
       _navChapter = '';
       _navSubject = '';
-      // Check if there's an active LIVE free session for this class
-      const liveSession = _livePlannedSessions.find(s =>
-        normalizeLiveClass(s.classNum) === normalizeLiveClass(c) && isSessionLive(s) && isSessionFree(s)
-      );
-      if (liveSession) {
-        _navSubject = liveSession.subject || '';
-        _navStream = normalizeLiveStream(liveSession.stream || '');
-        _navChapter = liveSession.chapter || '';
-        _selectedSessionDoc = liveSession;
-        joinSelectedLiveSession();
-        return;
-      }
+      _selectedSessionDoc = null;
       if (c === '11' || c === '12') {
         _currentStep = 2;
       } else {
@@ -2785,30 +2774,10 @@ function renderStep3Subjects() {
     item.onclick = () => {
       _navSubject = subj;
       _navChapter = '';
-      const liveSession = _livePlannedSessions.find(s =>
-        liveSessionMatchesSelection(s, {
-          classNum: _navClass,
-          stream: _navClass === '11' || _navClass === '12' ? _navStream : '',
-          subject: subj
-        }) && isSessionLive(s)
-      );
-      // If subject has an active LIVE session, join directly without going to chapter step
-      if (liveSession && isSessionFree(liveSession)) {
-        _selectedSessionDoc = liveSession;
-        _navChapter = liveSession.chapter || '';
-        joinSelectedLiveSession();
-        return;
-      }
-      // Otherwise navigate to chapters step
+      _selectedSessionDoc = null;
       _currentStep = 4;
       renderNavyStepNavigation();
-      if (liveSession) {
-        _selectedSessionDoc = liveSession;
-        _navChapter = liveSession.chapter || '';
-        renderLiveSessionDetails(liveSession, liveSession.chapter || 'Live class');
-      } else {
-        checkSessionAndShowCard('');
-      }
+      checkSessionAndShowCard('');
     };
     list.appendChild(item);
   });
@@ -2865,29 +2834,16 @@ function renderStep4Chapters() {
     
     item.onclick = () => {
       _navChapter = chap;
-      if (hasLive) {
-        // Find the matching live session and join directly
-        const liveSess = _livePlannedSessions.find(s =>
-          liveSessionMatchesSelection(s, {
-            classNum: _navClass,
-            stream: (_navClass === '11' || _navClass === '12') ? _navStream : '',
-            subject: _navSubject,
-            chapter: chap
-          }) && isSessionLive(s)
-        ) || _livePlannedSessions.find(s =>
-          liveSessionMatchesSelection(s, {
-            classNum: _navClass,
-            stream: (_navClass === '11' || _navClass === '12') ? _navStream : '',
-            subject: _navSubject
-          }) && isSessionLive(s)
-        );
-        if (liveSess) {
-          _selectedSessionDoc = liveSess;
-          joinSelectedLiveSession();
-          return;
-        }
+      const liveSess = _livePlannedSessions.find(s =>
+        liveSessionMatchesSelection(s, chapSelection) && isSessionLive(s)
+      );
+
+      if (liveSess && isSessionFree(liveSess)) {
+        _selectedSessionDoc = liveSess;
+        joinSelectedLiveSession();
+      } else {
+        checkSessionAndShowCard(chap);
       }
-      checkSessionAndShowCard(chap);
     };
     list.appendChild(item);
   });
