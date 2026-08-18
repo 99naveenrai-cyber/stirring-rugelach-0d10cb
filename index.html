@@ -3399,6 +3399,7 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
 
   if (typeof closeLiveModal === "function") { try { closeLiveModal(); } catch(_) {} }
   if (typeof startLiveClassPresence === "function") { try { startLiveClassPresence(sessionId); } catch(_) {} }
+  try { window._ideaKdcInteractiveRoom?.init(sessionId); } catch(_) {}
   setupStudentLiveQuizListener(sessionId);
   const firebase = window._ideaKdcLiveFirebase;
   if (firebase && window.IdeaKDCLiveSync) {
@@ -3548,6 +3549,298 @@ function setupStudentLiveQuizListener(sessionId) {
   }
 }
 window.setupStudentLiveQuizListener = setupStudentLiveQuizListener;
+
+// ════════════════════════════════════════════════════════════════════════════
+// PHASES 4, 5 & 6: REAL-TIME INTERACTIVE STUDENT AUDIO/VIDEO ROOM MANAGER
+// ════════════════════════════════════════════════════════════════════════════
+
+class IdeaKDCInteractiveRoomManager {
+  constructor() {
+    this.sessionId = '';
+    this.activeMode = null; // 'audio' | 'video' | null
+    this.localAudioStream = null;
+    this.localVideoStream = null;
+    this.micActive = false;
+    this.cameraActive = false;
+    this.unsubscribers = [];
+    this.globalConfig = { audioEnabled: false, videoEnabled: false, audioRoomViewingEnabled: true, videoRoomViewingEnabled: true };
+    this.studentPermission = { canListenAudioRoom: true, canWatchVideoRoom: true, canUseMicrophone: false, canUseCamera: false, audioRoomBanned: false, videoRoomBanned: false };
+    this.allRoomStudents = {};
+  }
+
+  async init(sessionId) {
+    this.cleanup();
+    this.sessionId = String(sessionId || '');
+    if (!this.sessionId) return;
+
+    const firebase = window._ideaKdcLiveFirebase;
+    if (!firebase || !firebase.db || !firebase.onSnapshot) return;
+
+    // Listen to global interactive config
+    this.unsubscribers.push(firebase.onSnapshot(firebase.doc(firebase.db, 'liveInteractiveConfig', this.sessionId), (snap) => {
+      if (snap.exists()) {
+        this.globalConfig = snap.data();
+      }
+      this.enforceRealtimePermissions();
+    }, (err) => console.warn('[Interactive student config sync warning]', err)));
+
+    // Listen to personal student permission
+    const uid = window._ideaKdcAuth?.currentUser?.uid || 'guest';
+    if (uid !== 'guest') {
+      this.unsubscribers.push(firebase.onSnapshot(firebase.doc(firebase.db, 'liveInteractivePermissions', this.sessionId, 'students', uid), (snap) => {
+        if (snap.exists()) {
+          this.studentPermission = snap.data();
+        }
+        this.enforceRealtimePermissions();
+      }, (err) => console.warn('[Interactive student perm sync warning]', err)));
+    }
+
+    // Listen to all room participants
+    this.unsubscribers.push(firebase.onSnapshot(firebase.collection(firebase.db, 'liveInteractivePermissions', this.sessionId, 'students'), (snap) => {
+      this.allRoomStudents = {};
+      snap.docs.forEach(d => { this.allRoomStudents[d.id] = d.data(); });
+      this.renderParticipantGrid();
+    }, (err) => console.warn('[Interactive room grid sync warning]', err)));
+  }
+
+  getEffectivePermissions() {
+    const s = this.studentPermission;
+    const g = this.globalConfig;
+
+    const audioRoomBanned = s.audioRoomBanned === true;
+    const videoRoomBanned = s.videoRoomBanned === true;
+    const forceMuted = s.forceMuted === true;
+    const forceCameraOff = s.forceCameraOff === true;
+
+    return {
+      canListenAudioRoom: !audioRoomBanned && g.audioRoomViewingEnabled !== false && s.canListenAudioRoom !== false,
+      canWatchVideoRoom: !videoRoomBanned && g.videoRoomViewingEnabled !== false && s.canWatchVideoRoom !== false,
+      canUseMicrophone: !audioRoomBanned && !forceMuted && g.audioEnabled === true && s.canUseMicrophone === true,
+      canUseCamera: !videoRoomBanned && !forceCameraOff && g.videoEnabled === true && s.canUseCamera === true,
+      audioRoomBanned,
+      videoRoomBanned,
+      bothBanned: audioRoomBanned && videoRoomBanned,
+      forceMuted,
+      forceCameraOff
+    };
+  }
+
+  enforceRealtimePermissions() {
+    const eff = this.getEffectivePermissions();
+
+    // 1. If mic permission revoked while active, stop audio track immediately
+    if (this.micActive && !eff.canUseMicrophone) {
+      this.stopLocalTrack('mic');
+      if (typeof showToast === 'function') showToast(eff.forceMuted ? 'Muted by teacher.' : 'Microphone permission revoked.', 'info');
+    }
+
+    // 2. If camera permission revoked while active, stop video track immediately
+    if (this.cameraActive && !eff.canUseCamera) {
+      this.stopLocalTrack('camera');
+      if (typeof showToast === 'function') showToast(eff.forceCameraOff ? 'Camera turned OFF by teacher.' : 'Camera permission revoked.', 'info');
+    }
+
+    // 3. If student is in Audio Mode but audio room is banned or viewing disabled, exit room
+    if (this.activeMode === 'audio' && (!eff.canListenAudioRoom || eff.audioRoomBanned)) {
+      this.leaveRoom();
+      if (typeof showToast === 'function') showToast('Access not allowed by teacher.', 'error');
+    }
+
+    // 4. If student is in Video Mode but video room is banned or viewing disabled, exit room
+    if (this.activeMode === 'video' && (!eff.canWatchVideoRoom || eff.videoRoomBanned)) {
+      this.leaveRoom();
+      if (typeof showToast === 'function') showToast('Access not allowed by teacher.', 'error');
+    }
+
+    this.updateControlsUI();
+  }
+
+  async joinRoom(mode = 'audio') {
+    const eff = this.getEffectivePermissions();
+    if (mode === 'audio' && (!eff.canListenAudioRoom || eff.audioRoomBanned)) {
+      if (typeof showToast === 'function') showToast('Access not allowed by teacher.', 'error');
+      return;
+    }
+    if (mode === 'video' && (!eff.canWatchVideoRoom || eff.videoRoomBanned)) {
+      if (typeof showToast === 'function') showToast('Access not allowed by teacher.', 'error');
+      return;
+    }
+
+    this.activeMode = mode;
+    this.openRoomView();
+    if (typeof showToast === 'function') showToast(`Joined interactive ${mode} room!`, 'success');
+  }
+
+  async toggleLocalTrack(type = 'mic') {
+    const eff = this.getEffectivePermissions();
+    if (type === 'mic') {
+      if (!eff.canUseMicrophone) {
+        if (typeof showToast === 'function') showToast(eff.forceMuted ? 'Muted by teacher.' : 'Access not allowed by teacher.', 'error');
+        return;
+      }
+      if (!this.micActive) {
+        try {
+          this.localAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          this.micActive = true;
+          if (typeof showToast === 'function') showToast('Microphone unmuted.', 'success');
+        } catch (e) {
+          if (typeof showToast === 'function') showToast('Could not access microphone.', 'error');
+        }
+      } else {
+        this.stopLocalTrack('mic');
+      }
+    } else if (type === 'camera') {
+      if (!eff.canUseCamera) {
+        if (typeof showToast === 'function') showToast(eff.forceCameraOff ? 'Camera disabled by teacher.' : 'Access not allowed by teacher.', 'error');
+        return;
+      }
+      if (!this.cameraActive) {
+        try {
+          this.localVideoStream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+          this.cameraActive = true;
+          if (typeof showToast === 'function') showToast('Camera turned ON.', 'success');
+        } catch (e) {
+          if (typeof showToast === 'function') showToast('Could not access camera.', 'error');
+        }
+      } else {
+        this.stopLocalTrack('camera');
+      }
+    }
+    this.updateControlsUI();
+    this.renderParticipantGrid();
+  }
+
+  stopLocalTrack(type = 'mic') {
+    if (type === 'mic' && this.localAudioStream) {
+      this.localAudioStream.getTracks().forEach(t => t.stop());
+      this.localAudioStream = null;
+      this.micActive = false;
+    }
+    if (type === 'camera' && this.localVideoStream) {
+      this.localVideoStream.getTracks().forEach(t => t.stop());
+      this.localVideoStream = null;
+      this.cameraActive = false;
+    }
+    this.updateControlsUI();
+    this.renderParticipantGrid();
+  }
+
+  openRoomView() {
+    const page = document.getElementById('page-interactive-room');
+    if (page) {
+      page.style.display = 'flex';
+      this.renderParticipantGrid();
+      this.updateControlsUI();
+    }
+  }
+
+  closeRoomView() {
+    const page = document.getElementById('page-interactive-room');
+    if (page) page.style.display = 'none';
+  }
+
+  leaveRoom() {
+    this.stopLocalTrack('mic');
+    this.stopLocalTrack('camera');
+    this.activeMode = null;
+    this.closeRoomView();
+  }
+
+  updateControlsUI() {
+    const eff = this.getEffectivePermissions();
+    const btnMic = document.getElementById('btn-interactive-toggle-mic');
+    const btnCam = document.getElementById('btn-interactive-toggle-cam');
+
+    if (btnMic) {
+      btnMic.style.background = this.micActive ? '#16a34a' : '#334155';
+      btnMic.style.opacity = eff.canUseMicrophone ? '1' : '0.5';
+      btnMic.innerHTML = `🎤 Mic ${this.micActive ? 'ON' : eff.forceMuted ? 'MUTED' : 'OFF'}`;
+    }
+    if (btnCam) {
+      btnCam.style.background = this.cameraActive ? '#16a34a' : '#334155';
+      btnCam.style.opacity = eff.canUseCamera ? '1' : '0.5';
+      btnCam.innerHTML = `📷 Camera ${this.cameraActive ? 'ON' : eff.forceCameraOff ? 'OFF' : 'OFF'}`;
+    }
+
+    const countEl = document.getElementById('interactive-bar-student-count');
+    if (countEl) countEl.textContent = String(Object.keys(this.allRoomStudents).length);
+  }
+
+  renderParticipantGrid() {
+    const container = document.getElementById('interactive-grid-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const uids = Object.keys(this.allRoomStudents);
+    if (uids.length === 0) {
+      container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:40px;font-weight:700">No other students in room yet. You are connected!</div>';
+      return;
+    }
+
+    uids.forEach(uid => {
+      const s = this.allRoomStudents[uid] || {};
+      const tile = document.createElement('div');
+      tile.style.cssText = 'background:#1e293b;border:1px solid #334155;border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-height:120px;cursor:pointer;transition:transform 0.2s';
+      tile.onclick = () => this.spotlightParticipant(s);
+
+      const isSelf = uid === (window._ideaKdcAuth?.currentUser?.uid || 'guest');
+      const micActive = isSelf ? this.micActive : s.canUseMicrophone === true;
+      const camActive = isSelf ? this.cameraActive : s.canUseCamera === true;
+
+      tile.innerHTML = `
+        <div style="width:48px;height:48px;border-radius:99px;background:${camActive?'#16a34a':'#0284c7'};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.1rem;margin-bottom:8px">
+          ${(s.name || 'S').slice(0,2).toUpperCase()}
+        </div>
+        <div style="font-size:.78rem;font-weight:800;color:#f8fafc;text-align:center">${escapeHtml(s.name || 'Student')} ${isSelf?'(You)':''}</div>
+        <div style="display:flex;gap:4px;margin-top:6px">
+          <span style="font-size:.65rem;font-weight:800;color:${micActive?'#4ade80':'#94a3b8'}">${micActive?'🎤 ON':'🎤 OFF'}</span>
+          <span style="font-size:.65rem;font-weight:800;color:${camActive?'#4ade80':'#94a3b8'}">${camActive?'📷 ON':'📷 OFF'}</span>
+        </div>
+      `;
+      container.appendChild(tile);
+    });
+  }
+
+  spotlightParticipant(s) {
+    const modal = document.getElementById('interactive-spotlight-modal');
+    const nameEl = document.getElementById('interactive-spotlight-name');
+    const contentEl = document.getElementById('interactive-spotlight-content');
+    if (!modal || !nameEl || !contentEl) return;
+
+    nameEl.textContent = `Spotlight View: ${s.name || 'Student'}`;
+    contentEl.innerHTML = `<div style="text-align:center"><div style="font-size:3rem;margin-bottom:10px">👤</div><div>${escapeHtml(s.name || 'Student')}</div><div style="font-size:.8rem;color:#38bdf8;margin-top:6px">Audio/Video Stream Active</div></div>`;
+    modal.style.display = 'flex';
+  }
+
+  cleanup() {
+    this.leaveRoom();
+    this.unsubscribers.forEach(unsub => { try { unsub?.(); } catch(_) {} });
+    this.unsubscribers = [];
+  }
+}
+
+window._ideaKdcInteractiveRoom = new IdeaKDCInteractiveRoomManager();
+
+function toggleStudentInteractiveRoom(mode) {
+  window._ideaKdcInteractiveRoom.joinRoom(mode);
+}
+function openStudentInteractiveRoomView() {
+  window._ideaKdcInteractiveRoom.openRoomView();
+}
+function closeStudentInteractiveRoomView() {
+  window._ideaKdcInteractiveRoom.closeRoomView();
+}
+function leaveStudentInteractiveRoom() {
+  window._ideaKdcInteractiveRoom.leaveRoom();
+}
+function toggleInteractiveLocalTrack(type) {
+  window._ideaKdcInteractiveRoom.toggleLocalTrack(type);
+}
+function closeInteractiveSpotlight() {
+  const modal = document.getElementById('interactive-spotlight-modal');
+  if (modal) modal.style.display = 'none';
+}
+
 
 function stopLiveEventSynchronization() {
   if (_liveQuizUnsub) { _liveQuizUnsub(); _liveQuizUnsub = null; }
@@ -10405,6 +10698,50 @@ pageHistory = ['home'];
   </div>
 </div>
 
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     PHASE 4, 5 & 6: INTERACTIVE AUDIO / VIDEO ROOM OVERLAY (#page-interactive-room)
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="page-interactive-room" style="position:fixed;inset:0;width:100vw;height:100vh;background:#0f172a;z-index:25010;display:none;flex-direction:column;overflow:hidden">
+  <!-- Header Bar -->
+  <div style="padding:max(12px,env(safe-area-inset-top)) 16px 12px;background:rgba(15,23,42,0.95);border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;z-index:10">
+    <button onclick="closeStudentInteractiveRoomView()" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:99px;padding:.4rem 1rem;font-weight:800;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.4rem">
+      ← Back to Live Class
+    </button>
+    <div style="text-align:center">
+      <div style="font-weight:900;font-size:.92rem;color:#f8fafc" id="interactive-room-title">🎙️ Interactive Student Room</div>
+      <div style="font-size:.72rem;color:#38bdf8;font-weight:700" id="interactive-room-subtext">Connected to Live Session</div>
+    </div>
+    <button onclick="leaveStudentInteractiveRoom()" style="background:#dc2626;color:#fff;border:none;border-radius:99px;padding:.4rem .9rem;font-weight:800;font-size:.78rem;cursor:pointer">
+      🚪 Leave Room
+    </button>
+  </div>
+
+  <!-- Participant Grid Area -->
+  <div id="interactive-grid-container" style="flex:1;padding:16px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-content:start">
+    <!-- JavaScript builds participant cards dynamically -->
+  </div>
+
+  <!-- Enlarge Spotlight Modal -->
+  <div id="interactive-spotlight-modal" style="display:none;position:absolute;inset:0;background:rgba(2,6,23,0.92);backdrop-filter:blur(15px);z-index:20;flex-direction:column;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-weight:900;color:#f8fafc;font-size:.9rem" id="interactive-spotlight-name">Student View</span>
+      <button onclick="closeInteractiveSpotlight()" style="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:99px;padding:4px 12px;font-size:.78rem;font-weight:700;cursor:pointer">Close ✖</button>
+    </div>
+    <div id="interactive-spotlight-content" style="flex:1;background:#000;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:1.2rem;font-weight:800"></div>
+  </div>
+
+  <!-- Interactive Control Bar -->
+  <div style="padding:12px 16px max(16px,env(safe-area-inset-bottom));background:rgba(15,23,42,0.95);border-top:1px solid #334155;display:flex;justify-content:center;align-items:center;gap:12px">
+    <button onclick="toggleInteractiveLocalTrack('mic')" id="btn-interactive-toggle-mic" style="min-width:110px;padding:.6rem 1rem;background:#334155;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem">
+      🎤 Mic OFF
+    </button>
+    <button onclick="toggleInteractiveLocalTrack('camera')" id="btn-interactive-toggle-cam" style="min-width:110px;padding:.6rem 1rem;background:#334155;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem">
+      📷 Camera OFF
+    </button>
+  </div>
+</div>
+
 <!-- ════════════════════════════════════════
      PAGE: LIVE STREAM (FULL SCREEN)
 ════════════════════════════════════════ -->
@@ -10420,6 +10757,20 @@ pageHistory = ['home'];
   <button onclick="confirmLeaveLiveStream()" style="position:absolute;top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));z-index:1005;background:rgba(15,23,42,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:99px;padding:.4rem 1rem;font-weight:700;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;box-shadow:0 4px 12px rgba(0,0,0,0.4)">
     ← Leave Live
   </button>
+
+  <!-- Floating Interactive Room Action Bar -->
+  <div id="live-interactive-bar" style="position:absolute;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:1005;display:flex;align-items:center;gap:.4rem">
+    <button onclick="toggleStudentInteractiveRoom('audio')" id="btn-join-interactive-audio" style="background:rgba(15,23,42,0.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#38bdf8;border:1px solid rgba(56,189,248,0.4);border-radius:99px;padding:.4rem .8rem;font-weight:800;font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:.3rem;box-shadow:0 4px 12px rgba(0,0,0,0.4)">
+      🎙️ Join Audio
+    </button>
+    <button onclick="toggleStudentInteractiveRoom('video')" id="btn-join-interactive-video" style="background:rgba(15,23,42,0.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#4ade80;border:1px solid rgba(74,222,128,0.4);border-radius:99px;padding:.4rem .8rem;font-weight:800;font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:.3rem;box-shadow:0 4px 12px rgba(0,0,0,0.4)">
+      📹 Join Video
+    </button>
+    <button onclick="openStudentInteractiveRoomView()" style="background:rgba(15,23,42,0.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#f8fafc;border:1px solid rgba(255,255,255,0.25);border-radius:99px;padding:.4rem .8rem;font-weight:800;font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:.3rem;box-shadow:0 4px 12px rgba(0,0,0,0.4)">
+      👥 Room (<span id="interactive-bar-student-count">0</span>)
+    </button>
+  </div>
+
 
   <div id="live-sync-debug" style="display:none;position:absolute;top:max(62px,calc(env(safe-area-inset-top) + 62px));left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));z-index:1004;background:rgba(2,6,23,.82);color:#bae6fd;border:1px solid rgba(56,189,248,.45);border-radius:8px;padding:.45rem .6rem;font:600 .68rem/1.4 monospace;pointer-events:none"></div>
 

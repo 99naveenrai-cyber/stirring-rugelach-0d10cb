@@ -5097,7 +5097,7 @@ exports.getPlayerAccess = onCall(callableOptions({ region: 'asia-south1' }), asy
   const auth = request.auth;
   const uid = auth?.uid || 'guest-student';
   const userEmail = (auth?.token?.email || '').toLowerCase();
-  const isAdmin = ADMIN_EMAILS.includes(userEmail);
+  const isAdmin = isAdminAuth(auth);
 
   const sessionId = String(request.data?.sessionId || '').trim();
   if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId required.');
@@ -5152,4 +5152,154 @@ exports.registerUnplannedLiveClassInterest = onCall(callableOptions({ region: 'a
 
   logger.info("Unplanned Live Class Interest Registered", { uid: auth.uid, email, classNum, subject, chapter });
   return { registered: true, requestId };
+});
+
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// PHASE 2: REAL-TIME INTERACTIVE STUDENT AUDIO / VIDEO ROOM PERMISSIONS
+// ════════════════════════════════════════════════════════════════════════════
+
+// Admin: Update global interactive room settings for a session
+exports.adminUpdateInteractiveGlobalConfig = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const sessionId = validatedResourceId(request.data?.sessionId, 'sessionId');
+  
+  const update = {
+    audioEnabled: Boolean(request.data?.audioEnabled),
+    videoEnabled: Boolean(request.data?.videoEnabled),
+    audioRoomViewingEnabled: request.data?.audioRoomViewingEnabled !== false,
+    videoRoomViewingEnabled: request.data?.videoRoomViewingEnabled !== false,
+    updatedAt: FieldValue.serverTimestamp()
+  };
+
+  const configRef = db.collection('liveInteractiveConfig').doc(sessionId);
+  await configRef.set(update, { merge: true });
+
+  // Bulk permission overrides if requested by admin
+  const { allowMicForAll, allowCameraForAll, allowListenAudioForAll, allowWatchVideoForAll } = request.data || {};
+  if (allowMicForAll !== undefined || allowCameraForAll !== undefined || allowListenAudioForAll !== undefined || allowWatchVideoForAll !== undefined) {
+    const studentsSnap = await db.collection('liveInteractivePermissions').doc(sessionId).collection('students').get();
+    if (!studentsSnap.empty) {
+      const batch = db.batch();
+      studentsSnap.docs.forEach(docSnap => {
+        const studentUpdate = { updatedAt: FieldValue.serverTimestamp() };
+        if (allowMicForAll !== undefined) studentUpdate.canUseMicrophone = Boolean(allowMicForAll);
+        if (allowCameraForAll !== undefined) studentUpdate.canUseCamera = Boolean(allowCameraForAll);
+        if (allowListenAudioForAll !== undefined) studentUpdate.canListenAudioRoom = Boolean(allowListenAudioForAll);
+        if (allowWatchVideoForAll !== undefined) studentUpdate.canWatchVideoRoom = Boolean(allowWatchVideoForAll);
+        batch.set(docSnap.ref, studentUpdate, { merge: true });
+      });
+      await batch.commit();
+    }
+  }
+
+  return { ok: true, config: update };
+});
+
+// Admin: Update per-student interactive room permissions or ban status
+exports.adminUpdateStudentInteractivePermission = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const sessionId = validatedResourceId(request.data?.sessionId, 'sessionId');
+  const targetUid = validatedResourceId(request.data?.targetUid, 'targetUid');
+  const name = String(request.data?.name || '').slice(0, 120);
+
+  const permRef = db.collection('liveInteractivePermissions').doc(sessionId).collection('students').doc(targetUid);
+  const existingSnap = await permRef.get();
+  const existing = existingSnap.exists ? existingSnap.data() : {};
+
+  const payload = {
+    uid: targetUid,
+    name: name || existing.name || 'Student',
+    canListenAudioRoom: request.data?.canListenAudioRoom !== undefined ? Boolean(request.data.canListenAudioRoom) : (existing.canListenAudioRoom !== false),
+    canWatchVideoRoom: request.data?.canWatchVideoRoom !== undefined ? Boolean(request.data.canWatchVideoRoom) : (existing.canWatchVideoRoom !== false),
+    canUseMicrophone: request.data?.canUseMicrophone !== undefined ? Boolean(request.data.canUseMicrophone) : (existing.canUseMicrophone === true),
+    canUseCamera: request.data?.canUseCamera !== undefined ? Boolean(request.data.canUseCamera) : (existing.canUseCamera === true),
+    audioRoomBanned: request.data?.audioRoomBanned !== undefined ? Boolean(request.data.audioRoomBanned) : (existing.audioRoomBanned === true),
+    videoRoomBanned: request.data?.videoRoomBanned !== undefined ? Boolean(request.data.videoRoomBanned) : (existing.videoRoomBanned === true),
+    forceMuted: request.data?.forceMuted !== undefined ? Boolean(request.data.forceMuted) : (existing.forceMuted === true),
+    forceCameraOff: request.data?.forceCameraOff !== undefined ? Boolean(request.data.forceCameraOff) : (existing.forceCameraOff === true),
+    updatedAt: FieldValue.serverTimestamp()
+  };
+
+  await permRef.set(payload, { merge: true });
+  return { ok: true, permission: payload };
+});
+
+// Student/Admin: Get authorized room token & compute real-time interactive permissions
+exports.getInteractiveRoomToken = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  const auth = requireAuth(request);
+  enforceCallableRateLimit(request, 'get-interactive-room-token', 60, 60 * 1000);
+  const sessionId = validatedResourceId(request.data?.sessionId, 'sessionId');
+  const isAdmin = isAdminAuth(auth);
+
+  const [sessionSnap, registrationSnap, configSnap, permSnap] = await Promise.all([
+    db.collection('liveClasses').doc(sessionId).get(),
+    db.collection('liveRegistrations').doc(sessionId).collection('students').doc(auth.uid).get(),
+    db.collection('liveInteractiveConfig').doc(sessionId).get(),
+    db.collection('liveInteractivePermissions').doc(sessionId).collection('students').doc(auth.uid).get()
+  ]);
+
+  if (!sessionSnap.exists) throw new HttpsError('not-found', 'Live session not found.');
+  const session = sessionSnap.data();
+  const isFree = (session.pricePaise || 0) === 0;
+
+  if (!isAdmin && !isFree && (!registrationSnap.exists || registrationSnap.data()?.access === false)) {
+    throw new HttpsError('permission-denied', 'You are not registered for this live class.');
+  }
+
+  const globalConfig = configSnap.exists ? configSnap.data() : {
+    audioEnabled: false,
+    videoEnabled: false,
+    audioRoomViewingEnabled: true,
+    videoRoomViewingEnabled: true
+  };
+
+  const studentPerm = permSnap.exists ? permSnap.data() : {
+    canListenAudioRoom: true,
+    canWatchVideoRoom: true,
+    canUseMicrophone: false,
+    canUseCamera: false,
+    audioRoomBanned: false,
+    videoRoomBanned: false,
+    forceMuted: false,
+    forceCameraOff: false
+  };
+
+  // Compute effective permissions (default ALL mic & cam to OFF unless explicitly granted)
+  const audioRoomBanned = studentPerm.audioRoomBanned === true;
+  const videoRoomBanned = studentPerm.videoRoomBanned === true;
+  const forceMuted = studentPerm.forceMuted === true;
+  const forceCameraOff = studentPerm.forceCameraOff === true;
+
+  const effectivePermissions = {
+    audioEnabled: globalConfig.audioEnabled === true,
+    videoEnabled: globalConfig.videoEnabled === true,
+    audioRoomViewingEnabled: globalConfig.audioRoomViewingEnabled !== false,
+    videoRoomViewingEnabled: globalConfig.videoRoomViewingEnabled !== false,
+    
+    canListenAudioRoom: !audioRoomBanned && globalConfig.audioRoomViewingEnabled !== false && studentPerm.canListenAudioRoom !== false,
+    canWatchVideoRoom: !videoRoomBanned && globalConfig.videoRoomViewingEnabled !== false && studentPerm.canWatchVideoRoom !== false,
+    
+    canUseMicrophone: !audioRoomBanned && !forceMuted && globalConfig.audioEnabled === true && studentPerm.canUseMicrophone === true,
+    canUseCamera: !videoRoomBanned && !forceCameraOff && globalConfig.videoEnabled === true && studentPerm.canUseCamera === true,
+    
+    audioRoomBanned,
+    videoRoomBanned,
+    bothBanned: audioRoomBanned && videoRoomBanned,
+    forceMuted,
+    forceCameraOff,
+    isAdmin
+  };
+
+  // Generate secure token payload
+  const roomToken = `ideakdc_room_${sessionId}_${auth.uid}_${Date.now()}`;
+
+  return {
+    ok: true,
+    sessionId,
+    uid: auth.uid,
+    roomToken,
+    permissions: effectivePermissions
+  };
 });

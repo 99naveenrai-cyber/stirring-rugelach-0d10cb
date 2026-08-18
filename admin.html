@@ -1068,6 +1068,69 @@ window.NCERT_CURRICULUM_2026_27 = {
                 <span>⏹ End Live Session</span>
               </button>
             </div>
+
+          <!-- ════════════════════════════════════════════════════════
+               PHASE 3: STUDENT AUDIO / VIDEO ROOM CONTROL PANEL
+          ════════════════════════════════════════════════════════ -->
+          <div style="margin-top:1rem;background:#ffffff;border:1.5px solid #cbd5e1;border-radius:12px;padding:.8rem;box-shadow:0 4px 14px rgba(0,0,0,0.05)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;flex-wrap:wrap;gap:.4rem">
+              <div style="font-weight:900;font-size:.88rem;color:#1e3a8a">🎙️ Student Audio & Video Room Controls</div>
+              <div id="lc-interactive-room-status" style="font-size:.72rem;font-weight:700;color:#0284c7">Live Sync Active</div>
+            </div>
+
+            <!-- Global Feature Toggles -->
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.6rem;margin-bottom:.8rem">
+              <div style="font-size:.75rem;font-weight:800;color:#334155;margin-bottom:.4rem">Global Room Toggles & Bulk Permissions:</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.4rem">
+                <button onclick="toggleGlobalInteractiveSetting('audioEnabled')" id="btn-toggle-audio-enabled" class="btn-submit" style="background:#0284c7;padding:.35rem .2rem;font-size:.68rem">
+                  <span>🎙️ Audio: OFF</span>
+                </button>
+                <button onclick="toggleGlobalInteractiveSetting('videoEnabled')" id="btn-toggle-video-enabled" class="btn-submit" style="background:#0284c7;padding:.35rem .2rem;font-size:.68rem">
+                  <span>📹 Video: OFF</span>
+                </button>
+                <button onclick="toggleGlobalInteractiveSetting('allowListenAudioForAll')" id="btn-toggle-audio-listen" class="btn-submit" style="background:#475569;padding:.35rem .2rem;font-size:.68rem">
+                  <span>🎧 Audio Listen: ALL</span>
+                </button>
+                <button onclick="toggleGlobalInteractiveSetting('allowWatchVideoForAll')" id="btn-toggle-video-watch" class="btn-submit" style="background:#475569;padding:.35rem .2rem;font-size:.68rem">
+                  <span>👁️ Video Watch: ALL</span>
+                </button>
+                <button onclick="bulkInteractivePermission('allowMicForAll', true)" class="btn-submit" style="background:#16a34a;padding:.35rem .2rem;font-size:.68rem">
+                  <span>🎤 Mic for All</span>
+                </button>
+                <button onclick="bulkInteractivePermission('allowMicForAll', false)" class="btn-submit" style="background:#dc2626;padding:.35rem .2rem;font-size:.68rem">
+                  <span>🔇 Revoke Mic All</span>
+                </button>
+                <button onclick="bulkInteractivePermission('allowCameraForAll', true)" class="btn-submit" style="background:#16a34a;padding:.35rem .2rem;font-size:.68rem">
+                  <span>📷 Cam for All</span>
+                </button>
+                <button onclick="bulkInteractivePermission('allowCameraForAll', false)" class="btn-submit" style="background:#dc2626;padding:.35rem .2rem;font-size:.68rem">
+                  <span>📷 Revoke Cam All</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Student Audience Interactive List -->
+            <div style="font-size:.76rem;font-weight:800;color:#334155;margin-bottom:.4rem;display:flex;justify-content:space-between;align-items:center">
+              <span>👥 Student Audience & Room Controls (<span id="lc-interactive-student-count">0</span>)</span>
+            </div>
+            <div style="max-height:300px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px">
+              <table style="width:100%;border-collapse:collapse;font-size:.72rem">
+                <thead>
+                  <tr style="background:#f1f5f9;color:#334155;text-align:left">
+                    <th style="padding:6px;border-bottom:1px solid #cbd5e1">Student</th>
+                    <th style="padding:6px;border-bottom:1px solid #cbd5e1">Status</th>
+                    <th style="padding:6px;border-bottom:1px solid #cbd5e1">Mic State</th>
+                    <th style="padding:6px;border-bottom:1px solid #cbd5e1">Cam State</th>
+                    <th style="padding:6px;border-bottom:1px solid #cbd5e1;text-align:right">Action Controls</th>
+                  </tr>
+                </thead>
+                <tbody id="lc-interactive-student-tbody">
+                  <tr><td colspan="5" style="padding:10px;text-align:center;color:#64748b">Select an active live session to manage interactive rooms.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           </div>
 
         </div>
@@ -1140,6 +1203,9 @@ const db        = getFirestore(app);
 const storage   = getStorage(app);
 const functions = getFunctions(app, 'asia-south1');
 const adminSaveLiveClassFn = httpsCallable(functions, 'adminSaveLiveClass');
+const adminUpdateInteractiveGlobalConfigFn = httpsCallable(functions, 'adminUpdateInteractiveGlobalConfig');
+const adminUpdateStudentInteractivePermissionFn = httpsCallable(functions, 'adminUpdateStudentInteractivePermission');
+
 const adminUploadLiveQuestionsFn = httpsCallable(functions, 'adminUploadLiveQuestions');
 const adminGoLiveFn = httpsCallable(functions, 'adminGoLive');
 const adminEndLiveClassFn = httpsCallable(functions, 'adminEndLiveClass');
@@ -4741,6 +4807,196 @@ window.saveSpotQuestionToBank = async () => {
   }
 };
 
+
+
+let _globalInteractiveConfig = {
+  audioEnabled: false,
+  videoEnabled: false,
+  audioRoomViewingEnabled: true,
+  videoRoomViewingEnabled: true
+};
+let _studentInteractivePermissions = {};
+let _interactiveUnsubscribers = [];
+
+function setupInteractiveAdminSync(sessionId) {
+  _interactiveUnsubscribers.forEach(unsub => { try { unsub?.(); } catch(_) {} });
+  _interactiveUnsubscribers = [];
+
+  if (!sessionId) return;
+
+  // 1. Listen to global interactive config
+  _interactiveUnsubscribers.push(onSnapshot(doc(db, 'liveInteractiveConfig', sessionId), (snap) => {
+    if (snap.exists()) {
+      _globalInteractiveConfig = snap.data();
+    }
+    renderGlobalInteractiveControls();
+  }, (err) => console.warn('[Interactive config admin sync warning]', err)));
+
+  // 2. Listen to student audience & per-student interactive permissions
+  _interactiveUnsubscribers.push(onSnapshot(collection(db, 'liveInteractivePermissions', sessionId, 'students'), (snap) => {
+    _studentInteractivePermissions = {};
+    snap.docs.forEach(d => {
+      _studentInteractivePermissions[d.id] = d.data();
+    });
+    renderStudentInteractiveTable();
+  }, (err) => console.warn('[Interactive perm admin sync warning]', err)));
+}
+
+function renderGlobalInteractiveControls() {
+  const btnAudio = document.getElementById('btn-toggle-audio-enabled');
+  const btnVideo = document.getElementById('btn-toggle-video-enabled');
+  const btnListen = document.getElementById('btn-toggle-audio-listen');
+  const btnWatch = document.getElementById('btn-toggle-video-watch');
+
+  if (btnAudio) {
+    const isON = _globalInteractiveConfig.audioEnabled === true;
+    btnAudio.style.background = isON ? '#16a34a' : '#0284c7';
+    btnAudio.innerHTML = `<span>🎙️ Audio: ${isON ? 'ENABLED' : 'OFF'}</span>`;
+  }
+  if (btnVideo) {
+    const isON = _globalInteractiveConfig.videoEnabled === true;
+    btnVideo.style.background = isON ? '#16a34a' : '#0284c7';
+    btnVideo.innerHTML = `<span>📹 Video: ${isON ? 'ENABLED' : 'OFF'}</span>`;
+  }
+  if (btnListen) {
+    const isON = _globalInteractiveConfig.audioRoomViewingEnabled !== false;
+    btnListen.style.background = isON ? '#475569' : '#dc2626';
+    btnListen.innerHTML = `<span>🎧 Audio Listen: ${isON ? 'ALLOWED' : 'BLOCKED'}</span>`;
+  }
+  if (btnWatch) {
+    const isON = _globalInteractiveConfig.videoRoomViewingEnabled !== false;
+    btnWatch.style.background = isON ? '#475569' : '#dc2626';
+    btnWatch.innerHTML = `<span>👁️ Video Watch: ${isON ? 'ALLOWED' : 'BLOCKED'}</span>`;
+  }
+}
+
+async function toggleGlobalInteractiveSetting(settingKey) {
+  const sessionId = document.getElementById('lc-publisher-session-select')?.value;
+  if (!sessionId) { alert('Select an active live session first.'); return; }
+  
+  const update = { sessionId, ..._globalInteractiveConfig };
+  if (settingKey === 'audioEnabled') update.audioEnabled = !_globalInteractiveConfig.audioEnabled;
+  if (settingKey === 'videoEnabled') update.videoEnabled = !_globalInteractiveConfig.videoEnabled;
+  if (settingKey === 'allowListenAudioForAll') update.audioRoomViewingEnabled = !(_globalInteractiveConfig.audioRoomViewingEnabled !== false);
+  if (settingKey === 'allowWatchVideoForAll') update.videoRoomViewingEnabled = !(_globalInteractiveConfig.videoRoomViewingEnabled !== false);
+
+  try {
+    await adminUpdateInteractiveGlobalConfigFn(update);
+    showToast('Updated global room setting.', 'success');
+  } catch (err) {
+    alert('Error updating global room setting: ' + err?.message);
+  }
+}
+
+async function bulkInteractivePermission(settingKey, flag) {
+  const sessionId = document.getElementById('lc-publisher-session-select')?.value;
+  if (!sessionId) { alert('Select an active live session first.'); return; }
+
+  const payload = { sessionId };
+  payload[settingKey] = flag;
+
+  try {
+    await adminUpdateInteractiveGlobalConfigFn(payload);
+    showToast(`Bulk updated student permissions!`, 'success');
+  } catch (err) {
+    alert('Error applying bulk permission: ' + err?.message);
+  }
+}
+
+function renderStudentInteractiveTable() {
+  const tbody = document.getElementById('lc-interactive-student-tbody');
+  const countEl = document.getElementById('lc-interactive-student-count');
+  if (!tbody) return;
+
+  const uids = Object.keys(_studentInteractivePermissions);
+  if (countEl) countEl.textContent = String(uids.length);
+
+  if (uids.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:10px;text-align:center;color:#64748b">No active students in room yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  uids.forEach(uid => {
+    const s = _studentInteractivePermissions[uid] || {};
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #f1f5f9';
+
+    const micGranted = s.canUseMicrophone === true;
+    const camGranted = s.canUseCamera === true;
+    const audioBanned = s.audioRoomBanned === true;
+    const videoBanned = s.videoRoomBanned === true;
+    const forceMuted = s.forceMuted === true;
+    const forceCamOff = s.forceCameraOff === true;
+
+    tr.innerHTML = `
+      <td style="padding:6px;font-weight:700;color:#0f172a">
+        ${escapeHtml(s.name || 'Student')} <br><span style="font-size:.65rem;color:#64748b">${uid.slice(0,8)}...</span>
+      </td>
+      <td style="padding:6px">
+        <span style="font-size:.65rem;font-weight:800;color:${(audioBanned&&videoBanned)?'#dc2626':'#16a34a'};background:${(audioBanned&&videoBanned)?'#fee2e2':'#dcfce7'};padding:2px 6px;border-radius:99px">
+          ${(audioBanned&&videoBanned)?'BANNED':'ONLINE'}
+        </span>
+      </td>
+      <td style="padding:6px">
+        <span style="font-size:.68rem;font-weight:700;color:${audioBanned?'#dc2626':forceMuted?'#d97706':micGranted?'#16a34a':'#64748b'}">
+          ${audioBanned?'Banned':forceMuted?'Force Muted':micGranted?'Granted (Off)':'Not Allowed'}
+        </span>
+      </td>
+      <td style="padding:6px">
+        <span style="font-size:.68rem;font-weight:700;color:${videoBanned?'#dc2626':forceCamOff?'#d97706':camGranted?'#16a34a':'#64748b'}">
+          ${videoBanned?'Banned':forceCamOff?'Force Off':camGranted?'Granted (Off)':'Not Allowed'}
+        </span>
+      </td>
+      <td style="padding:6px;text-align:right">
+        <div style="display:flex;gap:3px;justify-content:flex-end;flex-wrap:wrap">
+          <button onclick="updateSingleStudentPermission('${uid}', 'canUseMicrophone', ${!micGranted})" style="background:${micGranted?'#dc2626':'#16a34a'};color:#fff;border:none;border-radius:4px;padding:2px 5px;font-size:.62rem;font-weight:700;cursor:pointer">
+            ${micGranted?'Revoke Mic':'Allow Mic'}
+          </button>
+          <button onclick="updateSingleStudentPermission('${uid}', 'canUseCamera', ${!camGranted})" style="background:${camGranted?'#dc2626':'#16a34a'};color:#fff;border:none;border-radius:4px;padding:2px 5px;font-size:.62rem;font-weight:700;cursor:pointer">
+            ${camGranted?'Revoke Cam':'Allow Cam'}
+          </button>
+          <button onclick="updateSingleStudentPermission('${uid}', 'forceMuted', ${!forceMuted})" style="background:${forceMuted?'#475569':'#d97706'};color:#fff;border:none;border-radius:4px;padding:2px 5px;font-size:.62rem;font-weight:700;cursor:pointer">
+            ${forceMuted?'Un-Mute':'Force Mute'}
+          </button>
+          <button onclick="updateSingleStudentPermission('${uid}', 'forceCameraOff', ${!forceCamOff})" style="background:${forceCamOff?'#475569':'#d97706'};color:#fff;border:none;border-radius:4px;padding:2px 5px;font-size:.62rem;font-weight:700;cursor:pointer">
+            ${forceCamOff?'Un-CamOff':'Force CamOff'}
+          </button>
+          <button onclick="updateSingleStudentPermission('${uid}', 'banBoth', ${!(audioBanned&&videoBanned)})" style="background:${(audioBanned&&videoBanned)?'#2563eb':'#b91c1c'};color:#fff;border:none;border-radius:4px;padding:2px 5px;font-size:.62rem;font-weight:700;cursor:pointer">
+            ${(audioBanned&&videoBanned)?'Unban Student':'Ban Student'}
+          </button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function updateSingleStudentPermission(targetUid, key, val) {
+  const sessionId = document.getElementById('lc-publisher-session-select')?.value;
+  if (!sessionId) return;
+  const s = _studentInteractivePermissions[targetUid] || {};
+  
+  const payload = {
+    sessionId,
+    targetUid,
+    name: s.name || 'Student'
+  };
+
+  if (key === 'banBoth') {
+    payload.audioRoomBanned = Boolean(val);
+    payload.videoRoomBanned = Boolean(val);
+  } else {
+    payload[key] = Boolean(val);
+  }
+
+  try {
+    await adminUpdateStudentInteractivePermissionFn(payload);
+    showToast('Student permissions updated.', 'success');
+  } catch (err) {
+    alert('Error updating student permission: ' + err?.message);
+  }
+}
 
 window.unpublishLiveQuiz = async () => {
   const sessionId = document.getElementById('lc-publisher-session-select')?.value;
