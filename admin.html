@@ -505,6 +505,7 @@ window.NCERT_CURRICULUM_2026_27 = {
     <button class="admin-nav-item" id="subnav-finance" onclick="switchPanel('finance',this)">₹ Finance</button>
     <button class="admin-nav-item" id="subnav-coupons" onclick="switchPanel('coupons',this)">🎟️ Coupons</button>
     <button class="admin-nav-item live-item" id="subnav-live" onclick="switchPanel('live',this)">🔴 Live Class</button>
+    <button class="admin-nav-item live-item active" id="subnav-live-studio" onclick="switchPanel('live-studio',this)" style="border-color:#2563eb;color:#2563eb;background:#eff6ff">🎙️ Live Studio</button>
     <button class="admin-nav-item refresh-item" id="subnav-refresh" onclick="refreshAdminPanelData(this)" style="border-color:#16a34a;color:#15803d;background:#f0fdf4">
       🔄 <span id="subnav-refresh-text">Refresh Updates</span>
     </button>
@@ -851,7 +852,215 @@ window.NCERT_CURRICULUM_2026_27 = {
   </div>
 
   <!-- ══ PANEL: LIVE CLASSES ══ -->
-  <div class="panel" id="panel-live">
+  
+  <!-- ════════════════════════════════════════════════════════════════════════════
+       DEDICATED ORGANIZED PAGE: LIVE CONTROL & QUIZ PUBLISHER STUDIO (#panel-live-studio)
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-live-studio">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+      <div class="panel-title" style="margin:0">🎙️ Live Class Control & Quiz Publisher Studio</div>
+      <button onclick="switchPanel('live')" class="btn-secondary" style="padding:.4rem .8rem;font-size:.78rem">
+        ← Back to Session Planner
+      </button>
+    </div>
+
+    <!-- Session Info Banner -->
+    <div id="studio-session-banner" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:14px;padding:1rem 1.2rem;margin-bottom:1.2rem;box-shadow:0 4px 14px rgba(37,99,235,0.3);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem">
+      <div>
+        <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#93c5fd" id="studio-banner-class">SELECT A SESSION BELOW</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;margin-top:2px" id="studio-banner-title">No Session Selected</div>
+        <div style="font-size:.78rem;color:#dbeafe;margin-top:4px" id="studio-banner-meta">Select a session from the list to launch the Live Control Studio.</div>
+      </div>
+      <div id="studio-banner-badge">
+        <span style="background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:99px;font-size:.75rem;font-weight:800">STATUS: IDLE</span>
+      </div>
+    </div>
+
+    <!-- Active Live Session Selector Dropdown -->
+    <div class="form-card" style="margin-bottom:1.2rem;background:#fff;border:1.5px solid #cbd5e1">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap">
+        <label style="font-weight:800;font-size:.82rem;color:#0f172a">Active Studio Session:</label>
+        <select id="studio-session-select" onchange="onStudioSessionSelect(this.value)" style="flex:1;min-width:240px;padding:8px 12px;font-size:.84rem;font-weight:700;border-radius:8px;border:1.5px solid #2563eb;background:#f8fafc">
+          <option value="">Loading sessions...</option>
+        </select>
+        <button onclick="loadAdminLiveSessions()" class="btn-secondary" style="padding:.45rem .8rem;font-size:.78rem">🔄 Refresh Sessions</button>
+      </div>
+    </div>
+
+    <!-- Studio Grid: 2 Columns for Large Screens -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.2rem">
+      
+      <!-- Studio Column 1: Stream Setup & Spot Quiz Publisher -->
+      <div style="display:flex;flex-direction:column;gap:1.2rem">
+        
+        <!-- CARD 1: OBS YouTube Stream Setup -->
+        <div class="form-card" style="border:2px solid #ef4444">
+          <div class="form-card-title" style="color:#dc2626">🔴 1. Stream Setup & Go Live</div>
+          <div id="studio-golive-box" style="background:#fff5f5;border:1px solid #fca5a5;padding:.85rem;border-radius:10px">
+            <div style="font-weight:800;font-size:.84rem;color:#991b1b;margin-bottom:.4rem">▶️ OBS / YouTube Live Link</div>
+            <p style="font-size:.74rem;color:#7f1d1d;margin-bottom:.6rem">Paste your OBS YouTube Unlisted Stream URL below to flip status to LIVE:</p>
+            <input type="url" id="studio-yt-url" placeholder="https://www.youtube.com/watch?v=... or stream link" style="width:100%;padding:10px;font-size:.84rem;border:1.5px solid #cbd5e1;border-radius:8px;margin-bottom:.6rem;box-sizing:border-box">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+              <button onclick="goLiveStreamStudio()" class="btn-submit" style="background:#dc2626;margin-top:0">
+                <span>🔴 Start Live Stream</span>
+              </button>
+              <button onclick="endLiveClassSessionStudio()" class="btn-secondary" style="color:#c53030;border-color:#fca5a5">
+                <span>⏹ End Live Session</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: Spot Quiz Publisher -->
+        <div class="form-card" style="border:1.5px solid #2563eb;background:#ffffff">
+          <div class="form-card-title" style="color:#1e3a8a">🎯 2. Write & Publish Spot Quiz</div>
+          
+          <div class="form-group">
+            <label style="font-weight:800;font-size:.78rem;color:#1e3a8a">Question Type</label>
+            <select id="studio-spot-type" onchange="onSpotTypeChangeStudio()" style="width:100%;padding:8px;font-size:.84rem;font-weight:700;border-radius:8px;border:1.5px solid #cbd5e1">
+              <option value="mcq">1. MCQ (4 Options A, B, C, D)</option>
+              <option value="tf">2. True / False (सही / गलत)</option>
+              <option value="match">3. Drag & Drop Match Pairs (जोड़ी मिलाओ)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:.78rem;font-weight:800">Question Text</label>
+            <input type="text" id="studio-spot-text" placeholder="e.g. What is the derivative of sin(x)?" style="width:100%;padding:9px;font-size:.85rem;border:1.5px solid #cbd5e1;border-radius:8px">
+          </div>
+
+          <!-- MCQ Inputs -->
+          <div id="studio-type-mcq-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.6rem">
+            <div><input type="text" id="studio-spot-a" placeholder="Option A" style="width:100%;padding:7px;font-size:.78rem;border:1px solid #cbd5e1;border-radius:6px"> <label style="font-size:.7rem;font-weight:700;margin-top:2px;display:block"><input type="radio" name="studio-spot-correct" value="0" checked> Correct A</label></div>
+            <div><input type="text" id="studio-spot-b" placeholder="Option B" style="width:100%;padding:7px;font-size:.78rem;border:1px solid #cbd5e1;border-radius:6px"> <label style="font-size:.7rem;font-weight:700;margin-top:2px;display:block"><input type="radio" name="studio-spot-correct" value="1"> Correct B</label></div>
+            <div><input type="text" id="studio-spot-c" placeholder="Option C" style="width:100%;padding:7px;font-size:.78rem;border:1px solid #cbd5e1;border-radius:6px"> <label style="font-size:.7rem;font-weight:700;margin-top:2px;display:block"><input type="radio" name="studio-spot-correct" value="2"> Correct C</label></div>
+            <div><input type="text" id="studio-spot-d" placeholder="Option D" style="width:100%;padding:7px;font-size:.78rem;border:1px solid #cbd5e1;border-radius:6px"> <label style="font-size:.7rem;font-weight:700;margin-top:2px;display:block"><input type="radio" name="studio-spot-correct" value="3"> Correct D</label></div>
+          </div>
+
+          <!-- True / False Inputs -->
+          <div id="studio-type-tf-wrap" style="display:none;margin-bottom:.6rem;background:#f8fafc;padding:.6rem;border-radius:8px;border:1px solid #e2e8f0">
+            <label style="font-weight:800;font-size:.78rem;margin-bottom:.4rem;display:block;color:#1e3a8a">Correct Answer:</label>
+            <label style="margin-right:1.2rem;font-size:.8rem;font-weight:700;cursor:pointer"><input type="radio" name="studio-tf-correct" value="0" checked> TRUE (सही)</label>
+            <label style="font-size:.8rem;font-weight:700;cursor:pointer"><input type="radio" name="studio-tf-correct" value="1"> FALSE (गलत)</label>
+          </div>
+
+          <!-- Drag & Drop Match Inputs -->
+          <div id="studio-type-match-wrap" style="display:none;margin-bottom:.6rem;background:#f8fafc;padding:.6rem;border-radius:8px;border:1px solid #e2e8f0">
+            <div style="font-weight:800;font-size:.78rem;margin-bottom:.4rem;color:#1e3a8a">Matching Pair Columns:</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem">
+              <input type="text" id="studio-match-l1" placeholder="Left 1 (e.g. Radius)" style="padding:6px;font-size:.76rem;border:1px solid #cbd5e1;border-radius:6px">
+              <input type="text" id="studio-match-r1" placeholder="Right 1 (e.g. r)" style="padding:6px;font-size:.76rem;border:1px solid #cbd5e1;border-radius:6px">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem">
+              <input type="text" id="studio-match-l2" placeholder="Left 2 (e.g. Area)" style="padding:6px;font-size:.76rem;border:1px solid #cbd5e1;border-radius:6px">
+              <input type="text" id="studio-match-r2" placeholder="Right 2 (e.g. πr²)" style="padding:6px;font-size:.76rem;border:1px solid #cbd5e1;border-radius:6px">
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.8rem">
+            <div>
+              <label style="font-size:.78rem;font-weight:800;display:block">Timer Duration:</label>
+              <select id="studio-spot-timer" style="width:100%;padding:6px;font-size:.78rem;font-weight:700;border-radius:6px;border:1px solid #cbd5e1">
+                <option value="10">10 seconds</option>
+                <option value="20">20 seconds</option>
+                <option value="30" selected>30 seconds (Default)</option>
+                <option value="45">45 seconds</option>
+                <option value="60">60 seconds</option>
+                <option value="0">No Timer (Unlimited)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:800;display:block">Screen Position:</label>
+              <select id="studio-spot-position" style="width:100%;padding:6px;font-size:.78rem;font-weight:700;border-radius:6px;border:1px solid #cbd5e1">
+                <option value="center" selected>Center (90% Width)</option>
+                <option value="right">Far Right (50% Width)</option>
+                <option value="left">Far Left (50% Width)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Publisher Controls Bar -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.45rem">
+            <button onclick="publishSpotQuizStudio()" class="btn-submit" style="background:#2563eb;margin-top:0">
+              <span>🚀 Publish Quiz</span>
+            </button>
+            <button onclick="addExtraLiveQuizTimeStudio()" class="btn-submit" style="background:#0284c7;margin-top:0">
+              <span>⏱️ +15s Extra Time</span>
+            </button>
+            <button onclick="unpublishLiveQuizStudio()" class="btn-submit" style="background:#dc2626;margin-top:0">
+              <span>🛑 Unpublish Quiz</span>
+            </button>
+            <button onclick="saveSpotQuestionToBankStudio()" class="btn-submit" style="background:#1e3a8a;margin-top:0">
+              <span>💾 Save to Bank</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Studio Column 2: Question Bank & Student Interactive Controls -->
+      <div style="display:flex;flex-direction:column;gap:1.2rem">
+        
+        <!-- CARD 3: Question Bank & JSON Uploader -->
+        <div class="form-card" style="border:1.5px solid #0284c7">
+          <div class="form-card-title" style="color:#0369a1">📋 3. Question Bank & 1-Tap Launch</div>
+          
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;padding:.6rem;border-radius:8px;margin-bottom:.8rem">
+            <label style="font-size:.76rem;font-weight:800;display:block;margin-bottom:.3rem;color:#0369a1">JSON Question Bank Default Timer:</label>
+            <select id="studio-json-timer" style="width:100%;padding:5px;font-size:.76rem;font-weight:700;border-radius:6px;border:1px solid #7dd3fc;background:#fff">
+              <option value="10">10 seconds</option>
+              <option value="20">20 seconds</option>
+              <option value="30" selected>30 seconds (Default)</option>
+              <option value="45">45 seconds</option>
+              <option value="60">60 seconds</option>
+              <option value="0">No Timer (Unlimited)</option>
+            </select>
+            <input type="file" id="studio-json-file" accept=".json" onchange="uploadLiveJsonQuestionsStudio(this)" style="font-size:.75rem;margin-top:.4rem">
+          </div>
+
+          <div style="font-weight:800;font-size:.82rem;color:#1e3a8a;margin-bottom:.4rem">Pre-Planned Questions (1-Tap Publish):</div>
+          <div id="studio-uploaded-q-list" style="display:flex;flex-direction:column;gap:.45rem;max-height:260px;overflow-y:auto"></div>
+        </div>
+
+        <!-- CARD 4: Real-time Student Audio / Video Controls -->
+        <div class="form-card" style="border:1.5px solid #16a34a">
+          <div class="form-card-title" style="color:#15803d">🎙️ 4. Student Interactive Room Controls</div>
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:.6rem;border-radius:8px;margin-bottom:.8rem">
+            <div style="font-size:.75rem;font-weight:800;color:#166534;margin-bottom:.4rem">Global Room Toggles:</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
+              <button onclick="toggleGlobalInteractiveSetting('audioEnabled')" class="btn-submit" style="background:#0284c7;padding:.35rem;font-size:.68rem;margin-top:0">
+                <span>🎙️ Toggle Audio Room</span>
+              </button>
+              <button onclick="toggleGlobalInteractiveSetting('videoEnabled')" class="btn-submit" style="background:#0284c7;padding:.35rem;font-size:.68rem;margin-top:0">
+                <span>📹 Toggle Video Room</span>
+              </button>
+            </div>
+          </div>
+
+          <div style="font-size:.76rem;font-weight:800;color:#166534;margin-bottom:.4rem">Active Students & Controls:</div>
+          <div class="table-responsive-wrap" style="max-height:220px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px">
+            <table style="width:100%;border-collapse:collapse;font-size:.72rem">
+              <thead>
+                <tr style="background:#f1f5f9;color:#334155;text-align:left">
+                  <th style="padding:6px">Student</th>
+                  <th style="padding:6px">Mic</th>
+                  <th style="padding:6px">Cam</th>
+                  <th style="padding:6px;text-align:right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="studio-interactive-student-tbody">
+                <tr><td colspan="4" style="padding:10px;text-align:center;color:#64748b">Select a session to manage students.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+<div class="panel" id="panel-live">
     <div class="panel-title" style="color:var(--red,#c53030)">🔴 Live Class Manager</div>
     <div class="form-card" id="live-audience-card" style="margin-bottom:1rem">
       <div class="form-card-title">👥 Live Class Students</div>
@@ -5088,6 +5297,140 @@ async function updateSingleStudentPermission(targetUid, key, val) {
   }
 }
 
+
+
+function syncStudioSessionDropdowns() {
+  const sessionSelect = document.getElementById('lc-publisher-session-select');
+  const studioSelect = document.getElementById('studio-session-select');
+  if (!sessionSelect || !studioSelect) return;
+  
+  studioSelect.innerHTML = sessionSelect.innerHTML;
+  studioSelect.value = sessionSelect.value;
+  onStudioSessionSelect(studioSelect.value);
+}
+
+function onStudioSessionSelect(sessionId) {
+  const sessionSelect = document.getElementById('lc-publisher-session-select');
+  if (sessionSelect && sessionSelect.value !== sessionId) {
+    sessionSelect.value = sessionId;
+    if (typeof loadLivePublisherSessionDetails === 'function') loadLivePublisherSessionDetails(sessionId);
+    if (typeof setupInteractiveAdminSync === 'function') setupInteractiveAdminSync(sessionId);
+  }
+  updateStudioBanner(sessionId);
+}
+
+function updateStudioBanner(sessionId) {
+  const bannerClass = document.getElementById('studio-banner-class');
+  const bannerTitle = document.getElementById('studio-banner-title');
+  const bannerMeta = document.getElementById('studio-banner-meta');
+  const bannerBadge = document.getElementById('studio-banner-badge');
+
+  if (!sessionId || !_allLiveSessionsMap[sessionId]) {
+    if (bannerTitle) bannerTitle.textContent = 'No Session Selected';
+    if (bannerMeta) bannerMeta.textContent = 'Select an active session from the dropdown to launch controls.';
+    return;
+  }
+
+  const s = _allLiveSessionsMap[sessionId];
+  if (bannerClass) bannerClass.textContent = `CLASS ${s.classNum} • ${String(s.subject).toUpperCase()}`;
+  if (bannerTitle) bannerTitle.textContent = s.chapter || 'Live Class Session';
+  if (bannerMeta) bannerMeta.textContent = `Teacher: ${s.teacherName || 'Rahul Sir'} • Date: ${s.date} ${s.time}`;
+  if (bannerBadge) {
+    const isLive = s.status === 'live';
+    bannerBadge.innerHTML = `<span style="background:${isLive?'#dc2626':'#2563eb'};padding:5px 14px;border-radius:99px;font-size:.78rem;font-weight:900;letter-spacing:.05em">${isLive?'🔴 LIVE NOW':'📅 PLANNED'}</span>`;
+  }
+}
+
+function openLiveStudioForSession(sessionId) {
+  if (typeof switchPanel === 'function') switchPanel('live-studio');
+  const studioSelect = document.getElementById('studio-session-select');
+  if (studioSelect) {
+    studioSelect.value = sessionId;
+    onStudioSessionSelect(sessionId);
+  }
+}
+window.openLiveStudioForSession = openLiveStudioForSession;
+
+function goLiveStreamStudio() {
+  const input = document.getElementById('studio-yt-url');
+  const mainInput = document.getElementById('lc-yt-url');
+  if (input && mainInput) mainInput.value = input.value;
+  if (typeof goLiveStream === 'function') goLiveStream();
+}
+window.goLiveStreamStudio = goLiveStreamStudio;
+
+function endLiveClassSessionStudio() {
+  if (typeof endLiveClassSession === 'function') endLiveClassSession();
+}
+window.endLiveClassSessionStudio = endLiveClassSessionStudio;
+
+function onSpotTypeChangeStudio() {
+  const typeSelect = document.getElementById('studio-spot-type');
+  const mainTypeSelect = document.getElementById('lc-spot-type');
+  if (typeSelect && mainTypeSelect) {
+    mainTypeSelect.value = typeSelect.value;
+    if (typeof onSpotTypeChange === 'function') onSpotTypeChange();
+  }
+}
+window.onSpotTypeChangeStudio = onSpotTypeChangeStudio;
+
+function publishSpotQuizStudio() {
+  // Sync inputs from studio to mainSpot inputs
+  const sText = document.getElementById('studio-spot-text')?.value;
+  const mainText = document.getElementById('lc-spot-text');
+  if (mainText && sText) mainText.value = sText;
+
+  const sType = document.getElementById('studio-spot-type')?.value;
+  const mainType = document.getElementById('lc-spot-type');
+  if (mainType && sType) mainType.value = sType;
+
+  const sA = document.getElementById('studio-spot-a')?.value;
+  const mainA = document.getElementById('lc-spot-a');
+  if (mainA && sA) mainA.value = sA;
+
+  const sB = document.getElementById('studio-spot-b')?.value;
+  const mainB = document.getElementById('lc-spot-b');
+  if (mainB && sB) mainB.value = sB;
+
+  const sC = document.getElementById('studio-spot-c')?.value;
+  const mainC = document.getElementById('lc-spot-c');
+  if (mainC && sC) mainC.value = sC;
+
+  const sD = document.getElementById('studio-spot-d')?.value;
+  const mainD = document.getElementById('lc-spot-d');
+  if (mainD && sD) mainD.value = sD;
+
+  const sTimer = document.getElementById('studio-spot-timer')?.value;
+  const mainTimer = document.getElementById('lc-spot-timer');
+  if (mainTimer && sTimer) mainTimer.value = sTimer;
+
+  const sPos = document.getElementById('studio-spot-position')?.value;
+  const mainPos = document.getElementById('lc-spot-position');
+  if (mainPos && sPos) mainPos.value = sPos;
+
+  if (typeof publishSpotQuiz === 'function') publishSpotQuiz();
+}
+window.publishSpotQuizStudio = publishSpotQuizStudio;
+
+function addExtraLiveQuizTimeStudio() {
+  if (typeof addExtraLiveQuizTime === 'function') addExtraLiveQuizTime();
+}
+window.addExtraLiveQuizTimeStudio = addExtraLiveQuizTimeStudio;
+
+function unpublishLiveQuizStudio() {
+  if (typeof unpublishLiveQuiz === 'function') unpublishLiveQuiz();
+}
+window.unpublishLiveQuizStudio = unpublishLiveQuizStudio;
+
+function saveSpotQuestionToBankStudio() {
+  publishSpotQuizStudio();
+}
+window.saveSpotQuestionToBankStudio = saveSpotQuestionToBankStudio;
+
+function uploadLiveJsonQuestionsStudio(input) {
+  if (typeof uploadLiveJsonQuestions === 'function') uploadLiveJsonQuestions(input);
+}
+window.uploadLiveJsonQuestionsStudio = uploadLiveJsonQuestionsStudio;
 
 window.refreshAdminPanelData = async (btn) => {
   const refreshText = document.getElementById('subnav-refresh-text');
