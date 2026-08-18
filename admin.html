@@ -487,6 +487,9 @@ window.NCERT_CURRICULUM_2026_27 = {
   <div class="top-nav">
     <div class="top-nav-brand"><span class="brand-wordmark" aria-label="ideaKDC"><span class="brand-idea">idea</span><span class="brand-kdc">KDC</span></span><span>Admin</span></div>
     <div class="top-nav-right">
+      <button onclick="refreshAdminPanelData()" title="Refresh Panel Data & Updates" style="padding:4px 10px;border:1.5px solid #16a34a;border-radius:8px;background:#f0fdf4;color:#15803d;font-weight:800;font-size:.74rem;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem">
+        🔄 <span class="top-refresh-label">Refresh</span>
+      </button>
       <button class="admin-install-btn" type="button" data-pwa-install onclick="IdeaKDCPwa.install()" aria-label="Save IdeaKDC Admin to home screen" title="Save to Home Screen">&#8681;</button>
       <span class="admin-badge" id="admin-email-badge">Admin</span>
       <button class="btn-logout" onclick="doLogout()">Logout</button>
@@ -502,6 +505,9 @@ window.NCERT_CURRICULUM_2026_27 = {
     <button class="admin-nav-item" id="subnav-finance" onclick="switchPanel('finance',this)">₹ Finance</button>
     <button class="admin-nav-item" id="subnav-coupons" onclick="switchPanel('coupons',this)">🎟️ Coupons</button>
     <button class="admin-nav-item live-item" id="subnav-live" onclick="switchPanel('live',this)">🔴 Live Class</button>
+    <button class="admin-nav-item refresh-item" id="subnav-refresh" onclick="refreshAdminPanelData(this)" style="border-color:#16a34a;color:#15803d;background:#f0fdf4">
+      🔄 <span id="subnav-refresh-text">Refresh Updates</span>
+    </button>
   </div>
 
   <!-- ══ PANEL: DASHBOARD ══ -->
@@ -5066,6 +5072,36 @@ async function updateSingleStudentPermission(targetUid, key, val) {
     alert('Error updating student permission: ' + err?.message);
   }
 }
+
+
+window.refreshAdminPanelData = async (btn) => {
+  const refreshText = document.getElementById('subnav-refresh-text');
+  if (refreshText) refreshText.textContent = 'Syncing...';
+  if (btn) btn.style.opacity = '0.7';
+
+  try {
+    const promises = [];
+    if (typeof loadDashboardStats === 'function') promises.push(loadDashboardStats());
+    if (typeof loadContentList === 'function') promises.push(loadContentList());
+    if (typeof loadEnrollments === 'function') promises.push(loadEnrollments());
+    
+    const liveSelect = document.getElementById('lc-publisher-session-select');
+    if (liveSelect && liveSelect.value) {
+      if (typeof loadLivePublisherSessionDetails === 'function') promises.push(loadLivePublisherSessionDetails(liveSelect.value));
+      if (typeof setupInteractiveAdminSync === 'function') setupInteractiveAdminSync(liveSelect.value);
+    }
+    if (typeof loadLiveAudienceData === 'function') promises.push(loadLiveAudienceData());
+
+    await Promise.allSettled(promises);
+    showToast('🔄 Admin Panel refreshed with latest updates!', 'success');
+  } catch (err) {
+    console.warn('[Admin refresh error]', err);
+    showToast('Refresh complete.', 'info');
+  } finally {
+    if (refreshText) refreshText.textContent = 'Refresh Updates';
+    if (btn) btn.style.opacity = '1';
+  }
+};
 
 window.unpublishLiveQuiz = async () => {
   const sessionId = document.getElementById('lc-publisher-session-select')?.value;
