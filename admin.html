@@ -5059,9 +5059,11 @@ window.saveSpotQuestionToBank = async () => {
     const b = document.getElementById('lc-spot-b').value.trim();
     const c = document.getElementById('lc-spot-c').value.trim();
     const d = document.getElementById('lc-spot-d').value.trim();
-    const correctRadios = document.getElementsByName('lc-spot-correct');
     let correctIdx = 0;
-    for (let r of correctRadios) { if (r.checked) correctIdx = Number(r.value); }
+    const studioRadios = document.getElementsByName('studio-spot-correct');
+    const mainRadios = document.getElementsByName('lc-spot-correct');
+    for (let r of studioRadios) { if (r.checked) correctIdx = Number(r.value); }
+    for (let r of mainRadios) { if (r.checked && studioRadios.length === 0) correctIdx = Number(r.value); }
     if (!a || !b) { alert('MCQ requires Options A and B.'); return; }
     const options = [a, b];
     if (c) options.push(c);
@@ -5413,6 +5415,28 @@ function publishSpotQuizStudio() {
   const sPos = document.getElementById('studio-spot-position')?.value;
   const mainPos = document.getElementById('lc-spot-position');
   if (mainPos && sPos) mainPos.value = sPos;
+
+  // Sync correct option radio button from Studio to Main
+  const sRadios = document.getElementsByName('studio-spot-correct');
+  let checkedVal = '0';
+  for (let r of sRadios) {
+    if (r.checked) checkedVal = r.value;
+  }
+  const mainRadios = document.getElementsByName('lc-spot-correct');
+  for (let r of mainRadios) {
+    r.checked = (r.value === checkedVal);
+  }
+
+  // Sync True/False radio button from Studio to Main
+  const sTfRadios = document.getElementsByName('studio-tf-correct');
+  let tfCheckedVal = '0';
+  for (let r of sTfRadios) {
+    if (r.checked) tfCheckedVal = r.value;
+  }
+  const mainTfRadios = document.getElementsByName('lc-tf-correct');
+  for (let r of mainTfRadios) {
+    r.checked = (r.value === tfCheckedVal);
+  }
 
   if (typeof publishSpotQuiz === 'function') publishSpotQuiz();
 }
