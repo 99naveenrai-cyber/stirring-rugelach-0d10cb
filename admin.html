@@ -4746,8 +4746,13 @@ window.loadAdminLiveSessions = async () => {
           👩‍🏫 ${escapeHtml(sess.teacherName || 'Teacher to be announced')} | ⏱️ ${Number(sess.durationMinutes || 60)} min<br>
           📅 ${sess.date} ⏰ ${sess.time} | 💰 ${sess.pricePaise ? '₹'+(sess.pricePaise/100) : 'FREE'}
         </div>
+        <div style="margin-top:.45rem;display:flex;justify-content:flex-end">
+          <button onclick="event.stopPropagation();openLiveStudioForSession('${sess.sessionId}')" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:.74rem;font-weight:800;cursor:pointer">
+            🎙️ Open Live Studio →
+          </button>
+        </div>
       `;
-      card.onclick = () => window.selectLiveSession(sess);
+      card.onclick = () => openLiveStudioForSession(sess.sessionId);
       container.appendChild(card);
     });
   } catch (err) {
@@ -4775,6 +4780,7 @@ window.watchAdminLivePreview = (sessionId) => {
 
 window.selectLiveSession = (sess) => {
   selectedLiveSession = sess;
+  openLiveStudioForSession(sess.sessionId);
   const audienceFilter = document.getElementById('live-audience-session-filter');
   if (audienceFilter) audienceFilter.value = sess.sessionId;
   window.loadAdminLiveAudience?.(sess.sessionId);
