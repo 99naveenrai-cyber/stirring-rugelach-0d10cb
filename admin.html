@@ -1087,12 +1087,15 @@ window.NCERT_CURRICULUM_2026_27 = {
                 </div>
               </div>
 
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-bottom:.4rem">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.4rem;margin-bottom:.4rem">
                 <button onclick="saveSpotQuestionToBank()" class="btn-submit" style="background:#1e3a8a;padding:.45rem .3rem;font-size:.7rem">
                   <span>💾 Save to Bank</span>
                 </button>
                 <button onclick="publishSpotQuiz()" class="btn-submit" style="background:#2563eb;padding:.45rem .3rem;font-size:.7rem">
                   <span>🚀 Publish Quiz</span>
+                </button>
+                <button onclick="addExtraLiveQuizTime()" class="btn-submit" style="background:#0284c7;padding:.45rem .3rem;font-size:.7rem">
+                  <span>⏱️ +15s Extra Time</span>
                 </button>
                 <button onclick="unpublishLiveQuiz()" class="btn-submit" style="background:#dc2626;padding:.45rem .3rem;font-size:.7rem">
                   <span>🛑 Unpublish Quiz</span>
@@ -1103,6 +1106,17 @@ window.NCERT_CURRICULUM_2026_27 = {
             <!-- OPTION 2: Upload JSON Question Bank -->
             <div id="lc-box-json" style="display:none">
               <p style="font-size:.72rem;color:#64748b;margin-bottom:.4rem">Upload a JSON array of pre-planned questions for this class.</p>
+              <div class="form-group" style="margin-bottom:.5rem">
+                <label style="font-size:.75rem;font-weight:700;display:block">Default Timer for JSON Question Bank:</label>
+                <select id="lc-json-timer" style="width:100%;padding:4px 6px;font-size:.75rem;border-radius:5px;border:1px solid #cbd5e1;background:#fff">
+                  <option value="10">10 seconds</option>
+                  <option value="20">20 seconds</option>
+                  <option value="30" selected>30 seconds (Default)</option>
+                  <option value="45">45 seconds</option>
+                  <option value="60">60 seconds</option>
+                  <option value="0">No Timer (Unlimited)</option>
+                </select>
+              </div>
               <div class="form-group" style="margin-bottom:.5rem">
                 <label style="font-size:.75rem;font-weight:700;display:block">Default Screen Position for JSON Bank:</label>
                 <select id="lc-json-position" style="width:100%;padding:4px 6px;font-size:.75rem;border-radius:5px;border:1px solid #cbd5e1;background:#fff">
@@ -1287,6 +1301,7 @@ const adminEndLiveClassFn = httpsCallable(functions, 'adminEndLiveClass');
 const adminDeleteLiveClassFn = httpsCallable(functions, 'adminDeleteLiveClass');
 const adminPublishLiveQuizFn = httpsCallable(functions, 'adminPublishLiveQuiz');
 const adminClearLiveQuizFn = httpsCallable(functions, 'adminClearLiveQuiz');
+const adminAddExtraLiveQuizTimeFn = httpsCallable(functions, 'adminAddExtraLiveQuizTime');
 const adminListLiveSessionsFn = httpsCallable(functions, 'adminListLiveSessions');
 const adminListLiveAudienceFn = httpsCallable(functions, 'adminListLiveAudience');
 const adminUploadPreflightFn = httpsCallable(functions, 'adminUploadPreflight');
@@ -5100,6 +5115,18 @@ window.refreshAdminPanelData = async (btn) => {
   } finally {
     if (refreshText) refreshText.textContent = 'Refresh Updates';
     if (btn) btn.style.opacity = '1';
+  }
+};
+
+
+window.addExtraLiveQuizTime = async () => {
+  const sessionId = document.getElementById('lc-publisher-session-select')?.value;
+  if (!sessionId) { alert('Select an active live session first.'); return; }
+  try {
+    await adminAddExtraLiveQuizTimeFn({ sessionId, extraSeconds: 15 });
+    showToast('⏱️ Added +15s extra time to active live quiz!', 'success');
+  } catch (err) {
+    alert('Failed to add extra time: ' + err?.message);
   }
 };
 

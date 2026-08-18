@@ -4683,7 +4683,7 @@ exports.adminPublishLiveQuiz = onCall(callableOptions({ region: 'asia-south1' })
   if (!Number.isFinite(requestedOffsetMs) || requestedOffsetMs < 0 || requestedOffsetMs > 10000)
     throw new HttpsError('invalid-argument', 'offsetMs must be between 0 and 10000.');
 
-  const allowed = [5,10,20,30,60,90,120];
+  const allowed = [0,5,10,15,20,30,45,60,90,120];
   if (!allowed.includes(timeLimit)) throw new HttpsError('invalid-argument', 'Invalid timeLimit.');
 
   let qObj = { text: questionText, type: qType, timeLimit, position };
@@ -4758,6 +4758,24 @@ exports.adminPublishLiveQuiz = onCall(callableOptions({ region: 'asia-south1' })
 });
 
 // Admin: clear the active quiz
+
+// Admin: Add extra time to active live quiz during live class
+exports.adminAddExtraLiveQuizTime = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
+  requireAdminAuth(request);
+  const sessionId = validatedResourceId(request.data?.sessionId, 'sessionId');
+  const extraSeconds = Number(request.data?.extraSeconds) || 15;
+  const stateRef = db.collection('liveQuizState').doc(sessionId);
+  const stateSnap = await stateRef.get();
+  if (!stateSnap.exists || !stateSnap.data()?.active) {
+    throw new HttpsError('failed-precondition', 'No active live quiz question to extend.');
+  }
+  await stateRef.set({
+    extraSecondsAdded: FieldValue.increment(extraSeconds),
+    extendedAt: FieldValue.serverTimestamp()
+  }, { merge: true });
+  return { ok: true, extraSeconds };
+});
+
 exports.adminClearLiveQuiz = onCall(callableOptions({ region: 'asia-south1' }), async (request) => {
   requireAdminAuth(request);
   const sessionId = String(request.data?.sessionId || '').trim();

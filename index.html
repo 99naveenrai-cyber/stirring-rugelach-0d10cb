@@ -3909,6 +3909,39 @@ function launchDramaticUpwardConfetti() {
 }
 
 
+
+function launchDramaticUpwardSlowConfetti() {
+  const colors = ['#f43f5e', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#eab308', '#ffffff'];
+  const count = 90;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'upward-slow-confetti';
+    const xPos = (Math.random() - 0.5) * window.innerWidth * 0.95;
+    const drift = (Math.random() - 0.5) * 140;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const width = 8 + Math.random() * 10;
+    const height = 12 + Math.random() * 14;
+    const duration = 2.5 + Math.random() * 1.5;
+    const delay = Math.random() * 0.3;
+
+    p.style.cssText = `
+      left: 50%;
+      bottom: -20px;
+      width: ${width}px;
+      height: ${height}px;
+      background: ${color};
+      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+      --cx: ${xPos}px;
+      --drift: ${drift}px;
+      --cdur: ${duration}s;
+      animation-delay: ${delay}s;
+    `;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), (duration + delay + 0.5) * 1000);
+  }
+}
+window.launchDramaticUpwardSlowConfetti = launchDramaticUpwardSlowConfetti;
+
 function renderLiveQuizEventOverlay(event) {
   try {
     if (!event) return;
@@ -3930,28 +3963,34 @@ function renderLiveQuizEventOverlay(event) {
 }
 window.renderLiveQuizEventOverlay = renderLiveQuizEventOverlay;
 
+
 function showLiveQuizOverlay(q) {
   const overlay = document.getElementById('live-quiz-overlay');
   const qText = document.getElementById('live-quiz-question-text');
   const grid = document.getElementById('live-quiz-options-grid');
   const timerText = document.getElementById('live-quiz-timer-text');
   const timerBar = document.getElementById('live-quiz-timer-bar');
+  const feedbackBox = document.getElementById('live-quiz-feedback-box');
 
   if (!overlay || !qText || !grid) return;
 
-  // Standardize schema correct index
+  if (feedbackBox) {
+    feedbackBox.style.display = 'none';
+    feedbackBox.innerHTML = '';
+  }
+
   q.correctIndex = (typeof q.correctIndex === 'number') ? q.correctIndex : (typeof q.correct === 'number' ? q.correct : 0);
 
-  // Set position (center, left, right)
   const pos = q.position || 'center';
   overlay.className = `pos-${pos}`;
 
   const qType = q.type || 'mcq';
   qText.innerHTML = `<span style="font-size:.7rem;padding:2px 8px;border-radius:99px;background:#38bdf8;color:#0f172a;font-weight:900;margin-right:.4rem;text-transform:uppercase">${qType === 'tf' ? 'TRUE/FALSE' : qType === 'match' ? 'MATCH PAIRS' : 'MCQ'}</span> ${q.text}`;
   grid.innerHTML = '';
+
   let studentSelectedIdx = -1;
-  let selectedPairLeft = null;
-  let studentMatches = {};
+  let hasSolvedCorrectly = false;
+  let isTimerActive = true;
 
   if (qType === 'mcq' || qType === 'tf') {
     const opts = q.options || (qType === 'tf' ? ['TRUE (सही)', 'FALSE (गलत)'] : []);
@@ -3962,129 +4001,105 @@ function showLiveQuizOverlay(q) {
       const btn = document.createElement('button');
       btn.className = 'live-quiz-opt-btn';
       btn.innerHTML = qType === 'tf' ? optText : `<strong>${String.fromCharCode(65+idx)})</strong> ${optText}`;
+      
+      // Multi-Try Option Click Handler
       btn.onclick = () => {
+        if (!isTimerActive || hasSolvedCorrectly) return;
         studentSelectedIdx = idx;
-        document.querySelectorAll('.live-quiz-opt-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
+
+        if (idx === q.correctIndex) {
+          // Correct Option Clicked!
+          hasSolvedCorrectly = true;
+          btn.classList.remove('wrong-dramatic-glow');
+          btn.classList.add('correct-sparkle-glow');
+
+          // Whole screen celebration confetti moving upward with sudden slow motion
+          launchDramaticUpwardSlowConfetti();
+
+          // Display uploaded feedback in rectangular green box directly below option
+          if (feedbackBox) {
+            const fbMsg = q.feedback || q.explanation || 'Answer Correct!';
+            feedbackBox.style.display = 'block';
+            feedbackBox.innerHTML = `<div style="background:#15803d;color:#ffffff;border:1px solid #22c55e;padding:10px 14px;border-radius:8px;font-size:.84rem;font-weight:700;box-shadow:0 4px 12px rgba(21,128,61,0.3)">${escapeHtml(fbMsg)}</div>`;
+          }
+
+          // Record score
+          if (_activeLiveQuizEvent && _liveScoreSessionId && window.submitVerifiedLiveQuizAnswer) {
+            window.submitVerifiedLiveQuizAnswer({
+              sessionId: _activeLiveQuizEvent.sessionId,
+              eventId: _activeLiveQuizEvent.eventId,
+              selectedOption: String(idx),
+              quizSessionId: _liveScoreSessionId,
+              responseId: `${_activeLiveQuizEvent.eventId}__${Date.now()}`
+            }).catch(() => {});
+          }
+        } else {
+          // Wrong Option Clicked -> Glow Red dramatically, allow retry (Multi-Try)!
+          btn.classList.add('wrong-dramatic-glow');
+        }
       };
       grid.appendChild(btn);
     });
-  } else if (qType === 'match' && Array.isArray(q.pairs)) {
-    grid.style.display = 'flex';
-    grid.style.flexDirection = 'column';
-    grid.style.gap = '.4rem';
-
-    const matchWrap = document.createElement('div');
-    matchWrap.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:.6rem;width:100%';
-    
-    const leftCol = document.createElement('div');
-    leftCol.style.cssText = 'display:flex;flex-direction:column;gap:.35rem';
-    
-    const rightCol = document.createElement('div');
-    rightCol.style.cssText = 'display:flex;flex-direction:column;gap:.35rem';
-
-    // Shuffle right column for matching game
-    const shuffledRight = [...q.pairs.map(p => p.right)].sort(() => Math.random() - 0.5);
-
-    q.pairs.forEach((pair, idx) => {
-      const lBtn = document.createElement('button');
-      lBtn.className = 'live-quiz-opt-btn';
-      lBtn.id = `match-left-${idx}`;
-      lBtn.innerHTML = `<strong>${idx+1}.</strong> ${pair.left}`;
-      lBtn.onclick = () => {
-        selectedPairLeft = idx;
-        document.querySelectorAll('[id^="match-left-"]').forEach(b => b.style.borderColor = 'rgba(255,255,255,0.2)');
-        lBtn.style.borderColor = '#fbbf24';
-      };
-      leftCol.appendChild(lBtn);
-    });
-
-    shuffledRight.forEach((rVal, rIdx) => {
-      const rBtn = document.createElement('button');
-      rBtn.className = 'live-quiz-opt-btn';
-      rBtn.id = `match-right-${rIdx}`;
-      rBtn.innerHTML = rVal;
-      rBtn.onclick = () => {
-        if (selectedPairLeft !== null) {
-          studentMatches[selectedPairLeft] = rVal;
-          rBtn.style.borderColor = '#38bdf8';
-          rBtn.style.background = 'rgba(56,189,248,0.2)';
-          const lBtn = document.getElementById(`match-left-${selectedPairLeft}`);
-          if (lBtn) {
-            lBtn.style.borderColor = '#38bdf8';
-            lBtn.style.background = 'rgba(56,189,248,0.2)';
-          }
-        }
-      };
-      rightCol.appendChild(rBtn);
-    });
-
-    matchWrap.appendChild(leftCol);
-    matchWrap.appendChild(rightCol);
-    grid.appendChild(matchWrap);
   }
 
   overlay.style.display = 'block';
 
-  // Timer countdown
-  let timeLeft = q.timeLimit || 30;
-  timerText.textContent = `${timeLeft}s`;
-  timerBar.style.transition = 'none';
-  timerBar.style.width = '100%';
-
-  setTimeout(() => {
-    timerBar.style.transition = `width ${timeLeft}s linear`;
-    timerBar.style.width = '0%';
-  }, 50);
+  // Timer Handling (10s, 20s, 30s, 45s, 60s or 0s Unlimited)
+  let timeLimit = Number(q.timeLimit);
+  if (!Number.isFinite(timeLimit)) timeLimit = 30;
 
   if (_liveQuizTimerInt) clearInterval(_liveQuizTimerInt);
-  _liveQuizTimerInt = setInterval(() => {
-    timeLeft--;
+
+  if (timeLimit === 0) {
+    // Unlimited / No Timer Mode
+    timerText.textContent = '∞ Unlimited';
+    timerBar.style.transition = 'none';
+    timerBar.style.width = '100%';
+  } else {
+    let timeLeft = timeLimit;
     timerText.textContent = `${timeLeft}s`;
-    if (timeLeft <= 0) {
-      clearInterval(_liveQuizTimerInt);
-      // Reveal Answer with Dramatic Glow
-      revealQuizAnswer(q.correctIndex, studentSelectedIdx);
-    }
-  }, 1000);
+    timerBar.style.transition = 'none';
+    timerBar.style.width = '100%';
+
+    setTimeout(() => {
+      timerBar.style.transition = `width ${timeLeft}s linear`;
+      timerBar.style.width = '0%';
+    }, 50);
+
+    _liveQuizTimerInt = setInterval(() => {
+      timeLeft--;
+      timerText.textContent = `${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(_liveQuizTimerInt);
+        isTimerActive = false;
+        
+        // Time Ends: Lock options and show correct answer in blinking style with white boundary (NO celebration, NO confetti)
+        revealTimeEndedAnswer(q.correctIndex, hasSolvedCorrectly);
+      }
+    }, 1000);
+  }
 }
 
-function revealQuizAnswer(correctIdx, studentSelectedIdx) {
+function revealTimeEndedAnswer(correctIdx, hasSolvedCorrectly) {
   const options = document.querySelectorAll('.live-quiz-opt-btn');
   options.forEach((btn, idx) => {
+    btn.disabled = true;
     if (idx === correctIdx) {
-      btn.classList.add('correct-glow');
-    }
-    if (studentSelectedIdx !== -1 && studentSelectedIdx !== correctIdx && idx === studentSelectedIdx) {
-      btn.classList.add('wrong-glow');
+      if (!hasSolvedCorrectly) {
+        // Show correct in blinking style with white boundary (NO celebration, NO upward confetti)
+        btn.classList.add('blinking-white-boundary');
+      } else {
+        btn.classList.add('correct-sparkle-glow');
+      }
     }
   });
 
-  if (studentSelectedIdx === correctIdx) {
-    launchDramaticUpwardConfetti();
-  }
-  if (_activeLiveQuizEvent) {
-    const sessionId = _activeLiveQuizEvent.sessionId;
-    if (studentSelectedIdx !== -1 && _liveScoreSessionId && window.submitVerifiedLiveQuizAnswer) {
-      window.submitVerifiedLiveQuizAnswer({
-        sessionId,
-        eventId: _activeLiveQuizEvent.eventId,
-        selectedOption: String(studentSelectedIdx),
-        quizSessionId: _liveScoreSessionId,
-        responseId: `${_activeLiveQuizEvent.eventId}__${Date.now()}`
-      }).catch((error) => console.warn('[Live quiz score] save delayed', error?.code || error?.message || error));
-    }
-    recordLiveQuizSyncState(sessionId, _activeLiveQuizEvent, 'answered', {
-      actualPlaybackTime: _liveStreamClock?.currentTime?.(),
-      estimatedLiveLatency: _liveStreamClock?.estimatedLiveLatency?.()
-    }, _liveStreamClock?.snapshot?.());
-  }
-
-  // Auto-hide overlay after 3.5 seconds of feedback
+  // Auto-hide overlay after 4 seconds of time-ended reveal
   setTimeout(() => {
     hideLiveQuizOverlay();
-  }, 3500);
+  }, 4000);
 }
+
 
 function hideLiveQuizOverlay() {
   const overlay = document.getElementById('live-quiz-overlay');
@@ -10788,6 +10803,8 @@ pageHistory = ['home'];
     <div id="live-quiz-options-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
       <!-- JavaScript builds options -->
     </div>
+    <!-- Rectangular Green Feedback Box -->
+    <div id="live-quiz-feedback-box" style="display:none;margin-top:.6rem"></div>
   </div>
 </div>
 
