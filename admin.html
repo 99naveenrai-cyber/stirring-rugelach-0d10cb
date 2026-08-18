@@ -280,6 +280,75 @@ body{padding-bottom:65px}
 
 
   /* ── MOBILE & TABLET RESPONSIVENESS ENHANCEMENTS ── */
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     COMPREHENSIVE MULTI-DEVICE RESPONSIVE BREAKPOINTS (MOBILE, TABLET, LAPTOP)
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  /* 💻 1. LAPTOP & DESKTOP (screens > 768px) */
+  @media (min-width: 769px) {
+    .panel { max-width: 1100px !important; padding: 1.5rem 1.5rem 3rem !important; }
+    .stats-row { grid-template-columns: repeat(4, 1fr) !important; gap: 1rem !important; }
+    #lc-grid { grid-template-columns: 1.1fr 0.9fr !important; gap: 1.25rem !important; }
+    .finance-summary-grid, .finance-private-grid { grid-template-columns: repeat(4, 1fr) !important; }
+    .live-student-card-grid { grid-template-columns: repeat(3, 1fr) !important; }
+    .form-card { padding: 1.4rem !important; }
+  }
+
+  /* 📱💻 2. TABLET (screens 481px to 768px) */
+  @media (min-width: 481px) and (max-width: 768px) {
+    .panel { max-width: 740px !important; padding: 1rem 1rem 4rem !important; }
+    .stats-row { grid-template-columns: repeat(2, 1fr) !important; gap: .75rem !important; }
+    #lc-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+    .form-row { grid-template-columns: 1fr !important; }
+    .live-student-card-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .finance-summary-grid, .finance-private-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .admin-sub-nav { padding: .5rem .8rem; gap: .4rem; }
+    .admin-nav-item { padding: .42rem .75rem; font-size: .76rem; }
+  }
+
+  /* 📱 3. MOBILE (screens <= 480px) */
+  @media (max-width: 480px) {
+    body { font-size: 14px; }
+    .top-nav { padding: 0 .5rem; height: 50px; }
+    .brand-wordmark { font-size: .95rem; padding: 3px 6px; }
+    .top-nav-brand { font-size: .65rem; gap: .35rem; }
+    .admin-badge { font-size: .62rem; padding: 2px 7px; }
+    .btn-logout { font-size: .72rem; padding: 4px 8px; }
+
+    .panel { padding: .65rem .45rem 4.5rem !important; width: 100% !important; }
+    .panel-title { font-size: 1.05rem !important; margin-bottom: .75rem !important; }
+
+    .stats-row { grid-template-columns: repeat(2, 1fr) !important; gap: .45rem !important; }
+    .stat-card { padding: .75rem !important; }
+    .stat-value { font-size: 1.4rem !important; }
+    .stat-label { font-size: .62rem !important; }
+
+    #lc-grid { grid-template-columns: 1fr !important; gap: .75rem !important; }
+    .form-card { padding: .8rem !important; border-radius: 12px !important; margin-bottom: .75rem !important; }
+    .form-card-title { font-size: .88rem !important; margin-bottom: .75rem !important; }
+    .form-row { grid-template-columns: 1fr !important; gap: .45rem !important; }
+
+    .admin-sub-nav { padding: .35rem .45rem; gap: .3rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .admin-nav-item { padding: .38rem .6rem; font-size: .7rem; border-radius: 8px; }
+
+    .content-item { padding: .8rem !important; }
+    .content-item-media { flex-direction: column !important; align-items: stretch !important; gap: .6rem !important; }
+    .content-thumb { width: 100% !important; aspect-ratio: 16/9 !important; }
+    .content-item-actions { display: grid !important; grid-template-columns: 1fr 1fr !important; width: 100% !important; gap: .4rem !important; }
+    .btn-edit, .btn-delete { width: 100% !important; text-align: center !important; justify-content: center !important; }
+
+    .enroll-card { padding: .8rem !important; }
+    .enroll-actions { flex-direction: column !important; gap: .4rem !important; }
+
+    .finance-member { grid-template-columns: 1fr !important; gap: .45rem !important; }
+    .finance-summary-grid, .finance-private-grid { grid-template-columns: 1fr !important; }
+
+    /* Interactive Table Responsive Horizontal Scroll */
+    .table-responsive-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+    table { min-width: 600px; }
+  }
+
   @media (max-width: 768px) {
     .top-header-nav { display: none !important; }
     .top-nav { padding: 0 .6rem; height: 50px; }
