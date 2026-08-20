@@ -6099,7 +6099,7 @@ async function canOpenCourseVideo(course, videoIdx = 0) {
 
 function getRouteCourseId() {
   const params = new URLSearchParams(window.location.search);
-  return (params.get('courseId') || '').trim();
+  return (params.get('courseId') || params.get('course') || '').trim();
 }
 
 function getRouteLessonId() {
@@ -6109,7 +6109,7 @@ function getRouteLessonId() {
 
 function getRouteLiveSessionId() {
   const params = new URLSearchParams(window.location.search);
-  return (params.get('liveSessionId') || '').trim();
+  return (params.get('liveSessionId') || params.get('live') || '').trim();
 }
 
 async function handleSharedViewRoute(liveSessionsPromise = Promise.resolve()) {
@@ -6118,6 +6118,14 @@ async function handleSharedViewRoute(liveSessionsPromise = Promise.resolve()) {
   const view = String(params.get('view') || '').toLowerCase();
   if (liveSessionId) {
     await liveSessionsPromise;
+    const sess = (_livePlannedSessions || []).find(item => item.sessionId === liveSessionId);
+    // If free live class or active stream, open directly with no registration required
+    if (sess && (!sess.pricePaise || sess.pricePaise === 0 || sess.status === 'live')) {
+      if (sess.ytId) {
+        openLiveStreamPage(sess.ytId, sess.sessionId);
+        return true;
+      }
+    }
     await window.showLive();
     await window.openPlannedLiveSession(liveSessionId);
     return true;
@@ -6549,11 +6557,26 @@ async function getPurchasedCoursesForCurrentUser() {
 async function resumePendingCourseAfterLogin() {
   if (!pendingCourseId || !currentUser) return false;
   const courseId = pendingCourseId;
+  const autoPay = window._pendingCourseAutoPay === true;
   pendingCourseId = null;
+  window._pendingCourseAutoPay = false;
   await loadCourses();
   const access = await getCourseAccess(courseId, resolveCourseById(courseId));
-  if (access.access) await window.openCourse(courseId);
-  else await window.handleEnroll(courseId);
+  if (access.access) {
+    await window.openCourse(courseId);
+  } else {
+    // Open exact course payment page immediately in last finishing step of registration
+    selectedCourse = allCourses.find(c => c.id === courseId);
+    if (selectedCourse) {
+      setupPaymentPage();
+      pushPage('payment');
+      if (autoPay && typeof createCashfreeOrder === 'function') {
+        setTimeout(() => createCashfreeOrder(courseId), 100);
+      }
+    } else {
+      await window.handleEnroll(courseId);
+    }
+  }
   return true;
 }
 
@@ -6610,7 +6633,8 @@ window.handleEnroll = async (courseId) => {
 
   if (!currentUser) {
     pendingCourseId = courseId;
-    showToast('Login required before payment.', 'error');
+    window._pendingCourseAutoPay = true;
+    showToast('Registration required before payment.', 'info');
     pushPage('login');
     pushHistory();
     return;

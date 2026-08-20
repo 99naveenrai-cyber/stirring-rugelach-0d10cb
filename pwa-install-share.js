@@ -36,9 +36,11 @@
   function safeShareUrl(details) {
     const url = new URL('/', window.location.origin);
     const kind = String(details?.kind || 'page');
-    if (details?.courseId) url.searchParams.set('courseId', String(details.courseId));
+    const courseId = details?.courseId || details?.course;
+    const liveSessionId = details?.liveSessionId || details?.live;
+    if (courseId) url.searchParams.set('courseId', String(courseId));
     if (details?.lessonId) url.searchParams.set('lessonId', String(details.lessonId));
-    if (details?.liveSessionId) url.searchParams.set('liveSessionId', String(details.liveSessionId));
+    if (liveSessionId) url.searchParams.set('liveSessionId', String(liveSessionId));
     if (kind === 'live') url.searchParams.set('view', 'live');
     return url.toString();
   }
