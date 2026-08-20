@@ -4377,7 +4377,7 @@ function showLiveQuizOverlay(q) {
       btn.innerHTML = qType === 'tf' ? optText : `<strong>${String.fromCharCode(65+idx)})</strong> ${optText}`;
       
       // Multi-Try Option Click Handler
-      btn.onclick = () => {
+      btn.onclick = (evt) => {
         if (!isTimerActive || hasSolvedCorrectly) return;
         studentSelectedIdx = idx;
 
