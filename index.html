@@ -4124,12 +4124,11 @@ function playVictoryResultSound() {
 
 function launchDramaticUpwardSlowConfetti() {
   const colors = ['#f43f5e', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#eab308', '#ffffff', '#ffd700', '#38bdf8'];
-  const count = 130;
+  const count = 120;
   for (let i = 0; i < count; i++) {
     const p = document.createElement('div');
     p.className = 'upward-slow-confetti';
-    const xPos = (Math.random() - 0.5) * window.innerWidth * 0.95;
-    const drift = (Math.random() - 0.5) * 180;
+    const leftPercent = 3 + Math.random() * 94;
     const color = colors[Math.floor(Math.random() * colors.length)];
     const width = 8 + Math.random() * 12;
     const height = 12 + Math.random() * 16;
@@ -4140,16 +4139,13 @@ function launchDramaticUpwardSlowConfetti() {
       position: fixed !important;
       z-index: 2147483647 !important;
       pointer-events: none !important;
-      left: 50%;
+      left: ${leftPercent}%;
       bottom: 0px;
       width: ${width}px;
       height: ${height}px;
       background: ${color};
       border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
       box-shadow: 0 0 10px ${color};
-      --cx: ${xPos}px;
-      --drift: ${drift}px;
-      --cdur: ${duration}s;
       animation: upwardConfettiSlow ${duration}s cubic-bezier(0.1, 0.85, 0.25, 1) ${delay}s forwards;
     `;
     document.body.appendChild(p);
@@ -11070,6 +11066,28 @@ pageHistory = ['home'];
   </div>
 </div>
 
+
+<!-- Real-Time Quiz Overlay Card (Decoupled Top-Level Element for Desktop & Mobile) -->
+<div id="live-quiz-overlay" style="position:fixed;z-index:2147483647;display:none;">
+  <!-- Timer Progress Bar -->
+  <div style="width:100%;height:5px;background:rgba(255,255,255,0.15);border-radius:99px;overflow:hidden;margin-bottom:1rem">
+    <div id="live-quiz-timer-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#3b82f6,#ef4444);transition:width 1s linear"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+    <span style="font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#38bdf8">🔴 Live Quiz Question</span>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <button type="button" id="live-sound-toggle-btn" onclick="toggleLiveQuizSound()" style="background:rgba(22,163,74,0.85);color:#fff;border:none;border-radius:99px;padding:2px 8px;font-size:.68rem;font-weight:800;cursor:pointer">🔊 Sound ON</button>
+      <span id="live-quiz-timer-text" style="font-size:.8rem;font-weight:900;color:#f43f5e">30s</span>
+    </div>
+  </div>
+  <div id="live-quiz-question-text" style="font-size:.98rem;font-weight:700;line-height:1.4;margin-bottom:1rem;color:#f8fafc">Question text goes here...</div>
+  <div id="live-quiz-options-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+    <!-- JavaScript builds options -->
+  </div>
+  <!-- Rectangular Green Feedback Box -->
+  <div id="live-quiz-feedback-box" style="display:none;margin-top:.6rem"></div>
+</div>
+
 <!-- ════════════════════════════════════════
      PAGE: LIVE STREAM (FULL SCREEN)
 ════════════════════════════════════════ -->
@@ -11102,12 +11120,7 @@ pageHistory = ['home'];
 
   <div id="live-sync-debug" style="display:none;position:absolute;top:max(62px,calc(env(safe-area-inset-top) + 62px));left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));z-index:1004;background:rgba(2,6,23,.82);color:#bae6fd;border:1px solid rgba(56,189,248,.45);border-radius:8px;padding:.45rem .6rem;font:600 .68rem/1.4 monospace;pointer-events:none"></div>
 
-  <!-- Real-Time Quiz Overlay Card -->
-  <div id="live-quiz-overlay" style="position:fixed;z-index:30000;display:none;">
-    <!-- Timer Progress Bar -->
-    <div style="width:100%;height:5px;background:rgba(255,255,255,0.15);border-radius:99px;overflow:hidden;margin-bottom:1rem">
-      <div id="live-quiz-timer-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#3b82f6,#ef4444);transition:width 1s linear"></div>
-    </div>
+  </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
       <span style="font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#38bdf8">🔴 Live Quiz Question</span>
       <div style="display:flex;align-items:center;gap:.5rem">
