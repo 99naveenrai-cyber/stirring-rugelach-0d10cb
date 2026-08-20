@@ -2972,7 +2972,7 @@ function renderStep1Classes() {
     btn.className = cls;
     btn.innerHTML = `Class ${c}th${hasLive ? '<br><span style="font-size:.6rem">🔴 LIVE</span>' : hasPlan ? '<br><span style="font-size:.6rem">📅 Plan</span>' : ''}`;
     
-    btn.onclick = () => {
+    btn.onclick = (evt) => {
       _navClass = c;
       _navChapter = '';
       _navSubject = '';
@@ -4195,59 +4195,60 @@ function playVictoryResultSound() {
   } catch (_) {}
 }
 
-function launchDramaticUpwardSlowConfetti() {
-  const colors = ['#f43f5e', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#eab308', '#ffffff', '#ffd700', '#38bdf8'];
-  // Adaptive particle count for Mobile, Tablet, Laptop, TV displays
-  const count = Math.min(160, Math.max(90, Math.floor(window.innerWidth / 7)));
+function launchDramaticUpwardSlowConfetti(originX, originY) {
+  const colors = ['#f43f5e', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#eab308', '#ffffff', '#ffd700', '#38bdf8', '#a855f7'];
+  // Increased particle quantity (180 - 240 particles)
+  const count = Math.min(240, Math.max(160, Math.floor(window.innerWidth / 5)));
   const container = document.body;
 
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
+  const startX = (typeof originX === 'number' && Number.isFinite(originX)) ? originX : (window.innerWidth / 2);
+  const startY = (typeof originY === 'number' && Number.isFinite(originY)) ? originY : (window.innerHeight / 2);
 
   for (let i = 0; i < count; i++) {
     const p = document.createElement('div');
     p.className = 'party-popper-burst-particle';
 
     const angle = Math.random() * Math.PI * 2;
-    const maxRadius = Math.max(window.innerWidth, window.innerHeight) * (0.4 + Math.random() * 0.5);
+    const maxRadius = Math.max(window.innerWidth, window.innerHeight) * (0.45 + Math.random() * 0.55);
     const targetX = Math.cos(angle) * maxRadius;
-    const targetY = Math.sin(angle) * maxRadius - (Math.random() * 70 + 30);
+    const targetY = Math.sin(angle) * maxRadius - (Math.random() * 140 + 60); // Stronger majestic upward float
 
     const color = colors[Math.floor(Math.random() * colors.length)];
-    const size = 7 + Math.random() * 10;
-    const isCircle = Math.random() > 0.5;
-    const duration = 1.8 + Math.random() * 1.4;
-    const rot = Math.floor(Math.random() * 1080 - 540);
+    const size = 7 + Math.random() * 12;
+    const isCircle = Math.random() > 0.4;
+    // Slower, majestic, festive explosion duration (3.0s - 4.5s)
+    const duration = 3.0 + Math.random() * 1.5;
+    const rot = Math.floor(Math.random() * 1440 - 720);
 
     p.style.cssText = `
       position: fixed !important;
       z-index: 2147483647 !important;
       pointer-events: none !important;
-      left: ${centerX}px !important;
-      top: ${centerY}px !important;
+      left: ${startX}px !important;
+      top: ${startY}px !important;
       width: ${size}px !important;
-      height: ${size * (isCircle ? 1 : 1.6)}px !important;
+      height: ${size * (isCircle ? 1 : 1.7)}px !important;
       background: ${color} !important;
       border-radius: ${isCircle ? '50%' : '3px'} !important;
-      box-shadow: 0 0 12px ${color} !important;
+      box-shadow: 0 0 14px ${color} !important;
       will-change: transform, opacity !important;
       transform: translate3d(0, 0, 0) scale(0.2) rotate(0deg);
       opacity: 1;
-      transition: transform ${duration}s cubic-bezier(0.1, 0.85, 0.25, 1), opacity ${duration}s cubic-bezier(0.4, 0, 1, 1);
+      transition: transform ${duration}s cubic-bezier(0.05, 0.75, 0.15, 1), opacity ${duration}s cubic-bezier(0.3, 0, 1, 1);
     `;
 
     container.appendChild(p);
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        p.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(1) rotate(${rot}deg)`;
+        p.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(1.1) rotate(${rot}deg)`;
         p.style.opacity = '0';
       });
     });
 
     setTimeout(() => {
       try { p.remove(); } catch (_) {}
-    }, (duration + 0.3) * 1000);
+    }, (duration + 0.4) * 1000);
   }
 }
 window.launchDramaticUpwardSlowConfetti = launchDramaticUpwardSlowConfetti;
@@ -4329,7 +4330,7 @@ function showLiveQuizOverlay(q) {
           playVictoryResultSound();
 
           // Whole screen celebration confetti moving upward
-          launchDramaticUpwardSlowConfetti();
+          launchDramaticUpwardSlowConfetti(evt?.clientX, evt?.clientY);
 
           // Display randomized correct feedback message in rectangular green box
           if (feedbackBox) {
@@ -4398,8 +4399,13 @@ function showLiveQuizOverlay(q) {
         clearInterval(_liveQuizTimerInt);
         isTimerActive = false;
         
-        // Time Ends: Lock options and show correct answer in blinking style with white boundary (NO celebration, NO confetti)
-        revealTimeEndedAnswer(q.correctIndex, hasSolvedCorrectly);
+        // Lock options immediately on time end, but wait 0.5s BEFORE revealing correct answer in sky blue
+        const opts = document.querySelectorAll('#live-quiz-options-grid .live-quiz-opt-btn, .live-quiz-opt-btn');
+        opts.forEach(b => b.disabled = true);
+
+        setTimeout(() => {
+          revealTimeEndedAnswer(q.correctIndex, hasSolvedCorrectly);
+        }, 500);
       }
     }, 1000);
   }
@@ -4431,7 +4437,18 @@ function hideLiveQuizOverlay() {
   const overlay = document.getElementById('live-quiz-overlay');
   if (overlay) {
     overlay.classList.remove('show');
-    overlay.style.setProperty('display', 'none', 'important');
+    // Disappear in style: smooth scale-down, opacity fade-out & blur
+    overlay.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease-out, filter 0.5s ease-out';
+    overlay.style.setProperty('transform', 'translate(-50%, -40%) scale(0.88)', 'important');
+    overlay.style.setProperty('opacity', '0', 'important');
+    overlay.style.setProperty('filter', 'blur(10px)', 'important');
+    
+    setTimeout(() => {
+      overlay.style.setProperty('display', 'none', 'important');
+      overlay.style.removeProperty('transform');
+      overlay.style.removeProperty('opacity');
+      overlay.style.removeProperty('filter');
+    }, 520);
   }
   if (_liveQuizTimerInt) clearInterval(_liveQuizTimerInt);
   _liveSyncManager?.completeCurrent?.('completed', {
