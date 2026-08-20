@@ -927,7 +927,67 @@ body.academic-menu-open{overflow:hidden}
 }
 
 
-  /* ── STAGE 5 — STUDY RESOURCES SECTION STYLES ── */
+  
+  /* ════════════════════════════════════════════════════════════════════════════
+     BRAVE BROWSER COMPATIBILITY & SPARKLING GREEN DRAMATIC GLOW STYLES
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  #live-quiz-overlay {
+    position: fixed !important;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+    contain: layout style !important;
+  }
+
+  #live-quiz-overlay.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* 🌟 DRAMATIC SPARKLING GREEN GLOW FOR CORRECT OPTION */
+  .live-quiz-opt-btn.correct-sparkle-glow,
+  .correct-sparkle-glow {
+    background: linear-gradient(135deg, #15803d 0%, #22c55e 50%, #16a34a 100%) !important;
+    border: 2.5px solid #86efac !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.95), 0 0 60px rgba(22, 163, 74, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.6) !important;
+    animation: dramaticSparklePulse 0.6s infinite alternate ease-in-out !important;
+    transform: scale(1.03) !important;
+  }
+
+  @keyframes dramaticSparklePulse {
+    0% {
+      box-shadow: 0 0 18px rgba(34, 197, 94, 0.7), 0 0 40px rgba(22, 163, 74, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.4);
+      border-color: #86efac;
+      transform: scale(1.02);
+    }
+    100% {
+      box-shadow: 0 0 40px rgba(34, 197, 94, 1), 0 0 80px rgba(74, 222, 128, 0.95), inset 0 0 25px rgba(255, 255, 255, 0.8);
+      border-color: #ffffff;
+      transform: scale(1.05);
+    }
+  }
+
+  /* 🛑 DRAMATIC RED GLOW FOR WRONG OPTION */
+  .live-quiz-opt-btn.wrong-dramatic-glow,
+  .wrong-dramatic-glow {
+    background: linear-gradient(135deg, #991b1b 0%, #dc2626 50%, #b91c1c 100%) !important;
+    border: 2px solid #fca5a5 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.85), inset 0 0 12px rgba(0, 0, 0, 0.4) !important;
+    animation: dramaticWrongShake 0.4s cubic-bezier(.36,.07,.19,.97) both !important;
+  }
+
+  @keyframes dramaticWrongShake {
+    10%, 90% { transform: translate3d(-2px, 0, 0) scale(0.98); }
+    20%, 80% { transform: translate3d(3px, 0, 0) scale(0.98); }
+    30%, 50%, 70% { transform: translate3d(-5px, 0, 0) scale(0.98); }
+    40%, 60% { transform: translate3d(5px, 0, 0) scale(0.98); }
+  }
+
+/* ── STAGE 5 — STUDY RESOURCES SECTION STYLES ── */
   .study-resources-section {
     background: #ffffff;
     border-bottom: 1px solid #dde5f1;
@@ -4043,7 +4103,10 @@ function showLiveQuizOverlay(q) {
     });
   }
 
-  overlay.style.display = 'block';
+  overlay.classList.add('show');
+  overlay.style.setProperty('display', 'block', 'important');
+  overlay.style.setProperty('visibility', 'visible', 'important');
+  overlay.style.setProperty('opacity', '1', 'important');
 
   // Timer Handling (10s, 20s, 30s, 45s, 60s or 0s Unlimited)
   let timeLimit = Number(q.timeLimit);
@@ -4104,7 +4167,10 @@ function revealTimeEndedAnswer(correctIdx, hasSolvedCorrectly) {
 
 function hideLiveQuizOverlay() {
   const overlay = document.getElementById('live-quiz-overlay');
-  if (overlay) overlay.style.display = 'none';
+  if (overlay) {
+    overlay.classList.remove('show');
+    overlay.style.setProperty('display', 'none', 'important');
+  }
   if (_liveQuizTimerInt) clearInterval(_liveQuizTimerInt);
   _liveSyncManager?.completeCurrent?.('completed', {
     actualPlaybackTime: _liveStreamClock?.currentTime?.()
