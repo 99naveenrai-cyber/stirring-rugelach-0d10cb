@@ -4237,6 +4237,41 @@ function flyQuestionCardGentlyToNearestSide() {
 }
 window.flyQuestionCardGentlyToNearestSide = flyQuestionCardGentlyToNearestSide;
 
+
+function getEventTapCoordinates(evt) {
+  if (!evt) return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  
+  let x = evt.clientX;
+  let y = evt.clientY;
+
+  if ((!x || !y) && evt.changedTouches && evt.changedTouches.length > 0) {
+    x = evt.changedTouches[0].clientX;
+    y = evt.changedTouches[0].clientY;
+  }
+  if ((!x || !y) && evt.touches && evt.touches.length > 0) {
+    x = evt.touches[0].clientX;
+    y = evt.touches[0].clientY;
+  }
+
+  if ((!x || !y) && evt.currentTarget && typeof evt.currentTarget.getBoundingClientRect === 'function') {
+    const rect = evt.currentTarget.getBoundingClientRect();
+    x = rect.left + rect.width / 2;
+    y = rect.top + rect.height / 2;
+  } else if ((!x || !y) && evt.target && typeof evt.target.getBoundingClientRect === 'function') {
+    const rect = evt.target.getBoundingClientRect();
+    x = rect.left + rect.width / 2;
+    y = rect.top + rect.height / 2;
+  }
+
+  if (!x || !y || !Number.isFinite(x) || !Number.isFinite(y)) {
+    x = window.innerWidth / 2;
+    y = window.innerHeight / 2;
+  }
+
+  return { x, y };
+}
+window.getEventTapCoordinates = getEventTapCoordinates;
+
 function launchDramaticUpwardSlowConfetti(originX, originY) {
   try {
     const existingCanvas = document.getElementById('live-confetti-canvas');
@@ -4410,7 +4445,8 @@ function showLiveQuizOverlay(q) {
           playVictoryResultSound();
 
           // Whole screen celebration confetti moving upward
-          launchDramaticUpwardSlowConfetti(evt?.clientX, evt?.clientY);
+          const tapCoords = getEventTapCoordinates(evt);
+          launchDramaticUpwardSlowConfetti(tapCoords.x, tapCoords.y);
 
           // Display randomized correct feedback message in rectangular green box
           if (feedbackBox) {
@@ -11295,8 +11331,8 @@ pageHistory = ['home'];
     📱 Please Watch in Landscape Mode for the Best Experience
   </div>
   
-  <!-- Floating Back / Leave Button -->
-  <button onclick="confirmLeaveLiveStream()" style="position:absolute;top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));z-index:1005;background:rgba(15,23,42,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:99px;padding:.4rem 1rem;font-weight:700;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;box-shadow:0 4px 12px rgba(0,0,0,0.4)">
+  <!-- Floating Back / Leave Button (Instant 1-Tap Responsive Max Z-Index) -->
+  <button type="button" id="btn-leave-live-stream" onclick="confirmLeaveLiveStream()" ontouchstart="event.preventDefault(); confirmLeaveLiveStream();" style="position:fixed !important;top:max(14px,env(safe-area-inset-top)) !important;left:max(14px,env(safe-area-inset-left)) !important;z-index:2147483645 !important;pointer-events:auto !important;touch-action:manipulation !important;background:rgba(15,23,42,0.85) !important;backdrop-filter:blur(12px) !important;-webkit-backdrop-filter:blur(12px) !important;color:#ffffff !important;border:1.5px solid rgba(255,255,255,0.3) !important;border-radius:99px !important;padding:.5rem 1.1rem !important;font-weight:800 !important;font-size:.85rem !important;cursor:pointer !important;display:flex !important;align-items:center !important;gap:.4rem !important;box-shadow:0 6px 16px rgba(0,0,0,0.5) !important;user-select:none !important;">
     ← Leave Live
   </button>
 
