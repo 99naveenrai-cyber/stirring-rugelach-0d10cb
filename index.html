@@ -3542,6 +3542,32 @@ async function openLiveStreamPage(youtubeVideoId, sessionId) {
   iframe.src = `https://www.youtube.com/embed/${rawId}?autoplay=1&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(location.origin)}`;
   console.log("A10 iframe.src assigned", iframe.src);
 
+  // Initialize YT.Player API on live-yt-iframe for direct autoplay without showing YouTube play button overlay
+  if (typeof ensureYouTubeIframeApi === 'function') {
+    ensureYouTubeIframeApi().then((YT) => {
+      if (window._liveStreamYTPlayer) {
+        try { window._liveStreamYTPlayer.destroy(); } catch(_) {}
+      }
+      window._liveStreamYTPlayer = new YT.Player('live-yt-iframe', {
+        events: {
+          onReady: (event) => {
+            try {
+              event.target.playVideo();
+            } catch(_) {}
+            if (_liveStreamClock && event.target.getCurrentTime) {
+              try { _liveStreamClock.attachPlayer?.(event.target); } catch(_) {}
+            }
+          },
+          onStateChange: (event) => {
+            if (_liveStreamClock && event.target.getCurrentTime) {
+              try { _liveStreamClock.attachPlayer?.(event.target); } catch(_) {}
+            }
+          }
+        }
+      });
+    }).catch((err) => console.warn('[Live Stream YT API]', err));
+  }
+
   setTimeout(() => {
     const pageEl = document.getElementById('page-live');
     const inDOM = Boolean(pageEl && document.body.contains(pageEl));
