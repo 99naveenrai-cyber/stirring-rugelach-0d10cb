@@ -2995,8 +2995,7 @@ function renderStep1Classes() {
     btn.className = cls;
     btn.innerHTML = `Class ${c}th${hasLive ? '<br><span style="font-size:.6rem">🔴 LIVE</span>' : hasPlan ? '<br><span style="font-size:.6rem">📅 Plan</span>' : ''}`;
     
-    btn.onclick = (evt) => {
-        flyQuestionCardGentlyToNearestSide();
+    btn.onclick = () => {
       _navClass = c;
       _navChapter = '';
       _navSubject = '';
@@ -4218,24 +4217,6 @@ function playVictoryResultSound() {
     });
   } catch (_) {}
 }
-
-
-function flyQuestionCardGentlyToNearestSide() {
-  const overlay = document.getElementById('live-quiz-overlay');
-  if (!overlay) return;
-  const rect = overlay.getBoundingClientRect();
-  const cardCenterX = rect.left + rect.width / 2;
-  const screenCenterX = window.innerWidth / 2;
-
-  overlay.style.transition = 'all 0.65s cubic-bezier(0.16, 1, 0.3, 1)';
-
-  if (cardCenterX < screenCenterX) {
-    overlay.className = 'pos-left';
-  } else {
-    overlay.className = 'pos-right';
-  }
-}
-window.flyQuestionCardGentlyToNearestSide = flyQuestionCardGentlyToNearestSide;
 
 
 function getEventTapCoordinates(evt) {
