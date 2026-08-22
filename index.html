@@ -2116,6 +2116,37 @@ button.live-quiz-opt-btn.correct-sky-blue-reveal,
   will-change: transform, opacity !important;
 }
 
+
+/* 🎯 BULLETPROOF LIVE QUIZ OPTION BUTTON TOUCH & POINTER EVENT OVERRIDES */
+.live-quiz-opt-btn {
+  position: relative !important;
+  z-index: 2147483647 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  cursor: pointer !important;
+}
+
+.live-quiz-opt-btn.correct-sparkle-glow,
+.live-quiz-opt-btn.correct-glow {
+  background: linear-gradient(135deg, #15803d 0%, #22c55e 50%, #16a34a 100%) !important;
+  border-color: #4ade80 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 25px rgba(34, 197, 94, 0.9), 0 0 50px rgba(34, 197, 94, 0.6) !important;
+  animation: dramaticGreenGlow 0.8s infinite alternate !important;
+}
+
+.live-quiz-opt-btn.wrong-dramatic-glow,
+.live-quiz-opt-btn.wrong-glow {
+  background: linear-gradient(135deg, #991b1b 0%, #dc2626 50%, #b91c1c 100%) !important;
+  border-color: #fca5a5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.9), 0 0 50px rgba(239, 68, 68, 0.6) !important;
+  animation: wrongShake 0.4s ease-in-out !important;
+}
+
 </style>
 <script src="ncert_curriculum_data.js"></script>
 <script src="curriculum-access.js"></script>
@@ -4407,26 +4438,30 @@ function showLiveQuizOverlay(q) {
 
     opts.forEach((optText, idx) => {
       const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = 'live-quiz-opt-btn';
       btn.innerHTML = qType === 'tf' ? optText : `<strong>${String.fromCharCode(65+idx)})</strong> ${optText}`;
       
-      // Multi-Try Option Click Handler
-      btn.onclick = (evt) => {
+      const handleOptionTap = (evt) => {
+        if (evt) {
+          try { evt.preventDefault(); evt.stopPropagation(); } catch(_) {}
+        }
         if (!isTimerActive || hasSolvedCorrectly) return;
         studentSelectedIdx = idx;
+
+        const tapCoords = getEventTapCoordinates(evt);
 
         if (idx === q.correctIndex) {
           // Correct Option Clicked!
           hasSolvedCorrectly = true;
-          btn.classList.remove('wrong-dramatic-glow');
-          btn.classList.add('correct-sparkle-glow');
+          btn.classList.remove('wrong-dramatic-glow', 'wrong-glow');
+          btn.classList.add('correct-sparkle-glow', 'correct-glow');
 
           // Soft Correct Sound & Victory Sound
           playSoftCorrectSound();
           playVictoryResultSound();
 
-          // Whole screen celebration confetti moving upward
-          const tapCoords = getEventTapCoordinates(evt);
+          // Confetti celebration exploding from tap position
           launchDramaticUpwardSlowConfetti(tapCoords.x, tapCoords.y);
 
           // Display randomized correct feedback message in rectangular green box
@@ -4448,7 +4483,8 @@ function showLiveQuizOverlay(q) {
           }
         } else {
           // Wrong Option Clicked -> Glow Red dramatically, play soft wrong sound, show random wrong feedback
-          btn.classList.add('wrong-dramatic-glow');
+          btn.classList.remove('correct-sparkle-glow', 'correct-glow');
+          btn.classList.add('wrong-dramatic-glow', 'wrong-glow');
           playSoftWrongSound();
 
           if (feedbackBox) {
@@ -4458,6 +4494,24 @@ function showLiveQuizOverlay(q) {
           }
         }
       };
+
+      let handled = false;
+      btn.addEventListener('pointerdown', (e) => {
+        if (!handled) {
+          handled = true;
+          handleOptionTap(e);
+          setTimeout(() => { handled = false; }, 400);
+        }
+      }, { passive: false });
+
+      btn.onclick = (e) => {
+        if (!handled) {
+          handled = true;
+          handleOptionTap(e);
+          setTimeout(() => { handled = false; }, 400);
+        }
+      };
+
       grid.appendChild(btn);
     });
   }
